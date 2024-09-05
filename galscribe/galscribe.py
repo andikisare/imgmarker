@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
-from PyQt5.QtCore import Qt, QSize
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem
+from PyQt6.QtGui import QPixmap, QPainter, QPen, QBrush
+from PyQt6.QtCore import Qt, QSize
 import sys
 import os
 from PIL import ImageTk, Image, ImageShow, ImageFilter, ImageEnhance
@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
 
         # Current index widget
         self.idx_label = QLabel(f'Current image: {self.idx+1} of {self.N}')
-        self.idx_label.setAlignment(Qt.AlignHCenter)
+        self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Back widget
         self.back_button = QPushButton(text='Back',parent=self)
@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
         '''
         Resize event; rescales image to fit in window, but keeps aspect ratio
         '''
-        self.image_view.fitInView(self._pixmap_item, Qt.KeepAspectRatio)
+        self.image_view.fitInView(self._pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         super().resizeEvent(event)
 
     def onClick(self, event):
@@ -204,9 +204,6 @@ class MainWindow(QMainWindow):
             # Increment the index
             self.idx -= 1
             self.imageUpdate()
-
-
-
 
 def main():
     app = QApplication(sys.argv)
