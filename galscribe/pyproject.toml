@@ -19,4 +19,4 @@ authors = [
 ]
 
 [project.scripts]
-galnote = "galscribe:main"
+galscribe = "galscribe:main"
