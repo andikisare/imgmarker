@@ -146,23 +146,23 @@ class MainWindow(QMainWindow):
         Actions to complete on mouse-click
         '''
         # Left Click
-        if (self._pixmap_item is self.image_view.itemAt(event.pos())) and (event.button() == Qt.LeftButton):
+        if (self._pixmap_item is self.image_view.itemAt(event.pos())) and (event.button() == Qt.MouseButton.LeftButton):
             sp = self.image_view.mapToScene(event.pos())
             lp = self._pixmap_item.mapFromScene(sp).toPoint()
             
-            coords = self.wcs.all_pix2world([[lp.x(), lp.y()]], 0)[0]
+            x, y = lp.x(), self.pixmap.height()-lp.y()
+            coords = self.wcs.all_pix2world([[x, y]], 0)[0]
 
             r = 10
             ellipse = QGraphicsEllipseItem(lp.x()-r/2, lp.y()-r/2, r, r)
-            ellipse.setPen(QPen(Qt.red, 1, Qt.SolidLine))
+            ellipse.setPen(QPen(Qt.GlobalColor.red, 1, Qt.PenStyle.SolidLine))
             self.image_scene.addItem(ellipse) 
-            #self.image_view.onPaint()
-            
+                        
             print(lp)
             print(coords)
 
         # Right Click
-        if (self._pixmap_item is self.image_view.itemAt(event.pos())) and (event.button() == Qt.RightButton):
+        if (self._pixmap_item is self.image_view.itemAt(event.pos())) and (event.button() == Qt.MouseButton.RightButton):
             pass
     
 
