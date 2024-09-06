@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         self.windowsize = QSize(int(self.fullw/2), int(self.fullh/2))
         self.zoomfrac = (self.fullh - 275) / 400
         self._go_back_one = False
-        self.setWindowTitle("galnote")
+        self.setWindowTitle("Galaxy Marker")
 
         # Create image scene
         self.image_scene = QGraphicsScene(self)
@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
         #self.image_view.mouseMoveEvent = self.mouseTracker
 
         # Current index widget
-        self.idx_label = QLabel(f'Current image: {self.idx+1} of {self.N}')
+        self.idx_label = QLabel(f'Image {self.idx+1} of {self.N}')
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Back widget
