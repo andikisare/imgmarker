@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem
-from PyQt6.QtGui import QPixmap, QPainter, QPen, QBrush
+from PyQt6.QtGui import QPixmap, QPainter, QPen, QBrush, QCursor, QKeyEvent, QColor
 from PyQt6.QtCore import Qt, QSize
 import sys
 import os
-from PIL import ImageTk, Image, ImageShow, ImageFilter, ImageEnhance
+from PIL import Image, ImageShow
 ImageShow.Viewer = "PNG"
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ import sys
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS as WCS
 from astropy.io import fits
+from collections import defaultdict
 
 class MainWindow(QMainWindow):
     def __init__(self, path = '', imtype = 'tif',
@@ -32,7 +33,6 @@ class MainWindow(QMainWindow):
         '''
         super().__init__()
 
-        os.system('xset r off')
         if path == '':
             self.path = os.getcwd()
 
@@ -55,6 +55,9 @@ class MainWindow(QMainWindow):
         
         self.wcs = self.parseWCS(self.img)
 
+        # Initialize output dictionary
+        data = defaultdict(dict)
+
         #sets useful attributes
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
@@ -71,8 +74,10 @@ class MainWindow(QMainWindow):
 
         # Create image view
         self.image_view = QGraphicsView(self.image_scene)
-        self.image_view.mousePressEvent = self.onClick
+        self.image_view.keyPressEvent = self.onImageClick
+        self.image_view.mousePressEvent = self.onImageClick
         self.image_view.resizeEvent = self.onResize
+        #self.image_view.mouseMoveEvent = self.mouseTracker
 
         # Current index widget
         self.idx_label = QLabel(f'Current image: {self.idx+1} of {self.N}')
@@ -83,9 +88,9 @@ class MainWindow(QMainWindow):
         self.back_button.setFixedHeight(40)
         self.back_button.clicked.connect(self.onBack)
 
-        # Submit Button
+        '''# Submit Button
         self.submit_button = QPushButton(text='Submit',parent=self)
-        self.submit_button.setFixedHeight(40)
+        self.submit_button.setFixedHeight(40)'''
 
         # Next widget
         self.next_button = QPushButton(text='Next',parent=self)
@@ -95,7 +100,7 @@ class MainWindow(QMainWindow):
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
         self.bottom_layout.addWidget(self.back_button)
-        self.bottom_layout.addWidget(self.submit_button)
+        #self.bottom_layout.addWidget(self.submit_button)
         self.bottom_layout.addWidget(self.next_button)
 
         # Add widgets to main layout
@@ -118,20 +123,47 @@ class MainWindow(QMainWindow):
         images = glob.glob(self.path + '*.' + self.imtype)
 
         return images   
+    
+    def _buttonCheck(self,event):
+        button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
+
+        try: button1 = event.button() == Qt.MouseButton.LeftButton
+        except: button1 = event.key() == Qt.Key.Key_1
+
+        try: button2 = event.button() == Qt.MouseButton.RightButton
+        except: button2 = event.key() == Qt.Key.Key_2
+
+        try:
+            button3 = event.key() == Qt.Key.Key_3
+            button4 = event.key() == Qt.Key.Key_4
+            button5 = event.key() == Qt.Key.Key_5
+            button6 = event.key() == Qt.Key.Key_6
+            button7 = event.key() == Qt.Key.Key_7
+            button8 = event.key() == Qt.Key.Key_8
+            button9 = event.key() == Qt.Key.Key_9
+        except: pass
+
+        return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
+
         
-    def getPixel(self, event):
-        x = self.event.pos().x()
-        y = event.pos().y()
-        print(x,y)
+    def drawCircle(self,x,y,c=Qt.GlobalColor.black,r=10):
+        ellipse = QGraphicsEllipseItem(x-r/2, y-r/2, r, r)
+        ellipse.setPen(QPen(c, 1, Qt.PenStyle.SolidLine))
+        self.image_scene.addItem(ellipse) 
 
     def imageUpdate(self):
+        self.image_scene.clear()
         # Update idx label
         self.idx_label.setText(f'Current image: {self.idx+1} of {self.N}')
 
-        # Update the pixmap and WCS
+        # Update the pixmap
         next_image = QPixmap(self.images[self.idx])
+        self.pixmap = QPixmap(next_image)
+        self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
+        self.image_scene.addItem(self._pixmap_item)
+
+        #Update WCS
         self.wcs = self.parseWCS(self.images[self.idx])
-        self._pixmap_item.setPixmap(next_image)
 
 
     def onResize(self, event):
@@ -141,31 +173,39 @@ class MainWindow(QMainWindow):
         self.image_view.fitInView(self._pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         super().resizeEvent(event)
 
-    def onClick(self, event):
+    def onImageClick(self, event):
         '''
         Actions to complete on mouse-click
         '''
-        # Left Click
-        if (self._pixmap_item is self.image_view.itemAt(event.pos())) and (event.button() == Qt.MouseButton.LeftButton):
-            sp = self.image_view.mapToScene(event.pos())
-            lp = self._pixmap_item.mapFromScene(sp).toPoint()
-            
-            x, y = lp.x(), self.pixmap.height()-lp.y()
-            coords = self.wcs.all_pix2world([[x, y]], 0)[0]
+        # get event position and position on image
+        ep, lp = self.mouseImagePos(event)
+        
+        # Check button presses
+        buttons = self._buttonCheck(event)
+        colors = [QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
+                  QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
+                  QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
 
-            r = 10
-            ellipse = QGraphicsEllipseItem(lp.x()-r/2, lp.y()-r/2, r, r)
-            ellipse.setPen(QPen(Qt.GlobalColor.red, 1, Qt.PenStyle.SolidLine))
-            self.image_scene.addItem(ellipse) 
-                        
-            print(lp)
-            print(coords)
+        # Used button1
+        for i in range(0,9):
 
-        # Right Click
-        if (self._pixmap_item is self.image_view.itemAt(event.pos())) and (event.button() == Qt.MouseButton.RightButton):
-            pass
+            if (self._pixmap_item is self.image_view.itemAt(ep)) and buttons[i]:
+                
+                x, y = lp.x(), self.pixmap.height() - lp.y()
+                coords = self.wcs.all_pix2world([[x, y]], 0)[0]
+
+                self.drawCircle(lp.x(),lp.y(),c=colors[i])
+
+                print(lp)
+                print(coords)
     
+    def mouseImagePos(self,event):
+        ep = self.image_view.mapFromGlobal(QCursor.pos())
+        sp = self.image_view.mapToScene(ep)
+        lp = self._pixmap_item.mapFromScene(sp).toPoint()
 
+        return ep, lp
+    
     def parseWCS(self,image_tif):
         tif_image_data = np.array(Image.open(image_tif))
         img = Image.open(image_tif)
