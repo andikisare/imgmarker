@@ -49,14 +49,10 @@ class MainWindow(QMainWindow):
         # Initialize images and WCS
         self.idx = 0
         self.images = self._findImages()
-        
         self.N = len(self.images)
-        self.img = self.images[self.idx]
-        
-        self.wcs = self.parseWCS(self.img)
 
         # Initialize output dictionary
-        data = defaultdict(dict)
+        self.data = defaultdict(dict)
 
         #sets useful attributes
         self.fullw = self.screen().size().width()
@@ -68,9 +64,7 @@ class MainWindow(QMainWindow):
 
         # Create image scene
         self.image_scene = QGraphicsScene(self)
-        self.pixmap = QPixmap(self.img)
-        self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
-        self.image_scene.addItem(self._pixmap_item)
+        self.imageUpdate()
 
         # Create image view
         self.image_view = QGraphicsView(self.image_scene)
@@ -163,14 +157,13 @@ class MainWindow(QMainWindow):
         self.idx_label.setText(f'Current image: {self.idx+1} of {self.N}')
 
         # Update the pixmap
-        next_image = QPixmap(self.images[self.idx])
-        self.pixmap = QPixmap(next_image)
+        self.image = self.images[self.idx]
+        self.pixmap = QPixmap(self.image)
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)
 
         #Update WCS
         self.wcs = self.parseWCS(self.images[self.idx])
-
 
     def onResize(self, event):
         '''
@@ -192,9 +185,7 @@ class MainWindow(QMainWindow):
                   QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
                   QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
 
-        # Used button1
         for i in range(0,9):
-
             if (self._pixmap_item is self.image_view.itemAt(ep)) and buttons[i]:
                 
                 x, y = lp.x(), self.pixmap.height() - lp.y()
