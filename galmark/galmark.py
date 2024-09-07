@@ -1,19 +1,18 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit
-from PyQt6.QtGui import QPixmap, QPainter, QPen, QBrush, QCursor, QKeyEvent, QColor
+from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor
 from PyQt6.QtCore import Qt, QSize
 import sys
 import os
 from PIL import Image, ImageShow
 ImageShow.Viewer = "PNG"
 import numpy as np
-import pandas as pd
 import io
 import glob
 import argparse
 import os
 import sys
 from PIL.TiffTags import TAGS
-from astropy.wcs import WCS as WCS
+from astropy.wcs import WCS
 from astropy.io import fits
 from collections import defaultdict
 
@@ -23,6 +22,27 @@ class DataDict(defaultdict):
 
     def __repr__(self):
         return repr(dict(self))
+    
+def markBindingCheck(event):
+    button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
+
+    try: button1 = event.button() == Qt.MouseButton.LeftButton
+    except: button1 = event.key() == Qt.Key.Key_1
+
+    try: button2 = event.button() == Qt.MouseButton.RightButton
+    except: button2 = event.key() == Qt.Key.Key_2
+
+    try:
+        button3 = event.key() == Qt.Key.Key_3
+        button4 = event.key() == Qt.Key.Key_4
+        button5 = event.key() == Qt.Key.Key_5
+        button6 = event.key() == Qt.Key.Key_6
+        button7 = event.key() == Qt.Key.Key_7
+        button8 = event.key() == Qt.Key.Key_8
+        button9 = event.key() == Qt.Key.Key_9
+    except: pass
+
+    return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
 
 class MainWindow(QMainWindow):
     def __init__(self, path = '', imtype = 'tif',
@@ -55,7 +75,7 @@ class MainWindow(QMainWindow):
 
         # Initialize images and WCS
         self.idx = 0
-        self.images = self._findImages()
+        self.images = self.findImages()
         self.N = len(self.images)
 
         # Initialize output dictionary
@@ -65,24 +85,18 @@ class MainWindow(QMainWindow):
                   QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
                   QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
 
-        #sets useful attributes
+        # Useful attributes
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
         self.windowsize = QSize(int(self.fullw/2), int(self.fullh/2))
-        self.zoomfrac = (self.fullh - 275) / 400
+        #self.zoomfrac = (self.fullh - 275) / 400
         self._go_back_one = False
         self.setWindowTitle("Galaxy Marker")
 
-        # Create image scene
+        # Create image view
         self.image_scene = QGraphicsScene(self)
         self.imageUpdate()
-
-        # Create image view
         self.image_view = QGraphicsView(self.image_scene)
-        self.image_view.keyPressEvent = self.onImageClick
-        self.image_view.mousePressEvent = self.onImageClick
-        self.image_view.resizeEvent = self.onResize
-        #self.image_view.mouseMoveEvent = self.mouseTracker
 
         # Current index widget
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -105,14 +119,15 @@ class MainWindow(QMainWindow):
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
         self.comment_box.setFixedHeight(40)
+        self.commentUpdate()
     
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
         self.bottom_layout.addWidget(self.back_button)
+        self.bottom_layout.addWidget(self.next_button)
         self.bottom_layout.addWidget(self.comment_box)
         self.bottom_layout.addWidget(self.submit_button)
-        self.bottom_layout.addWidget(self.next_button)
-
+        
         # Add widgets to main layout
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
@@ -121,11 +136,81 @@ class MainWindow(QMainWindow):
         layout.addLayout(self.bottom_layout)
         self.setCentralWidget(central_widget)
 
-        # On actions
+    # Events
+    def resizeEvent(self, event):
+        '''
+        Resize event; rescales image to fit in window, but keeps aspect ratio
+        '''
+        self.image_view.fitInView(self._pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+        super().resizeEvent(event)
 
+    def keyPressEvent(self,event):
+        # Check if key is bound with marking the image
+        markButtons = markBindingCheck(event)
+        for i in range(0,9):
+            if markButtons[i]: self.onMark(event,group=i)
 
+        # Check if "Enter" was pressed
+        if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter): self.onEnter()
 
-    def _findImages(self):
+    def mousePressEvent(self,event):
+        # Check if key is bound with marking the image
+        markButtons = markBindingCheck(event)
+        for i in range(0,9):
+            if markButtons[i]: self.onMark(event,group=i)
+
+    # On-actions
+    def onMark(self, event, group=0):
+        '''
+        Actions to complete when marking
+        '''
+        # get event position and position on image
+        ep, lp = self.mouseImagePos()
+        
+        # Mark if hovering over image  
+        if self._pixmap_item is self.image_view.itemAt(ep):    
+            x, y = lp.x(), self.pixmap.height() - lp.y()
+            ra, dec = self.wcs.all_pix2world([[x, y]], 0)[0]
+
+            self.drawCircle(lp.x(),lp.y(),c=self.colors[group])
+            print(group)
+
+            if not self.data[self.image_name][self.group_names[group]]['RA']:
+                self.data[self.image_name][self.group_names[group]]['RA'] = []
+
+            if not self.data[self.image_name][self.group_names[group]]['DEC']: 
+                self.data[self.image_name][self.group_names[group]]['DEC'] = []
+
+            self.data[self.image_name][self.group_names[group]]['RA'].append(ra)
+            self.data[self.image_name][self.group_names[group]]['DEC'].append(dec)
+
+            '''print(lp)
+            print([ra,dec])
+            print(self.data)'''
+
+    def onNext(self):
+        if self.idx+1 < self.N:
+            # Increment the index
+            self.idx += 1
+            self.imageUpdate()
+            self.redraw()
+            self.commentUpdate()
+
+    def onBack(self):
+        if self.idx+1 > 1:
+            # Increment the index
+            self.idx -= 1
+            self.imageUpdate()
+            self.redraw()
+            self.commentUpdate()
+
+    def onEnter(self):
+        self.commentUpdate()
+    
+    def onSave(self):
+        pass
+
+    def findImages(self):
         '''
         Finds and returns a list of images of self.imtype located at
             self.path.
@@ -136,28 +221,6 @@ class MainWindow(QMainWindow):
         images = glob.glob(self.path + '*.' + self.imtype)
 
         return images   
-    
-    def _buttonCheck(self,event):
-        button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
-
-        try: button1 = event.button() == Qt.MouseButton.LeftButton
-        except: button1 = event.key() == Qt.Key.Key_1
-
-        try: button2 = event.button() == Qt.MouseButton.RightButton
-        except: button2 = event.key() == Qt.Key.Key_2
-
-        try:
-            button3 = event.key() == Qt.Key.Key_3
-            button4 = event.key() == Qt.Key.Key_4
-            button5 = event.key() == Qt.Key.Key_5
-            button6 = event.key() == Qt.Key.Key_6
-            button7 = event.key() == Qt.Key.Key_7
-            button8 = event.key() == Qt.Key.Key_8
-            button9 = event.key() == Qt.Key.Key_9
-        except: pass
-
-        return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
-
         
     def drawCircle(self,x,y,c=Qt.GlobalColor.black,r=10):
         ellipse = QGraphicsEllipseItem(x-r/2, y-r/2, r, r)
@@ -182,6 +245,13 @@ class MainWindow(QMainWindow):
 
         #Update WCS
         self.wcs = self.parseWCS(self.images[self.idx])
+    
+    def commentUpdate(self):
+        comment = self.comment_box.text()
+        if not comment: comment = 'None' # default comment to 'None'
+
+        self.data[self.image_name]['comment'] = comment
+        self.comment_box.setText('')
 
     def redraw(self):
         for i in range(0,9):
@@ -197,52 +267,20 @@ class MainWindow(QMainWindow):
                     y += self.pixmap.height() - 2*y
 
                     self.drawCircle(x,y,c=self.colors[i])
-                    print(x,y)
-
-
-
-    def onResize(self, event):
-        '''
-        Resize event; rescales image to fit in window, but keeps aspect ratio
-        '''
-        self.image_view.fitInView(self._pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
-        super().resizeEvent(event)
-
-    def onImageClick(self, event):
-        '''
-        Actions to complete on mouse-click
-        '''
-        # get event position and position on image
-        ep, lp = self.mouseImagePos(event)
-        
-        # Check button presses
-        buttons = self._buttonCheck(event)
-        
-
-        for i in range(0,9):
-            if (self._pixmap_item is self.image_view.itemAt(ep)) and buttons[i]:
-                
-                x, y = lp.x(), self.pixmap.height() - lp.y()
-                ra, dec = self.wcs.all_pix2world([[x, y]], 0)[0]
-
-                self.drawCircle(lp.x(),lp.y(),c=self.colors[i])
-
-                if not 'RA' in self.data[self.image_name][self.group_names[i]]: self.data[self.image_name][self.group_names[i]]['RA'] = []
-                if not 'DEC' in self.data[self.image_name][self.group_names[i]]: self.data[self.image_name][self.group_names[i]]['DEC'] = []
-
-                self.data[self.image_name][self.group_names[i]]['RA'].append(ra)
-                self.data[self.image_name][self.group_names[i]]['DEC'].append(dec)
-
-                print(lp)
-                print([ra,dec])
-                print(self.data)
     
-    def mouseImagePos(self,event):
-        ep = self.image_view.mapFromGlobal(QCursor.pos())
-        sp = self.image_view.mapToScene(ep)
-        lp = self._pixmap_item.mapFromScene(sp).toPoint()
+    def mouseImagePos(self):
+        '''
+        Gets mouse positions
 
-        return ep, lp
+        Returns:
+            view_pos: position of mouse in image_view
+            pix_pos: position of mouse in the pixmap
+        '''
+        view_pos = self.image_view.mapFromGlobal(QCursor.pos())
+        scene_pos = self.image_view.mapToScene(view_pos)
+        pix_pos = self._pixmap_item.mapFromScene(scene_pos).toPoint()
+
+        return view_pos, pix_pos
     
     def parseWCS(self,image_tif):
         tif_image_data = np.array(Image.open(image_tif))
@@ -267,28 +305,9 @@ class MainWindow(QMainWindow):
 
         # Create a WCS object from the header
         wcs = WCS(header)
-        print(wcs)
+        #print(wcs)
         shape = (meta_dict['ImageWidth'][0], meta_dict['ImageLength'][0])
         return wcs
-    
-    def onNext(self):
-        if self.idx+1 < self.N:
-            # Increment the index
-            self.idx += 1
-            self.imageUpdate()
-
-    def onBack(self):
-        if self.idx+1 > 1:
-            # Increment the index
-            self.idx -= 1
-            self.imageUpdate()
-            self.redraw()
-
-    def onEnter(self):
-        comment = self.comment_box.text()
-        self.data[self.image_name]['comment'] = comment
-        print(comment)
-        self.comment_box.setText('')
 
 def main():
     app = QApplication(sys.argv)
