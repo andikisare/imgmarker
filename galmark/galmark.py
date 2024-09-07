@@ -17,6 +17,13 @@ from astropy.wcs import WCS as WCS
 from astropy.io import fits
 from collections import defaultdict
 
+class DataDict(defaultdict):
+    def __init__(self, *args, **kwargs):
+        super(DataDict, self).__init__(DataDict, *args, **kwargs)
+
+    def __repr__(self):
+        return repr(dict(self))
+
 class MainWindow(QMainWindow):
     def __init__(self, path = '', imtype = 'tif',
         outfile = 'lensrankings.txt', overwrite = False, parent=None):
@@ -52,7 +59,11 @@ class MainWindow(QMainWindow):
         self.N = len(self.images)
 
         # Initialize output dictionary
-        self.data = defaultdict(dict)
+        self.data = DataDict()
+        self.group_names = [f'group {i}' for i in range(1,10)]
+        self.colors = [QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
+                  QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
+                  QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
 
         #sets useful attributes
         self.fullw = self.screen().size().width()
@@ -81,10 +92,10 @@ class MainWindow(QMainWindow):
         self.back_button.setFixedHeight(40)
         self.back_button.clicked.connect(self.onBack)
 
-        # Submit Button
-        self.submit_button = QPushButton(text='Submit',parent=self)
+        # Enter Button
+        self.submit_button = QPushButton(text='Enter',parent=self)
         self.submit_button.setFixedHeight(40)
-        self.submit_button.clicked.connect(self.onSubmit)
+        self.submit_button.clicked.connect(self.onEnter)
 
         # Next widget
         self.next_button = QPushButton(text='Next',parent=self)
@@ -94,7 +105,7 @@ class MainWindow(QMainWindow):
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
         self.comment_box.setFixedHeight(40)
-
+    
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
         self.bottom_layout.addWidget(self.back_button)
@@ -109,6 +120,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.idx_label)
         layout.addLayout(self.bottom_layout)
         self.setCentralWidget(central_widget)
+
+        # On actions
+
 
 
     def _findImages(self):
@@ -161,12 +175,31 @@ class MainWindow(QMainWindow):
 
         # Update the pixmap
         self.image = self.images[self.idx]
+        self.image_name = self.image.split('/')[-1].split('.')[0]
         self.pixmap = QPixmap(self.image)
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)
 
         #Update WCS
         self.wcs = self.parseWCS(self.images[self.idx])
+
+    def redraw(self):
+        for i in range(0,9):
+            RA_list = self.data[self.image_name][self.group_names[i]]['RA']
+            DEC_list = self.data[self.image_name][self.group_names[i]]['DEC']
+
+            if not RA_list or not DEC_list: pass  
+            else:
+                for j, _ in enumerate(RA_list):
+   
+                    x,y = self.wcs.all_world2pix([[RA_list[j], DEC_list[j]]], 0)[0]
+
+                    y += self.pixmap.height() - 2*y
+
+                    self.drawCircle(x,y,c=self.colors[i])
+                    print(x,y)
+
+
 
     def onResize(self, event):
         '''
@@ -184,20 +217,25 @@ class MainWindow(QMainWindow):
         
         # Check button presses
         buttons = self._buttonCheck(event)
-        colors = [QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
-                  QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
-                  QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
+        
 
         for i in range(0,9):
             if (self._pixmap_item is self.image_view.itemAt(ep)) and buttons[i]:
                 
                 x, y = lp.x(), self.pixmap.height() - lp.y()
-                coords = self.wcs.all_pix2world([[x, y]], 0)[0]
+                ra, dec = self.wcs.all_pix2world([[x, y]], 0)[0]
 
-                self.drawCircle(lp.x(),lp.y(),c=colors[i])
+                self.drawCircle(lp.x(),lp.y(),c=self.colors[i])
+
+                if not 'RA' in self.data[self.image_name][self.group_names[i]]: self.data[self.image_name][self.group_names[i]]['RA'] = []
+                if not 'DEC' in self.data[self.image_name][self.group_names[i]]: self.data[self.image_name][self.group_names[i]]['DEC'] = []
+
+                self.data[self.image_name][self.group_names[i]]['RA'].append(ra)
+                self.data[self.image_name][self.group_names[i]]['DEC'].append(dec)
 
                 print(lp)
-                print(coords)
+                print([ra,dec])
+                print(self.data)
     
     def mouseImagePos(self,event):
         ep = self.image_view.mapFromGlobal(QCursor.pos())
@@ -244,11 +282,13 @@ class MainWindow(QMainWindow):
             # Increment the index
             self.idx -= 1
             self.imageUpdate()
+            self.redraw()
 
-    def onSubmit(self):
+    def onEnter(self):
         comment = self.comment_box.text()
+        self.data[self.image_name]['comment'] = comment
         print(comment)
-        # ['Comments'].append()
+        self.comment_box.setText('')
 
 def main():
     app = QApplication(sys.argv)
