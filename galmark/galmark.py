@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit
 from PyQt6.QtGui import QPixmap, QPainter, QPen, QBrush, QCursor, QKeyEvent, QColor
 from PyQt6.QtCore import Qt, QSize
 import sys
@@ -88,19 +88,25 @@ class MainWindow(QMainWindow):
         self.back_button.setFixedHeight(40)
         self.back_button.clicked.connect(self.onBack)
 
-        '''# Submit Button
+        # Submit Button
         self.submit_button = QPushButton(text='Submit',parent=self)
-        self.submit_button.setFixedHeight(40)'''
+        self.submit_button.setFixedHeight(40)
+        self.submit_button.clicked.connect(self.onSubmit)
 
         # Next widget
         self.next_button = QPushButton(text='Next',parent=self)
         self.next_button.setFixedHeight(40)
         self.next_button.clicked.connect(self.onNext)
 
+        # Comment widget
+        self.comment_box = QLineEdit(parent=self)
+        self.comment_box.setFixedHeight(40)
+
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
         self.bottom_layout.addWidget(self.back_button)
-        #self.bottom_layout.addWidget(self.submit_button)
+        self.bottom_layout.addWidget(self.comment_box)
+        self.bottom_layout.addWidget(self.submit_button)
         self.bottom_layout.addWidget(self.next_button)
 
         # Add widgets to main layout
@@ -244,6 +250,11 @@ class MainWindow(QMainWindow):
             # Increment the index
             self.idx -= 1
             self.imageUpdate()
+
+    def onSubmit(self):
+        comment = self.comment_box.text()
+        print(comment)
+        # ['Comments'].append()
 
 def main():
     app = QApplication(sys.argv)
