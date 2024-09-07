@@ -74,7 +74,6 @@ class MainWindow(QMainWindow):
         #self.image_view.mouseMoveEvent = self.mouseTracker
 
         # Current index widget
-        self.idx_label = QLabel(f'Image {self.idx+1} of {self.N}')
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Back widget
@@ -153,8 +152,12 @@ class MainWindow(QMainWindow):
 
     def imageUpdate(self):
         self.image_scene.clear()
+
         # Update idx label
-        self.idx_label.setText(f'Current image: {self.idx+1} of {self.N}')
+        try: self.idx_label.setText(f'Image {self.idx+1} of {self.N}')
+        except: 
+            self.idx_label = QLabel(f'Image {self.idx+1} of {self.N}')
+            self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Update the pixmap
         self.image = self.images[self.idx]
