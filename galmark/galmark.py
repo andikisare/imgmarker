@@ -109,6 +109,8 @@ class MainWindow(QMainWindow):
         self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.image_view.horizontalScrollBar().blockSignals(True)
         self.image_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.image_view.move(0, 0)
+        self.image_view.setTransformationAnchor(self.image_view.ViewportAnchor(1))
 
         # Current index widget
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -191,9 +193,9 @@ class MainWindow(QMainWindow):
             self.onMiddleMouse()
 
     def wheelEvent(self,event):
-        if (event.angleDelta().y() > 0):
-            self.zoomIn()
         if (event.angleDelta().y() < 0):
+            self.zoomIn()
+        if (event.angleDelta().y() > 0):
             self.zoomOut()
 
     # On-actions
@@ -288,9 +290,16 @@ class MainWindow(QMainWindow):
         self.comment_box.setText('')
 
     def onMiddleMouse(self):
-        # Detect middle mouse button presses
+        # Center on cursor
+        center = self.image_view.mapToScene(self.image_view.viewport().rect().center())
         view_pos, pix_pos = self.mouseImagePos()
-        self.image_view.centerOn(pix_pos.toPointF())
+        centerX = center.x()
+        centerY = center.y()
+        cursorX = pix_pos.x()
+        cursorY = pix_pos.y()
+        newX = int(centerX - cursorX)
+        newY = int(centerY - cursorY)
+        self.image_view.translate(newX, newY)
 
     def zoomIn(self):
         view_pos, pix_pos = self.mouseImagePos()
