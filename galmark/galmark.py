@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar, QInputDialog
 from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction, QTransform
 from PyQt6.QtCore import Qt, QSize, QPoint
 import sys
@@ -100,6 +100,8 @@ class MainWindow(QMainWindow):
         self._go_back_one = False
         self.setWindowTitle("Galaxy Marker")
 
+        self.getText()
+        
         # Create image view
         self.image_scene = QGraphicsScene(self)
         self.imageUpdate()
@@ -179,6 +181,13 @@ class MainWindow(QMainWindow):
         return super().eventFilter(source, event)
     
     # Events
+
+    def getText(self):
+        # Make popup to get name
+        text, OK = QInputDialog.getText(self,"Startup", "Your name:")
+        if OK:
+            print(text)
+
     def resizeEvent(self, event):
         '''
         Resize event; rescales image to fit in window, but keeps aspect ratio
@@ -193,7 +202,11 @@ class MainWindow(QMainWindow):
             if markButtons[i]: self.onMark(event,group=i)
 
         # Check if "Enter" was pressed
-        if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter): self.onEnter()
+        if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter):
+            self.onEnter()
+
+        if (event.key() == Qt.Key.Key_Escape) or (event.key() == Qt.Key.Key_Q):
+            self.onEscape()
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
@@ -227,6 +240,7 @@ class MainWindow(QMainWindow):
 
             self.data[self.image_name][self.group_names[group]]['RA'].append(ra)
             self.data[self.image_name][self.group_names[group]]['DEC'].append(dec)
+            self.writeToTxt()
 
     def onNext(self):
         if self.idx+1 < self.N:
@@ -248,6 +262,11 @@ class MainWindow(QMainWindow):
         self.commentUpdate()
         self.writeToTxt()
     
+    def onEscape(self):
+        self.writeToTxt()
+        self.close()
+        
+
     def onSave(self):
         pass
 
