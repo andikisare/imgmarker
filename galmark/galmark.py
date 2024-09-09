@@ -110,8 +110,6 @@ class MainWindow(QMainWindow):
         self.image_view.horizontalScrollBar().blockSignals(True)
         self.image_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-
-
         # Current index widget
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
@@ -274,14 +272,9 @@ class MainWindow(QMainWindow):
         # Update the pixmap
         self.image = self.images[self.idx]
         self.image_name = self.image.split('/')[-1].split('.')[0]
-        self._blank = QPixmap()
-        self._blank.scaled(5000,5000)
         self.pixmap = QPixmap(self.image)
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
-        self._blank_item = QGraphicsPixmapItem(self._blank)
         self.image_scene.addItem(self._pixmap_item)
-        self.image_scene.addItem(self._blank_item)
-        
 
         #Update WCS
         self.wcs = self.parseWCS(self.images[self.idx])
@@ -300,8 +293,9 @@ class MainWindow(QMainWindow):
         self.image_view.centerOn(pix_pos.toPointF())
 
     def zoomIn(self):
+        view_pos, pix_pos = self.mouseImagePos()
         transform = self.image_view.transform()
-        center = self.image_view.mapToScene(self.image_view.viewport().rect().center())
+        center = self.image_view.mapToScene(view_pos)
         transform.translate(center.x(), center.y())
         transform.scale(1.1, 1.1)
         transform.translate(-center.x(), -center.y())
