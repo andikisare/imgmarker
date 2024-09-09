@@ -43,6 +43,13 @@ def markBindingCheck(event):
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
 
+"""
+# Use this function for correlating middle mouse button to a keyboard button, do later
+def panBindingCheck(event):
+    middleMouse = False
+    try 
+"""
+
 class MainWindow(QMainWindow):
     def __init__(self, path = '', imtype = 'tif',
         outfile = 'lensrankings.txt', overwrite = True, parent=None):
@@ -97,6 +104,10 @@ class MainWindow(QMainWindow):
         self.image_scene = QGraphicsScene(self)
         self.imageUpdate()
         self.image_view = QGraphicsView(self.image_scene)
+        self.image_view.verticalScrollBar().blockSignals(True)
+        self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.image_view.horizontalScrollBar().blockSignals(True)
+        self.image_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         # Current index widget
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -174,6 +185,15 @@ class MainWindow(QMainWindow):
         markButtons = markBindingCheck(event)
         for i in range(0,9):
             if markButtons[i]: self.onMark(event,group=i)
+        
+        if (event.button() == Qt.MouseButton.MiddleButton):
+            self.onMiddleMouse()
+
+    def wheelEvent(self,event):
+        if (event.angleDelta().y() > 0):
+            self.zoomIn()
+        if (event.angleDelta().y() < 0):
+            self.zoomOut()
 
     # On-actions
     def onMark(self, event, group=0):
@@ -259,13 +279,26 @@ class MainWindow(QMainWindow):
         self.wcs = self.parseWCS(self.images[self.idx])
     
     def commentUpdate(self):
+        # Update the comment in the dictionary
         comment = self.comment_box.text()
         if not comment: comment = 'None' # default comment to 'None'
 
         self.data[self.image_name]['comment'] = comment
         self.comment_box.setText('')
 
+    def onMiddleMouse(self):
+        # Detect middle mouse button presses
+        view_pos, pix_pos = self.mouseImagePos()
+        self.image_view.centerOn(pix_pos.toPointF())
+
+    def zoomIn(self):
+        self.image_view.scale(1.1, 1.1)
+
+    def zoomOut(self):
+        self.image_view.scale(0.9, 0.9)
+
     def redraw(self):
+        # Redraws circles if you go back or forward
         for i in range(0,9):
             RA_list = self.data[self.image_name][self.group_names[i]]['RA']
             DEC_list = self.data[self.image_name][self.group_names[i]]['DEC']
