@@ -111,6 +111,7 @@ class MainWindow(QMainWindow):
         self.image_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.image_view.move(0, 0)
         self.image_view.setTransformationAnchor(self.image_view.ViewportAnchor(1))
+        self.image_view.viewport().installEventFilter(self)
 
         # Current index widget
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -166,6 +167,17 @@ class MainWindow(QMainWindow):
         ## Edit menu
         fileMenu = menuBar.addMenu("&Edit")
 
+    def eventFilter(self, source, event):
+        # Event filter for zooming without scrolling
+        if (source == self.image_view.viewport()) and (event.type() == 31):
+            x = event.angleDelta().y() / 120
+            if x > 0:
+                self.zoomOut()
+            elif x < 0:
+                self.zoomIn()
+            return True
+        return super().eventFilter(source, event)
+    
     # Events
     def resizeEvent(self, event):
         '''
@@ -191,12 +203,6 @@ class MainWindow(QMainWindow):
         
         if (event.button() == Qt.MouseButton.MiddleButton):
             self.onMiddleMouse()
-
-    def wheelEvent(self,event):
-        if (event.angleDelta().y() < 0):
-            self.zoomIn()
-        if (event.angleDelta().y() > 0):
-            self.zoomOut()
 
     # On-actions
     def onMark(self, event, group=0):
@@ -302,19 +308,21 @@ class MainWindow(QMainWindow):
         self.image_view.translate(newX, newY)
 
     def zoomIn(self):
+        # Zoom in on cursor location
         view_pos, pix_pos = self.mouseImagePos()
         transform = self.image_view.transform()
         center = self.image_view.mapToScene(view_pos)
         transform.translate(center.x(), center.y())
-        transform.scale(1.1, 1.1)
+        transform.scale(1.2, 1.2)
         transform.translate(-center.x(), -center.y())
         self.image_view.setTransform(transform)
 
     def zoomOut(self):
+        # Zoom out from cursor location
         transform = self.image_view.transform()
         center = self.image_view.mapToScene(self.image_view.viewport().rect().center())
         transform.translate(center.x(), center.y())
-        transform.scale(0.9, 0.9)
+        transform.scale(1/1.2, 1/1.2)
         transform.translate(-center.x(), -center.y())
         self.image_view.setTransform(transform)
 
