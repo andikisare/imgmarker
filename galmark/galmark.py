@@ -3,11 +3,10 @@ from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction
 from PyQt6.QtCore import Qt, QSize
 import sys
 import os
-from PIL import Image, ImageShow
-ImageShow.Viewer = "PNG"
 import numpy as np
 import io
 import glob
+from PIL import Image
 import argparse
 import os
 import sys
@@ -46,7 +45,7 @@ def markBindingCheck(event):
 
 class MainWindow(QMainWindow):
     def __init__(self, path = '', imtype = 'tif',
-        outfile = 'lensrankings.txt', overwrite = False, parent=None):
+        outfile = 'lensrankings.txt', overwrite = True, parent=None):
         '''
         Constructor
 
@@ -72,6 +71,7 @@ class MainWindow(QMainWindow):
         self.imtype = imtype
         self.outfile = outfile
         self.overwrite = overwrite
+        self.outfile = 'out.txt'
 
         # Initialize images and WCS
         self.idx = 0
@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
 
         # Initialize output dictionary
         self.data = DataDict()
-        self.group_names = [f'group {i}' for i in range(1,10)]
+        self.group_names = [f'{i}' for i in range(1,10)]
         self.colors = [QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
                   QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
                   QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.idx_label)
         layout.addLayout(self.bottom_layout)
         self.setCentralWidget(central_widget)
-
+        
         # Menu bar
         menuBar = self.menuBar()
 
@@ -151,7 +151,6 @@ class MainWindow(QMainWindow):
 
         ## Edit menu
         fileMenu = menuBar.addMenu("&Edit")
-
 
     # Events
     def resizeEvent(self, event):
@@ -234,7 +233,7 @@ class MainWindow(QMainWindow):
         images = glob.glob(self.path + '*.' + self.imtype)
 
         return images   
-        
+    
     def drawCircle(self,x,y,c=Qt.GlobalColor.black,r=10):
         ellipse = QGraphicsEllipseItem(x-r/2, y-r/2, r, r)
         ellipse.setPen(QPen(c, 1, Qt.PenStyle.SolidLine))
@@ -320,9 +319,20 @@ class MainWindow(QMainWindow):
         wcs = WCS(header)
         shape = (meta_dict['ImageWidth'][0], meta_dict['ImageLength'][0])
         return wcs
-    
+
     def writeToTxt(self):
-        print(f'name | group | RA | DEC | comment')
+        path_existed = os.path.exists(self.outfile)
+        if path_existed and self.overwrite:
+            os.remove(self.outfile)
+        out = open(self.outfile,"a")
+   
+        lines = []
+        name_lengths = []
+        group_lengths = []
+        ra_lengths = []
+        dec_lengths = []
+        comment_lengths = []
+
         for name in self.data:
             for level2 in self.data[name]:
                 if level2 == 'comment': pass
@@ -335,7 +345,27 @@ class MainWindow(QMainWindow):
                     for i, _ in enumerate(RA_list):
                         ra = RA_list[i]
                         dec = DEC_list[i]
-                        print(f'{name} | {group} | {ra} | {dec} | {comment}')
+                        l = [name,group,ra,dec,comment]
+
+                        lines.append(l)
+                        name_lengths.append(len(name))
+                        group_lengths.append(len(group))
+                        ra_lengths.append(len(f'{ra:.8f}'))
+                        dec_lengths.append(len(f'{dec:.8f}'))
+                        comment_lengths.append(len(comment))
+
+        # Dynamically adjust column widths
+        nameln = np.max(name_lengths) + 2
+        groupln = max(np.max(group_lengths), 5) + 2
+        raln = max(np.max(ra_lengths), 2) + 2
+        decln = max(np.max(dec_lengths), 2) + 2
+        commentln = max(np.max(comment_lengths), 7) + 2
+
+        if not path_existed: out.write(f'{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'comment':^{commentln}}\n')
+
+        for l in lines:
+            outline = f'{l[0]:^{nameln}}|{l[1]:^{groupln}}|{l[2]:^{raln}.8f}|{l[3]:^{decln}.8f}|{l[4]:^{commentln}}\n'
+            out.write(outline)
 
 def main():
     app = QApplication(sys.argv)
