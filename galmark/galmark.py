@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit
-from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar
+from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction
 from PyQt6.QtCore import Qt, QSize
 import sys
 import os
@@ -136,6 +136,23 @@ class MainWindow(QMainWindow):
         layout.addLayout(self.bottom_layout)
         self.setCentralWidget(central_widget)
 
+        # Menu bar
+        menuBar = self.menuBar()
+
+        ## File menu
+        fileMenu = menuBar.addMenu("&File")
+
+        ### Save menu
+        saveMenu = QAction("&Save", self)
+        saveMenu.setShortcut("Ctrl+S")
+        saveMenu.setStatusTip('Save')
+        saveMenu.triggered.connect(self.onSave)
+        fileMenu.addAction(saveMenu)
+
+        ## Edit menu
+        fileMenu = menuBar.addMenu("&Edit")
+
+
     # Events
     def resizeEvent(self, event):
         '''
@@ -173,7 +190,6 @@ class MainWindow(QMainWindow):
             ra, dec = self.wcs.all_pix2world([[x, y]], 0)[0]
 
             self.drawCircle(lp.x(),lp.y(),c=self.colors[group])
-            print(group)
 
             if not self.data[self.image_name][self.group_names[group]]['RA']:
                 self.data[self.image_name][self.group_names[group]]['RA'] = []
@@ -183,10 +199,6 @@ class MainWindow(QMainWindow):
 
             self.data[self.image_name][self.group_names[group]]['RA'].append(ra)
             self.data[self.image_name][self.group_names[group]]['DEC'].append(dec)
-
-            '''print(lp)
-            print([ra,dec])
-            print(self.data)'''
 
     def onNext(self):
         if self.idx+1 < self.N:
@@ -206,6 +218,7 @@ class MainWindow(QMainWindow):
 
     def onEnter(self):
         self.commentUpdate()
+        self.writeToTxt()
     
     def onSave(self):
         pass
@@ -305,9 +318,24 @@ class MainWindow(QMainWindow):
 
         # Create a WCS object from the header
         wcs = WCS(header)
-        #print(wcs)
         shape = (meta_dict['ImageWidth'][0], meta_dict['ImageLength'][0])
         return wcs
+    
+    def writeToTxt(self):
+        print(f'name | group | RA | DEC | comment')
+        for name in self.data:
+            for level2 in self.data[name]:
+                if level2 == 'comment': pass
+                else: 
+                    group = level2
+                    comment = self.data[name]['comment']
+
+                    RA_list = self.data[name][group]['RA']
+                    DEC_list = self.data[name][group]['DEC']
+                    for i, _ in enumerate(RA_list):
+                        ra = RA_list[i]
+                        dec = DEC_list[i]
+                        print(f'{name} | {group} | {ra} | {dec} | {comment}')
 
 def main():
     app = QApplication(sys.argv)
