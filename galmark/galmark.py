@@ -65,17 +65,8 @@ class MainWindow(QMainWindow):
         '''
         super().__init__()
 
-        if path == '':
-            self.path = os.getcwd()
-
-        else:
-            self.path = path
-
-        if self.path[-1] != '/':
-            self.path = self.path + '/'
-
         self.imtype = imtype
-        self.configfile = 'config'
+        self.config = 'config'
         self.overwrite = overwrite
         self.readConfig()
 
@@ -110,6 +101,9 @@ class MainWindow(QMainWindow):
         self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.image_view.horizontalScrollBar().blockSignals(True)
         self.image_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.image_view.move(0, 0)
+        self.image_view.setTransformationAnchor(self.image_view.ViewportAnchor(1))
+        self.image_view.viewport().installEventFilter(self)
 
         # Current index widget
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -216,12 +210,6 @@ class MainWindow(QMainWindow):
         if (event.button() == Qt.MouseButton.MiddleButton):
             self.onMiddleMouse()
 
-    def wheelEvent(self,event):
-        if (event.angleDelta().y() > 0):
-            self.zoomIn()
-        if (event.angleDelta().y() < 0):
-            self.zoomOut()
-
     # On-actions
     def onMark(self, event, group=0):
         '''
@@ -282,7 +270,7 @@ class MainWindow(QMainWindow):
         Returns:
             ims (list of strings): filenames
         '''
-        images = glob.glob(self.path + '*.' + self.imtype)
+        images = glob.glob(self.images_path + '*.' + self.imtype)
 
         return images   
     
@@ -322,7 +310,13 @@ class MainWindow(QMainWindow):
         # Center on cursor
         center = self.image_view.mapToScene(self.image_view.viewport().rect().center())
         view_pos, pix_pos = self.mouseImagePos()
-        self.image_view.centerOn(pix_pos.toPointF())
+        centerX = center.x()
+        centerY = center.y()
+        cursorX = pix_pos.x()
+        cursorY = pix_pos.y()
+        newX = int(centerX - cursorX)
+        newY = int(centerY - cursorY)
+        self.image_view.translate(newX, newY)
 
     def zoomIn(self):
         # Zoom in on cursor location
@@ -454,10 +448,25 @@ class MainWindow(QMainWindow):
                 out.write(outline)
 
     def readConfig(self):
-        for l in open(self.configfile):
+        for l in open(self.config):
             var, val = l.replace(' ','').split('=')
             if var == 'groups':
                 self.group_names = val.split(',')
+            if var == 'out_path':
+                if var == './':
+                    self.out_path = os.getcwd()
+                else:
+                    self.out_path = var
+                if self.out_path[-1] != '/':
+                    self.out_path = self.out_path + '/'
+            if var == 'images_path':
+                if val == './':
+                    self.images_path = os.getcwd()
+                else:
+                    self.images_path = val
+                if self.images_path[-1] != '/':
+                    self.images_path = self.images_path + '/'
+
 
 def main():
     app = QApplication(sys.argv)
