@@ -323,7 +323,7 @@ class MainWindow(QMainWindow):
 
     def zoomIn(self):
         # Zoom in on cursor location
-        view_pos, pix_pos = self.mouseImagePos()
+        view_pos, _ = self.mouseImagePos()
         transform = self.image_view.transform()
         center = self.image_view.mapToScene(view_pos)
         transform.translate(center.x(), center.y())
@@ -333,8 +333,9 @@ class MainWindow(QMainWindow):
 
     def zoomOut(self):
         # Zoom out from cursor location
+        view_pos, _ = self.mouseImagePos()
         transform = self.image_view.transform()
-        center = self.image_view.mapToScene(self.image_view.viewport().rect().center())
+        center = self.image_view.mapToScene(view_pos)
         transform.translate(center.x(), center.y())
         transform.scale(1/1.2, 1/1.2)
         transform.translate(-center.x(), -center.y())
@@ -371,7 +372,7 @@ class MainWindow(QMainWindow):
         return view_pos, pix_pos
     
     def parseWCS(self,image_tif):
-        tif_image_data = np.array(Image.open(image_tif))
+        #tif_image_data = np.array(Image.open(image_tif))
         img = Image.open(image_tif)
         meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
         
@@ -393,7 +394,7 @@ class MainWindow(QMainWindow):
 
         # Create a WCS object from the header
         wcs = WCS(header)
-        shape = (meta_dict['ImageWidth'][0], meta_dict['ImageLength'][0])
+        #shape = (meta_dict['ImageWidth'][0], meta_dict['ImageLength'][0])
         return wcs
 
     def checkUsername(self):
