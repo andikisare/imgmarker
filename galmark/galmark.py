@@ -51,8 +51,7 @@ def panBindingCheck(event):
 """
 
 class MainWindow(QMainWindow):
-    def __init__(self, path = '', imtype = 'tif',
-        outfile = 'lensrankings.txt', overwrite = True, parent=None):
+    def __init__(self, path = '', imtype = 'tif', overwrite = True, parent=None):
         '''
         Constructor
 
@@ -76,8 +75,9 @@ class MainWindow(QMainWindow):
             self.path = self.path + '/'
 
         self.imtype = imtype
-        self.outfile = outfile
+        self.configfile = 'config'
         self.overwrite = overwrite
+        self.readConfig()
 
         # Initialize images and WCS
         self.idx = 0
@@ -86,7 +86,6 @@ class MainWindow(QMainWindow):
 
         # Initialize output dictionary
         self.data = DataDict()
-        self.group_names = [f'{i}' for i in range(1,10)]
         self.colors = [QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
                   QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
                   QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
@@ -271,8 +270,7 @@ class MainWindow(QMainWindow):
     def onEscape(self):
         self.writeToTxt()
         self.close()
-        
-
+    
     def onSave(self):
         pass
 
@@ -455,10 +453,17 @@ class MainWindow(QMainWindow):
                 outline = f'{l[0]:^{nameln}}|{l[1]:^{groupln}}|{l[2]:^{raln}.8f}|{l[3]:^{decln}.8f}|{l[4]:^{commentln}}\n'
                 out.write(outline)
 
+    def readConfig(self):
+        for l in open(self.configfile):
+            var, val = l.replace(' ','').split('=')
+            if var == 'groups':
+                self.group_names = val.split(',')
+
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+    window.readConfig()
     app.exec()
 
 if __name__ == '__main__': main()
