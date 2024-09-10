@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar, QInputDialog
-from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction, QTransform
-from PyQt6.QtCore import Qt, QSize, QPoint
+from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction
+from PyQt6.QtCore import Qt, QSize
 import sys
 import os
 import numpy as np
@@ -78,7 +78,6 @@ class MainWindow(QMainWindow):
         self.imtype = imtype
         self.outfile = outfile
         self.overwrite = overwrite
-        self.outfile = 'out.txt'
 
         # Initialize images and WCS
         self.idx = 0
@@ -99,9 +98,10 @@ class MainWindow(QMainWindow):
         #self.zoomfrac = (self.fullh - 275) / 400
         self._go_back_one = False
         self.setWindowTitle("Galaxy Marker")
-
-        self.getText()
         
+        username = ""
+        username = self.getText()
+        self.outfile = str(username) + ".txt"
         # Create image view
         self.image_scene = QGraphicsScene(self)
         self.imageUpdate()
@@ -111,9 +111,6 @@ class MainWindow(QMainWindow):
         self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.image_view.horizontalScrollBar().blockSignals(True)
         self.image_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.image_view.move(0, 0)
-        self.image_view.setTransformationAnchor(self.image_view.ViewportAnchor(1))
-        self.image_view.viewport().installEventFilter(self)
 
         # Current index widget
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -184,9 +181,12 @@ class MainWindow(QMainWindow):
 
     def getText(self):
         # Make popup to get name
-        text, OK = QInputDialog.getText(self,"Startup", "Your name:")
+        text, OK = QInputDialog.getText(self,"Startup", "Your name: (no caps, no space, e.g. ryanwalker)")
+
         if OK:
-            print(text)
+            return text
+        elif not OK:
+            self.onEscape()
 
     def resizeEvent(self, event):
         '''
@@ -216,6 +216,12 @@ class MainWindow(QMainWindow):
         
         if (event.button() == Qt.MouseButton.MiddleButton):
             self.onMiddleMouse()
+
+    def wheelEvent(self,event):
+        if (event.angleDelta().y() > 0):
+            self.zoomIn()
+        if (event.angleDelta().y() < 0):
+            self.zoomOut()
 
     # On-actions
     def onMark(self, event, group=0):
@@ -318,13 +324,7 @@ class MainWindow(QMainWindow):
         # Center on cursor
         center = self.image_view.mapToScene(self.image_view.viewport().rect().center())
         view_pos, pix_pos = self.mouseImagePos()
-        centerX = center.x()
-        centerY = center.y()
-        cursorX = pix_pos.x()
-        cursorY = pix_pos.y()
-        newX = int(centerX - cursorX)
-        newY = int(centerY - cursorY)
-        self.image_view.translate(newX, newY)
+        self.image_view.centerOn(pix_pos.toPointF())
 
     def zoomIn(self):
         # Zoom in on cursor location
@@ -402,51 +402,58 @@ class MainWindow(QMainWindow):
         return wcs
 
     def writeToTxt(self):
-        path_existed = os.path.exists(self.outfile)
-        if path_existed and self.overwrite:
-            os.remove(self.outfile)
-        out = open(self.outfile,"a")
-   
-        lines = []
-        name_lengths = []
-        group_lengths = []
-        ra_lengths = []
-        dec_lengths = []
-        comment_lengths = []
+        try:
+            print(self.data[self.image_name][1])
+            dataExists = bool(self.data[self.image_name])
+        except:
+            dataExists = False
+        
+        if dataExists:
+            path_existed = os.path.exists(self.outfile)
+            if path_existed and self.overwrite:
+                os.remove(self.outfile)
+            out = open(self.outfile,"a")
 
-        for name in self.data:
-            for level2 in self.data[name]:
-                if level2 == 'comment': pass
-                else: 
-                    group = level2
-                    comment = self.data[name]['comment']
+            lines = []
+            name_lengths = []
+            group_lengths = []
+            ra_lengths = []
+            dec_lengths = []
+            comment_lengths = []
 
-                    RA_list = self.data[name][group]['RA']
-                    DEC_list = self.data[name][group]['DEC']
-                    for i, _ in enumerate(RA_list):
-                        ra = RA_list[i]
-                        dec = DEC_list[i]
-                        l = [name,group,ra,dec,comment]
+            for name in self.data:
+                for level2 in self.data[name]:
+                    if level2 == 'comment': pass
+                    else: 
+                        group = level2
+                        comment = self.data[name]['comment']
 
-                        lines.append(l)
-                        name_lengths.append(len(name))
-                        group_lengths.append(len(group))
-                        ra_lengths.append(len(f'{ra:.8f}'))
-                        dec_lengths.append(len(f'{dec:.8f}'))
-                        comment_lengths.append(len(comment))
+                        RA_list = self.data[name][group]['RA']
+                        DEC_list = self.data[name][group]['DEC']
+                        for i, _ in enumerate(RA_list):
+                            ra = RA_list[i]
+                            dec = DEC_list[i]
+                            l = [name,group,ra,dec,comment]
 
-        # Dynamically adjust column widths
-        nameln = np.max(name_lengths) + 2
-        groupln = max(np.max(group_lengths), 5) + 2
-        raln = max(np.max(ra_lengths), 2) + 2
-        decln = max(np.max(dec_lengths), 2) + 2
-        commentln = max(np.max(comment_lengths), 7) + 2
+                            lines.append(l)
+                            name_lengths.append(len(name))
+                            group_lengths.append(len(group))
+                            ra_lengths.append(len(f'{ra:.8f}'))
+                            dec_lengths.append(len(f'{dec:.8f}'))
+                            comment_lengths.append(len(comment))
 
-        if not path_existed: out.write(f'{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'comment':^{commentln}}\n')
+            # Dynamically adjust column widths
+            nameln = np.max(name_lengths) + 2
+            groupln = max(np.max(group_lengths), 5) + 2
+            raln = max(np.max(ra_lengths), 2) + 2
+            decln = max(np.max(dec_lengths), 2) + 2
+            commentln = max(np.max(comment_lengths), 7) + 2
 
-        for l in lines:
-            outline = f'{l[0]:^{nameln}}|{l[1]:^{groupln}}|{l[2]:^{raln}.8f}|{l[3]:^{decln}.8f}|{l[4]:^{commentln}}\n'
-            out.write(outline)
+            if not path_existed: out.write(f'{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'comment':^{commentln}}\n')
+
+            for l in lines:
+                outline = f'{l[0]:^{nameln}}|{l[1]:^{groupln}}|{l[2]:^{raln}.8f}|{l[3]:^{decln}.8f}|{l[4]:^{commentln}}\n'
+                out.write(outline)
 
 def main():
     app = QApplication(sys.argv)
