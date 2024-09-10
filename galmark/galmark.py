@@ -319,7 +319,6 @@ class MainWindow(QMainWindow):
         ellipse = QGraphicsEllipseItem(x-r/2, y-r/2, r, r)
         ellipse.setPen(QPen(c, 1, Qt.PenStyle.SolidLine))
         self.image_scene.addItem(ellipse) 
-        self.image_scene.selec
 
     def zoomIn(self):
         # Zoom in on cursor location
