@@ -89,14 +89,16 @@ class MainWindow(QMainWindow):
         self._go_back_one = False
         self.setWindowTitle("Galaxy Marker")
         
-        username = ""
-        username = self.getText()
-        self.outfile = str(username) + ".txt"
+        self.username = ""
+        self.username = str(self.getText())
+        self.outfile = self.username + ".txt"
         # Create image view
         self.image_scene = QGraphicsScene(self)
         self.imageUpdate()
         self.image_view = QGraphicsView(self.image_scene)
-        
+        if not self.checkUsername():
+            print(self.checkUsername())
+            self.close()        
         self.image_view.verticalScrollBar().blockSignals(True)
         self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.image_view.horizontalScrollBar().blockSignals(True)
@@ -393,14 +395,23 @@ class MainWindow(QMainWindow):
         shape = (meta_dict['ImageWidth'][0], meta_dict['ImageLength'][0])
         return wcs
 
+    def checkUsername(self):
+        if ((self.username != "None") and (self.username != "")):
+            usernameExists = True
+        else:
+            usernameExists = False
+        return usernameExists
+
     def writeToTxt(self):
-        try:
-            print(self.data[self.image_name][1])
-            dataExists = bool(self.data[self.image_name])
-        except:
-            dataExists = False
         
-        if dataExists:
+        dataExists = bool(self.data != {})
+        usernameExists = self.checkUsername()
+        if usernameExists and dataExists:
+            okToWrite = True
+        else:
+            okToWrite = False
+        
+        if okToWrite:
             path_existed = os.path.exists(self.outfile)
             if path_existed and self.overwrite:
                 os.remove(self.outfile)
