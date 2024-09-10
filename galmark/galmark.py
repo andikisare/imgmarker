@@ -194,7 +194,7 @@ class MainWindow(QMainWindow):
         # Check if key is bound with marking the image
         markButtons = markBindingCheck(event)
         for i in range(0,9):
-            if markButtons[i]: self.onMark(event,group=i)
+            if markButtons[i]: self.onMark(group=i)
 
         # Check if "Enter" was pressed
         if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter):
@@ -207,13 +207,13 @@ class MainWindow(QMainWindow):
         # Check if key is bound with marking the image
         markButtons = markBindingCheck(event)
         for i in range(0,9):
-            if markButtons[i]: self.onMark(event,group=i)
+            if markButtons[i]: self.onMark(group=i)
         
         if (event.button() == Qt.MouseButton.MiddleButton):
             self.onMiddleMouse()
 
     # On-actions
-    def onMark(self, event, group=0):
+    def onMark(self, group=0):
         '''
         Actions to complete when marking
         '''
