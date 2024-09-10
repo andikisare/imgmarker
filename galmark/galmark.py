@@ -95,10 +95,7 @@ class MainWindow(QMainWindow):
         # Create image view
         self.image_scene = QGraphicsScene(self)
         self.imageUpdate()
-        self.image_view = QGraphicsView(self.image_scene)
-        if not self.checkUsername():
-            print(self.checkUsername())
-            self.close()        
+        self.image_view = QGraphicsView(self.image_scene)       
         self.image_view.verticalScrollBar().blockSignals(True)
         self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.image_view.horizontalScrollBar().blockSignals(True)
