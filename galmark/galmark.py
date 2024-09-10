@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # Initialize config
-        self.config = 'config'
+        self.config = 'galmark.cfg'
         self.readConfig()
 
         # Initialize images and WCS
@@ -434,25 +434,40 @@ class MainWindow(QMainWindow):
                 out.write(outline)
 
     def readConfig(self):
-        # Read each line from the config and parse it
-        for l in open(self.config):
-            var, val = l.replace(' ','').replace('\n','').split('=')
-            if var == 'groups':
-                self.group_names = val.split(',')
-            if var == 'out_path':
-                if var == './':
-                    self.out_path = os.getcwd()
-                else:
-                    self.out_path = var
-                if self.out_path[-1] != '/':
-                    self.out_path = self.out_path + '/'
-            if var == 'images_path':
-                if val == './':
-                    self.images_path = os.getcwd()
-                else:
-                    self.images_path = val
-                if self.images_path[-1] != '/':
-                    self.images_path = self.images_path + '/'
+        '''
+        Read each line from the config and parse it
+        '''
+
+        # If the config doesn't exist, create one
+        if not os.path.exists(self.config):
+            config_file = open(self.config,'w')
+            self.group_names = ['1','2','3','4','5','6','7','8','9']
+            self.out_path = os.getcwd() + '/'
+            self.images_path = os.getcwd() + '/'
+
+            config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
+            config_file.write(f'out_path = {self.out_path}\n')
+            config_file.write(f'images_path = {self.images_path}')
+
+        else:
+            for l in open(self.config):
+                var, val = l.replace(' ','').replace('\n','').split('=')
+                if var == 'groups':
+                    self.group_names = val.split(',')
+                if var == 'out_path':
+                    if var == './':
+                        self.out_path = os.getcwd()
+                    else:
+                        self.out_path = var
+                    if self.out_path[-1] != '/':
+                        self.out_path = self.out_path + '/'
+                if var == 'images_path':
+                    if val == './':
+                        self.images_path = os.getcwd()
+                    else:
+                        self.images_path = val
+                    if self.images_path[-1] != '/':
+                        self.images_path = self.images_path + '/'
 
 
 def main():
