@@ -51,7 +51,7 @@ def panBindingCheck(event):
 """
 
 class MainWindow(QMainWindow):
-    def __init__(self, path = '', imtype = 'tif', overwrite = True, parent=None):
+    def __init__(self, path = '', imtype = 'tif', parent=None):
         '''
         Constructor
 
@@ -67,7 +67,6 @@ class MainWindow(QMainWindow):
 
         # Initialize config
         self.config = 'config'
-        self.overwrite = overwrite
         self.readConfig()
 
         # Initialize images and WCS
@@ -127,6 +126,7 @@ class MainWindow(QMainWindow):
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
         self.comment_box.setFixedHeight(40)
+        self.commentUpdate()
     
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
@@ -210,7 +210,6 @@ class MainWindow(QMainWindow):
         '''
         Actions to complete when marking
         '''
-        self.commentUpdate()
 
         # get event position and position on image
         ep, lp = self.mouseImagePos()
@@ -253,7 +252,6 @@ class MainWindow(QMainWindow):
         self.writeToTxt()
     
     def onExit(self):
-        self.writeToTxt()
         sys.exit()
 
     def onMiddleMouse(self):
@@ -389,9 +387,9 @@ class MainWindow(QMainWindow):
 
     def writeToTxt(self):
         if self.checkUsername() and self.data:
-            path_existed = os.path.exists(self.outfile)
-            if path_existed and self.overwrite:
-                os.remove(self.outfile)
+            
+            if os.path.exists(self.outfile): os.remove(self.outfile)
+
             out = open(self.outfile,"a")
 
             lines = []
@@ -429,7 +427,7 @@ class MainWindow(QMainWindow):
             decln = max(np.max(dec_lengths), 2) + 2
             commentln = max(np.max(comment_lengths), 7) + 2
 
-            if not path_existed: out.write(f'{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'comment':^{commentln}}\n')
+            out.write(f'{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'comment':^{commentln}}\n')
 
             for l in lines:
                 outline = f'{l[0]:^{nameln}}|{l[1]:^{groupln}}|{l[2]:^{raln}.8f}|{l[3]:^{decln}.8f}|{l[4]:^{commentln}}\n'
