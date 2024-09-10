@@ -483,7 +483,6 @@ def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    window.readConfig()
     app.exec()
 
 if __name__ == '__main__': main()
