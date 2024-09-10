@@ -436,7 +436,7 @@ class MainWindow(QMainWindow):
     def readConfig(self):
         # Read each line from the config and parse it
         for l in open(self.config):
-            var, val = l.replace(' ','').split('=')
+            var, val = l.replace(' ','').replace('\n','').split('=')
             if var == 'groups':
                 self.group_names = val.split(',')
             if var == 'out_path':
