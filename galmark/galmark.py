@@ -128,7 +128,7 @@ class MainWindow(QMainWindow):
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
         self.comment_box.setFixedHeight(40)
-        self.commentUpdate()
+        #self.commentUpdate()
     
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
@@ -217,6 +217,7 @@ class MainWindow(QMainWindow):
         '''
         Actions to complete when marking
         '''
+        self.commentUpdate()
         # get event position and position on image
         ep, lp = self.mouseImagePos()
         
@@ -259,7 +260,7 @@ class MainWindow(QMainWindow):
     
     def onEscape(self):
         self.writeToTxt()
-        self.close()
+        sys.exit()
     
     def onSave(self):
         pass
@@ -401,17 +402,9 @@ class MainWindow(QMainWindow):
         else:
             usernameExists = False
         return usernameExists
-
+    
     def writeToTxt(self):
-        
-        dataExists = bool(self.data != {})
-        usernameExists = self.checkUsername()
-        if usernameExists and dataExists:
-            okToWrite = True
-        else:
-            okToWrite = False
-        
-        if okToWrite:
+        if self.checkUsername() and self.data:
             path_existed = os.path.exists(self.outfile)
             if path_existed and self.overwrite:
                 os.remove(self.outfile)
