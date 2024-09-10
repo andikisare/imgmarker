@@ -65,14 +65,15 @@ class MainWindow(QMainWindow):
         '''
         super().__init__()
 
-        self.imtype = imtype
+        # Initialize config
         self.config = 'config'
         self.overwrite = overwrite
         self.readConfig()
 
         # Initialize images and WCS
+        self.imtype = imtype
         self.idx = 0
-        self.images = self.findImages()
+        self.images = glob.glob(self.images_path + '*.' + self.imtype)
         self.N = len(self.images)
 
         # Initialize output dictionary
@@ -80,18 +81,19 @@ class MainWindow(QMainWindow):
         self.colors = [QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
                   QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
                   QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
+        
+        # Intiialize user
+        self.username = ""
+        self.username = self.getText()
+        self.outfile = self.username + ".txt"
 
         # Useful attributes
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
         self.windowsize = QSize(int(self.fullw/2), int(self.fullh/2))
-        #self.zoomfrac = (self.fullh - 275) / 400
         self._go_back_one = False
         self.setWindowTitle("Galaxy Marker")
-        
-        self.username = ""
-        self.username = str(self.getText())
-        self.outfile = self.username + ".txt"
+
         # Create image view
         self.image_scene = QGraphicsScene(self)
         self.imageUpdate()
@@ -125,7 +127,6 @@ class MainWindow(QMainWindow):
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
         self.comment_box.setFixedHeight(40)
-        #self.commentUpdate()
     
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
@@ -148,12 +149,12 @@ class MainWindow(QMainWindow):
         ## File menu
         fileMenu = menuBar.addMenu("&File")
 
-        ### Save menu
-        saveMenu = QAction("&Save", self)
-        saveMenu.setShortcut("Ctrl+S")
-        saveMenu.setStatusTip('Save')
-        saveMenu.triggered.connect(self.onSave)
-        fileMenu.addAction(saveMenu)
+        ### Exit menu
+        exitMenu = QAction('&Exit', self)
+        exitMenu.setShortcuts(['Esc','q'])
+        exitMenu.setStatusTip('Exit')
+        exitMenu.triggered.connect(self.onExit)
+        fileMenu.addAction(exitMenu)
 
         ## Edit menu
         fileMenu = menuBar.addMenu("&Edit")
@@ -169,16 +170,14 @@ class MainWindow(QMainWindow):
             return True
         return super().eventFilter(source, event)
     
-    # Events
+    # === Events ===
 
     def getText(self):
         # Make popup to get name
         text, OK = QInputDialog.getText(self,"Startup", "Your name: (no caps, no space, e.g. ryanwalker)")
 
-        if OK:
-            return text
-        elif not OK:
-            self.onEscape()
+        if OK: return text
+        else: self.onExit()
 
     def resizeEvent(self, event):
         '''
@@ -197,9 +196,6 @@ class MainWindow(QMainWindow):
         if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter):
             self.onEnter()
 
-        if (event.key() == Qt.Key.Key_Escape) or (event.key() == Qt.Key.Key_Q):
-            self.onEscape()
-
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
         markButtons = markBindingCheck(event)
@@ -209,12 +205,13 @@ class MainWindow(QMainWindow):
         if (event.button() == Qt.MouseButton.MiddleButton):
             self.onMiddleMouse()
 
-    # On-actions
+    # === On-actions ===
     def onMark(self, group=0):
         '''
         Actions to complete when marking
         '''
         self.commentUpdate()
+
         # get event position and position on image
         ep, lp = self.mouseImagePos()
         
@@ -255,29 +252,23 @@ class MainWindow(QMainWindow):
         self.commentUpdate()
         self.writeToTxt()
     
-    def onEscape(self):
+    def onExit(self):
         self.writeToTxt()
         sys.exit()
-    
-    def onSave(self):
-        pass
 
-    def findImages(self):
-        '''
-        Finds and returns a list of images of self.imtype located at
-            self.path.
+    def onMiddleMouse(self):
+        # Center on cursor
+        center = self.image_view.mapToScene(self.image_view.viewport().rect().center())
+        _, pix_pos = self.mouseImagePos()
+        centerX = center.x()
+        centerY = center.y()
+        cursorX = pix_pos.x()
+        cursorY = pix_pos.y()
+        newX = int(centerX - cursorX)
+        newY = int(centerY - cursorY)
+        self.image_view.translate(newX, newY)
 
-        Returns:
-            ims (list of strings): filenames
-        '''
-        images = glob.glob(self.images_path + '*.' + self.imtype)
-
-        return images   
-    
-    def drawCircle(self,x,y,c=Qt.GlobalColor.black,r=10):
-        ellipse = QGraphicsEllipseItem(x-r/2, y-r/2, r, r)
-        ellipse.setPen(QPen(c, 1, Qt.PenStyle.SolidLine))
-        self.image_scene.addItem(ellipse) 
+    # === Update methods ===
 
     def imageUpdate(self):
         self.image_scene.clear()
@@ -306,17 +297,29 @@ class MainWindow(QMainWindow):
         self.data[self.image_name]['comment'] = comment
         self.comment_box.setText('')
 
-    def onMiddleMouse(self):
-        # Center on cursor
-        center = self.image_view.mapToScene(self.image_view.viewport().rect().center())
-        view_pos, pix_pos = self.mouseImagePos()
-        centerX = center.x()
-        centerY = center.y()
-        cursorX = pix_pos.x()
-        cursorY = pix_pos.y()
-        newX = int(centerX - cursorX)
-        newY = int(centerY - cursorY)
-        self.image_view.translate(newX, newY)
+    def redraw(self):
+        # Redraws circles if you go back or forward
+        for i in range(0,9):
+            RA_list = self.data[self.image_name][self.group_names[i]]['RA']
+            DEC_list = self.data[self.image_name][self.group_names[i]]['DEC']
+
+            if not RA_list or not DEC_list: pass  
+            else:
+                for j, _ in enumerate(RA_list):
+   
+                    x,y = self.wcs.all_world2pix([[RA_list[j], DEC_list[j]]], 0)[0]
+
+                    y += self.pixmap.height() - 2*y
+
+                    self.drawCircle(x,y,c=self.colors[i])
+
+    # === Interactions ===
+    
+    def drawCircle(self,x,y,c=Qt.GlobalColor.black,r=10):
+        ellipse = QGraphicsEllipseItem(x-r/2, y-r/2, r, r)
+        ellipse.setPen(QPen(c, 1, Qt.PenStyle.SolidLine))
+        self.image_scene.addItem(ellipse) 
+        self.image_scene.selec
 
     def zoomIn(self):
         # Zoom in on cursor location
@@ -338,21 +341,7 @@ class MainWindow(QMainWindow):
         transform.translate(-center.x(), -center.y())
         self.image_view.setTransform(transform)
 
-    def redraw(self):
-        # Redraws circles if you go back or forward
-        for i in range(0,9):
-            RA_list = self.data[self.image_name][self.group_names[i]]['RA']
-            DEC_list = self.data[self.image_name][self.group_names[i]]['DEC']
-
-            if not RA_list or not DEC_list: pass  
-            else:
-                for j, _ in enumerate(RA_list):
-   
-                    x,y = self.wcs.all_world2pix([[RA_list[j], DEC_list[j]]], 0)[0]
-
-                    y += self.pixmap.height() - 2*y
-
-                    self.drawCircle(x,y,c=self.colors[i])
+    # === Utils ===
     
     def mouseImagePos(self):
         '''
@@ -395,12 +384,10 @@ class MainWindow(QMainWindow):
         return wcs
 
     def checkUsername(self):
-        if ((self.username != "None") and (self.username != "")):
-            usernameExists = True
-        else:
-            usernameExists = False
-        return usernameExists
+        return (self.username != "None") and (self.username != "")
     
+    # === I/O ===
+
     def writeToTxt(self):
         if self.checkUsername() and self.data:
             path_existed = os.path.exists(self.outfile)
@@ -450,6 +437,7 @@ class MainWindow(QMainWindow):
                 out.write(outline)
 
     def readConfig(self):
+        # Read each line from the config and parse it
         for l in open(self.config):
             var, val = l.replace(' ','').split('=')
             if var == 'groups':
