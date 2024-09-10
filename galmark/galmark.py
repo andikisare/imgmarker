@@ -14,6 +14,7 @@ from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
 from astropy.io import fits
 from collections import defaultdict
+import datetime as dt
 
 class DataDict(defaultdict):
     def __init__(self, *args, **kwargs):
@@ -85,6 +86,9 @@ class MainWindow(QMainWindow):
         self.username = ""
         self.username = self.getText()
         self.outfile = self.username + ".txt"
+
+        # Set date
+        self.date = dt.datetime.now(dt.UTC).date().isoformat()
 
         # Useful attributes
         self.fullw = self.screen().size().width()
@@ -268,6 +272,9 @@ class MainWindow(QMainWindow):
 
     # === Update methods ===
 
+    def dateUpdate(self):
+        self.data[self.image_name]['date'] = self.date
+
     def imageUpdate(self):
         self.image_scene.clear()
 
@@ -284,8 +291,11 @@ class MainWindow(QMainWindow):
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)
 
-        #Update WCS
+        # Update WCS
         self.wcs = self.parseWCS(self.images[self.idx])
+
+        # Call date update
+        self.dateUpdate()
     
     def commentUpdate(self):
         # Update the comment in the dictionary
@@ -401,17 +411,18 @@ class MainWindow(QMainWindow):
 
             for name in self.data:
                 for level2 in self.data[name]:
-                    if level2 == 'comment': pass
+                    if (level2 == 'comment' or level2 == 'date'): pass
                     else: 
                         group = level2
                         comment = self.data[name]['comment']
+                        date = self.data[name]['date']
 
                         RA_list = self.data[name][group]['RA']
                         DEC_list = self.data[name][group]['DEC']
                         for i, _ in enumerate(RA_list):
                             ra = RA_list[i]
                             dec = DEC_list[i]
-                            l = [name,group,ra,dec,comment]
+                            l = [name,date,group,ra,dec,comment]
 
                             lines.append(l)
                             name_lengths.append(len(name))
@@ -426,11 +437,12 @@ class MainWindow(QMainWindow):
             raln = max(np.max(ra_lengths), 2) + 2
             decln = max(np.max(dec_lengths), 2) + 2
             commentln = max(np.max(comment_lengths), 7) + 2
+            dateln = 12
 
-            out.write(f'{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'comment':^{commentln}}\n')
+            out.write(f'{'name':^{nameln}}|{'date':^{dateln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'comment':^{commentln}}\n')
 
             for l in lines:
-                outline = f'{l[0]:^{nameln}}|{l[1]:^{groupln}}|{l[2]:^{raln}.8f}|{l[3]:^{decln}.8f}|{l[4]:^{commentln}}\n'
+                outline = f'{l[0]:^{nameln}}|{l[1]:^{dateln}}|{l[2]:^{groupln}}|{l[3]:^{raln}.8f}|{l[4]:^{decln}.8f}|{l[5]:^{commentln}}\n'
                 out.write(outline)
 
     def readConfig(self):
