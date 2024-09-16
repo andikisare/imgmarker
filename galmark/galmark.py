@@ -9,6 +9,7 @@ import glob
 from PIL import Image
 import argparse
 import os
+import platform
 import sys
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
@@ -66,6 +67,9 @@ class MainWindow(QMainWindow):
         '''
         super().__init__()
 
+        if platform.system() == 'Windows': self._delim = '\\'
+        else: self._delim = '/'
+
         # Initialize config
         self.config = 'galmark.cfg'
         self.readConfig()
@@ -75,6 +79,10 @@ class MainWindow(QMainWindow):
         self.idx = 0
         self.images = glob.glob(self.images_path + '*.' + self.imtype)
         self.N = len(self.images)
+
+        self.image = self.images[self.idx]
+        self.image_name = self.image.replace('\\','/').split('/')[-1].split('.')[0]
+        self.wcs = self.parseWCS(self.image)
 
         # Initialize output dictionary
         self.data = DataDict()
@@ -86,8 +94,6 @@ class MainWindow(QMainWindow):
         self.username = ""
         self.username = self.getText()
         self.outfile = self.username + ".txt"
-
-        # Set date
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
 
         # Useful attributes
@@ -97,9 +103,19 @@ class MainWindow(QMainWindow):
         self._go_back_one = False
         self.setWindowTitle("Galaxy Marker")
 
+        # Current index widget
+        self.idx_label = QLabel(f'Image {self.idx+1} of {self.N}')
+        self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        # Current image name widget
+        self.image_label = QLabel(f'{self.image_name}')
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
         # Create image view
         self.image_scene = QGraphicsScene(self)
-        self.imageUpdate()
+        self.pixmap = QPixmap(self.image)
+        self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
+        self.image_scene.addItem(self._pixmap_item)
         self.image_view = QGraphicsView(self.image_scene)       
         self.image_view.verticalScrollBar().blockSignals(True)
         self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -108,9 +124,6 @@ class MainWindow(QMainWindow):
         self.image_view.move(0, 0)
         self.image_view.setTransformationAnchor(self.image_view.ViewportAnchor(1))
         self.image_view.viewport().installEventFilter(self)
-
-        # Current index widget
-        self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Back widget
         self.back_button = QPushButton(text='Back',parent=self)
@@ -139,12 +152,49 @@ class MainWindow(QMainWindow):
         self.bottom_layout.addWidget(self.comment_box)
         self.bottom_layout.addWidget(self.submit_button)
         
+        ### Problem widgets
+        self.problemUpdate()
+        # Not centered on cluster
+        self.not_centered_button = QPushButton(text='Not Centered on Cluster', parent=self)
+        self.not_centered_button.setFixedHeight(40)
+        self.not_centered_button.clicked.connect(self.onNotCentered)
+
+        # Bad image scaling
+        self.bad_scaling_button = QPushButton(text='Bad Image Scaling', parent=self)
+        self.bad_scaling_button.setFixedHeight(40)
+        self.bad_scaling_button.clicked.connect(self.onBadScaling)
+
+        # No cluster visible
+        self.no_cluster_button = QPushButton(text='No Cluster Visible', parent=self)
+        self.no_cluster_button.setFixedHeight(40)
+        self.no_cluster_button.clicked.connect(self.onNoCluster)
+
+        # High redshift/too red
+        self.high_redshift_button = QPushButton(text='High Redshift Cluster', parent=self)
+        self.high_redshift_button.setFixedHeight(40)
+        self.high_redshift_button.clicked.connect(self.onHighRedshift)
+
+        # Other/leave comment prompt?
+        self.other_button = QPushButton(text='Other', parent=self)
+        self.other_button.setFixedHeight(40)
+        self.other_button.clicked.connect(self.onOther)
+
+        # Problems layout
+        self.problems_layout = QHBoxLayout()
+        self.problems_layout.addWidget(self.not_centered_button)
+        self.problems_layout.addWidget(self.bad_scaling_button)
+        self.problems_layout.addWidget(self.no_cluster_button)
+        self.problems_layout.addWidget(self.high_redshift_button)
+        self.problems_layout.addWidget(self.other_button)
+
         # Add widgets to main layout
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
+        layout.addWidget(self.image_label)
         layout.addWidget(self.image_view)
         layout.addWidget(self.idx_label)
         layout.addLayout(self.bottom_layout)
+        layout.addLayout(self.problems_layout)
         self.setCentralWidget(central_widget)
         
         # Menu bar
@@ -194,7 +244,7 @@ class MainWindow(QMainWindow):
         # Check if key is bound with marking the image
         markButtons = markBindingCheck(event)
         for i in range(0,9):
-            if markButtons[i]: self.onMark(group=i)
+            if markButtons[i]: self.onMark(group=i+1)
 
         # Check if "Enter" was pressed
         if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter):
@@ -204,12 +254,32 @@ class MainWindow(QMainWindow):
         # Check if key is bound with marking the image
         markButtons = markBindingCheck(event)
         for i in range(0,9):
-            if markButtons[i]: self.onMark(group=i)
+            if markButtons[i]: self.onMark(group=i+1)
         
         if (event.button() == Qt.MouseButton.MiddleButton):
             self.onMiddleMouse()
 
     # === On-actions ===
+    def onNotCentered(self):
+        self.data[self.image_name]['problem'] = "Cluster not centered"
+        self.writeToTxt()
+
+    def onBadScaling(self):
+        self.data[self.image_name]['problem'] = "Bad image scaling"
+        self.writeToTxt()
+
+    def onNoCluster(self):
+        self.data[self.image_name]['problem'] = "No cluster visible"
+        self.writeToTxt()
+
+    def onHighRedshift(self):
+        self.data[self.image_name]['problem'] = "Redshift too high"
+        self.writeToTxt()
+
+    def onOther(self):
+        self.data[self.image_name]['problem'] = "Other"
+        self.writeToTxt()
+
     def onMark(self, group=0):
         '''
         Actions to complete when marking
@@ -223,16 +293,16 @@ class MainWindow(QMainWindow):
             x, y = lp.x(), self.pixmap.height() - lp.y()
             ra, dec = self.wcs.all_pix2world([[x, y]], 0)[0]
 
-            self.drawCircle(lp.x(),lp.y(),c=self.colors[group])
+            self.drawCircle(lp.x(),lp.y(),c=self.colors[group-1])
 
-            if not self.data[self.image_name][self.group_names[group]]['RA']:
-                self.data[self.image_name][self.group_names[group]]['RA'] = []
+            if not self.data[self.image_name][group]['RA']:
+                self.data[self.image_name][group]['RA'] = []
 
-            if not self.data[self.image_name][self.group_names[group]]['DEC']: 
-                self.data[self.image_name][self.group_names[group]]['DEC'] = []
+            if not self.data[self.image_name][group]['DEC']: 
+                self.data[self.image_name][group]['DEC'] = []
 
-            self.data[self.image_name][self.group_names[group]]['RA'].append(ra)
-            self.data[self.image_name][self.group_names[group]]['DEC'].append(dec)
+            self.data[self.image_name][group]['RA'].append(ra)
+            self.data[self.image_name][group]['DEC'].append(dec)
             self.writeToTxt()
 
     def onNext(self):
@@ -242,6 +312,7 @@ class MainWindow(QMainWindow):
             self.imageUpdate()
             self.redraw()
             self.commentUpdate()
+            self.problemUpdate()
 
     def onBack(self):
         if self.idx+1 > 1:
@@ -250,7 +321,8 @@ class MainWindow(QMainWindow):
             self.imageUpdate()
             self.redraw()
             self.commentUpdate()
-
+            self.problemUpdate()
+            
     def onEnter(self):
         self.commentUpdate()
         self.writeToTxt()
@@ -272,30 +344,24 @@ class MainWindow(QMainWindow):
 
     # === Update methods ===
 
-    def dateUpdate(self):
-        self.data[self.image_name]['date'] = self.date
-
     def imageUpdate(self):
-        self.image_scene.clear()
-
-        # Update idx label
-        try: self.idx_label.setText(f'Image {self.idx+1} of {self.N}')
-        except: 
-            self.idx_label = QLabel(f'Image {self.idx+1} of {self.N}')
-            self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.image_scene.clear()   
 
         # Update the pixmap
         self.image = self.images[self.idx]
-        self.image_name = self.image.split('/')[-1].split('.')[0]
+        self.image_name = self.image.replace('\\','/').split('/')[-1].split('.')[0]
         self.pixmap = QPixmap(self.image)
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)
 
-        # Update WCS
-        self.wcs = self.parseWCS(self.images[self.idx])
+        # Update idx label
+        self.idx_label.setText(f'Image {self.idx+1} of {self.N}')
 
-        # Call date update
-        self.dateUpdate()
+        # Update image label
+        self.image_label.setText(f'{self.image_name}')
+
+        #Update WCS
+        self.wcs = self.parseWCS(self.image)
     
     def commentUpdate(self):
         # Update the comment in the dictionary
@@ -305,11 +371,14 @@ class MainWindow(QMainWindow):
         self.data[self.image_name]['comment'] = comment
         self.comment_box.setText('')
 
+    def problemUpdate(self):
+        self.data[self.image_name]['problem'] = 'None'
+
     def redraw(self):
         # Redraws circles if you go back or forward
         for i in range(0,9):
-            RA_list = self.data[self.image_name][self.group_names[i]]['RA']
-            DEC_list = self.data[self.image_name][self.group_names[i]]['DEC']
+            RA_list = self.data[self.image_name][i+1]['RA']
+            DEC_list = self.data[self.image_name][i+1]['DEC']
 
             if not RA_list or not DEC_list: pass  
             else:
@@ -407,55 +476,79 @@ class MainWindow(QMainWindow):
             group_lengths = []
             ra_lengths = []
             dec_lengths = []
+            problem_lengths = []
             comment_lengths = []
 
             for name in self.data:
-                for level2 in self.data[name]:
-                    if (level2 == 'comment' or level2 == 'date'): pass
-                    else: 
-                        group = level2
-                        comment = self.data[name]['comment']
-                        date = self.data[name]['date']
+                comment = self.data[name]['comment']
+                problem = self.data[name]['problem']
 
-                        RA_list = self.data[name][group]['RA']
-                        DEC_list = self.data[name][group]['DEC']
-                        for i, _ in enumerate(RA_list):
-                            ra = RA_list[i]
-                            dec = DEC_list[i]
-                            l = [name,date,group,ra,dec,comment]
+                if problem == 'None':
+                    for level2 in self.data[name]:
+                        if isinstance(level2,int): 
+                            group_name = self.group_names[level2-1]
+                            RA_list = self.data[name][level2]['RA']
+                            DEC_list = self.data[name][level2]['DEC']
 
-                            lines.append(l)
-                            name_lengths.append(len(name))
-                            group_lengths.append(len(group))
-                            ra_lengths.append(len(f'{ra:.8f}'))
-                            dec_lengths.append(len(f'{dec:.8f}'))
-                            comment_lengths.append(len(comment))
+                            for i, _ in enumerate(RA_list):
+                                ra = RA_list[i]
+                                dec = DEC_list[i]
+                                l = [self.date,name,group_name,ra,dec,problem,comment]
+
+                                lines.append(l)
+                                name_lengths.append(len(name))
+                                group_lengths.append(len(group_name))
+                                ra_lengths.append(len(f'{ra:.8f}'))
+                                dec_lengths.append(len(f'{dec:.8f}'))
+                                problem_lengths.append(len(problem))
+                                comment_lengths.append(len(comment))
+                else:
+                    for i in range(1,10):
+                        try: del self.data[name][i]
+                        except: pass
+                    group_name = 'None'
+                    ra = 'NaN'
+                    dec = 'NaN'
+                    l = [self.date,name,group_name,ra,dec,problem,comment]
+
+                    lines.append(l)
+                    name_lengths.append(len(name))
+                    group_lengths.append(len(group_name))
+                    ra_lengths.append(len(ra))
+                    dec_lengths.append(len(dec))
+                    problem_lengths.append(len(problem))
+                    comment_lengths.append(len(comment))
 
             # Dynamically adjust column widths
             nameln = np.max(name_lengths) + 2
             groupln = max(np.max(group_lengths), 5) + 2
             raln = max(np.max(ra_lengths), 2) + 2
             decln = max(np.max(dec_lengths), 2) + 2
+            problemln = max(np.max(problem_lengths), 9) + 2
             commentln = max(np.max(comment_lengths), 7) + 2
             dateln = 12
 
-            out.write(f'{'name':^{nameln}}|{'date':^{dateln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'comment':^{commentln}}\n')
+            out.write(f'{'date':^{dateln}}|{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'problem':^{problemln}}|{'comment':^{commentln}}\n')
 
             for l in lines:
-                outline = f'{l[0]:^{nameln}}|{l[1]:^{dateln}}|{l[2]:^{groupln}}|{l[3]:^{raln}.8f}|{l[4]:^{decln}.8f}|{l[5]:^{commentln}}\n'
+                if l[5] == 'None':
+                    outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}.8f}|{l[4]:^{decln}.8f}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
+                else:
+                    outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}}|{l[4]:^{decln}}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
                 out.write(outline)
 
     def readConfig(self):
         '''
         Read each line from the config and parse it
         '''
+        
 
         # If the config doesn't exist, create one
         if not os.path.exists(self.config):
             config_file = open(self.config,'w')
             self.group_names = ['1','2','3','4','5','6','7','8','9']
-            self.out_path = os.getcwd() + '/'
-            self.images_path = os.getcwd() + '/'
+            self.out_path = os.path.join(os.getcwd(),'')
+            self.images_path = os.path.join(os.getcwd(),'')
 
             config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
             config_file.write(f'out_path = {self.out_path}\n')
@@ -464,28 +557,17 @@ class MainWindow(QMainWindow):
         else:
             for l in open(self.config):
                 var, val = l.replace(' ','').replace('\n','').split('=')
+
                 if var == 'groups':
                     self.group_names = val.split(',')
+
                 if var == 'out_path':
-                    if var == './':
-                        self.out_path = os.getcwd()
-                    else:
-                        self.out_path = var
-                    if self.out_path[-1] != '/':
-                        self.out_path = self.out_path + '/'
+                    if var == './': self.out_path = os.getcwd()
+                    else: self.out_path = var
+                    os.path.join(self.out_path,'')
+
                 if var == 'images_path':
-                    if val == './':
-                        self.images_path = os.getcwd()
-                    else:
-                        self.images_path = val
-                    if self.images_path[-1] != '/':
-                        self.images_path = self.images_path + '/'
+                    if val == './': self.images_path = os.getcwd()
+                    else: self.images_path = val
+                    self.images_path =  os.path.join(self.images_path,'')
 
-
-def main():
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    app.exec()
-
-if __name__ == '__main__': main()
