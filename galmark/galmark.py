@@ -269,6 +269,10 @@ class MainWindow(QMainWindow):
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
         self.problem_other_box.setChecked(False)
+        for i in range(1,10):
+            try: del self.data[self.image_name][i]
+            except: pass
+        self.imageUpdate()
 
     def onProblemTwo(self):
         self.data[self.image_name]['problem'] = 2
@@ -277,6 +281,10 @@ class MainWindow(QMainWindow):
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
         self.problem_other_box.setChecked(False)
+        for i in range(1,10):
+            try: del self.data[self.image_name][i]
+            except: pass
+        self.imageUpdate()
 
     def onProblemThree(self):
         self.data[self.image_name]['problem'] = 3
@@ -285,6 +293,10 @@ class MainWindow(QMainWindow):
         self.problem_two_box.setChecked(False)
         self.problem_four_box.setChecked(False)
         self.problem_other_box.setChecked(False)
+        for i in range(1,10):
+            try: del self.data[self.image_name][i]
+            except: pass
+        self.imageUpdate()
 
     def onProblemFour(self):
         self.data[self.image_name]['problem'] = 4
@@ -293,6 +305,10 @@ class MainWindow(QMainWindow):
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_other_box.setChecked(False)
+        for i in range(1,10):
+            try: del self.data[self.image_name][i]
+            except: pass
+        self.imageUpdate()
 
     def onProblemOther(self):
         self.data[self.image_name]['problem'] = 5
@@ -301,6 +317,10 @@ class MainWindow(QMainWindow):
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
+        for i in range(1,10):
+            try: del self.data[self.image_name][i]
+            except: pass
+        self.imageUpdate()
 
     def onMark(self, group=0):
         '''
@@ -387,11 +407,26 @@ class MainWindow(QMainWindow):
     
     def commentUpdate(self):
         # Update the comment in the dictionary
-        comment = self.comment_box.text()
-        if not comment: comment = 'None' # default comment to 'None'
+        print(self.data[self.image_name]['comment'])
+        if bool(self.data[self.image_name]['comment']) and not (self.data[self.image_name]['comment'] == 'None'):
+            self.comment_box.setText(self.data[self.image_name]['comment'])
+        else:
+            
+            comment = self.comment_box.text()
+            if not comment: comment = 'None' # default comment to 'None'
 
-        self.data[self.image_name]['comment'] = comment
+            self.data[self.image_name]['comment'] = comment
+
         self.comment_box.setText('')
+
+        '''comment = self.comment_box.text()
+        print(comment, 'comment')
+        if not comment:
+            comment = 'None' # default comment to 'None'
+            self.comment_box.setText('')
+        else:
+            self.comment_box.setText(comment)
+        self.data[self.image_name]['comment'] = comment'''
 
     def problemUpdate(self):
         # Initialize problem and update checkboxes
@@ -553,9 +588,9 @@ class MainWindow(QMainWindow):
                 
                 # Otherwise (i.e., there is an image problem, or there is no data in groups) delete any data, replace with NaNs
                 else:
-                    for i in range(1,10):
-                        try: del self.data[name][i]
-                        except: pass
+                    # for i in range(1,10):
+                    #     try: del self.data[name][i]
+                    #     except: pass
 
                     group_name = 'None'
                     ra = 'NaN'
