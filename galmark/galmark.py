@@ -153,39 +153,41 @@ class MainWindow(QMainWindow):
         self.bottom_layout.addWidget(self.submit_button)
         
         ### Problem widgets
-        self.problemUpdate()
+
         # Not centered on cluster
-        self.not_centered_button = QPushButton(text='Not Centered on Cluster', parent=self)
-        self.not_centered_button.setFixedHeight(40)
-        self.not_centered_button.clicked.connect(self.onNotCentered)
+        self.problem_one_box = QPushButton(text='Not Centered on Cluster', parent=self)
+        self.problem_one_box.setFixedHeight(40)
+        self.problem_one_box.clicked.connect(self.onProblemOne)
 
         # Bad image scaling
-        self.bad_scaling_button = QPushButton(text='Bad Image Scaling', parent=self)
-        self.bad_scaling_button.setFixedHeight(40)
-        self.bad_scaling_button.clicked.connect(self.onBadScaling)
+        self.problem_two_box = QPushButton(text='Bad Image Scaling', parent=self)
+        self.problem_two_box.setFixedHeight(40)
+        self.problem_two_box.clicked.connect(self.onProblemTwo)
 
         # No cluster visible
-        self.no_cluster_button = QPushButton(text='No Cluster Visible', parent=self)
-        self.no_cluster_button.setFixedHeight(40)
-        self.no_cluster_button.clicked.connect(self.onNoCluster)
+        self.problem_three_box = QPushButton(text='No Cluster Visible', parent=self)
+        self.problem_three_box.setFixedHeight(40)
+        self.problem_three_box.clicked.connect(self.onProblemThree)
 
         # High redshift/too red
-        self.high_redshift_button = QPushButton(text='High Redshift Cluster', parent=self)
-        self.high_redshift_button.setFixedHeight(40)
-        self.high_redshift_button.clicked.connect(self.onHighRedshift)
+        self.problem_four_box = QPushButton(text='High Redshift Cluster', parent=self)
+        self.problem_four_box.setFixedHeight(40)
+        self.problem_four_box.clicked.connect(self.onProblemFour)
 
         # Other/leave comment prompt?
-        self.other_button = QPushButton(text='Other', parent=self)
-        self.other_button.setFixedHeight(40)
-        self.other_button.clicked.connect(self.onOther)
+        self.problem_other_box = QPushButton(text='Other', parent=self)
+        self.problem_other_box.setFixedHeight(40)
+        self.problem_other_box.clicked.connect(self.onProblemOther)
+
+        self.problemUpdate()
 
         # Problems layout
         self.problems_layout = QHBoxLayout()
-        self.problems_layout.addWidget(self.not_centered_button)
-        self.problems_layout.addWidget(self.bad_scaling_button)
-        self.problems_layout.addWidget(self.no_cluster_button)
-        self.problems_layout.addWidget(self.high_redshift_button)
-        self.problems_layout.addWidget(self.other_button)
+        self.problems_layout.addWidget(self.problem_one_box)
+        self.problems_layout.addWidget(self.problem_two_box)
+        self.problems_layout.addWidget(self.problem_three_box)
+        self.problems_layout.addWidget(self.problem_four_box)
+        self.problems_layout.addWidget(self.problem_other_box)
 
         # Add widgets to main layout
         central_widget = QWidget()
@@ -260,25 +262,45 @@ class MainWindow(QMainWindow):
             self.onMiddleMouse()
 
     # === On-actions ===
-    def onNotCentered(self):
-        self.data[self.image_name]['problem'] = "Cluster not centered"
+    def onProblemOne(self):
+        self.data[self.image_name]['problem'] = 1
         self.writeToTxt()
+        self.problem_two_box.setChecked(False)
+        self.problem_three_box.setChecked(False)
+        self.problem_four_box.setChecked(False)
+        self.problem_other_box.setChecked(False)
 
-    def onBadScaling(self):
-        self.data[self.image_name]['problem'] = "Bad image scaling"
+    def onProblemTwo(self):
+        self.data[self.image_name]['problem'] = 2
         self.writeToTxt()
+        self.problem_one_box.setChecked(False)
+        self.problem_three_box.setChecked(False)
+        self.problem_four_box.setChecked(False)
+        self.problem_other_box.setChecked(False)
 
-    def onNoCluster(self):
-        self.data[self.image_name]['problem'] = "No cluster visible"
+    def onProblemThree(self):
+        self.data[self.image_name]['problem'] = 3
         self.writeToTxt()
+        self.problem_one_box.setChecked(False)
+        self.problem_two_box.setChecked(False)
+        self.problem_four_box.setChecked(False)
+        self.problem_other_box.setChecked(False)
 
-    def onHighRedshift(self):
-        self.data[self.image_name]['problem'] = "Redshift too high"
+    def onProblemFour(self):
+        self.data[self.image_name]['problem'] = 4
         self.writeToTxt()
+        self.problem_one_box.setChecked(False)
+        self.problem_two_box.setChecked(False)
+        self.problem_three_box.setChecked(False)
+        self.problem_other_box.setChecked(False)
 
-    def onOther(self):
-        self.data[self.image_name]['problem'] = "Other"
+    def onProblemOther(self):
+        self.data[self.image_name]['problem'] = 5
         self.writeToTxt()
+        self.problem_one_box.setChecked(False)
+        self.problem_two_box.setChecked(False)
+        self.problem_three_box.setChecked(False)
+        self.problem_four_box.setChecked(False)
 
     def onMark(self, group=0):
         '''
@@ -372,7 +394,26 @@ class MainWindow(QMainWindow):
         self.comment_box.setText('')
 
     def problemUpdate(self):
-        self.data[self.image_name]['problem'] = 'None'
+        # Initialize problem and update checkboxes
+        self.problem_one_box.setChecked(False)
+        self.problem_two_box.setChecked(False)
+        self.problem_three_box.setChecked(False)
+        self.problem_four_box.setChecked(False)
+        self.problem_other_box.setChecked(False)
+        if not (self.data[self.image_name]['problem']):
+            self.data[self.image_name]['problem'] = 0
+        else:
+            problem = self.data[self.image_name]['problem']
+            if (problem == 1):
+                self.problem_one_box.setChecked(True)
+            if (problem == 2):
+                self.problem_two_box.setChecked(True)
+            if (problem == 3):
+                self.problem_three_box.setChecked(True)
+            if (problem == 4):
+                self.problem_four_box.setChecked(True)
+            if (problem == 5):
+                self.problem_other_box.setChecked(True)
 
     def redraw(self):
         # Redraws circles if you go back or forward
@@ -481,31 +522,41 @@ class MainWindow(QMainWindow):
 
             for name in self.data:
                 comment = self.data[name]['comment']
-                problem = self.data[name]['problem']
+                
+                problem = self.problem_names[self.data[name]['problem']]
 
-                if problem == 'None':
-                    for level2 in self.data[name]:
-                        if isinstance(level2,int): 
-                            group_name = self.group_names[level2-1]
-                            RA_list = self.data[name][level2]['RA']
-                            DEC_list = self.data[name][level2]['DEC']
+                # Get list of groups containing data
+                keys = [key for key in self.data[name]]
+                groups = [g for g in keys if isinstance(g,int) 
+                          and self.data[name][g]['RA'] 
+                          and self.data[name][g]['DEC']]
 
-                            for i, _ in enumerate(RA_list):
-                                ra = RA_list[i]
-                                dec = DEC_list[i]
-                                l = [self.date,name,group_name,ra,dec,problem,comment]
+                # If there are no image problems, and there is data in groups, then add this data to lines
+                if (problem == 'None') and (len(groups) != 0):
+                    for g in groups:
+                        group_name = self.group_names[g-1]
+                        RA_list = self.data[name][g]['RA']
+                        DEC_list = self.data[name][g]['DEC']
 
-                                lines.append(l)
-                                name_lengths.append(len(name))
-                                group_lengths.append(len(group_name))
-                                ra_lengths.append(len(f'{ra:.8f}'))
-                                dec_lengths.append(len(f'{dec:.8f}'))
-                                problem_lengths.append(len(problem))
-                                comment_lengths.append(len(comment))
+                        for i, _ in enumerate(RA_list):
+                            ra = RA_list[i]
+                            dec = DEC_list[i]
+                            l = [self.date,name,group_name,ra,dec,problem,comment]
+
+                            lines.append(l)
+                            name_lengths.append(len(name))
+                            group_lengths.append(len(group_name))
+                            ra_lengths.append(len(f'{ra:.8f}'))
+                            dec_lengths.append(len(f'{dec:.8f}'))
+                            problem_lengths.append(len(problem))
+                            comment_lengths.append(len(comment))
+                
+                # Otherwise (i.e., there is an image problem, or there is no data in groups) delete any data, replace with NaNs
                 else:
                     for i in range(1,10):
                         try: del self.data[name][i]
                         except: pass
+
                     group_name = 'None'
                     ra = 'NaN'
                     dec = 'NaN'
@@ -531,10 +582,8 @@ class MainWindow(QMainWindow):
             out.write(f'{'date':^{dateln}}|{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'problem':^{problemln}}|{'comment':^{commentln}}\n')
 
             for l in lines:
-                if l[5] == 'None':
-                    outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}.8f}|{l[4]:^{decln}.8f}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
-                else:
-                    outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}}|{l[4]:^{decln}}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
+                try: outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}.8f}|{l[4]:^{decln}.8f}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
+                except: outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}}|{l[4]:^{decln}}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
                 out.write(outline)
 
     def readConfig(self):
@@ -549,10 +598,13 @@ class MainWindow(QMainWindow):
             self.group_names = ['1','2','3','4','5','6','7','8','9']
             self.out_path = os.path.join(os.getcwd(),'')
             self.images_path = os.path.join(os.getcwd(),'')
+            self.problem_names = ['None','not_centered','bad_scaling','no_cluster','high_redshift','other']
 
             config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
             config_file.write(f'out_path = {self.out_path}\n')
-            config_file.write(f'images_path = {self.images_path}')
+            config_file.write(f'images_path = {self.images_path}\n')
+            config_file.write(f'problem_names = {self.problem_names[0]},{self.problem_names[1]},{self.problem_names[2]},{self.problem_names[3]},{self.problem_names[4]},{self.problem_names[5]}')
+
 
         else:
             for l in open(self.config):
@@ -571,6 +623,10 @@ class MainWindow(QMainWindow):
                     else: self.images_path = val
                     self.images_path =  os.path.join(self.images_path,'')
 
+                if var == 'problem_names':
+                    self.problem_names = val.split(',')
+                    self.problem_names.insert(0, 'None')
+            
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
@@ -578,3 +634,4 @@ def main():
     app.exec()
 
 if __name__ == '__main__': main()
+
