@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar, QInputDialog
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar, QInputDialog, QCheckBox
 from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction
 from PyQt6.QtCore import Qt, QSize
 import sys
@@ -155,27 +155,27 @@ class MainWindow(QMainWindow):
         ### Problem widgets
 
         # Not centered on cluster
-        self.problem_one_box = QPushButton(text='Not Centered on Cluster', parent=self)
+        self.problem_one_box = QCheckBox(text='Not Centered on Cluster', parent=self)
         self.problem_one_box.setFixedHeight(40)
         self.problem_one_box.clicked.connect(self.onProblemOne)
 
         # Bad image scaling
-        self.problem_two_box = QPushButton(text='Bad Image Scaling', parent=self)
+        self.problem_two_box = QCheckBox(text='Bad Image Scaling', parent=self)
         self.problem_two_box.setFixedHeight(40)
         self.problem_two_box.clicked.connect(self.onProblemTwo)
 
         # No cluster visible
-        self.problem_three_box = QPushButton(text='No Cluster Visible', parent=self)
+        self.problem_three_box = QCheckBox(text='No Cluster Visible', parent=self)
         self.problem_three_box.setFixedHeight(40)
         self.problem_three_box.clicked.connect(self.onProblemThree)
 
         # High redshift/too red
-        self.problem_four_box = QPushButton(text='High Redshift Cluster', parent=self)
+        self.problem_four_box = QCheckBox(text='High Redshift Cluster', parent=self)
         self.problem_four_box.setFixedHeight(40)
         self.problem_four_box.clicked.connect(self.onProblemFour)
 
         # Other/leave comment prompt?
-        self.problem_other_box = QPushButton(text='Other', parent=self)
+        self.problem_other_box = QCheckBox(text='Other', parent=self)
         self.problem_other_box.setFixedHeight(40)
         self.problem_other_box.clicked.connect(self.onProblemOther)
 
