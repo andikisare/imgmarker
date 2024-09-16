@@ -571,3 +571,10 @@ class MainWindow(QMainWindow):
                     else: self.images_path = val
                     self.images_path =  os.path.join(self.images_path,'')
 
+def main():
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    app.exec()
+
+if __name__ == '__main__': main()
