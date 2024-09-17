@@ -66,8 +66,8 @@ class MainWindow(QMainWindow):
             outfile (string): filename of text file for saving data
         '''
         super().__init__()
-
-        self.setWindowIcon(QIcon(os.path.join(sys.path[0],'icon.png')))
+        __dirname__ = os.path.dirname(os.path.realpath(__file__))
+        self.setWindowIcon(QIcon(os.path.join(__dirname__,'icon.png')))
 
         # Initialize config
         self.config = 'galmark.cfg'
@@ -642,7 +642,6 @@ class MainWindow(QMainWindow):
         '''
         Read each line from the config and parse it
         '''
-        
 
         # If the config doesn't exist, create one
         if not os.path.exists(self.config):

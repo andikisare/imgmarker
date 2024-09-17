@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "galmark"
 version = "0.1.0"
+readme = "README.md"
 
 dependencies = [
   "astropy==6.1.3",
@@ -17,5 +18,14 @@ authors = [
   {name = "Ryan Walker", email = "astrorya@umich.edu"}
 ]
 
+[tool.setuptools.packages.find]
+where = [".."]
+include = ["galmark"]
+
+[tool.setuptools.package-data]
+galmark = ["*.png"]
+
 [project.scripts]
-galmark = "galmark:main"
+galmark = "galmark.galmark:main"
+
+
