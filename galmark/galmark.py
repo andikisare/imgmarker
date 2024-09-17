@@ -264,63 +264,78 @@ class MainWindow(QMainWindow):
 
     # === On-actions ===
     def onProblemOne(self):
-        self.data[self.image_name]['problem'] = 1
+        if (self.problem_one_box.checkState().value == 2):
+            self.data[self.image_name]['problem'] = 1
+            for i in range(1,10):
+                try: del self.data[self.image_name][i]
+                except: pass
+        else:
+            self.data[self.image_name]['problem'] = 0
         self.writeToTxt()
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
         self.problem_other_box.setChecked(False)
-        for i in range(1,10):
-            try: del self.data[self.image_name][i]
-            except: pass
         self.imageUpdate()
 
     def onProblemTwo(self):
-        self.data[self.image_name]['problem'] = 2
+        if (self.problem_two_box.checkState().value == 2):
+            self.data[self.image_name]['problem'] = 2
+            for i in range(1,10):
+                try: del self.data[self.image_name][i]
+                except: pass
+        else:
+            self.data[self.image_name]['problem'] = 0
         self.writeToTxt()
         self.problem_one_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
         self.problem_other_box.setChecked(False)
-        for i in range(1,10):
-            try: del self.data[self.image_name][i]
-            except: pass
         self.imageUpdate()
 
     def onProblemThree(self):
-        self.data[self.image_name]['problem'] = 3
+        if (self.problem_three_box.checkState().value == 2):
+            self.data[self.image_name]['problem'] = 3
+            for i in range(1,10):
+                try: del self.data[self.image_name][i]
+                except: pass
+        else:
+            self.data[self.image_name]['problem'] = 0
         self.writeToTxt()
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_four_box.setChecked(False)
         self.problem_other_box.setChecked(False)
-        for i in range(1,10):
-            try: del self.data[self.image_name][i]
-            except: pass
         self.imageUpdate()
 
     def onProblemFour(self):
-        self.data[self.image_name]['problem'] = 4
+        if (self.problem_four_box.checkState().value == 2):
+            self.data[self.image_name]['problem'] = 4
+            for i in range(1,10):
+                try: del self.data[self.image_name][i]
+                except: pass
+        else:
+            self.data[self.image_name]['problem'] = 0
         self.writeToTxt()
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_other_box.setChecked(False)
-        for i in range(1,10):
-            try: del self.data[self.image_name][i]
-            except: pass
         self.imageUpdate()
 
     def onProblemOther(self):
-        self.data[self.image_name]['problem'] = 5
+        if (self.problem_other_box.checkState().value == 2):
+            self.data[self.image_name]['problem'] = 5
+            for i in range(1,10):
+                try: del self.data[self.image_name][i]
+                except: pass
+        else:
+            self.data[self.image_name]['problem'] = 0
         self.writeToTxt()
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
-        for i in range(1,10):
-            try: del self.data[self.image_name][i]
-            except: pass
         self.imageUpdate()
 
     def onMark(self, group=0):
@@ -459,7 +474,7 @@ class MainWindow(QMainWindow):
             RA_list = self.data[self.image_name][i+1]['RA']
             DEC_list = self.data[self.image_name][i+1]['DEC']
 
-            if not RA_list or not DEC_list: pass  
+            if not RA_list or not DEC_list: pass
             else:
                 for j, _ in enumerate(RA_list):
    
