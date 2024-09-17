@@ -95,6 +95,7 @@ class MainWindow(QMainWindow):
         self.username = self.getText()
         self.outfile = self.username + ".txt"
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
+        self.comment = 'None'
 
         # Useful attributes
         self.fullw = self.screen().size().width()
@@ -143,7 +144,7 @@ class MainWindow(QMainWindow):
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
         self.comment_box.setFixedHeight(40)
-        self.commentUpdate()
+        self.commentUpdate(False)
     
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
@@ -351,22 +352,26 @@ class MainWindow(QMainWindow):
         if self.idx+1 < self.N:
             # Increment the index
             self.idx += 1
+            self.commentUpdate(True)
             self.imageUpdate()
             self.redraw()
-            self.commentUpdate()
+            self.commentUpdate(False)
             self.problemUpdate()
+            self.writeToTxt()
 
     def onBack(self):
         if self.idx+1 > 1:
             # Increment the index
             self.idx -= 1
+            self.commentUpdate(True)
             self.imageUpdate()
             self.redraw()
-            self.commentUpdate()
+            self.commentUpdate(False)
             self.problemUpdate()
+            self.writeToTxt()
             
     def onEnter(self):
-        self.commentUpdate()
+        self.commentUpdate(True)
         self.writeToTxt()
     
     def onExit(self):
@@ -405,28 +410,26 @@ class MainWindow(QMainWindow):
         #Update WCS
         self.wcs = self.parseWCS(self.image)
     
-    def commentUpdate(self):
+    def commentUpdate(self, beforeImageUpdate):
         # Update the comment in the dictionary
-        print(self.data[self.image_name]['comment'])
-        if bool(self.data[self.image_name]['comment']) and not (self.data[self.image_name]['comment'] == 'None'):
-            self.comment_box.setText(self.data[self.image_name]['comment'])
-        else:
-            
+        if beforeImageUpdate:
             comment = self.comment_box.text()
-            if not comment: comment = 'None' # default comment to 'None'
-
-            self.data[self.image_name]['comment'] = comment
-
-        self.comment_box.setText('')
-
-        '''comment = self.comment_box.text()
-        print(comment, 'comment')
-        if not comment:
-            comment = 'None' # default comment to 'None'
-            self.comment_box.setText('')
+            if not comment:
+                comment = 'None'
+                self.data[self.image_name]['comment'] = comment
+            else:
+                self.data[self.image_name]['comment'] = comment
         else:
-            self.comment_box.setText(comment)
-        self.data[self.image_name]['comment'] = comment'''
+            if bool(self.data[self.image_name]['comment']):
+                if (self.data[self.image_name]['comment'] == 'None'):
+                    self.comment_box.setText('')
+                else:
+                    comment = self.data[self.image_name]['comment']
+                    self.comment_box.setText(comment)
+            else:
+                comment = 'None'
+                self.data[self.image_name]['comment'] = comment
+                self.comment_box.setText('')
 
     def problemUpdate(self):
         # Initialize problem and update checkboxes
@@ -532,7 +535,6 @@ class MainWindow(QMainWindow):
 
         # Create a WCS object from the header
         wcs = WCS(header)
-        #shape = (meta_dict['ImageWidth'][0], meta_dict['ImageLength'][0])
         return wcs
 
     def checkUsername(self):
@@ -557,7 +559,6 @@ class MainWindow(QMainWindow):
 
             for name in self.data:
                 comment = self.data[name]['comment']
-                
                 problem = self.problem_names[self.data[name]['problem']]
 
                 # Get list of groups containing data
@@ -588,10 +589,6 @@ class MainWindow(QMainWindow):
                 
                 # Otherwise (i.e., there is an image problem, or there is no data in groups) delete any data, replace with NaNs
                 else:
-                    # for i in range(1,10):
-                    #     try: del self.data[name][i]
-                    #     except: pass
-
                     group_name = 'None'
                     ra = 'NaN'
                     dec = 'NaN'
