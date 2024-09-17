@@ -655,7 +655,7 @@ class MainWindow(QMainWindow):
             config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
             config_file.write(f'out_path = {self.out_path}\n')
             config_file.write(f'images_path = {self.images_path}\n')
-            config_file.write(f'problem_names = {self.problem_names[0]},{self.problem_names[1]},{self.problem_names[2]},{self.problem_names[3]},{self.problem_names[4]},{self.problem_names[5]}')
+            config_file.write(f'problem_names = {self.problem_names[1]},{self.problem_names[2]},{self.problem_names[3]},{self.problem_names[4]},{self.problem_names[5]}')
 
 
         else:
