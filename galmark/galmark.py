@@ -357,7 +357,7 @@ class MainWindow(QMainWindow):
             self.redraw()
             self.commentUpdate(False)
             self.problemUpdate()
-            self.writeToTxt()
+            # self.writeToTxt()
 
     def onBack(self):
         if self.idx+1 > 1:
@@ -368,7 +368,7 @@ class MainWindow(QMainWindow):
             self.redraw()
             self.commentUpdate(False)
             self.problemUpdate()
-            self.writeToTxt()
+            # self.writeToTxt()
             
     def onEnter(self):
         self.commentUpdate(True)
@@ -416,9 +416,9 @@ class MainWindow(QMainWindow):
             comment = self.comment_box.text()
             if not comment:
                 comment = 'None'
-                self.data[self.image_name]['comment'] = comment
-            else:
-                self.data[self.image_name]['comment'] = comment
+
+            self.data[self.image_name]['comment'] = comment
+            self.writeToTxt()
         else:
             if bool(self.data[self.image_name]['comment']):
                 if (self.data[self.image_name]['comment'] == 'None'):
