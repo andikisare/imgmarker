@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar, QInputDialog, QCheckBox
-from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction
+from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction, QIcon
 from PyQt6.QtCore import Qt, QSize
 import sys
 import os
@@ -67,8 +67,7 @@ class MainWindow(QMainWindow):
         '''
         super().__init__()
 
-        if platform.system() == 'Windows': self._delim = '\\'
-        else: self._delim = '/'
+        self.setWindowIcon(QIcon(os.path.join(sys.path[0],'icon.png')))
 
         # Initialize config
         self.config = 'galmark.cfg'
@@ -81,7 +80,7 @@ class MainWindow(QMainWindow):
         self.N = len(self.images)
 
         self.image = self.images[self.idx]
-        self.image_name = self.image.replace('\\','/').split('/')[-1].split('.')[0]
+        self.image_name = self.image.split(os.sep)[-1].split('.')[0]
         self.wcs = self.parseWCS(self.image)
 
         # Initialize output dictionary
