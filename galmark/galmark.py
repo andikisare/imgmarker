@@ -476,7 +476,7 @@ class MainWindow(QMainWindow):
 
             if not RA_list or not DEC_list: pass
             else:
-                for j, _ in enumerate(RA_list):
+                for j in range(0,len(RA_list)):
    
                     x,y = self.wcs.all_world2pix([[RA_list[j], DEC_list[j]]], 0)[0]
 
@@ -558,38 +558,35 @@ class MainWindow(QMainWindow):
     # === I/O ===
 
     def writeToTxt(self):
+        lines = []
+        name_lengths = []
+        group_lengths = []
+        ra_lengths = []
+        dec_lengths = []
+        problem_lengths = []
+        comment_lengths = []
+        
         if self.checkUsername() and self.data:
-            
-            if os.path.exists(self.outfile): os.remove(self.outfile)
+            names = list(self.data.keys())
 
-            out = open(self.outfile,"a")
-
-            lines = []
-            name_lengths = []
-            group_lengths = []
-            ra_lengths = []
-            dec_lengths = []
-            problem_lengths = []
-            comment_lengths = []
-
-            for name in self.data:
+            for name in names:
                 comment = self.data[name]['comment']
                 problem = self.problem_names[self.data[name]['problem']]
 
                 # Get list of groups containing data
-                keys = [key for key in self.data[name]]
-                groups = [g for g in keys if isinstance(g,int) 
-                          and self.data[name][g]['RA'] 
-                          and self.data[name][g]['DEC']]
+                level2_keys = list(self.data[name].keys())
+                groups = [key for key in level2_keys if isinstance(key,int) 
+                          and self.data[name][key]['RA'] 
+                          and self.data[name][key]['DEC']]
 
                 # If there are no image problems, and there is data in groups, then add this data to lines
                 if (problem == 'None') and (len(groups) != 0):
-                    for g in groups:
-                        group_name = self.group_names[g-1]
-                        RA_list = self.data[name][g]['RA']
-                        DEC_list = self.data[name][g]['DEC']
+                    for group in groups:
+                        group_name = self.group_names[group-1]
+                        RA_list = self.data[name][group]['RA']
+                        DEC_list = self.data[name][group]['DEC']
 
-                        for i, _ in enumerate(RA_list):
+                        for i in range(0,len(RA_list)):
                             ra = RA_list[i]
                             dec = DEC_list[i]
                             l = [self.date,name,group_name,ra,dec,problem,comment]
@@ -602,8 +599,8 @@ class MainWindow(QMainWindow):
                             problem_lengths.append(len(problem))
                             comment_lengths.append(len(comment))
                 
-                # Otherwise (i.e., there is an image problem, or there is no data in groups) delete any data, replace with NaNs
-                else:
+                # Otherwise, if there is a problem or a comment, replace ra/dec with NaNs
+                elif (problem != 'None') or (comment != 'None'):
                     group_name = 'None'
                     ra = 'NaN'
                     dec = 'NaN'
@@ -616,7 +613,12 @@ class MainWindow(QMainWindow):
                     dec_lengths.append(len(dec))
                     problem_lengths.append(len(problem))
                     comment_lengths.append(len(comment))
+                
+                # Otherwise, (no comment, no problem, and no data) delete entry from dictionary
+                else: pass
 
+        # Print out lines if there are lines to print
+        if len(lines) != 0:
             # Dynamically adjust column widths
             nameln = np.max(name_lengths) + 2
             groupln = max(np.max(group_lengths), 5) + 2
@@ -625,6 +627,10 @@ class MainWindow(QMainWindow):
             problemln = max(np.max(problem_lengths), 9) + 2
             commentln = max(np.max(comment_lengths), 7) + 2
             dateln = 12
+
+            # Write the file
+            if os.path.exists(self.outfile): os.remove(self.outfile)
+            out = open(self.outfile,"a")
 
             out.write(f'{'date':^{dateln}}|{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'problem':^{problemln}}|{'comment':^{commentln}}\n')
 
