@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar, QInputDialog, QCheckBox
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar, QInputDialog, QCheckBox, QTextEdit
 from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction, QIcon
 from PyQt6.QtCore import Qt, QSize
 import sys
@@ -16,6 +16,9 @@ from astropy.wcs import WCS
 from astropy.io import fits
 from collections import defaultdict
 import datetime as dt
+
+groupNames = []
+problemNames = []
 
 class DataDict(defaultdict):
     def __init__(self, *args, **kwargs):
@@ -52,6 +55,29 @@ def panBindingCheck(event):
     try 
 """
 
+class InstructionWindow(QWidget):
+    """
+    This window displays the instructions and keymappings
+    """
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        self.fullw = self.screen().size().width()
+        self.fullh = self.screen().size().height()
+        self.resize(int(self.fullw/5), int(self.fullh/3))
+        self.setWindowTitle('Instructions and Keymapping')
+        self.setLayout(layout)
+
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
+
+        self.instructions_and_keymapping = QTextEdit()
+
+
+    
+
 class MainWindow(QMainWindow):
     def __init__(self, path = '', imtype = 'tif', parent=None):
         '''
@@ -72,6 +98,9 @@ class MainWindow(QMainWindow):
         # Initialize config
         self.config = 'galmark.cfg'
         self.readConfig()
+
+        groupNames = self.group_names
+        problemNames = self.problem_names
 
         # Initialize images and WCS
         self.imtype = imtype
@@ -102,6 +131,11 @@ class MainWindow(QMainWindow):
         self.windowsize = QSize(int(self.fullw/2), int(self.fullh/2))
         self._go_back_one = False
         self.setWindowTitle("Galaxy Marker")
+
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
 
         # Current index widget
         self.idx_label = QLabel(f'Image {self.idx+1} of {self.N}')
@@ -214,6 +248,22 @@ class MainWindow(QMainWindow):
 
         ## Edit menu
         fileMenu = menuBar.addMenu("&Edit")
+
+        ## Window menu
+        windowMenu = menuBar.addMenu('&Window')
+
+        ### Instructions and Keymapping window
+        instructionsWindow = QAction('&Instructions and Keymapping', self)
+        instructionsWindow.setShortcuts(['i'])
+        instructionsWindow.setStatusTip('Instructions')
+        instructionsWindow.triggered.connect(self.showInstructions)
+        windowMenu.addAction(instructionsWindow)
+
+        self.showInstructions()
+
+    def showInstructions(self):
+        self.instructionWindow = InstructionWindow()
+        self.instructionWindow.show()
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
@@ -654,7 +704,7 @@ class MainWindow(QMainWindow):
             config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
             config_file.write(f'out_path = {self.out_path}\n')
             config_file.write(f'images_path = {self.images_path}\n')
-            config_file.write(f'problem_names = {self.problem_names[1]},{self.problem_names[2]},{self.problem_names[3]},{self.problem_names[4]},{self.problem_names[5]}')
+            config_file.write(f'problems = {self.problem_names[1]},{self.problem_names[2]},{self.problem_names[3]},{self.problem_names[4]},{self.problem_names[5]}')
 
 
         else:
@@ -674,9 +724,10 @@ class MainWindow(QMainWindow):
                     else: self.images_path = val
                     self.images_path =  os.path.join(self.images_path,'')
 
-                if var == 'problem_names':
+                if var == 'problems':
                     self.problem_names = val.split(',')
                     self.problem_names.insert(0, 'None')
+            
             
 def main():
     app = QApplication(sys.argv)
