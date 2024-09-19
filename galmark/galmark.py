@@ -250,7 +250,7 @@ class MainWindow(QMainWindow):
         fileMenu = menuBar.addMenu("&Edit")
 
         ## Window menu
-        windowMenu = menuBar.addMenu('&Window')
+        windowMenu = menuBar.addMenu('&Help')
 
         ### Instructions and Keymapping window
         instructionsWindow = QAction('&Instructions and Keymapping', self)
