@@ -19,6 +19,7 @@ import datetime as dt
 
 groupNames = []
 problemNames = []
+__dirname__ = os.path.dirname(os.path.realpath(__file__))
 
 class DataDict(defaultdict):
     def __init__(self, *args, **kwargs):
@@ -75,9 +76,6 @@ class InstructionWindow(QWidget):
 
         self.instructions_and_keymapping = QTextEdit()
 
-
-    
-
 class MainWindow(QMainWindow):
     def __init__(self, path = '', imtype = 'tif', parent=None):
         '''
@@ -92,7 +90,6 @@ class MainWindow(QMainWindow):
             outfile (string): filename of text file for saving data
         '''
         super().__init__()
-        __dirname__ = os.path.dirname(os.path.realpath(__file__))
         self.setWindowIcon(QIcon(os.path.join(__dirname__,'icon.png')))
 
         # Initialize config
@@ -258,8 +255,6 @@ class MainWindow(QMainWindow):
         instructionsWindow.setStatusTip('Instructions')
         instructionsWindow.triggered.connect(self.showInstructions)
         windowMenu.addAction(instructionsWindow)
-
-        self.showInstructions()
 
     def showInstructions(self):
         self.instructionWindow = InstructionWindow()
