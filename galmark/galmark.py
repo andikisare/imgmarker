@@ -61,6 +61,7 @@ class InstructionWindow(QWidget):
     """
     def __init__(self,groupNames):
         super().__init__()
+        self.setWindowIcon(QIcon(__icon__))
         layout = QVBoxLayout()
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
@@ -71,7 +72,7 @@ class InstructionWindow(QWidget):
         qt_rectangle = self.frameGeometry()
         center_point = QApplication.primaryScreen().geometry().center()
         qt_rectangle.moveCenter(center_point)
-        self.move(qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
+        self.move(-qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
 
         self.instructions_and_keymapping = QTextEdit()
         
