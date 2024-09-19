@@ -17,8 +17,6 @@ from astropy.io import fits
 from collections import defaultdict
 import datetime as dt
 
-groupNames = []
-problemNames = []
 __dirname__ = os.path.dirname(os.path.realpath(__file__))
 __icon__ = os.path.join(__dirname__,'icon.png')
 
@@ -61,7 +59,7 @@ class InstructionWindow(QWidget):
     """
     This window displays the instructions and keymappings
     """
-    def __init__(self):
+    def __init__(self,groupNames):
         super().__init__()
         layout = QVBoxLayout()
         self.fullw = self.screen().size().width()
@@ -76,6 +74,23 @@ class InstructionWindow(QWidget):
         self.move(qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
 
         self.instructions_and_keymapping = QTextEdit()
+        
+        self.instructions_and_keymapping.setPlainText(f'ALL data is saved when pressing "Next," "Back," or "Enter" in the window,\n'
+                                                      f'as well as checking a problem, exiting, or making a mark.\n\n'
+                                                      f'Action      :      Button\n'
+                                                      f'Group "{groupNames[0]}": Left click OR 1\n'
+                                                      f'Group "{groupNames[1]}": Right click OR 2\n' 
+                                                      f'Group "{groupNames[2]}": 3\n'
+                                                      f'Group "{groupNames[3]}": 4\n'
+                                                      f'Group "{groupNames[4]}": 5\n'
+                                                      f'Group "{groupNames[5]}": 6\n'
+                                                      f'Group "{groupNames[6]}": 7\n'
+                                                      f'Group "{groupNames[7]}": 8\n'
+                                                      f'Group "{groupNames[8]}": 9\n\n'
+                                                      f'Save: Enter'
+        )
+        self.instructions_and_keymapping.setReadOnly(True)
+        layout.addWidget(self.instructions_and_keymapping)
 
 class MainWindow(QMainWindow):
     def __init__(self, path = '', imtype = 'tif', parent=None):
@@ -96,9 +111,6 @@ class MainWindow(QMainWindow):
         # Initialize config
         self.config = 'galmark.cfg'
         self.readConfig()
-
-        groupNames = self.group_names
-        problemNames = self.problem_names
 
         # Initialize images and WCS
         self.imtype = imtype
@@ -257,8 +269,10 @@ class MainWindow(QMainWindow):
         instructionsWindow.triggered.connect(self.showInstructions)
         windowMenu.addAction(instructionsWindow)
 
+        self.showInstructions()
+
     def showInstructions(self):
-        self.instructionWindow = InstructionWindow()
+        self.instructionWindow = InstructionWindow(self.group_names)
         self.instructionWindow.show()
 
     def eventFilter(self, source, event):
