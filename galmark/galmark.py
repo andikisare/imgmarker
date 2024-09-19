@@ -175,7 +175,7 @@ class MainWindow(QMainWindow):
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
         self.comment_box.setFixedHeight(40)
-        self.commentUpdate(False)
+        self.getComment()
     
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
@@ -412,10 +412,10 @@ class MainWindow(QMainWindow):
         if self.idx+1 < self.N:
             # Increment the index
             self.idx += 1
-            self.commentUpdate(True)
+            self.commentUpdate()
             self.imageUpdate()
             self.redraw()
-            self.commentUpdate(False)
+            self.getComment()
             self.problemUpdate()
             # self.writeToTxt()
 
@@ -423,15 +423,15 @@ class MainWindow(QMainWindow):
         if self.idx+1 > 1:
             # Increment the index
             self.idx -= 1
-            self.commentUpdate(True)
+            self.commentUpdate()
             self.imageUpdate()
             self.redraw()
-            self.commentUpdate(False)
+            self.getComment()
             self.problemUpdate()
             # self.writeToTxt()
             
     def onEnter(self):
-        self.commentUpdate(True)
+        self.commentUpdate()
         self.writeToTxt()
     
     def onExit(self):
@@ -470,26 +470,26 @@ class MainWindow(QMainWindow):
         #Update WCS
         self.wcs = self.parseWCS(self.image)
     
-    def commentUpdate(self, beforeImageUpdate):
+    def commentUpdate(self):
         # Update the comment in the dictionary
-        if beforeImageUpdate:
-            comment = self.comment_box.text()
-            if not comment:
-                comment = 'None'
+        comment = self.comment_box.text()
+        if not comment:
+            comment = 'None'
 
-            self.data[self.image_name]['comment'] = comment
-            self.writeToTxt()
-        else:
-            if bool(self.data[self.image_name]['comment']):
-                if (self.data[self.image_name]['comment'] == 'None'):
-                    self.comment_box.setText('')
-                else:
-                    comment = self.data[self.image_name]['comment']
-                    self.comment_box.setText(comment)
-            else:
-                comment = 'None'
-                self.data[self.image_name]['comment'] = comment
+        self.data[self.image_name]['comment'] = comment
+        self.writeToTxt()
+
+    def getComment(self):
+        if bool(self.data[self.image_name]['comment']):
+            if (self.data[self.image_name]['comment'] == 'None'):
                 self.comment_box.setText('')
+            else:
+                comment = self.data[self.image_name]['comment']
+                self.comment_box.setText(comment)
+        else:
+            comment = 'None'
+            self.data[self.image_name]['comment'] = comment
+            self.comment_box.setText('')
 
     def problemUpdate(self):
         # Initialize problem and update checkboxes
