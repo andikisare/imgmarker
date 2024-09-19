@@ -20,6 +20,7 @@ import datetime as dt
 groupNames = []
 problemNames = []
 __dirname__ = os.path.dirname(os.path.realpath(__file__))
+__icon__ = os.path.join(__dirname__,'icon.png')
 
 class DataDict(defaultdict):
     def __init__(self, *args, **kwargs):
@@ -90,7 +91,7 @@ class MainWindow(QMainWindow):
             outfile (string): filename of text file for saving data
         '''
         super().__init__()
-        self.setWindowIcon(QIcon(os.path.join(__dirname__,'icon.png')))
+        self.setWindowIcon(QIcon(__icon__))
 
         # Initialize config
         self.config = 'galmark.cfg'
