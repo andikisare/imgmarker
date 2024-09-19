@@ -77,7 +77,7 @@ class InstructionWindow(QWidget):
         
         self.instructions_and_keymapping.setPlainText(f'ALL data is saved when pressing "Next," "Back," or "Enter" in the window,\n'
                                                       f'as well as checking a problem, exiting, or making a mark.\n\n'
-                                                      f'Action      :      Button\n'
+                                                      f'Action       :       Button\n'
                                                       f'Group "{groupNames[0]}": Left click OR 1\n'
                                                       f'Group "{groupNames[1]}": Right click OR 2\n' 
                                                       f'Group "{groupNames[2]}": 3\n'
@@ -253,7 +253,7 @@ class MainWindow(QMainWindow):
         exitMenu = QAction('&Exit', self)
         exitMenu.setShortcuts(['Esc','q'])
         exitMenu.setStatusTip('Exit')
-        exitMenu.triggered.connect(self.onExit)
+        exitMenu.triggered.connect(self.closeEvent)
         fileMenu.addAction(exitMenu)
 
         ## Edit menu
@@ -293,7 +293,7 @@ class MainWindow(QMainWindow):
         text, OK = QInputDialog.getText(self,"Startup", "Your name: (no caps, no space, e.g. ryanwalker)")
 
         if OK: return text
-        else: self.onExit()
+        else: self.closeEvent()
 
     def resizeEvent(self, event):
         '''
@@ -311,6 +311,8 @@ class MainWindow(QMainWindow):
         # Check if "Enter" was pressed
         if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter):
             self.onEnter()
+
+        # if (event.key() == Qt.Key.Key_Right)
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
@@ -448,7 +450,8 @@ class MainWindow(QMainWindow):
         self.commentUpdate()
         self.writeToTxt()
     
-    def onExit(self):
+    def closeEvent(self, event):
+        self.commentUpdate()
         sys.exit()
 
     def onMiddleMouse(self):
