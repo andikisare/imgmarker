@@ -251,7 +251,7 @@ class MainWindow(QMainWindow):
 
         ### Instructions and Keymapping window
         instructionsWindow = QAction('&Instructions and Keymapping', self)
-        instructionsWindow.setShortcuts(['i'])
+        instructionsWindow.setShortcuts(['F1'])
         instructionsWindow.setStatusTip('Instructions')
         instructionsWindow.triggered.connect(self.showInstructions)
         windowMenu.addAction(instructionsWindow)
