@@ -55,7 +55,7 @@ def panBindingCheck(event):
     try 
 """
 
-class InstructionWindow(QWidget):
+class HelpWindow(QWidget):
     """
     This window displays the instructions and keymappings
     """
@@ -74,24 +74,29 @@ class InstructionWindow(QWidget):
         qt_rectangle.moveCenter(center_point)
         self.move(-qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
 
-        self.instructions_and_keymapping = QTextEdit()
+        self.help_text = QTextEdit()
         
-        self.instructions_and_keymapping.setPlainText(f'ALL data is saved when pressing "Next," "Back," or "Enter" in the window,\n'
+        self.help_text.setPlainText(f'ALL data is saved when pressing "Next," "Back," or "Enter" in the window,\n'
                                                       f'as well as checking a problem, exiting, or making a mark.\n\n'
-                                                      f'Action       :       Button\n'
-                                                      f'Group "{groupNames[0]}": Left click OR 1\n'
-                                                      f'Group "{groupNames[1]}": Right click OR 2\n' 
-                                                      f'Group "{groupNames[2]}": 3\n'
-                                                      f'Group "{groupNames[3]}": 4\n'
-                                                      f'Group "{groupNames[4]}": 5\n'
-                                                      f'Group "{groupNames[5]}": 6\n'
-                                                      f'Group "{groupNames[6]}": 7\n'
-                                                      f'Group "{groupNames[7]}": 8\n'
-                                                      f'Group "{groupNames[8]}": 9\n\n'
-                                                      f'Save: Enter'
+                                                      f'Action                                                     Button\n'
+                                                      f'Group {groupNames[0]:<50} Left click OR 1\n'
+                                                      f'Group {groupNames[1]:<50} Right click OR 2\n' 
+                                                      f'Group {groupNames[2]:<50} 3\n'
+                                                      f'Group {groupNames[3]:<50} 4\n'
+                                                      f'Group {groupNames[4]:<50} 5\n'
+                                                      f'Group {groupNames[5]:<50} 6\n'
+                                                      f'Group {groupNames[6]:<50} 7\n'
+                                                      f'Group {groupNames[7]:<50} 8\n'
+                                                      f'Group {groupNames[8]:<50} 9\n\n'
+                                                      f'Save                                                       Enter\n'
+                                                      f'Pan                                                         Middle click\n'
+                                                      f'Zoom in/out                                         Scroll wheel\n'
+                                                      f'Save and close                                     Escape OR Q\n'
+                                                      f'Open help window (this window)     F1\n\n'
+                                                      f'To delete a mark, right click.'
         )
-        self.instructions_and_keymapping.setReadOnly(True)
-        layout.addWidget(self.instructions_and_keymapping)
+        self.help_text.setReadOnly(True)
+        layout.addWidget(self.help_text)
 
 class MainWindow(QMainWindow):
     def __init__(self, path = '', imtype = 'tif', parent=None):
@@ -264,17 +269,17 @@ class MainWindow(QMainWindow):
         windowMenu = menuBar.addMenu('&Help')
 
         ### Instructions and Keymapping window
-        instructionsWindow = QAction('&Instructions and Keymapping', self)
-        instructionsWindow.setShortcuts(['F1'])
-        instructionsWindow.setStatusTip('Instructions')
-        instructionsWindow.triggered.connect(self.showInstructions)
-        windowMenu.addAction(instructionsWindow)
+        helpWindow = QAction('&Instructions and Keymapping', self)
+        helpWindow.setShortcuts(['F1'])
+        helpWindow.setStatusTip('Instructions')
+        helpWindow.triggered.connect(self.showInstructions)
+        windowMenu.addAction(helpWindow)
 
         self.showInstructions()
 
     def showInstructions(self):
-        self.instructionWindow = InstructionWindow(self.group_names)
-        self.instructionWindow.show()
+        self.HelpWindow = HelpWindow(self.group_names)
+        self.HelpWindow.show()
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
@@ -285,6 +290,7 @@ class MainWindow(QMainWindow):
             elif x < 0:
                 self.zoomIn()
             return True
+        
         return super().eventFilter(source, event)
     
     # === Events ===
@@ -294,7 +300,7 @@ class MainWindow(QMainWindow):
         text, OK = QInputDialog.getText(self,"Startup", "Your name: (no caps, no space, e.g. ryanwalker)")
 
         if OK: return text
-        else: self.closeEvent()
+        else: sys.exit()
 
     def resizeEvent(self, event):
         '''
@@ -312,8 +318,6 @@ class MainWindow(QMainWindow):
         # Check if "Enter" was pressed
         if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter):
             self.onEnter()
-
-        # if (event.key() == Qt.Key.Key_Right)
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
