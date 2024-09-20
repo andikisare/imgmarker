@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar, QInputDialog, QCheckBox, QTextEdit
 from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction, QIcon
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, QPoint
 import sys
 import os
 import numpy as np
@@ -19,6 +19,9 @@ import datetime as dt
 
 __dirname__ = os.path.dirname(os.path.realpath(__file__))
 __icon__ = os.path.join(__dirname__,'icon.png')
+COLORS = [ QColor(0,0,0), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
+           QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
+           QColor(0,0,255),QColor(128,0,255),QColor(255,0,255) ]
 
 class DataDict(defaultdict):
     def __init__(self, *args, **kwargs):
@@ -26,7 +29,46 @@ class DataDict(defaultdict):
 
     def __repr__(self):
         return repr(dict(self))
+
+class Region(QGraphicsEllipseItem):
+    def __init__(self,parent,x:int,y:int,r:int=5,wcs:WCS=None,group:int=0):
+        super(Region, self).__init__(x-r,y-r,2*r,2*r)
+
+        self.r = r
+        self.wcs = wcs
+        self.g = group
+        self.c = COLORS[self.g]
+        self.parent = parent
+        
+    def center(self):
+        return QPoint(self.x()+self.r,self.y()+self.r)
     
+    def x(self):
+        return int(self.rect().x())
+    
+    def y(self):
+        return int(self.rect().y())
+    
+    def centerWCS(self):
+        if self.wcs != None:
+            _x, _y = self.center().x(), self.wcs._naxis[0] - self.center().y()
+            return self.wcs.all_pix2world([[_x, _y]], 0)[0]
+        else: raise NameError('No WCS solution provided')
+
+    def draw(self):
+        self.setPen(QPen(self.c, 1, Qt.PenStyle.SolidLine))
+        self.parent.image_scene.addItem(self)
+    
+    def setCenter(self,x:int,y:int):
+        self.setPos(x-self.r,y-self.r)
+
+    def setWCS(self,wcs:WCS):
+        self.wcs = wcs
+
+    def remove(self):
+        self.parent.image_scene.removeItem(self)
+        self.parent.data[self.parent.image_name][self.g]['Regions'].remove(self)
+
 def markBindingCheck(event):
     button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
 
@@ -48,12 +90,31 @@ def markBindingCheck(event):
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
 
-"""
-# Use this function for correlating middle mouse button to a keyboard button, do later
-def panBindingCheck(event):
-    middleMouse = False
-    try 
-"""
+def parseWCS(image_tif):
+    #tif_image_data = np.array(Image.open(image_tif))
+    img = Image.open(image_tif)
+    meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
+    
+    long_header_str = meta_dict['ImageDescription'][0]
+
+    line_length = 80
+
+    # Splitting the string into lines of 80 characters
+    lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
+    
+    # Join the lines with newline characters to form a properly formatted header string
+    corrected_header_str = "\n".join(lines)
+
+        # Use an IO stream to mimic a file
+    header_stream = io.StringIO(corrected_header_str)
+
+    # Read the header using astropy.io.fits
+    header = fits.Header.fromtextfile(header_stream)
+
+    # Create a WCS object from the header
+    wcs = WCS(header)
+    return wcs
+
 
 class HelpWindow(QWidget):
     """
@@ -126,18 +187,16 @@ class MainWindow(QMainWindow):
 
         self.image = self.images[self.idx]
         self.image_name = self.image.split(os.sep)[-1].split('.')[0]
-        self.wcs = self.parseWCS(self.image)
+        self.wcs = parseWCS(self.image)
 
         # Initialize output dictionary
         self.data = DataDict()
-        self.colors = [QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
-                  QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
-                  QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
+        
         
         # Intiialize user
         self.username = ""
         self.username = self.getText()
-        self.outfile = self.username + ".txt"
+        self.outfile = os.path.join(self.out_path, self.username + '.txt')
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
         self.comment = 'None'
 
@@ -265,21 +324,21 @@ class MainWindow(QMainWindow):
         ## Edit menu
         fileMenu = menuBar.addMenu("&Edit")
 
-        ## Window menu
-        windowMenu = menuBar.addMenu('&Help')
+        ## Help menu
+        helpMenu = menuBar.addMenu('&Help')
 
         ### Instructions and Keymapping window
-        helpWindow = QAction('&Instructions and Keymapping', self)
-        helpWindow.setShortcuts(['F1'])
-        helpWindow.setStatusTip('Instructions')
-        helpWindow.triggered.connect(self.showInstructions)
-        windowMenu.addAction(helpWindow)
+        instructionsMenu = QAction('&Instructions and Keymapping', self)
+        instructionsMenu.setShortcuts(['F1'])
+        instructionsMenu.setStatusTip('Instructions')
+        instructionsMenu.triggered.connect(self.showInstructions)
+        helpMenu.addAction(instructionsMenu)
 
         self.showInstructions()
 
     def showInstructions(self):
-        self.HelpWindow = HelpWindow(self.group_names)
-        self.HelpWindow.show()
+        self.helpWindow = HelpWindow(self.group_names)
+        self.helpWindow.show()
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
@@ -290,7 +349,6 @@ class MainWindow(QMainWindow):
             elif x < 0:
                 self.zoomIn()
             return True
-        
         return super().eventFilter(source, event)
     
     # === Events ===
@@ -300,7 +358,7 @@ class MainWindow(QMainWindow):
         text, OK = QInputDialog.getText(self,"Startup", "Your name: (no caps, no space, e.g. ryanwalker)")
 
         if OK: return text
-        else: sys.exit()
+        else: self.closeEvent()
 
     def resizeEvent(self, event):
         '''
@@ -319,6 +377,8 @@ class MainWindow(QMainWindow):
         if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter):
             self.onEnter()
 
+        # if (event.key() == Qt.Key.Key_Right)
+
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
         markButtons = markBindingCheck(event)
@@ -327,6 +387,9 @@ class MainWindow(QMainWindow):
         
         if (event.button() == Qt.MouseButton.MiddleButton):
             self.onMiddleMouse()
+
+        if (event.button() == Qt.MouseButton.RightButton):
+            self.getSelectedRegions()
 
     # === On-actions ===
     def onProblemOne(self):
@@ -414,19 +477,14 @@ class MainWindow(QMainWindow):
         
         # Mark if hovering over image  
         if self._pixmap_item is self.image_view.itemAt(ep):    
-            x, y = lp.x(), self.pixmap.height() - lp.y()
-            ra, dec = self.wcs.all_pix2world([[x, y]], 0)[0]
 
-            self.drawCircle(lp.x(),lp.y(),c=self.colors[group-1])
+            region = Region(self,lp.x(),lp.y(),wcs=self.wcs,group=group)
+            region.draw()
 
-            if not self.data[self.image_name][group]['RA']:
-                self.data[self.image_name][group]['RA'] = []
+            if not self.data[self.image_name][group]['Regions']:
+                self.data[self.image_name][group]['Regions'] = []
 
-            if not self.data[self.image_name][group]['DEC']: 
-                self.data[self.image_name][group]['DEC'] = []
-
-            self.data[self.image_name][group]['RA'].append(ra)
-            self.data[self.image_name][group]['DEC'].append(dec)
+            self.data[self.image_name][group]['Regions'].append(region)
             self.writeToTxt()
 
     def onNext(self):
@@ -435,7 +493,7 @@ class MainWindow(QMainWindow):
             self.idx += 1
             self.commentUpdate()
             self.imageUpdate()
-            self.redraw()
+            self.regionUpdate()
             self.getComment()
             self.problemUpdate()
             # self.writeToTxt()
@@ -446,7 +504,7 @@ class MainWindow(QMainWindow):
             self.idx -= 1
             self.commentUpdate()
             self.imageUpdate()
-            self.redraw()
+            self.regionUpdate()
             self.getComment()
             self.problemUpdate()
             # self.writeToTxt()
@@ -474,7 +532,7 @@ class MainWindow(QMainWindow):
     # === Update methods ===
 
     def imageUpdate(self):
-        self.image_scene.clear()   
+        for item in self.image_scene.items(): self.image_scene.removeItem(item)
 
         # Update the pixmap
         self.image = self.images[self.idx]
@@ -490,7 +548,7 @@ class MainWindow(QMainWindow):
         self.image_label.setText(f'{self.image_name}')
 
         #Update WCS
-        self.wcs = self.parseWCS(self.image)
+        self.wcs = parseWCS(self.image)
     
     def commentUpdate(self):
         # Update the comment in the dictionary
@@ -535,29 +593,30 @@ class MainWindow(QMainWindow):
             if (problem == 5):
                 self.problem_other_box.setChecked(True)
 
-    def redraw(self):
-        # Redraws circles if you go back or forward
-        for i in range(0,9):
-            RA_list = self.data[self.image_name][i+1]['RA']
-            DEC_list = self.data[self.image_name][i+1]['DEC']
+    def regionUpdate(self):
+        # Redraws all regions in image
+        for i in range(0,10):
+            region_list = self.data[self.image_name][i]['Regions']
 
-            if not RA_list or not DEC_list: pass
-            else:
-                for j in range(0,len(RA_list)):
-   
-                    x,y = self.wcs.all_world2pix([[RA_list[j], DEC_list[j]]], 0)[0]
+            if bool(region_list):
+                for region in region_list: region.draw()
 
-                    y += self.pixmap.height() - 2*y
+    def getSelectedRegions(self):
+        _, pix_pos = self.mouseImagePos()
+        pix_pos = pix_pos.toPointF()
+        selection_filt = [ item is self.image_scene.itemAt(pix_pos, item.transform()) 
+                           for item in self.image_scene.items() 
+                           if isinstance(item,Region) ]
+        selected_items = [ item for item in self.image_scene.items() 
+                           if isinstance(item,Region) 
+                           and (item is self.image_scene.itemAt(pix_pos, item.transform()))]
+        
+        for item in selected_items:
+            item.remove()
+            self.writeToTxt()
 
-                    self.drawCircle(x,y,c=self.colors[i])
 
-    # === Interactions ===
-    
-    def drawCircle(self,x,y,c=Qt.GlobalColor.black,r=10):
-        ellipse = QGraphicsEllipseItem(x-r/2, y-r/2, r, r)
-        ellipse.setPen(QPen(c, 1, Qt.PenStyle.SolidLine))
-        self.image_scene.addItem(ellipse) 
-
+    # === Transformations ===
     def zoomIn(self):
         # Zoom in on cursor location
         view_pos, _ = self.mouseImagePos()
@@ -594,30 +653,7 @@ class MainWindow(QMainWindow):
 
         return view_pos, pix_pos
     
-    def parseWCS(self,image_tif):
-        #tif_image_data = np.array(Image.open(image_tif))
-        img = Image.open(image_tif)
-        meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
-        
-        long_header_str = meta_dict['ImageDescription'][0]
-
-        line_length = 80
-
-        # Splitting the string into lines of 80 characters
-        lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
-       
-        # Join the lines with newline characters to form a properly formatted header string
-        corrected_header_str = "\n".join(lines)
-
-         # Use an IO stream to mimic a file
-        header_stream = io.StringIO(corrected_header_str)
-
-        # Read the header using astropy.io.fits
-        header = fits.Header.fromtextfile(header_stream)
-
-        # Create a WCS object from the header
-        wcs = WCS(header)
-        return wcs
+    
 
     def checkUsername(self):
         return (self.username != "None") and (self.username != "")
@@ -632,6 +668,11 @@ class MainWindow(QMainWindow):
         dec_lengths = []
         problem_lengths = []
         comment_lengths = []
+
+        # Create the file
+        if os.path.exists(self.outfile): 
+            os.remove(self.outfile)
+        out = open(self.outfile,"a")
         
         if self.checkUsername() and self.data:
             names = list(self.data.keys())
@@ -642,20 +683,17 @@ class MainWindow(QMainWindow):
 
                 # Get list of groups containing data
                 level2_keys = list(self.data[name].keys())
-                groups = [key for key in level2_keys if isinstance(key,int) 
-                          and self.data[name][key]['RA'] 
-                          and self.data[name][key]['DEC']]
+                groups = [ key for key in level2_keys if isinstance(key,int) 
+                          and self.data[name][key]['Regions'] ]
 
                 # If there are no image problems, and there is data in groups, then add this data to lines
                 if (problem == 'None') and (len(groups) != 0):
                     for group in groups:
-                        group_name = self.group_names[group-1]
-                        RA_list = self.data[name][group]['RA']
-                        DEC_list = self.data[name][group]['DEC']
+                        group_name = self.group_names[group]
+                        region_list = self.data[name][group]['Regions']
 
-                        for i in range(0,len(RA_list)):
-                            ra = RA_list[i]
-                            dec = DEC_list[i]
+                        for region in region_list:
+                            ra, dec = region.centerWCS()
                             l = [self.date,name,group_name,ra,dec,problem,comment]
 
                             lines.append(l)
@@ -695,10 +733,6 @@ class MainWindow(QMainWindow):
             commentln = max(np.max(comment_lengths), 7) + 2
             dateln = 12
 
-            # Write the file
-            if os.path.exists(self.outfile): os.remove(self.outfile)
-            out = open(self.outfile,"a")
-
             out.write(f'{'date':^{dateln}}|{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'problem':^{problemln}}|{'comment':^{commentln}}\n')
 
             for l in lines:
@@ -731,10 +765,11 @@ class MainWindow(QMainWindow):
 
                 if var == 'groups':
                     self.group_names = val.split(',')
+                    self.group_names.insert(0, 'None')
 
                 if var == 'out_path':
                     if var == './': self.out_path = os.getcwd()
-                    else: self.out_path = var
+                    else: self.out_path = val
                     os.path.join(self.out_path,'')
 
                 if var == 'images_path':
@@ -745,7 +780,8 @@ class MainWindow(QMainWindow):
                 if var == 'problems':
                     self.problem_names = val.split(',')
                     self.problem_names.insert(0, 'None')
-            
+
+
             
 def main():
     app = QApplication(sys.argv)
