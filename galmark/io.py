@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from galmark.window import StartupWindow
 
 def readConfig(config='galmark.cfg'):
     '''
@@ -132,3 +133,8 @@ def writeToTxt(data,username,date):
             except: outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}}|{l[4]:^{decln}}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
             out.write(outline)
 
+def inputs(config='galmark.cfg'):
+    out_path, images_path, group_names, problem_names = readConfig(config)
+    username = StartupWindow().getUser()
+
+    return username, out_path, images_path, group_names, problem_names
