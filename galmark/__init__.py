@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QApplication
 from galmark.window import MainWindow, StartupWindow
 from galmark.io import readConfig
 
-def user_inputs(config='galmark.cfg'):
+def inputs(config='galmark.cfg'):
     out_path, images_path, group_names, problem_names = readConfig(config)
     username = StartupWindow().getUser()
 
@@ -19,7 +19,7 @@ def user_inputs(config='galmark.cfg'):
 def main():
     app = QApplication(sys.argv)
     
-    window = MainWindow(*user_inputs())
+    window = MainWindow(*inputs())
     window.show()
 
     app.exec()
