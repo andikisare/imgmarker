@@ -1,120 +1,17 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QGraphicsEllipseItem, QLineEdit, QMenuBar, QInputDialog, QCheckBox, QTextEdit
-from PyQt6.QtGui import QPixmap, QPen, QCursor, QColor, QAction, QIcon
-from PyQt6.QtCore import Qt, QSize, QPoint
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QTextEdit
+from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon
+from PyQt6.QtCore import Qt, QSize
+from galmark.utils import parseWCS, markBindingCheck, DataDict
+from galmark.region import Region
+from galmark.io import writeToTxt
 import sys
 import os
 import numpy as np
-import io
 import glob
-from PIL import Image
-import argparse
-import os
-import platform
-import sys
-from PIL.TiffTags import TAGS
-from astropy.wcs import WCS
-from astropy.io import fits
-from collections import defaultdict
 import datetime as dt
 
 __dirname__ = os.path.dirname(os.path.realpath(__file__))
 __icon__ = os.path.join(__dirname__,'icon.png')
-COLORS = [ QColor(0,0,0), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
-           QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
-           QColor(0,0,255),QColor(128,0,255),QColor(255,0,255) ]
-
-class DataDict(defaultdict):
-    def __init__(self, *args, **kwargs):
-        super(DataDict, self).__init__(DataDict, *args, **kwargs)
-
-    def __repr__(self):
-        return repr(dict(self))
-
-class Region(QGraphicsEllipseItem):
-    def __init__(self,parent,x:int,y:int,r:int=5,wcs:WCS=None,group:int=0):
-        super(Region, self).__init__(x-r,y-r,2*r,2*r)
-
-        self.r = r
-        self.wcs = wcs
-        self.g = group
-        self.c = COLORS[self.g]
-        self.parent = parent
-        
-    def center(self):
-        return QPoint(self.x()+self.r,self.y()+self.r)
-    
-    def x(self):
-        return int(self.rect().x())
-    
-    def y(self):
-        return int(self.rect().y())
-    
-    def centerWCS(self):
-        if self.wcs != None:
-            _x, _y = self.center().x(), self.wcs._naxis[0] - self.center().y()
-            return self.wcs.all_pix2world([[_x, _y]], 0)[0]
-        else: raise NameError('No WCS solution provided')
-
-    def draw(self):
-        self.setPen(QPen(self.c, 1, Qt.PenStyle.SolidLine))
-        self.parent.image_scene.addItem(self)
-    
-    def setCenter(self,x:int,y:int):
-        self.setPos(x-self.r,y-self.r)
-
-    def setWCS(self,wcs:WCS):
-        self.wcs = wcs
-
-    def remove(self):
-        self.parent.image_scene.removeItem(self)
-        self.parent.data[self.parent.image_name][self.g]['Regions'].remove(self)
-
-def markBindingCheck(event):
-    button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
-
-    try: button1 = event.button() == Qt.MouseButton.LeftButton
-    except: button1 = event.key() == Qt.Key.Key_1
-
-    try: button2 = event.button() == Qt.MouseButton.RightButton
-    except: button2 = event.key() == Qt.Key.Key_2
-
-    try:
-        button3 = event.key() == Qt.Key.Key_3
-        button4 = event.key() == Qt.Key.Key_4
-        button5 = event.key() == Qt.Key.Key_5
-        button6 = event.key() == Qt.Key.Key_6
-        button7 = event.key() == Qt.Key.Key_7
-        button8 = event.key() == Qt.Key.Key_8
-        button9 = event.key() == Qt.Key.Key_9
-    except: pass
-
-    return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
-
-def parseWCS(image_tif):
-    #tif_image_data = np.array(Image.open(image_tif))
-    img = Image.open(image_tif)
-    meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
-    
-    long_header_str = meta_dict['ImageDescription'][0]
-
-    line_length = 80
-
-    # Splitting the string into lines of 80 characters
-    lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
-    
-    # Join the lines with newline characters to form a properly formatted header string
-    corrected_header_str = "\n".join(lines)
-
-        # Use an IO stream to mimic a file
-    header_stream = io.StringIO(corrected_header_str)
-
-    # Read the header using astropy.io.fits
-    header = fits.Header.fromtextfile(header_stream)
-
-    # Create a WCS object from the header
-    wcs = WCS(header)
-    return wcs
-
 
 class HelpWindow(QWidget):
     """
@@ -159,8 +56,20 @@ class HelpWindow(QWidget):
         self.help_text.setReadOnly(True)
         layout.addWidget(self.help_text)
 
+class StartupWindow(QInputDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowIcon(QIcon(__icon__))
+
+    def getUser(self):
+        # Make popup to get name
+        text, OK = self.getText(self,"Startup", "Your name: (no caps, no space, e.g. ryanwalker)")
+
+        if OK: return text
+        else: sys.exit()
+
 class MainWindow(QMainWindow):
-    def __init__(self, path = '', imtype = 'tif', parent=None):
+    def __init__(self, username, out_path, images_path, group_names, problem_names, imtype = 'tif'):
         '''
         Constructor
 
@@ -177,7 +86,10 @@ class MainWindow(QMainWindow):
 
         # Initialize config
         self.config = 'galmark.cfg'
-        self.readConfig()
+        self.out_path, self.images_path, self.group_names, self.problem_names =\
+        out_path, images_path, group_names, problem_names 
+        self.username = username
+        self.date = dt.datetime.now(dt.UTC).date().isoformat()
 
         # Initialize images and WCS
         self.imtype = imtype
@@ -191,13 +103,6 @@ class MainWindow(QMainWindow):
 
         # Initialize output dictionary
         self.data = DataDict()
-        
-        
-        # Intiialize user
-        self.username = ""
-        self.username = self.getText()
-        self.outfile = os.path.join(self.out_path, self.username + '.txt')
-        self.date = dt.datetime.now(dt.UTC).date().isoformat()
         self.comment = 'None'
 
         # Useful attributes
@@ -353,13 +258,6 @@ class MainWindow(QMainWindow):
     
     # === Events ===
 
-    def getText(self):
-        # Make popup to get name
-        text, OK = QInputDialog.getText(self,"Startup", "Your name: (no caps, no space, e.g. ryanwalker)")
-
-        if OK: return text
-        else: self.closeEvent()
-
     def resizeEvent(self, event):
         '''
         Resize event; rescales image to fit in window, but keeps aspect ratio
@@ -400,7 +298,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        self.writeToTxt()
+        writeToTxt(self.data,self.username,self.date)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
@@ -415,7 +313,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        self.writeToTxt()
+        writeToTxt(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
@@ -430,7 +328,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        self.writeToTxt()
+        writeToTxt(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_four_box.setChecked(False)
@@ -445,7 +343,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        self.writeToTxt()
+        writeToTxt(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
@@ -460,7 +358,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        self.writeToTxt()
+        writeToTxt(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
@@ -485,7 +383,7 @@ class MainWindow(QMainWindow):
                 self.data[self.image_name][group]['Regions'] = []
 
             self.data[self.image_name][group]['Regions'].append(region)
-            self.writeToTxt()
+            writeToTxt(self.data,self.username,self.date)
 
     def onNext(self):
         if self.idx+1 < self.N:
@@ -496,7 +394,7 @@ class MainWindow(QMainWindow):
             self.regionUpdate()
             self.getComment()
             self.problemUpdate()
-            # self.writeToTxt()
+            # writeToTxt(self.data,self.username,self.date)
 
     def onBack(self):
         if self.idx+1 > 1:
@@ -507,11 +405,11 @@ class MainWindow(QMainWindow):
             self.regionUpdate()
             self.getComment()
             self.problemUpdate()
-            # self.writeToTxt()
+            # writeToTxt(self.data,self.username,self.date)
             
     def onEnter(self):
         self.commentUpdate()
-        self.writeToTxt()
+        writeToTxt(self.data,self.username,self.date)
     
     def closeEvent(self, event):
         self.commentUpdate()
@@ -557,7 +455,7 @@ class MainWindow(QMainWindow):
             comment = 'None'
 
         self.data[self.image_name]['comment'] = comment
-        self.writeToTxt()
+        writeToTxt(self.data,self.username,self.date)
 
     def getComment(self):
         if bool(self.data[self.image_name]['comment']):
@@ -597,9 +495,8 @@ class MainWindow(QMainWindow):
         # Redraws all regions in image
         for i in range(0,10):
             region_list = self.data[self.image_name][i]['Regions']
-
-            if bool(region_list):
-                for region in region_list: region.draw()
+                
+            for region in region_list: region.draw()
 
     def getSelectedRegions(self):
         _, pix_pos = self.mouseImagePos()
@@ -613,8 +510,7 @@ class MainWindow(QMainWindow):
         
         for item in selected_items:
             item.remove()
-            self.writeToTxt()
-
+            writeToTxt(self.data,self.username,self.date)
 
     # === Transformations ===
     def zoomIn(self):
@@ -652,142 +548,6 @@ class MainWindow(QMainWindow):
         pix_pos = self._pixmap_item.mapFromScene(scene_pos).toPoint()
 
         return view_pos, pix_pos
+
+
     
-    
-
-    def checkUsername(self):
-        return (self.username != "None") and (self.username != "")
-    
-    # === I/O ===
-
-    def writeToTxt(self):
-        lines = []
-        name_lengths = []
-        group_lengths = []
-        ra_lengths = []
-        dec_lengths = []
-        problem_lengths = []
-        comment_lengths = []
-
-        # Create the file
-        if os.path.exists(self.outfile): 
-            os.remove(self.outfile)
-        out = open(self.outfile,"a")
-        
-        if self.checkUsername() and self.data:
-            names = list(self.data.keys())
-
-            for name in names:
-                comment = self.data[name]['comment']
-                problem = self.problem_names[self.data[name]['problem']]
-
-                # Get list of groups containing data
-                level2_keys = list(self.data[name].keys())
-                groups = [ key for key in level2_keys if isinstance(key,int) 
-                          and self.data[name][key]['Regions'] ]
-
-                # If there are no image problems, and there is data in groups, then add this data to lines
-                if (problem == 'None') and (len(groups) != 0):
-                    for group in groups:
-                        group_name = self.group_names[group]
-                        region_list = self.data[name][group]['Regions']
-
-                        for region in region_list:
-                            ra, dec = region.centerWCS()
-                            l = [self.date,name,group_name,ra,dec,problem,comment]
-
-                            lines.append(l)
-                            name_lengths.append(len(name))
-                            group_lengths.append(len(group_name))
-                            ra_lengths.append(len(f'{ra:.8f}'))
-                            dec_lengths.append(len(f'{dec:.8f}'))
-                            problem_lengths.append(len(problem))
-                            comment_lengths.append(len(comment))
-                
-                # Otherwise, if there is a problem or a comment, replace ra/dec with NaNs
-                elif (problem != 'None') or (comment != 'None'):
-                    group_name = 'None'
-                    ra = 'NaN'
-                    dec = 'NaN'
-                    l = [self.date,name,group_name,ra,dec,problem,comment]
-
-                    lines.append(l)
-                    name_lengths.append(len(name))
-                    group_lengths.append(len(group_name))
-                    ra_lengths.append(len(ra))
-                    dec_lengths.append(len(dec))
-                    problem_lengths.append(len(problem))
-                    comment_lengths.append(len(comment))
-                
-                # Otherwise, (no comment, no problem, and no data) delete entry from dictionary
-                else: pass
-
-        # Print out lines if there are lines to print
-        if len(lines) != 0:
-            # Dynamically adjust column widths
-            nameln = np.max(name_lengths) + 2
-            groupln = max(np.max(group_lengths), 5) + 2
-            raln = max(np.max(ra_lengths), 2) + 2
-            decln = max(np.max(dec_lengths), 2) + 2
-            problemln = max(np.max(problem_lengths), 9) + 2
-            commentln = max(np.max(comment_lengths), 7) + 2
-            dateln = 12
-
-            out.write(f'{'date':^{dateln}}|{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'problem':^{problemln}}|{'comment':^{commentln}}\n')
-
-            for l in lines:
-                try: outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}.8f}|{l[4]:^{decln}.8f}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
-                except: outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}}|{l[4]:^{decln}}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
-                out.write(outline)
-
-    def readConfig(self):
-        '''
-        Read each line from the config and parse it
-        '''
-
-        # If the config doesn't exist, create one
-        if not os.path.exists(self.config):
-            config_file = open(self.config,'w')
-            self.group_names = ['1','2','3','4','5','6','7','8','9']
-            self.out_path = os.path.join(os.getcwd(),'')
-            self.images_path = os.path.join(os.getcwd(),'')
-            self.problem_names = ['None','not_centered','bad_scaling','no_cluster','high_redshift','other']
-
-            config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
-            config_file.write(f'out_path = {self.out_path}\n')
-            config_file.write(f'images_path = {self.images_path}\n')
-            config_file.write(f'problems = {self.problem_names[1]},{self.problem_names[2]},{self.problem_names[3]},{self.problem_names[4]},{self.problem_names[5]}')
-
-
-        else:
-            for l in open(self.config):
-                var, val = l.replace(' ','').replace('\n','').split('=')
-
-                if var == 'groups':
-                    self.group_names = val.split(',')
-                    self.group_names.insert(0, 'None')
-
-                if var == 'out_path':
-                    if var == './': self.out_path = os.getcwd()
-                    else: self.out_path = val
-                    os.path.join(self.out_path,'')
-
-                if var == 'images_path':
-                    if val == './': self.images_path = os.getcwd()
-                    else: self.images_path = val
-                    self.images_path =  os.path.join(self.images_path,'')
-
-                if var == 'problems':
-                    self.problem_names = val.split(',')
-                    self.problem_names.insert(0, 'None')
-
-
-            
-def main():
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    app.exec()
-
-if __name__ == '__main__': main()
-
