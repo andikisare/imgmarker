@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QGraphicsEllipseItem
 from PyQt6.QtGui import QPen
 from PyQt6.QtCore import Qt, QPoint
-from utils import COLORS
+from galmark.utils import COLORS
 from astropy.wcs import WCS
 
 class Region(QGraphicsEllipseItem):

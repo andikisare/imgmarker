@@ -26,6 +26,6 @@ include = ["galmark"]
 galmark = ["*.png"]
 
 [project.scripts]
-galmark = "galmark.galmark:main"
+galmark = "galmark.__init__:main"
 
 
