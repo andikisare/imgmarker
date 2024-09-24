@@ -94,13 +94,11 @@ class MainWindow(QMainWindow):
         self.N = len(self.images)
 
         self.image = self.images[self.idx]
-        self.image_name = self.image.split(os.sep)[-1].split('.')[0]
+        self.image_name = self.image.split(os.sep)[-1]
         self.wcs = galmark.io.parseWCS(self.image)
 
         # Initialize output dictionary
-        save_path = os.path.join(__dirname__,username + '.pkl')
-        if os.path.exists(save_path): self.data = galmark.io.load(username)
-        else: self.data = galmark.io.DataDict()
+        self.data = galmark.io.load(username)
 
         # Useful attributes
         self.fullw = self.screen().size().width()
@@ -433,7 +431,7 @@ class MainWindow(QMainWindow):
 
         # Update the pixmap
         self.image = self.images[self.idx]
-        self.image_name = self.image.replace('\\','/').split('/')[-1].split('.')[0]
+        self.image_name = self.image.split(os.sep)[-1]
         self.pixmap = QPixmap(self.image)
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)

@@ -113,10 +113,11 @@ def checkUsername(username):
     return (username != "None") and (username != "")
 
 def save(data,username,date):
-    data_pkl = []
     lines = []
     name_lengths = []
     group_lengths = []
+    x_lengths = []
+    y_lengths = []
     ra_lengths = []
     dec_lengths = []
     problem_lengths = []
@@ -124,14 +125,12 @@ def save(data,username,date):
 
     out_path, images_path, group_names, problem_names = readConfig()
     outfile = os.path.join(out_path, username + '.txt')
-    outpkl = os.path.join(__dirname__, username + '.pkl')
     
     # Create the file
     if os.path.exists(outfile): 
         os.remove(outfile)
     out = open(outfile,"a")
 
-    
     if checkUsername(username) and data:
         names = list(data.keys())
 
@@ -152,25 +151,24 @@ def save(data,username,date):
 
                     for region in region_list:
                         ra, dec = region.centerWCS()
-                        l = [date,name,group_name,ra,dec,problem,comment]
+                        x, y = region.center().x(), region.center().y()
+                        l = [date,name,group_name,x,y,ra,dec,problem,comment]
 
                         lines.append(l)
                         name_lengths.append(len(name))
                         group_lengths.append(len(group_name))
+                        x_lengths.append(len(str(x)))
+                        y_lengths.append(len(str(y)))
                         ra_lengths.append(len(f'{ra:.8f}'))
                         dec_lengths.append(len(f'{dec:.8f}'))
                         problem_lengths.append(len(problem))
                         comment_lengths.append(len(comment))
-
-                        region_args = (region.center().x(), region.center().y())
-                        region_kwargs = {'r': region.r, 'wcs': region.wcs, 'group': region.g}
-                        region_data = [name,problem,comment,region_args,region_kwargs]
-                        
-                        data_pkl.append(region_data)
             
             # Otherwise, if there is a problem or a comment, replace ra/dec with NaNs
             elif (problem != 'None') or (comment != 'None'):
                 group_name = 'None'
+                x = 'NaN'
+                y = 'NaN'
                 ra = 'NaN'
                 dec = 'NaN'
                 l = [date,name,group_name,ra,dec,problem,comment]
@@ -178,6 +176,8 @@ def save(data,username,date):
                 lines.append(l)
                 name_lengths.append(len(name))
                 group_lengths.append(len(group_name))
+                x_lengths.append(len(x))
+                y_lengths.append(len(y))
                 ra_lengths.append(len(ra))
                 dec_lengths.append(len(dec))
                 problem_lengths.append(len(problem))
@@ -191,57 +191,56 @@ def save(data,username,date):
         # Dynamically adjust column widths
         nameln = np.max(name_lengths) + 2
         groupln = max(np.max(group_lengths), 5) + 2
+        xln = max(np.max(x_lengths), 1) + 2
+        yln = max(np.max(y_lengths), 1) + 2
         raln = max(np.max(ra_lengths), 2) + 2
         decln = max(np.max(dec_lengths), 2) + 2
         problemln = max(np.max(problem_lengths), 9) + 2
         commentln = max(np.max(comment_lengths), 7) + 2
         dateln = 12
 
-        out.write(f'{'date':^{dateln}}|{'name':^{nameln}}|{'group':^{groupln}}|{'RA':^{raln}}|{'DEC':^{decln}}|{'problem':^{problemln}}|{'comment':^{commentln}}\n')
+        l_fmt = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
+                  f'^{xln}', f'^{yln}', f'^{raln}.8f', f'^{decln}.8f',
+                  f'^{problemln}', f'^{commentln}' ]
+        l_fmt_nofloat = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
+                          f'^{xln}', f'^{yln}', f'^{raln}', f'^{decln}',
+                          f'^{problemln}', f'^{commentln}' ]
+        
+        header = ['date','image','group','x','y','RA','DEC','problem','comment']
+        header = ''.join(f'{h:{l_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
+        
+        out.write(header)
 
         for l in lines:
-            try: outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}.8f}|{l[4]:^{decln}.8f}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
-            except: outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}}|{l[4]:^{decln}}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
+            try: outline = ''.join(f'{_l:{l_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
+            except: outline = ''.join(f'{_l:{l_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
             out.write(outline)
-
-        pickle.dump(data_pkl, open(outpkl, 'wb'))
 
 def load(username,config='galmark.cfg'):
     out_path, images_path, group_names, problem_names = readConfig(config=config)
     outfile = os.path.join(out_path,username+'.txt')
-    savefile = os.path.join(__dirname__,username+'.pkl')
-    
-    raw_data = np.loadtxt(outfile,delimiter='|',dtype=str)[1:]
-    date_list = [ d.replace(' ', '') for d in raw_data[:,0] ]
-    name_list = [ n.replace(' ', '') for n in  raw_data[:,1] ]
-    group_list = [ g.replace(' ', '') for g in raw_data[:,2] ]
-    RA_list = [ float(ra.replace(' ', '')) for ra in raw_data[:,3] ]
-    DEC_list = [ float(dec.replace(' ', '')) for dec in raw_data[:,4] ]
-    problem_list = [ p.replace(' ', '') for p in raw_data[:,5] ]
-    comment_list = [ c.replace(' ', '') for c in raw_data[:,6] ]
-
-    data_pkl = pickle.load(open(savefile,'rb'))
     data = DataDict()
+    skip = True
 
-    for region_data in data_pkl:
-        name = region_data[0]
-        problem = region_data[1]
-        comment = region_data[2]
-        region_args = region_data[3]
-        region_kwargs = region_data[4]
+    for l in open(outfile):
+        if skip: skip = False
+        else:
+            date,name,group,x,y,ra,dec,problem,comment = l.replace(' ','').replace('|\n','').split('|')
+            group_idx = group_names.index(group)
+            problem_idx = problem_names.index(problem)
 
-        group_idx = region_kwargs['group']
-        problem_idx = problem_names.index(problem)
+            region_args = (int(x),int(y))
+            region_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
 
-        data[name]['comment'] = comment
-        data[name]['problem'] = problem_idx
+            data[name]['comment'] = comment
+            data[name]['problem'] = problem_idx
 
-        region = Region(*region_args, **region_kwargs)
+            region = Region(*region_args, **region_kwargs)
 
-        if not data[name][group_idx]['Regions']:
-            data[name][group_idx]['Regions'] = []
+            if not data[name][group_idx]['Regions']:
+                data[name][group_idx]['Regions'] = []
 
-        data[name][group_idx]['Regions'].append(region)
+            data[name][group_idx]['Regions'].append(region)
 
     return data
 
