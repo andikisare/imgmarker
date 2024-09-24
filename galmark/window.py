@@ -8,6 +8,7 @@ import sys
 import os
 import glob
 import datetime as dt
+import numpy as np
 
 class HelpWindow(QWidget):
     """
@@ -33,21 +34,21 @@ class HelpWindow(QWidget):
         self.help_text.setPlainText(f'ALL data is saved when pressing "Next," "Back," or "Enter" in the window,\n'
                                                       f'as well as checking a problem, exiting, or making a mark.\n\n'
                                                       f'Action                                                     Button\n'
-                                                      f'Group {groupNames[0]:<50} Left click OR 1\n'
-                                                      f'Group {groupNames[1]:<50} Right click OR 2\n' 
-                                                      f'Group {groupNames[2]:<50} 3\n'
-                                                      f'Group {groupNames[3]:<50} 4\n'
-                                                      f'Group {groupNames[4]:<50} 5\n'
-                                                      f'Group {groupNames[5]:<50} 6\n'
-                                                      f'Group {groupNames[6]:<50} 7\n'
-                                                      f'Group {groupNames[7]:<50} 8\n'
-                                                      f'Group {groupNames[8]:<50} 9\n\n'
+                                                      f'Group {groupNames[1]:<50} Left click OR 1\n'
+                                                      f'Group {groupNames[2]:<50} 2\n' 
+                                                      f'Group {groupNames[3]:<50} 3\n'
+                                                      f'Group {groupNames[4]:<50} 4\n'
+                                                      f'Group {groupNames[5]:<50} 5\n'
+                                                      f'Group {groupNames[6]:<50} 6\n'
+                                                      f'Group {groupNames[7]:<50} 7\n'
+                                                      f'Group {groupNames[8]:<50} 8\n'
+                                                      f'Group {groupNames[9]:<50} 9\n\n'
                                                       f'Save                                                       Enter\n'
                                                       f'Pan                                                         Middle click\n'
                                                       f'Zoom in/out                                         Scroll wheel\n'
                                                       f'Save and close                                     Escape OR Q\n'
                                                       f'Open help window (this window)     F1\n\n'
-                                                      f'To delete a mark, right click.'
+                                                      f'Delete mark                                         Right click (on mark)'
         )
         self.help_text.setReadOnly(True)
         layout.addWidget(self.help_text)
@@ -87,18 +88,48 @@ class MainWindow(QMainWindow):
         self.username = username
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
 
-        # Initialize images and WCS
-        self.imtype = imtype
-        self.idx = 0
-        self.images = glob.glob(self.images_path + '*.' + self.imtype)
-        self.N = len(self.images)
-
-        self.image = self.images[self.idx]
-        self.image_name = self.image.split(os.sep)[-1]
-        self.wcs = galmark.io.parseWCS(self.image)
-
         # Initialize output dictionary
         self.data = galmark.io.load(username)
+
+
+        # Initialize images and WCS
+        self.imtype = imtype
+        self.all_files = glob.glob(self.images_path + '*.' + self.imtype)
+        self.all_images = []
+
+        for file in self.all_files:
+            self.all_images.append(file.split(os.sep)[-1])
+
+        self.edited_images = []
+        if (self.data):
+            self.edited_images = list(self.data.keys())
+            self.unedited_images = [i for i in self.all_images if i not in self.edited_images]
+        else:
+            self.unedited_images = self.all_images
+        
+        rng = np.random.default_rng()
+        rng.shuffle(self.unedited_images)
+
+        self.unedited_files = []
+
+        for file in self.unedited_images:
+            self.unedited_files.append(self.images_path + file)
+        
+        if (len(self.edited_images) > 0):
+            self.edited_files = []
+            for file in self.edited_images:
+                self.edited_files.append(self.images_path + file)
+            self.images = self.edited_files + self.unedited_files
+            self.idx = len(self.edited_files)
+        else:
+            self.images = self.unedited_files
+            self.idx = 0
+
+        self.N = len(self.images)
+        self.image = self.images[self.idx]
+        
+        self.file_name = self.image.split(os.sep)[-1]
+        self.wcs = galmark.io.parseWCS(self.image)
 
         # Useful attributes
         self.fullw = self.screen().size().width()
@@ -117,7 +148,7 @@ class MainWindow(QMainWindow):
         self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Current image name widget
-        self.image_label = QLabel(f'{self.image_name}')
+        self.image_label = QLabel(f'{self.file_name}')
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Create image view
@@ -289,12 +320,12 @@ class MainWindow(QMainWindow):
     # === On-actions ===
     def onProblemOne(self):
         if (self.problem_one_box.checkState().value == 2):
-            self.data[self.image_name]['problem'] = 1
+            self.data[self.file_name]['problem'] = 1
             for i in range(1,10):
-                try: del self.data[self.image_name][i]
+                try: del self.data[self.file_name][i]
                 except: pass
         else:
-            self.data[self.image_name]['problem'] = 0
+            self.data[self.file_name]['problem'] = 0
         galmark.io.save(self.data,self.username,self.date)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
@@ -304,12 +335,12 @@ class MainWindow(QMainWindow):
 
     def onProblemTwo(self):
         if (self.problem_two_box.checkState().value == 2):
-            self.data[self.image_name]['problem'] = 2
+            self.data[self.file_name]['problem'] = 2
             for i in range(1,10):
-                try: del self.data[self.image_name][i]
+                try: del self.data[self.file_name][i]
                 except: pass
         else:
-            self.data[self.image_name]['problem'] = 0
+            self.data[self.file_name]['problem'] = 0
         galmark.io.save(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_three_box.setChecked(False)
@@ -319,12 +350,12 @@ class MainWindow(QMainWindow):
 
     def onProblemThree(self):
         if (self.problem_three_box.checkState().value == 2):
-            self.data[self.image_name]['problem'] = 3
+            self.data[self.file_name]['problem'] = 3
             for i in range(1,10):
-                try: del self.data[self.image_name][i]
+                try: del self.data[self.file_name][i]
                 except: pass
         else:
-            self.data[self.image_name]['problem'] = 0
+            self.data[self.file_name]['problem'] = 0
         galmark.io.save(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
@@ -334,12 +365,12 @@ class MainWindow(QMainWindow):
 
     def onProblemFour(self):
         if (self.problem_four_box.checkState().value == 2):
-            self.data[self.image_name]['problem'] = 4
+            self.data[self.file_name]['problem'] = 4
             for i in range(1,10):
-                try: del self.data[self.image_name][i]
+                try: del self.data[self.file_name][i]
                 except: pass
         else:
-            self.data[self.image_name]['problem'] = 0
+            self.data[self.file_name]['problem'] = 0
         galmark.io.save(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
@@ -349,12 +380,12 @@ class MainWindow(QMainWindow):
 
     def onProblemOther(self):
         if (self.problem_other_box.checkState().value == 2):
-            self.data[self.image_name]['problem'] = 5
+            self.data[self.file_name]['problem'] = 5
             for i in range(1,10):
-                try: del self.data[self.image_name][i]
+                try: del self.data[self.file_name][i]
                 except: pass
         else:
-            self.data[self.image_name]['problem'] = 0
+            self.data[self.file_name]['problem'] = 0
         galmark.io.save(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
@@ -376,10 +407,10 @@ class MainWindow(QMainWindow):
             region = Region(lp.x(),lp.y(),wcs=self.wcs,group=group)
             region.draw(self.image_scene)
 
-            if not self.data[self.image_name][group]['Regions']:
-                self.data[self.image_name][group]['Regions'] = []
+            if not self.data[self.file_name][group]['Regions']:
+                self.data[self.file_name][group]['Regions'] = []
 
-            self.data[self.image_name][group]['Regions'].append(region)
+            self.data[self.file_name][group]['Regions'].append(region)
             galmark.io.save(self.data,self.username,self.date)
 
     def onNext(self):
@@ -431,7 +462,7 @@ class MainWindow(QMainWindow):
 
         # Update the pixmap
         self.image = self.images[self.idx]
-        self.image_name = self.image.split(os.sep)[-1]
+        self.file_name = self.image.split(os.sep)[-1]
         self.pixmap = QPixmap(self.image)
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)
@@ -440,7 +471,7 @@ class MainWindow(QMainWindow):
         self.idx_label.setText(f'Image {self.idx+1} of {self.N}')
 
         # Update image label
-        self.image_label.setText(f'{self.image_name}')
+        self.image_label.setText(f'{self.file_name}')
 
         #Update WCS
         self.wcs = galmark.io.parseWCS(self.image)
@@ -451,19 +482,19 @@ class MainWindow(QMainWindow):
         if not comment:
             comment = 'None'
 
-        self.data[self.image_name]['comment'] = comment
+        self.data[self.file_name]['comment'] = comment
         galmark.io.save(self.data,self.username,self.date)
 
     def getComment(self):
-        if bool(self.data[self.image_name]['comment']):
-            if (self.data[self.image_name]['comment'] == 'None'):
+        if bool(self.data[self.file_name]['comment']):
+            if (self.data[self.file_name]['comment'] == 'None'):
                 self.comment_box.setText('')
             else:
-                comment = self.data[self.image_name]['comment']
+                comment = self.data[self.file_name]['comment']
                 self.comment_box.setText(comment)
         else:
             comment = 'None'
-            self.data[self.image_name]['comment'] = comment
+            self.data[self.file_name]['comment'] = comment
             self.comment_box.setText('')
 
     def problemUpdate(self):
@@ -473,10 +504,10 @@ class MainWindow(QMainWindow):
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
         self.problem_other_box.setChecked(False)
-        if not (self.data[self.image_name]['problem']):
-            self.data[self.image_name]['problem'] = 0
+        if not (self.data[self.file_name]['problem']):
+            self.data[self.file_name]['problem'] = 0
         else:
-            problem = self.data[self.image_name]['problem']
+            problem = self.data[self.file_name]['problem']
             if (problem == 1):
                 self.problem_one_box.setChecked(True)
             if (problem == 2):
@@ -491,7 +522,7 @@ class MainWindow(QMainWindow):
     def regionUpdate(self):
         # Redraws all regions in image
         for i in range(0,10):
-            region_list = self.data[self.image_name][i]['Regions']
+            region_list = self.data[self.file_name][i]['Regions']
                 
             for region in region_list: region.draw(self.image_scene)
 
@@ -507,7 +538,7 @@ class MainWindow(QMainWindow):
         
         for item in selected_items:
             self.image_scene.removeItem(item)
-            self.data[self.image_name][item.g]['Regions'].remove(item)
+            self.data[self.file_name][item.g]['Regions'].remove(item)
             galmark.io.save(self.data,self.username,self.date)
 
     # === Transformations ===
