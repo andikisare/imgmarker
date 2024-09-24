@@ -221,26 +221,27 @@ def load(username,config='galmark.cfg'):
     outfile = os.path.join(out_path,username+'.txt')
     data = DataDict()
     skip = True
+    
+    if os.path.exists(outfile):
+        for l in open(outfile):
+            if skip: skip = False
+            else:
+                date,name,group,x,y,ra,dec,problem,comment = l.replace(' ','').replace('|\n','').split('|')
+                group_idx = group_names.index(group)
+                problem_idx = problem_names.index(problem)
 
-    for l in open(outfile):
-        if skip: skip = False
-        else:
-            date,name,group,x,y,ra,dec,problem,comment = l.replace(' ','').replace('|\n','').split('|')
-            group_idx = group_names.index(group)
-            problem_idx = problem_names.index(problem)
+                region_args = (int(x),int(y))
+                region_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
 
-            region_args = (int(x),int(y))
-            region_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
+                data[name]['comment'] = comment
+                data[name]['problem'] = problem_idx
 
-            data[name]['comment'] = comment
-            data[name]['problem'] = problem_idx
+                region = Region(*region_args, **region_kwargs)
 
-            region = Region(*region_args, **region_kwargs)
+                if not data[name][group_idx]['Regions']:
+                    data[name][group_idx]['Regions'] = []
 
-            if not data[name][group_idx]['Regions']:
-                data[name][group_idx]['Regions'] = []
-
-            data[name][group_idx]['Regions'].append(region)
+                data[name][group_idx]['Regions'].append(region)
 
     return data
 
