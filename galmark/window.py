@@ -1,17 +1,13 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QTextEdit
 from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon
 from PyQt6.QtCore import Qt, QSize
-from galmark.utils import parseWCS, markBindingCheck, DataDict
 from galmark.region import Region
-from galmark.io import writeToTxt
+from galmark import __dirname__, __icon__ 
+import galmark.io
 import sys
 import os
-import numpy as np
 import glob
 import datetime as dt
-
-__dirname__ = os.path.dirname(os.path.realpath(__file__))
-__icon__ = os.path.join(__dirname__,'icon.png')
 
 class HelpWindow(QWidget):
     """
@@ -99,11 +95,12 @@ class MainWindow(QMainWindow):
 
         self.image = self.images[self.idx]
         self.image_name = self.image.split(os.sep)[-1].split('.')[0]
-        self.wcs = parseWCS(self.image)
+        self.wcs = galmark.io.parseWCS(self.image)
 
         # Initialize output dictionary
-        self.data = DataDict()
-        self.comment = 'None'
+        save_path = os.path.join(__dirname__,username + '.pkl')
+        if os.path.exists(save_path): self.data = galmark.io.load(username)
+        else: self.data = galmark.io.DataDict()
 
         # Useful attributes
         self.fullw = self.screen().size().width()
@@ -157,7 +154,6 @@ class MainWindow(QMainWindow):
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
         self.comment_box.setFixedHeight(40)
-        self.getComment()
     
         # Botton Bar layout
         self.bottom_layout = QHBoxLayout()
@@ -192,8 +188,6 @@ class MainWindow(QMainWindow):
         self.problem_other_box = QCheckBox(text='Other', parent=self)
         self.problem_other_box.setFixedHeight(40)
         self.problem_other_box.clicked.connect(self.onProblemOther)
-
-        self.problemUpdate()
 
         # Problems layout
         self.problems_layout = QHBoxLayout()
@@ -241,6 +235,11 @@ class MainWindow(QMainWindow):
 
         self.showInstructions()
 
+        # Initialize some data
+        self.getComment()
+        self.regionUpdate()
+        self.problemUpdate()
+
     def showInstructions(self):
         self.helpWindow = HelpWindow(self.group_names)
         self.helpWindow.show()
@@ -267,7 +266,7 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self,event):
         # Check if key is bound with marking the image
-        markButtons = markBindingCheck(event)
+        markButtons = galmark.io.markBindingCheck(event)
         for i in range(0,9):
             if markButtons[i]: self.onMark(group=i+1)
 
@@ -279,7 +278,7 @@ class MainWindow(QMainWindow):
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
-        markButtons = markBindingCheck(event)
+        markButtons = galmark.io.markBindingCheck(event)
         for i in range(0,9):
             if markButtons[i]: self.onMark(group=i+1)
         
@@ -298,7 +297,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        writeToTxt(self.data,self.username,self.date)
+        galmark.io.save(self.data,self.username,self.date)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
@@ -313,7 +312,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        writeToTxt(self.data,self.username,self.date)
+        galmark.io.save(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
@@ -328,7 +327,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        writeToTxt(self.data,self.username,self.date)
+        galmark.io.save(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_four_box.setChecked(False)
@@ -343,7 +342,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        writeToTxt(self.data,self.username,self.date)
+        galmark.io.save(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
@@ -358,7 +357,7 @@ class MainWindow(QMainWindow):
                 except: pass
         else:
             self.data[self.image_name]['problem'] = 0
-        writeToTxt(self.data,self.username,self.date)
+        galmark.io.save(self.data,self.username,self.date)
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
@@ -376,14 +375,14 @@ class MainWindow(QMainWindow):
         # Mark if hovering over image  
         if self._pixmap_item is self.image_view.itemAt(ep):    
 
-            region = Region(self,lp.x(),lp.y(),wcs=self.wcs,group=group)
-            region.draw()
+            region = Region(lp.x(),lp.y(),wcs=self.wcs,group=group)
+            region.draw(self.image_scene)
 
             if not self.data[self.image_name][group]['Regions']:
                 self.data[self.image_name][group]['Regions'] = []
 
             self.data[self.image_name][group]['Regions'].append(region)
-            writeToTxt(self.data,self.username,self.date)
+            galmark.io.save(self.data,self.username,self.date)
 
     def onNext(self):
         if self.idx+1 < self.N:
@@ -394,7 +393,7 @@ class MainWindow(QMainWindow):
             self.regionUpdate()
             self.getComment()
             self.problemUpdate()
-            # writeToTxt(self.data,self.username,self.date)
+            # galmark.io.save(self.data,self.username,self.date)
 
     def onBack(self):
         if self.idx+1 > 1:
@@ -405,11 +404,11 @@ class MainWindow(QMainWindow):
             self.regionUpdate()
             self.getComment()
             self.problemUpdate()
-            # writeToTxt(self.data,self.username,self.date)
+            # galmark.io.save(self.data,self.username,self.date)
             
     def onEnter(self):
         self.commentUpdate()
-        writeToTxt(self.data,self.username,self.date)
+        galmark.io.save(self.data,self.username,self.date)
     
     def closeEvent(self, event):
         self.commentUpdate()
@@ -446,7 +445,7 @@ class MainWindow(QMainWindow):
         self.image_label.setText(f'{self.image_name}')
 
         #Update WCS
-        self.wcs = parseWCS(self.image)
+        self.wcs = galmark.io.parseWCS(self.image)
     
     def commentUpdate(self):
         # Update the comment in the dictionary
@@ -455,7 +454,7 @@ class MainWindow(QMainWindow):
             comment = 'None'
 
         self.data[self.image_name]['comment'] = comment
-        writeToTxt(self.data,self.username,self.date)
+        galmark.io.save(self.data,self.username,self.date)
 
     def getComment(self):
         if bool(self.data[self.image_name]['comment']):
@@ -496,7 +495,7 @@ class MainWindow(QMainWindow):
         for i in range(0,10):
             region_list = self.data[self.image_name][i]['Regions']
                 
-            for region in region_list: region.draw()
+            for region in region_list: region.draw(self.image_scene)
 
     def getSelectedRegions(self):
         _, pix_pos = self.mouseImagePos()
@@ -509,8 +508,9 @@ class MainWindow(QMainWindow):
                            and (item is self.image_scene.itemAt(pix_pos, item.transform()))]
         
         for item in selected_items:
-            item.remove()
-            writeToTxt(self.data,self.username,self.date)
+            self.image_scene.removeItem(item)
+            self.data[self.image_name][item.g]['Regions'].remove(item)
+            galmark.io.save(self.data,self.username,self.date)
 
     # === Transformations ===
     def zoomIn(self):

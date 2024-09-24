@@ -4,6 +4,7 @@ import sys
 import os
 
 __dirname__ = os.path.dirname(os.path.realpath(__file__))
+__icon__ = os.path.join(__dirname__,'icon.png')
 sys.path.append(__dirname__.removesuffix('galmark'))
 
 from PyQt6.QtWidgets import QApplication

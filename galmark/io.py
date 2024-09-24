@@ -1,6 +1,69 @@
 import os
 import numpy as np
-from galmark.window import StartupWindow
+import galmark.window
+from galmark.region import Region
+from galmark import __dirname__
+from PyQt6.QtCore import Qt
+from PIL import Image
+from PIL.TiffTags import TAGS
+from astropy.wcs import WCS
+from astropy.io import fits
+from collections import defaultdict
+import io
+import pickle
+
+class DataDict(defaultdict):
+    def __init__(self, *args, **kwargs):
+        super(DataDict, self).__init__(DataDict, *args, **kwargs)
+
+    def __repr__(self):
+        return repr(dict(self))
+    
+def markBindingCheck(event):
+    button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
+
+    try: button1 = event.button() == Qt.MouseButton.LeftButton
+    except: button1 = event.key() == Qt.Key.Key_1
+
+    try: button2 = event.button() == Qt.MouseButton.RightButton
+    except: button2 = event.key() == Qt.Key.Key_2
+
+    try:
+        button3 = event.key() == Qt.Key.Key_3
+        button4 = event.key() == Qt.Key.Key_4
+        button5 = event.key() == Qt.Key.Key_5
+        button6 = event.key() == Qt.Key.Key_6
+        button7 = event.key() == Qt.Key.Key_7
+        button8 = event.key() == Qt.Key.Key_8
+        button9 = event.key() == Qt.Key.Key_9
+    except: pass
+
+    return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
+    
+def parseWCS(image_tif):
+    #tif_image_data = np.array(Image.open(image_tif))
+    img = Image.open(image_tif)
+    meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
+    
+    long_header_str = meta_dict['ImageDescription'][0]
+
+    line_length = 80
+
+    # Splitting the string into lines of 80 characters
+    lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
+    
+    # Join the lines with newline characters to form a properly formatted header string
+    corrected_header_str = "\n".join(lines)
+
+    # Use an IO stream to mimic a file
+    header_stream = io.StringIO(corrected_header_str)
+
+    # Read the header using astropy.io.fits
+    header = fits.Header.fromtextfile(header_stream)
+
+    # Create a WCS object from the header
+    wcs = WCS(header)
+    return wcs
 
 def readConfig(config='galmark.cfg'):
     '''
@@ -49,7 +112,8 @@ def readConfig(config='galmark.cfg'):
 def checkUsername(username):
     return (username != "None") and (username != "")
 
-def writeToTxt(data,username,date):
+def save(data,username,date):
+    data_pkl = []
     lines = []
     name_lengths = []
     group_lengths = []
@@ -60,6 +124,7 @@ def writeToTxt(data,username,date):
 
     out_path, images_path, group_names, problem_names = readConfig()
     outfile = os.path.join(out_path, username + '.txt')
+    outpkl = os.path.join(__dirname__, username + '.pkl')
     
     # Create the file
     if os.path.exists(outfile): 
@@ -96,6 +161,12 @@ def writeToTxt(data,username,date):
                         dec_lengths.append(len(f'{dec:.8f}'))
                         problem_lengths.append(len(problem))
                         comment_lengths.append(len(comment))
+
+                        region_args = (region.center().x(), region.center().y())
+                        region_kwargs = {'r': region.r, 'wcs': region.wcs, 'group': region.g}
+                        region_data = [name,problem,comment,region_args,region_kwargs]
+                        
+                        data_pkl.append(region_data)
             
             # Otherwise, if there is a problem or a comment, replace ra/dec with NaNs
             elif (problem != 'None') or (comment != 'None'):
@@ -133,8 +204,49 @@ def writeToTxt(data,username,date):
             except: outline = f'{l[0]:^{dateln}}|{l[1]:^{nameln}}|{l[2]:^{groupln}}|{l[3]:^{raln}}|{l[4]:^{decln}}|{l[5]:^{problemln}}|{l[6]:^{commentln}}\n'
             out.write(outline)
 
+        pickle.dump(data_pkl, open(outpkl, 'wb'))
+
+def load(username,config='galmark.cfg'):
+    out_path, images_path, group_names, problem_names = readConfig(config=config)
+    outfile = os.path.join(out_path,username+'.txt')
+    savefile = os.path.join(__dirname__,username+'.pkl')
+    
+    raw_data = np.loadtxt(outfile,delimiter='|',dtype=str)[1:]
+    date_list = [ d.replace(' ', '') for d in raw_data[:,0] ]
+    name_list = [ n.replace(' ', '') for n in  raw_data[:,1] ]
+    group_list = [ g.replace(' ', '') for g in raw_data[:,2] ]
+    RA_list = [ float(ra.replace(' ', '')) for ra in raw_data[:,3] ]
+    DEC_list = [ float(dec.replace(' ', '')) for dec in raw_data[:,4] ]
+    problem_list = [ p.replace(' ', '') for p in raw_data[:,5] ]
+    comment_list = [ c.replace(' ', '') for c in raw_data[:,6] ]
+
+    data_pkl = pickle.load(open(savefile,'rb'))
+    data = DataDict()
+
+    for region_data in data_pkl:
+        name = region_data[0]
+        problem = region_data[1]
+        comment = region_data[2]
+        region_args = region_data[3]
+        region_kwargs = region_data[4]
+
+        group_idx = region_kwargs['group']
+        problem_idx = problem_names.index(problem)
+
+        data[name]['comment'] = comment
+        data[name]['problem'] = problem_idx
+
+        region = Region(*region_args, **region_kwargs)
+
+        if not data[name][group_idx]['Regions']:
+            data[name][group_idx]['Regions'] = []
+
+        data[name][group_idx]['Regions'].append(region)
+
+    return data
+
 def inputs(config='galmark.cfg'):
     out_path, images_path, group_names, problem_names = readConfig(config)
-    username = StartupWindow().getUser()
+    username = galmark.window.StartupWindow().getUser()
 
     return username, out_path, images_path, group_names, problem_names
