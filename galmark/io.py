@@ -263,7 +263,8 @@ def glob(dir,ext,data_filt:DataDict={}):
 
     # Put edited images at the beginning, unedited images at front
     images = edited_images + unedited_images
-    idx = len(edited_images)
+    if len(edited_images) < len(all_images): idx = len(edited_images)
+    else: idx = len(edited_images) - 1
 
     return images, idx
 
