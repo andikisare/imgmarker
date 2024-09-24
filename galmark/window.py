@@ -368,7 +368,7 @@ class MainWindow(QMainWindow):
         # Mark if hovering over image
         
         if (self.data[self.image_file]['problem'] == 0):
-            if (self.region_limits[group] != 'None'):
+            if (self.region_limits[group - 1] != 'None'):
                 limit = int(self.region_limits[group - 1])
                 if (len(self.data[self.image_file][group]['Regions']) < limit):
                     if self._pixmap_item is self.image_view.itemAt(ep):
