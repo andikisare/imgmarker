@@ -77,13 +77,14 @@ def readConfig(config='galmark.cfg'):
         out_path = os.path.join(os.getcwd(),'')
         images_path = os.path.join(os.getcwd(),'')
         group_names = ['1','2','3','4','5','6','7','8','9']
-        problem_names = ['None','not_centered','bad_scaling','no_cluster','high_redshift','other']
+        problem_names = ['None','1','2','3','4','5']
+        region_limits = ['None','None','None','None','None','None','None','None','None']
 
         config_file.write(f'out_path = {out_path}\n')
         config_file.write(f'images_path = {images_path}\n')
         config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
-        config_file.write(f'problems = {problem_names[1]},{problem_names[2]},{problem_names[3]},{problem_names[4]},{problem_names[5]}')
-
+        config_file.write('problems = 1,2,3,4,5\n')
+        config_file.write('region_limits = None,None,None,None,None,None,None,None,None')
 
     else:
         for l in open(config):
@@ -106,8 +107,11 @@ def readConfig(config='galmark.cfg'):
             if var == 'problems':
                 problem_names = val.split(',')
                 problem_names.insert(0, 'None')
+            
+            if var == 'region_limits':
+                region_limits = val.split(',')
         
-    return out_path, images_path, group_names, problem_names
+    return out_path, images_path, group_names, problem_names, region_limits
                 
 def checkUsername(username):
     return (username != "None") and (username != "")
@@ -123,7 +127,7 @@ def save(data,username,date):
     problem_lengths = []
     comment_lengths = []
 
-    out_path, images_path, group_names, problem_names = readConfig()
+    out_path, images_path, group_names, problem_names, region_limits = readConfig()
     outfile = os.path.join(out_path, username + '.txt')
     
     # Create the file
@@ -171,7 +175,7 @@ def save(data,username,date):
                 y = 'NaN'
                 ra = 'NaN'
                 dec = 'NaN'
-                l = [date,name,group_name,ra,dec,problem,comment]
+                l = [date,name,group_name,x,y,ra,dec,problem,comment]
 
                 lines.append(l)
                 name_lengths.append(len(name))
@@ -217,7 +221,7 @@ def save(data,username,date):
             out.write(outline)
 
 def load(username,config='galmark.cfg'):
-    out_path, images_path, group_names, problem_names = readConfig(config=config)
+    out_path, images_path, group_names, problem_names, region_limits = readConfig(config=config)
     outfile = os.path.join(out_path,username+'.txt')
     data = DataDict()
     skip = True
@@ -269,7 +273,7 @@ def glob(dir,ext,data_filt:DataDict={}):
     return images, idx
 
 def inputs(config='galmark.cfg'):
-    out_path, images_path, group_names, problem_names = readConfig(config)
+    out_path, images_path, group_names, problem_names, region_limits = readConfig(config)
     username = galmark.window.StartupWindow().getUser()
 
-    return username, out_path, images_path, group_names, problem_names
+    return username, out_path, images_path, group_names, problem_names, region_limits

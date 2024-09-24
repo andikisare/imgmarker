@@ -64,7 +64,7 @@ class StartupWindow(QInputDialog):
         else: sys.exit()
 
 class MainWindow(QMainWindow):
-    def __init__(self, username, out_path, images_path, group_names, problem_names, imtype = 'tif'):
+    def __init__(self, username, out_path, images_path, group_names, problem_names, region_limits, imtype = 'tif'):
         '''
         Constructor
 
@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
 
         # Initialize config
         self.config = 'galmark.cfg'
-        self.username, self.group_names = username, group_names
+        self.username, self.group_names, self.problem_names, self.region_limits = username, group_names, problem_names, region_limits
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
 
         # Initialize output dictionary
@@ -157,30 +157,30 @@ class MainWindow(QMainWindow):
         
         ### Problem widgets
 
-        # Not centered on cluster
-        self.problem_one_box = QCheckBox(text='Not Centered on Cluster', parent=self)
+        # Problem 1
+        self.problem_one_box = QCheckBox(text=self.problem_names[1], parent=self)
         self.problem_one_box.setFixedHeight(40)
         self.problem_one_box.clicked.connect(self.onProblemOne)
 
-        # Bad image scaling
-        self.problem_two_box = QCheckBox(text='Bad Image Scaling', parent=self)
+        # Problem 2
+        self.problem_two_box = QCheckBox(text=self.problem_names[2], parent=self)
         self.problem_two_box.setFixedHeight(40)
         self.problem_two_box.clicked.connect(self.onProblemTwo)
 
-        # No cluster visible
-        self.problem_three_box = QCheckBox(text='No Cluster Visible', parent=self)
+        # Problem 3
+        self.problem_three_box = QCheckBox(text=self.problem_names[3], parent=self)
         self.problem_three_box.setFixedHeight(40)
         self.problem_three_box.clicked.connect(self.onProblemThree)
 
-        # High redshift/too red
-        self.problem_four_box = QCheckBox(text='High Redshift Cluster', parent=self)
+        # Problem 4
+        self.problem_four_box = QCheckBox(text=self.problem_names[4], parent=self)
         self.problem_four_box.setFixedHeight(40)
         self.problem_four_box.clicked.connect(self.onProblemFour)
 
-        # Other/leave comment prompt?
-        self.problem_other_box = QCheckBox(text='Other', parent=self)
-        self.problem_other_box.setFixedHeight(40)
-        self.problem_other_box.clicked.connect(self.onProblemOther)
+        # Problem 5/other
+        self.problem_five_box = QCheckBox(text=self.problem_names[5], parent=self)
+        self.problem_five_box.setFixedHeight(40)
+        self.problem_five_box.clicked.connect(self.onProblemOther)
 
         # Problems layout
         self.problems_layout = QHBoxLayout()
@@ -188,7 +188,7 @@ class MainWindow(QMainWindow):
         self.problems_layout.addWidget(self.problem_two_box)
         self.problems_layout.addWidget(self.problem_three_box)
         self.problems_layout.addWidget(self.problem_four_box)
-        self.problems_layout.addWidget(self.problem_other_box)
+        self.problems_layout.addWidget(self.problem_five_box)
 
         # Add widgets to main layout
         central_widget = QWidget()
@@ -294,7 +294,7 @@ class MainWindow(QMainWindow):
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
-        self.problem_other_box.setChecked(False)
+        self.problem_five_box.setChecked(False)
         self.imageUpdate()
 
     def onProblemTwo(self):
@@ -309,7 +309,7 @@ class MainWindow(QMainWindow):
         self.problem_one_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
-        self.problem_other_box.setChecked(False)
+        self.problem_five_box.setChecked(False)
         self.imageUpdate()
 
     def onProblemThree(self):
@@ -324,7 +324,7 @@ class MainWindow(QMainWindow):
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_four_box.setChecked(False)
-        self.problem_other_box.setChecked(False)
+        self.problem_five_box.setChecked(False)
         self.imageUpdate()
 
     def onProblemFour(self):
@@ -339,11 +339,11 @@ class MainWindow(QMainWindow):
         self.problem_one_box.setChecked(False)
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
-        self.problem_other_box.setChecked(False)
+        self.problem_five_box.setChecked(False)
         self.imageUpdate()
 
     def onProblemOther(self):
-        if (self.problem_other_box.checkState().value == 2):
+        if (self.problem_five_box.checkState().value == 2):
             self.data[self.image_file]['problem'] = 5
             for i in range(1,10):
                 try: del self.data[self.image_file][i]
@@ -365,17 +365,33 @@ class MainWindow(QMainWindow):
         # get event position and position on image
         ep, lp = self.mouseImagePos()
         
-        # Mark if hovering over image  
-        if self._pixmap_item is self.image_view.itemAt(ep):    
+        # Mark if hovering over image
+        
+        if (self.data[self.image_file]['problem'] == 0):
+            if (self.region_limits[group] != 'None'):
+                limit = int(self.region_limits[group - 1])
+                if (len(self.data[self.image_file][group]['Regions']) < limit):
+                    if self._pixmap_item is self.image_view.itemAt(ep):
 
-            region = Region(lp.x(),lp.y(),wcs=self.wcs,group=group)
-            region.draw(self.image_scene)
+                        region = Region(lp.x(),lp.y(),wcs=self.wcs,group=group)
+                        region.draw(self.image_scene)
 
-            if not self.data[self.image_file][group]['Regions']:
-                self.data[self.image_file][group]['Regions'] = []
+                        if not self.data[self.image_file][group]['Regions']:
+                            self.data[self.image_file][group]['Regions'] = []
 
-            self.data[self.image_file][group]['Regions'].append(region)
-            galmark.io.save(self.data,self.username,self.date)
+                        self.data[self.image_file][group]['Regions'].append(region)
+                        galmark.io.save(self.data,self.username,self.date)
+            else:
+                if self._pixmap_item is self.image_view.itemAt(ep):
+
+                    region = Region(lp.x(),lp.y(),wcs=self.wcs,group=group)
+                    region.draw(self.image_scene)
+
+                    if not self.data[self.image_file][group]['Regions']:
+                        self.data[self.image_file][group]['Regions'] = []
+
+                    self.data[self.image_file][group]['Regions'].append(region)
+                    galmark.io.save(self.data,self.username,self.date)
 
     def onNext(self):
         if self.idx+1 < self.N:
@@ -467,7 +483,7 @@ class MainWindow(QMainWindow):
         self.problem_two_box.setChecked(False)
         self.problem_three_box.setChecked(False)
         self.problem_four_box.setChecked(False)
-        self.problem_other_box.setChecked(False)
+        self.problem_five_box.setChecked(False)
         if not (self.data[self.image_file]['problem']):
             self.data[self.image_file]['problem'] = 0
         else:
@@ -481,7 +497,7 @@ class MainWindow(QMainWindow):
             if (problem == 4):
                 self.problem_four_box.setChecked(True)
             if (problem == 5):
-                self.problem_other_box.setChecked(True)
+                self.problem_five_box.setChecked(True)
 
     def regionUpdate(self):
         # Redraws all regions in image
