@@ -11,6 +11,7 @@ from astropy.io import fits
 from collections import defaultdict
 import io
 import pickle
+import glob as _glob
 
 class DataDict(defaultdict):
     def __init__(self, *args, **kwargs):
@@ -230,20 +231,42 @@ def load(username,config='galmark.cfg'):
                 group_idx = group_names.index(group)
                 problem_idx = problem_names.index(problem)
 
-                region_args = (int(x),int(y))
-                region_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
+                if (x!='NaN') and (y!='NaN'):
+                    region_args = (int(x),int(y))
+                    region_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
+                    region = Region(*region_args, **region_kwargs)
+
+                    if not data[name][group_idx]['Regions']:
+                        data[name][group_idx]['Regions'] = []
+
+                    data[name][group_idx]['Regions'].append(region)
 
                 data[name]['comment'] = comment
                 data[name]['problem'] = problem_idx
-
-                region = Region(*region_args, **region_kwargs)
-
-                if not data[name][group_idx]['Regions']:
-                    data[name][group_idx]['Regions'] = []
-
-                data[name][group_idx]['Regions'].append(region)
-
+                
     return data
+
+def glob(dir,ext,data_filt:DataDict={}):
+     # Find all images in image directory
+    all_images = _glob.glob(dir + '*.' + ext)
+
+    # Get list of paths to images if they are in the dictionary (have been edited)
+    if (data_filt):
+        edited_images = [dir + f for f in data_filt.keys()]
+        unedited_images = [i for i in all_images if i not in edited_images]
+    else:
+        edited_images = []
+        unedited_images = all_images
+
+    # Shuffle the remaining unedited images
+    rng = np.random.default_rng()
+    rng.shuffle(unedited_images)
+
+    # Put edited images at the beginning, unedited images at front
+    images = edited_images + unedited_images
+    idx = len(edited_images)
+
+    return images, idx
 
 def inputs(config='galmark.cfg'):
     out_path, images_path, group_names, problem_names = readConfig(config)
