@@ -10,7 +10,6 @@ from astropy.wcs import WCS
 from astropy.io import fits
 from collections import defaultdict
 import io
-import pickle
 import glob as _glob
 
 class DataDict(defaultdict):

@@ -6,9 +6,7 @@ from galmark import __dirname__, __icon__
 import galmark.io
 import sys
 import os
-import glob
 import datetime as dt
-import numpy as np
 
 class HelpWindow(QWidget):
     """
