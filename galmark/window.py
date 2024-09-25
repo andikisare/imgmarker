@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QTextEdit
-from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon
+from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QFontMetrics
 from PyQt6.QtCore import Qt, QSize
 from galmark.region import Region
 from galmark import __dirname__, __icon__ 
@@ -7,6 +7,7 @@ import galmark.io
 import sys
 import os
 import datetime as dt
+import textwrap
 
 class HelpWindow(QWidget):
     """
@@ -18,8 +19,7 @@ class HelpWindow(QWidget):
         layout = QVBoxLayout()
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
-        self.resize(int(self.fullw/5), int(self.fullh/3))
-        self.setWindowTitle('Instructions and Keymapping')
+        self.setWindowTitle('Instructions')
         self.setLayout(layout)
 
         qt_rectangle = self.frameGeometry()
@@ -27,40 +27,33 @@ class HelpWindow(QWidget):
         qt_rectangle.moveCenter(center_point)
         self.move(-qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
 
-        self.help_text = QTextEdit()
+        self.help_text = QLabel()
+        font = QFont('Courier')
+        fontmetrics = QFontMetrics(font)
+        self.help_text.setFont(font)
+        self.help_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.help_text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         
-        actions_list = ['Action', 'Save', 'Pan', 'Zoom in/out', 'Save and close', 'Open help window (this window)', 'Delete mark']
-        buttons_list = ['Button', 'Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Enter', 'Middle click', 'Scroll wheel', 'Escape OR Q', 'F1', 'Right click (on mark)']
+        actions_list = ['Delete','Enter comment', 'Focus', 'Zoom in/out', 'Exit', 'Help']
+        group_list = [f'Group \"{group}\"' for group in groupNames[1:]]
+        actions_list = group_list + actions_list
+        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Right click', 'Enter', 'Middle click', 'Scroll wheel', 'Esc OR Q', 'F1', ]
 
-        for i, group in enumerate(groupNames[1:10]):
-            actions_list.insert(i+1,f'Group \"{group}\"')
+        actions_padding = max([len(a) for a in actions_list])
+        buttons_padding = max([len(b) for b in buttons_list]) + 10
+        fullpadding = actions_padding + buttons_padding
 
-        padding = []
+        text = 'ALL data is saved when pressing "Next," "Back," or "Enter" in the window, as well as checking a problem, exiting, or making a mark.'
+        text = textwrap.wrap(text, width=fullpadding)
+        text = '\n'.join([f'{l:<{fullpadding}}' for l in text]) + '\n'
+        text += '-'*(fullpadding) + '\n'
+        text += f'{'Keybindings':^{fullpadding}}\n'
+        text += '-'*(fullpadding) + '\n'
+        for i in range(0,len(actions_list)):
+            text += f'{actions_list[i]:.<{actions_padding}}{buttons_list[i]:.>{buttons_padding}}\n'
+        self.help_text.setText(text)
+        text.removesuffix('\n')
 
-        for i in range(len(actions_list)):
-            padding.append(90 - (len(actions_list[i]) + len(buttons_list[i])))
-
-        self.help_text.setPlainText(f'ALL data is saved when pressing "Next," "Back," or "Enter" in the window,\n'
-                                    f'as well as checking a problem, exiting, or making a mark.\n\n'
-                                    f'{actions_list[0].ljust(padding[0])}{buttons_list[0]}\n'
-                                    f'{actions_list[1].ljust(padding[1])}{buttons_list[1]}\n'
-                                    f'{actions_list[2].ljust(padding[2])}{buttons_list[2]}\n'
-                                    f'{actions_list[3].ljust(padding[3])}{buttons_list[3]}\n'
-                                    f'{actions_list[4].ljust(padding[4])}{buttons_list[4]}\n'
-                                    f'{actions_list[5].ljust(padding[5])}{buttons_list[5]}\n'
-                                    f'{actions_list[6].ljust(padding[6])}{buttons_list[6]}\n'
-                                    f'{actions_list[7].ljust(padding[7])}{buttons_list[7]}\n'
-                                    f'{actions_list[8].ljust(padding[8])}{buttons_list[8]}\n'
-                                    f'{actions_list[9].ljust(padding[9])}{buttons_list[9]}\n'
-                                    f'{actions_list[10].ljust(padding[10])}{buttons_list[10]}\n'
-                                    f'{actions_list[11].ljust(padding[11])}{buttons_list[11]}\n'
-                                    f'{actions_list[12].ljust(padding[12])}{buttons_list[12]}\n'
-                                    f'{actions_list[13].ljust(padding[13])}{buttons_list[13]}\n'
-                                    f'{actions_list[14].ljust(padding[14])}{buttons_list[14]}\n'
-                                    f'{actions_list[15].ljust(padding[15])}{buttons_list[15]}\n'
-                                    )
-        
-        self.help_text.setReadOnly(True)
         layout.addWidget(self.help_text)
 
 class StartupWindow(QInputDialog):
@@ -104,8 +97,7 @@ class MainWindow(QMainWindow):
         self.images, self.idx = galmark.io.glob(images_path,self.imtype,data_filt=self.data)
         self.N = len(self.images)
 
-        try:
-            self.image = self.images[self.idx]
+        try: self.image = self.images[self.idx]
         except:
             print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
             sys.exit()
@@ -126,10 +118,12 @@ class MainWindow(QMainWindow):
 
         # Current image widget
         self.image_label = QLabel(f'{self.image_file} ({self.idx+1} of {self.N})')
+        self.image_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Mouse position widget
         self.position_label = QLabel()
+        self.position_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.position_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Create image view
@@ -244,7 +238,7 @@ class MainWindow(QMainWindow):
         helpMenu = menuBar.addMenu('&Help')
 
         ### Instructions and Keymapping window
-        instructionsMenu = QAction('&Instructions and Keymapping', self)
+        instructionsMenu = QAction('&Instructions', self)
         instructionsMenu.setShortcuts(['F1'])
         instructionsMenu.setStatusTip('Instructions')
         instructionsMenu.triggered.connect(self.showInstructions)
