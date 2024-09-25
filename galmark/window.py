@@ -107,13 +107,13 @@ class MainWindow(QMainWindow):
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
 
-        # Current index widget
-        self.idx_label = QLabel(f'Image {self.idx+1} of {self.N}')
-        self.idx_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-        # Current image name widget
-        self.image_label = QLabel(f'{self.image_file}')
+        # Current image widget
+        self.image_label = QLabel(f'{self.image_file} ({self.idx+1} of {self.N})')
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        # Mouse position widget
+        self.position_label = QLabel()
+        self.position_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Create image view
         self.image_scene = QGraphicsScene(self)
@@ -128,6 +128,8 @@ class MainWindow(QMainWindow):
         self.image_view.move(0, 0)
         self.image_view.setTransformationAnchor(self.image_view.ViewportAnchor(1))
         self.image_view.viewport().installEventFilter(self)
+        self.image_view.setMouseTracking(True)
+        self.image_view.mouseMoveEvent = self.mouseMoveEvent
 
         # Back widget
         self.back_button = QPushButton(text='Back',parent=self)
@@ -160,26 +162,31 @@ class MainWindow(QMainWindow):
         # Problem 1
         self.problem_one_box = QCheckBox(text=self.problem_names[1], parent=self)
         self.problem_one_box.setFixedHeight(40)
+        self.problem_one_box.setStyleSheet("margin-left:50%; margin-right:50%;")
         self.problem_one_box.clicked.connect(self.onProblemOne)
 
         # Problem 2
         self.problem_two_box = QCheckBox(text=self.problem_names[2], parent=self)
         self.problem_two_box.setFixedHeight(40)
+        self.problem_two_box.setStyleSheet("margin-left:50%; margin-right:50%;")
         self.problem_two_box.clicked.connect(self.onProblemTwo)
 
         # Problem 3
         self.problem_three_box = QCheckBox(text=self.problem_names[3], parent=self)
         self.problem_three_box.setFixedHeight(40)
+        self.problem_three_box.setStyleSheet("margin-left:50%; margin-right:50%;")
         self.problem_three_box.clicked.connect(self.onProblemThree)
 
         # Problem 4
         self.problem_four_box = QCheckBox(text=self.problem_names[4], parent=self)
         self.problem_four_box.setFixedHeight(40)
+        self.problem_four_box.setStyleSheet("margin-left:50%; margin-right:50%;")
         self.problem_four_box.clicked.connect(self.onProblemFour)
 
         # Problem 5/other
         self.problem_five_box = QCheckBox(text=self.problem_names[5], parent=self)
         self.problem_five_box.setFixedHeight(40)
+        self.problem_five_box.setStyleSheet("margin-left:50%; margin-right:50%;")
         self.problem_five_box.clicked.connect(self.onProblemOther)
 
         # Problems layout
@@ -195,7 +202,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.addWidget(self.image_label)
         layout.addWidget(self.image_view)
-        layout.addWidget(self.idx_label)
+        layout.addWidget(self.position_label)
         layout.addLayout(self.bottom_layout)
         layout.addLayout(self.problems_layout)
         self.setCentralWidget(central_widget)
@@ -280,6 +287,18 @@ class MainWindow(QMainWindow):
 
         if (event.button() == Qt.MouseButton.RightButton):
             self.getSelectedRegions()
+
+    def mouseMoveEvent(self, event):
+        ep, lp = self.mouseImagePos()
+
+        _x, _y = lp.x(), self.wcs._naxis[0] - lp.y()
+        ra, dec = self.wcs.all_pix2world([[_x, _y]], 0)[0]
+        
+        # Mark if hovering over image
+        if bool(self.image_view.itemAt(ep)):
+            self.position_label.setText(f'Pixel: ({lp.x()} , {lp.y()})     WCS: ({ra:.3f}° , {dec:.3f}°)')
+        else: 
+            self.position_label.setText('')
 
     # === On-actions ===
     def onProblemOne(self):
@@ -447,11 +466,8 @@ class MainWindow(QMainWindow):
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)
 
-        # Update idx label
-        self.idx_label.setText(f'Image {self.idx+1} of {self.N}')
-
         # Update image label
-        self.image_label.setText(f'{self.image_file}')
+        self.image_label.setText(f'{self.image_file} ({self.idx+1} of {self.N})')
 
         #Update WCS
         self.wcs = galmark.io.parseWCS(self.image)
