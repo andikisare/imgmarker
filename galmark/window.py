@@ -29,25 +29,37 @@ class HelpWindow(QWidget):
 
         self.help_text = QTextEdit()
         
+        actions_list = ['Action', 'Save', 'Pan', 'Zoom in/out', 'Save and close', 'Open help window (this window)', 'Delete mark']
+        buttons_list = ['Button', 'Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Enter', 'Middle click', 'Scroll wheel', 'Escape OR Q', 'F1', 'Right click (on mark)']
+
+        for i, group in enumerate(groupNames[1:10]):
+            actions_list.insert(i+1,f'Group \"{group}\"')
+
+        padding = []
+
+        for i in range(len(actions_list)):
+            padding.append(90 - (len(actions_list[i]) + len(buttons_list[i])))
+
         self.help_text.setPlainText(f'ALL data is saved when pressing "Next," "Back," or "Enter" in the window,\n'
-                                                      f'as well as checking a problem, exiting, or making a mark.\n\n'
-                                                      f'Action                                                     Button\n'
-                                                      f'Group {groupNames[1]:<50} Left click OR 1\n'
-                                                      f'Group {groupNames[2]:<50} 2\n' 
-                                                      f'Group {groupNames[3]:<50} 3\n'
-                                                      f'Group {groupNames[4]:<50} 4\n'
-                                                      f'Group {groupNames[5]:<50} 5\n'
-                                                      f'Group {groupNames[6]:<50} 6\n'
-                                                      f'Group {groupNames[7]:<50} 7\n'
-                                                      f'Group {groupNames[8]:<50} 8\n'
-                                                      f'Group {groupNames[9]:<50} 9\n\n'
-                                                      f'Save                                                       Enter\n'
-                                                      f'Pan                                                         Middle click\n'
-                                                      f'Zoom in/out                                         Scroll wheel\n'
-                                                      f'Save and close                                     Escape OR Q\n'
-                                                      f'Open help window (this window)     F1\n\n'
-                                                      f'Delete mark                                         Right click (on mark)'
-        )
+                                    f'as well as checking a problem, exiting, or making a mark.\n\n'
+                                    f'{actions_list[0].ljust(padding[0])}{buttons_list[0]}\n'
+                                    f'{actions_list[1].ljust(padding[1])}{buttons_list[1]}\n'
+                                    f'{actions_list[2].ljust(padding[2])}{buttons_list[2]}\n'
+                                    f'{actions_list[3].ljust(padding[3])}{buttons_list[3]}\n'
+                                    f'{actions_list[4].ljust(padding[4])}{buttons_list[4]}\n'
+                                    f'{actions_list[5].ljust(padding[5])}{buttons_list[5]}\n'
+                                    f'{actions_list[6].ljust(padding[6])}{buttons_list[6]}\n'
+                                    f'{actions_list[7].ljust(padding[7])}{buttons_list[7]}\n'
+                                    f'{actions_list[8].ljust(padding[8])}{buttons_list[8]}\n'
+                                    f'{actions_list[9].ljust(padding[9])}{buttons_list[9]}\n'
+                                    f'{actions_list[10].ljust(padding[10])}{buttons_list[10]}\n'
+                                    f'{actions_list[11].ljust(padding[11])}{buttons_list[11]}\n'
+                                    f'{actions_list[12].ljust(padding[12])}{buttons_list[12]}\n'
+                                    f'{actions_list[13].ljust(padding[13])}{buttons_list[13]}\n'
+                                    f'{actions_list[14].ljust(padding[14])}{buttons_list[14]}\n'
+                                    f'{actions_list[15].ljust(padding[15])}{buttons_list[15]}\n'
+                                    )
+        
         self.help_text.setReadOnly(True)
         layout.addWidget(self.help_text)
 
