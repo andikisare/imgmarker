@@ -103,8 +103,13 @@ class MainWindow(QMainWindow):
         self.imtype = imtype
         self.images, self.idx = galmark.io.glob(images_path,self.imtype,data_filt=self.data)
         self.N = len(self.images)
-        self.image = self.images[self.idx]
-        
+
+        try:
+            self.image = self.images[self.idx]
+        except:
+            print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
+            sys.exit()
+
         self.image_file = self.image.split(os.sep)[-1]
         self.wcs = galmark.io.parseWCS(self.image)
 
