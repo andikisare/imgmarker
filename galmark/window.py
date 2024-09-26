@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QTextEdit
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QTextEdit
 from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QFontMetrics
 from PyQt6.QtCore import Qt, QSize
 from galmark.region import Region
@@ -9,7 +9,7 @@ import os
 import datetime as dt
 import textwrap
 
-class HelpWindow(QWidget):
+class InstructionsWindow(QWidget):
     """
     This window displays the instructions and keymappings
     """
@@ -21,40 +21,52 @@ class HelpWindow(QWidget):
         self.fullh = self.screen().size().height()
         self.setWindowTitle('Instructions')
         self.setLayout(layout)
-
+        
+        # Set position of window
         qt_rectangle = self.frameGeometry()
         center_point = QApplication.primaryScreen().geometry().center()
         qt_rectangle.moveCenter(center_point)
         self.move(-qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
 
-        self.help_text = QLabel()
+        # Create the scroll area and label
+        self.scroll_area = QScrollArea()
+        self.label = QLabel()
+        self.scroll_area.setWidget(self.label)
+        self.scroll_area.setWidgetResizable(True)
         font = QFont('Courier')
-        fontmetrics = QFontMetrics(font)
-        self.help_text.setFont(font)
-        self.help_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.help_text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.label.setFont(font)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         
+        # Lists for keybindings
         actions_list = ['Delete','Enter comment', 'Focus', 'Zoom in/out', 'Exit', 'Help']
         group_list = [f'Group \"{group}\"' for group in groupNames[1:]]
         actions_list = group_list + actions_list
         buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Right click', 'Enter', 'Middle click', 'Scroll wheel', 'Esc OR Q', 'F1', ]
 
-        actions_padding = max([len(a) for a in actions_list])
-        buttons_padding = max([len(b) for b in buttons_list]) + 10
-        fullpadding = actions_padding + buttons_padding
+        # Determing widths for keybindings list
+        actions_width = max([len(a) for a in actions_list])
+        buttons_width = max([len(b) for b in buttons_list]) + 10
+        fullw_text = actions_width + buttons_width
 
+        # Create text
         text = 'ALL data is saved when pressing "Next," "Back," or "Enter" in the window, as well as checking a problem, exiting, or making a mark.'
-        text = textwrap.wrap(text, width=fullpadding)
-        text = '\n'.join([f'{l:<{fullpadding}}' for l in text]) + '\n'
-        text += '-'*(fullpadding) + '\n'
-        text += f'{'Keybindings':^{fullpadding}}\n'
-        text += '-'*(fullpadding) + '\n'
+        text = textwrap.wrap(text, width=fullw_text)
+        text = '\n'.join([f'{l:<{fullw_text}}' for l in text]) + '\n'
+        text += '-'*(fullw_text) + '\n'
+        text += f'{'Keybindings':^{fullw_text}}\n'
+        text += '-'*(fullw_text) + '\n'
         for i in range(0,len(actions_list)):
-            text += f'{actions_list[i]:.<{actions_padding}}{buttons_list[i]:.>{buttons_padding}}\n'
-        self.help_text.setText(text)
+            text += f'{actions_list[i]:.<{actions_width}}{buttons_list[i]:.>{buttons_width}}\n'
+        self.label.setText(text)
         text.removesuffix('\n')
 
-        layout.addWidget(self.help_text)
+        # Add scroll area to layout, get size of layout
+        layout.addWidget(self.scroll_area)
+        layout_width, layout_height = layout.sizeHint().width(), layout.sizeHint().height()
+
+        # Resize window according to size of layout
+        self.resize(int(layout_width*1.1),int(layout_height*1.1))
 
 class StartupWindow(QInputDialog):
     def __init__(self):
@@ -63,7 +75,7 @@ class StartupWindow(QInputDialog):
 
     def getUser(self):
         # Make popup to get name
-        text, OK = self.getText(self,"Startup", "Your name: (no caps, no space, e.g. ryanwalker)")
+        text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
 
         if OK: return text
         else: sys.exit()
@@ -238,22 +250,18 @@ class MainWindow(QMainWindow):
         helpMenu = menuBar.addMenu('&Help')
 
         ### Instructions and Keymapping window
+        self.instructionsWindow = InstructionsWindow(self.group_names)
         instructionsMenu = QAction('&Instructions', self)
         instructionsMenu.setShortcuts(['F1'])
         instructionsMenu.setStatusTip('Instructions')
-        instructionsMenu.triggered.connect(self.showInstructions)
+        instructionsMenu.triggered.connect(self.instructionsWindow.show)
         helpMenu.addAction(instructionsMenu)
-
-        self.showInstructions()
+        self.instructionsWindow.show()
 
         # Initialize some data
         self.getComment()
         self.regionUpdate()
         self.problemUpdate()
-
-    def showInstructions(self):
-        self.helpWindow = HelpWindow(self.group_names)
-        self.helpWindow.show()
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
