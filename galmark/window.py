@@ -315,7 +315,7 @@ class MainWindow(QMainWindow):
         
         # Mark if hovering over image
         if bool(self.image_view.itemAt(ep)):
-            self.position_label.setText(f'Pixel: ({lp.x()} , {lp.y()})     WCS: ({ra:.3f}° , {dec:.3f}°)')
+            self.position_label.setText(f'Pixel: ({lp.x()} , {lp.y()})     WCS: ({ra:.4f}° , {dec:.4f}°)')
         else: 
             self.position_label.setText('')
 
