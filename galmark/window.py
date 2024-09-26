@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QTextEdit
-from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QFontMetrics
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QSlider
+from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QImage
+from PyQt6.QtCore import Qt
 from galmark.mark import Mark
 from galmark import __dirname__, __icon__ 
 import galmark.io
@@ -8,6 +8,90 @@ import sys
 import os
 import datetime as dt
 import textwrap
+from math import ceil
+import cv2
+
+class AdjustmentsWindow(QWidget):
+    """
+    Blur window
+    """
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowIcon(QIcon(__icon__))
+        layout = QVBoxLayout()
+        self.fullw = self.screen().size().width()
+        self.fullh = self.screen().size().height()
+        self.setWindowTitle('Brightness and Contrast')
+        self.setLayout(layout)
+        
+        # Set position of window
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(-qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
+
+        # Brightness slider
+        self.brightnessSlider = QSlider()
+        self.brightnessSlider.setMinimum(-100)
+        self.brightnessSlider.setMaximum(100)
+        self.brightnessSlider.setValue(0)
+        self.brightnessSlider.setOrientation(Qt.Orientation.Horizontal)
+
+        # Contrast slider
+        self.contrastSlider = QSlider()
+        self.contrastSlider.setMinimum(-100)
+        self.contrastSlider.setMaximum(100)
+        self.contrastSlider.setValue(0)
+        self.contrastSlider.setOrientation(Qt.Orientation.Horizontal)
+
+        layout.addWidget(self.brightnessSlider)
+        layout.addWidget(self.contrastSlider)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+
+class BlurWindow(QWidget):
+    """
+    Blur window
+    """
+    def __init__(self):
+        super().__init__()
+        
+        self.setWindowIcon(QIcon(__icon__))
+        layout = QVBoxLayout()
+        self.fullw = self.screen().size().width()
+        self.fullh = self.screen().size().height()
+        self.setWindowTitle('Gaussian Blur')
+        self.setLayout(layout)
+        
+        
+        # Set position of window
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(-qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
+
+        max_blur = int((self.fullw+self.fullh)/20)
+        self.slider = QSlider()
+        self.slider.setMinimum(1)
+        self.slider.setTickInterval(2)
+        self.slider.setSingleStep(2)
+        self.slider.setOrientation(Qt.Orientation.Horizontal)
+        self.slider.sliderMoved.connect(self.onSliderMoved) 
+
+        self.valueLabel = QLabel()
+        self.valueLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.valueLabel.setText(f'Radius: {self.slider.value()}')
+
+        layout.addWidget(self.valueLabel)
+        layout.addWidget(self.slider)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setFixedWidth(int(self.fullw/6))
+        self.setFixedHeight(layout.sizeHint().height())
+        
+    def onSliderMoved(self, pos):
+        self.slider.setValue(ceil(pos) // 2 * 2 + 1)
+        self.valueLabel.setText(f'Radius: {self.slider.value()}')
 
 class InstructionsWindow(QWidget):
     """
@@ -94,7 +178,13 @@ class MainWindow(QMainWindow):
             outfile (string): filename of text file for saving data
         '''
         super().__init__()
+        self.setWindowTitle("Galaxy Marker")
         self.setWindowIcon(QIcon(__icon__))
+
+        # Filter windows
+        self.blurWindow = BlurWindow()
+        self.blurWindow.slider.valueChanged.connect(self.onBlur)
+        self.adjustmentsWindow = AdjustmentsWindow()
 
         # Initialize config
         self.config = 'galmark.cfg'
@@ -114,14 +204,15 @@ class MainWindow(QMainWindow):
             print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
             sys.exit()
 
+        self.matimage = cv2.imread(self.image)
+        self.qimage = QImage(self.matimage.data, self.matimage.shape[1], self.matimage.shape[0], QImage.Format.Format_RGB888).rgbSwapped()
+
+        # Set max blur based on size of image
+        blur_max = ceil((self.qimage.height()+self.qimage.width())/20)// 2 * 2 + 1
+        self.blurWindow.slider.setMaximum(blur_max)
+
         self.image_file = self.image.split(os.sep)[-1]
         self.wcs = galmark.io.parseWCS(self.image)
-
-        # Useful attributes
-        self.fullw = self.screen().size().width()
-        self.fullh = self.screen().size().height()
-        self.windowsize = QSize(int(self.fullw/2), int(self.fullh/2))
-        self.setWindowTitle("Galaxy Marker")
 
         qt_rectangle = self.frameGeometry()
         center_point = QApplication.primaryScreen().geometry().center()
@@ -243,8 +334,22 @@ class MainWindow(QMainWindow):
         exitMenu.triggered.connect(self.closeEvent)
         fileMenu.addAction(exitMenu)
 
-        ## Edit menu
-        fileMenu = menuBar.addMenu("&Edit")
+        ## Filter menu
+        filterMenu = menuBar.addMenu("&Filters")
+
+        ### Blur
+        blurMenu = QAction('&Gaussian Blur...',self)
+        blurMenu.setStatusTip("Gaussian Blur")
+        blurMenu.setShortcuts(['Ctrl+b'])
+        blurMenu.triggered.connect(self.blurWindow.show)
+        filterMenu.addAction(blurMenu)
+
+        ### Brightness and Contrast
+        adjustMenu = QAction('&Brightness and Contrast...',self)
+        adjustMenu.setStatusTip("Brightness and Contrast")
+        adjustMenu.setShortcuts(['Ctrl+a'])
+        adjustMenu.triggered.connect(self.adjustmentsWindow.show)
+        filterMenu.addAction(adjustMenu)
 
         ## Help menu
         helpMenu = menuBar.addMenu('&Help')
@@ -446,6 +551,14 @@ class MainWindow(QMainWindow):
         newX = int(centerX - cursorX)
         newY = int(centerY - cursorY)
         self.image_view.translate(newX, newY)
+
+    def onBlur(self,value):
+        value = ceil(value) // 2 * 2 + 1
+        self.matimage = cv2.imread(self.image)
+        self.matimage = cv2.GaussianBlur(self.matimage,(value,value),0)
+        self.qimage = QImage(self.matimage.data, self.matimage.shape[1], self.matimage.shape[0], QImage.Format.Format_RGB888).rgbSwapped()
+        self.pixmap = QPixmap(self.qimage)
+        self._pixmap_item.setPixmap(self.pixmap)
 
     # === Update methods ===
 
