@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import galmark.window
-from galmark.region import Region
+from galmark.mark import Mark
 from galmark import __dirname__
 from PyQt6.QtCore import Qt
 from PIL import Image
@@ -77,14 +77,14 @@ def readConfig(config='galmark.cfg'):
         out_path = os.path.join(os.getcwd(),'')
         images_path = os.path.join(os.getcwd(),'')
         group_names = ['1','2','3','4','5','6','7','8','9']
-        problem_names = ['None','1','2','3','4','5']
-        region_limits = ['None','None','None','None','None','None','None','None','None']
+        category_names = ['None','1','2','3','4','5']
+        group_max = ['None','None','None','None','None','None','None','None','None']
 
         config_file.write(f'out_path = {out_path}\n')
         config_file.write(f'images_path = {images_path}\n')
         config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
-        config_file.write('problems = 1,2,3,4,5\n')
-        config_file.write('region_limits = None,None,None,None,None,None,None,None,None')
+        config_file.write('categories = 1,2,3,4,5\n')
+        config_file.write('group_max = None,None,None,None,None,None,None,None,None')
 
     else:
         for l in open(config):
@@ -104,14 +104,14 @@ def readConfig(config='galmark.cfg'):
                 group_names = val.split(',')
                 group_names.insert(0, 'None')
 
-            if var == 'problems':
-                problem_names = val.split(',')
-                problem_names.insert(0, 'None')
+            if var == 'categories':
+                category_names = val.split(',')
+                category_names.insert(0, 'None')
             
-            if var == 'region_limits':
-                region_limits = val.split(',')
+            if var == 'group_max':
+                group_max = val.split(',')
         
-    return out_path, images_path, group_names, problem_names, region_limits
+    return out_path, images_path, group_names, category_names, group_max
                 
 def checkUsername(username):
     return (username != "None") and (username != "")
@@ -124,10 +124,10 @@ def save(data,username,date):
     y_lengths = []
     ra_lengths = []
     dec_lengths = []
-    problem_lengths = []
+    category_lengths = []
     comment_lengths = []
 
-    out_path, images_path, group_names, problem_names, region_limits = readConfig()
+    out_path, images_path, group_names, category_names, group_max = readConfig()
     outfile = os.path.join(out_path, username + '.txt')
     
     # Create the file
@@ -140,24 +140,38 @@ def save(data,username,date):
 
         for name in names:
             comment = data[name]['comment']
-            problem = problem_names[data[name]['problem']]
-
+            category_list = data[name]['category']
+            if (len(category_list) > 1):
+                category_list.sort()
             # Get list of groups containing data
             level2_keys = list(data[name].keys())
             groups = [ key for key in level2_keys if isinstance(key,int) 
-                        and data[name][key]['Regions'] ]
+                        and data[name][key]['Marks'] ]
 
-            # If there are no image problems, and there is data in groups, then add this data to lines
-            if (problem == 'None') and (len(groups) != 0):
+            # If there is data in groups, then add this data to lines
+            if (len(groups) != 0):
                 for group in groups:
                     group_name = group_names[group]
-                    region_list = data[name][group]['Regions']
+                    mark_list = data[name][group]['Marks']
 
-                    for region in region_list:
-                        ra, dec = region.centerWCS()
-                        x, y = region.center().x(), region.center().y()
-                        l = [date,name,group_name,x,y,ra,dec,problem,comment]
+                    for mark in mark_list:
+                        ra, dec = mark.centerWCS()
+                        x, y = mark.center().x(), mark.center().y()
+                        l = [date,name,group_name,x,y,ra,dec,comment]
 
+                        categories_to_print_string = ''
+                        categories_to_print_list = [category_names[i] for i in category_list]
+                        num_categories = len(category_list)
+                        if (num_categories != 0):
+                            for category, i in enumerate(categories_to_print_list):
+                                if (i != (num_categories - 1)):
+                                    categories_to_print_string += str(category) + ', '
+                                else:
+                                    categories_to_print_string += str(category)
+                        else:
+                            categories_to_print_string = 'None'
+
+                        l.insert(7, categories_to_print_string)
                         lines.append(l)
                         name_lengths.append(len(name))
                         group_lengths.append(len(group_name))
@@ -165,17 +179,30 @@ def save(data,username,date):
                         y_lengths.append(len(str(y)))
                         ra_lengths.append(len(f'{ra:.8f}'))
                         dec_lengths.append(len(f'{dec:.8f}'))
-                        problem_lengths.append(len(problem))
+                        category_lengths.append(len(categories_to_print_string))
                         comment_lengths.append(len(comment))
             
-            # Otherwise, if there is a problem or a comment, replace ra/dec with NaNs
-            elif (problem != 'None') or (comment != 'None'):
+            # Otherwise, if there is a category or a comment, replace ra/dec with NaNs
+            else: # (len(categories_to_print) != 0) or (comment != 'None'):
                 group_name = 'None'
                 x = 'NaN'
                 y = 'NaN'
                 ra = 'NaN'
                 dec = 'NaN'
-                l = [date,name,group_name,x,y,ra,dec,problem,comment]
+                l = [date,name,group_name,x,y,ra,dec,comment]
+                categories_to_print_string = ''
+                categories_to_print_list = [category_names[i] for i in category_list]
+                num_categories = len(category_list)
+                if len(category_list != 0):
+                    for category, i in enumerate(categories_to_print_list):
+                        if (i != (num_categories - 1)):
+                            categories_to_print_string += str(category) + ', '
+                        else:
+                            categories_to_print_string += str(category)
+                elif (comment == 'None'):
+                    categories_to_print_string = 'Seen'
+
+                l.insert(7, categories_to_print_string)
 
                 lines.append(l)
                 name_lengths.append(len(name))
@@ -184,11 +211,11 @@ def save(data,username,date):
                 y_lengths.append(len(y))
                 ra_lengths.append(len(ra))
                 dec_lengths.append(len(dec))
-                problem_lengths.append(len(problem))
+                category_lengths.append(len(categories_to_print_string))
                 comment_lengths.append(len(comment))
             
-            # Otherwise, (no comment, no problem, and no data) delete entry from dictionary
-            else: pass
+            # Otherwise, (no comment, no category, and no data) delete entry from dictionary
+            # else: pass
 
     # Print out lines if there are lines to print
     if len(lines) != 0:
@@ -199,18 +226,18 @@ def save(data,username,date):
         yln = max(np.max(y_lengths), 1) + 2
         raln = max(np.max(ra_lengths), 2) + 2
         decln = max(np.max(dec_lengths), 2) + 2
-        problemln = max(np.max(problem_lengths), 9) + 2
+        categoryln = max(np.max(category_lengths), 12) + 2
         commentln = max(np.max(comment_lengths), 7) + 2
         dateln = 12
 
         l_fmt = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
                   f'^{xln}', f'^{yln}', f'^{raln}.8f', f'^{decln}.8f',
-                  f'^{problemln}', f'^{commentln}' ]
+                  f'^{categoryln}', f'^{commentln}' ]
         l_fmt_nofloat = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
                           f'^{xln}', f'^{yln}', f'^{raln}', f'^{decln}',
-                          f'^{problemln}', f'^{commentln}' ]
+                          f'^{categoryln}', f'^{commentln}' ]
         
-        header = ['date','image','group','x','y','RA','DEC','problem','comment']
+        header = ['date','image','group','x','y','RA','DEC','category/ies','comment']
         header = ''.join(f'{h:{l_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
         
         out.write(header)
@@ -221,7 +248,7 @@ def save(data,username,date):
             out.write(outline)
 
 def load(username,config='galmark.cfg'):
-    out_path, images_path, group_names, problem_names, region_limits = readConfig(config=config)
+    out_path, images_path, group_names, category_names, group_max = readConfig(config=config)
     outfile = os.path.join(out_path,username+'.txt')
     data = DataDict()
     skip = True
@@ -230,22 +257,22 @@ def load(username,config='galmark.cfg'):
         for l in open(outfile):
             if skip: skip = False
             else:
-                date,name,group,x,y,ra,dec,problem,comment = [i.strip() for i in l.replace('|\n','').split('|')]
+                date,name,group,x,y,ra,dec,category,comment = [i.strip() for i in l.replace('|\n','').split('|')]
                 group_idx = group_names.index(group)
-                problem_idx = problem_names.index(problem)
+                category_idx = category_names.index(category)
 
                 if (x!='NaN') and (y!='NaN'):
-                    region_args = (int(x),int(y))
-                    region_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
-                    region = Region(*region_args, **region_kwargs)
+                    mark_args = (int(x),int(y))
+                    mark_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
+                    mark = Mark(*mark_args, **mark_kwargs)
 
-                    if not data[name][group_idx]['Regions']:
-                        data[name][group_idx]['Regions'] = []
+                    if not data[name][group_idx]['Marks']:
+                        data[name][group_idx]['Marks'] = []
 
-                    data[name][group_idx]['Regions'].append(region)
+                    data[name][group_idx]['Marks'].append(mark)
 
                 data[name]['comment'] = comment
-                data[name]['problem'] = problem_idx
+                data[name]['category'] = category_idx
                 
     return data
 
@@ -273,7 +300,7 @@ def glob(dir,ext,data_filt:DataDict={}):
     return images, idx
 
 def inputs(config='galmark.cfg'):
-    out_path, images_path, group_names, problem_names, region_limits = readConfig(config)
+    out_path, images_path, group_names, category_names, group_max = readConfig(config)
     username = galmark.window.StartupWindow().getUser()
 
-    return username, out_path, images_path, group_names, problem_names, region_limits
+    return username, out_path, images_path, group_names, category_names, group_max

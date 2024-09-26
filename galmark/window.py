@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QTextEdit
 from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QFontMetrics
 from PyQt6.QtCore import Qt, QSize
-from galmark.region import Region
+from galmark.mark import Mark
 from galmark import __dirname__, __icon__ 
 import galmark.io
 import sys
@@ -50,7 +50,7 @@ class InstructionsWindow(QWidget):
         fullw_text = actions_width + buttons_width
 
         # Create text
-        text = 'ALL data is saved when pressing "Next," "Back," or "Enter" in the window, as well as checking a problem, exiting, or making a mark.'
+        text = 'ALL data is saved when pressing "Next," "Back," or "Enter" in the window, as well as checking a category, exiting, or making a mark.'
         text = textwrap.wrap(text, width=fullw_text)
         text = '\n'.join([f'{l:<{fullw_text}}' for l in text]) + '\n'
         text += '-'*(fullw_text) + '\n'
@@ -81,7 +81,7 @@ class StartupWindow(QInputDialog):
         else: sys.exit()
 
 class MainWindow(QMainWindow):
-    def __init__(self, username, out_path, images_path, group_names, problem_names, region_limits, imtype = 'tif'):
+    def __init__(self, username, out_path, images_path, group_names, category_names, group_max, imtype = 'tif'):
         '''
         Constructor
 
@@ -98,7 +98,7 @@ class MainWindow(QMainWindow):
 
         # Initialize config
         self.config = 'galmark.cfg'
-        self.username, self.group_names, self.problem_names, self.region_limits = username, group_names, problem_names, region_limits
+        self.username, self.group_names, self.category_names, self.group_max = username, group_names, category_names, group_max
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
 
         # Initialize output dictionary
@@ -180,45 +180,45 @@ class MainWindow(QMainWindow):
         self.bottom_layout.addWidget(self.comment_box)
         self.bottom_layout.addWidget(self.submit_button)
         
-        ### Problem widgets
+        ### Category widgets
 
-        # Problem 1
-        self.problem_one_box = QCheckBox(text=self.problem_names[1], parent=self)
-        self.problem_one_box.setFixedHeight(40)
-        self.problem_one_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.problem_one_box.clicked.connect(self.onProblemOne)
+        # Category 1
+        self.category_one_box = QCheckBox(text=self.category_names[1], parent=self)
+        self.category_one_box.setFixedHeight(40)
+        self.category_one_box.setStyleSheet("margin-left:50%; margin-right:50%;")
+        self.category_one_box.clicked.connect(self.onCategoryOne)
 
-        # Problem 2
-        self.problem_two_box = QCheckBox(text=self.problem_names[2], parent=self)
-        self.problem_two_box.setFixedHeight(40)
-        self.problem_two_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.problem_two_box.clicked.connect(self.onProblemTwo)
+        # Category 2
+        self.category_two_box = QCheckBox(text=self.category_names[2], parent=self)
+        self.category_two_box.setFixedHeight(40)
+        self.category_two_box.setStyleSheet("margin-left:50%; margin-right:50%;")
+        self.category_two_box.clicked.connect(self.onCategoryTwo)
 
-        # Problem 3
-        self.problem_three_box = QCheckBox(text=self.problem_names[3], parent=self)
-        self.problem_three_box.setFixedHeight(40)
-        self.problem_three_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.problem_three_box.clicked.connect(self.onProblemThree)
+        # Category 3
+        self.category_three_box = QCheckBox(text=self.category_names[3], parent=self)
+        self.category_three_box.setFixedHeight(40)
+        self.category_three_box.setStyleSheet("margin-left:50%; margin-right:50%;")
+        self.category_three_box.clicked.connect(self.onCategoryThree)
 
-        # Problem 4
-        self.problem_four_box = QCheckBox(text=self.problem_names[4], parent=self)
-        self.problem_four_box.setFixedHeight(40)
-        self.problem_four_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.problem_four_box.clicked.connect(self.onProblemFour)
+        # Category 4
+        self.category_four_box = QCheckBox(text=self.category_names[4], parent=self)
+        self.category_four_box.setFixedHeight(40)
+        self.category_four_box.setStyleSheet("margin-left:50%; margin-right:50%;")
+        self.category_four_box.clicked.connect(self.onCategoryFour)
 
-        # Problem 5/other
-        self.problem_five_box = QCheckBox(text=self.problem_names[5], parent=self)
-        self.problem_five_box.setFixedHeight(40)
-        self.problem_five_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.problem_five_box.clicked.connect(self.onProblemOther)
+        # Category 5/other
+        self.category_five_box = QCheckBox(text=self.category_names[5], parent=self)
+        self.category_five_box.setFixedHeight(40)
+        self.category_five_box.setStyleSheet("margin-left:50%; margin-right:50%;")
+        self.category_five_box.clicked.connect(self.onCategoryFive)
 
-        # Problems layout
-        self.problems_layout = QHBoxLayout()
-        self.problems_layout.addWidget(self.problem_one_box)
-        self.problems_layout.addWidget(self.problem_two_box)
-        self.problems_layout.addWidget(self.problem_three_box)
-        self.problems_layout.addWidget(self.problem_four_box)
-        self.problems_layout.addWidget(self.problem_five_box)
+        # categories layout
+        self.categories_layout = QHBoxLayout()
+        self.categories_layout.addWidget(self.category_one_box)
+        self.categories_layout.addWidget(self.category_two_box)
+        self.categories_layout.addWidget(self.category_three_box)
+        self.categories_layout.addWidget(self.category_four_box)
+        self.categories_layout.addWidget(self.category_five_box)
 
         # Add widgets to main layout
         central_widget = QWidget()
@@ -227,7 +227,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.image_view)
         layout.addWidget(self.position_label)
         layout.addLayout(self.bottom_layout)
-        layout.addLayout(self.problems_layout)
+        layout.addLayout(self.categories_layout)
         self.setCentralWidget(central_widget)
         
         # Menu bar
@@ -260,8 +260,8 @@ class MainWindow(QMainWindow):
 
         # Initialize some data
         self.getComment()
-        self.regionUpdate()
-        self.problemUpdate()
+        self.markUpdate()
+        self.categoryUpdate()
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
@@ -305,7 +305,7 @@ class MainWindow(QMainWindow):
             self.onMiddleMouse()
 
         if (event.button() == Qt.MouseButton.RightButton):
-            self.getSelectedRegions()
+            self.getSelectedMarks()
 
     def mouseMoveEvent(self, event):
         ep, lp = self.mouseImagePos()
@@ -320,79 +320,44 @@ class MainWindow(QMainWindow):
             self.position_label.setText('')
 
     # === On-actions ===
-    def onProblemOne(self):
-        if (self.problem_one_box.checkState().value == 2):
-            self.data[self.image_file]['problem'] = 1
-            for i in range(1,10):
-                try: del self.data[self.image_file][i]
-                except: pass
+    def onCategoryOne(self):
+        if (self.category_one_box.checkState().value == 2) and (0 not in self.data[self.image_file]['category']):
+            self.data[self.image_file]['category'].append(0)
         else:
-            self.data[self.image_file]['problem'] = 0
+            self.data[self.image_file]['category'].remove(0)
         galmark.io.save(self.data,self.username,self.date)
-        self.problem_two_box.setChecked(False)
-        self.problem_three_box.setChecked(False)
-        self.problem_four_box.setChecked(False)
-        self.problem_five_box.setChecked(False)
         self.imageUpdate()
 
-    def onProblemTwo(self):
-        if (self.problem_two_box.checkState().value == 2):
-            self.data[self.image_file]['problem'] = 2
-            for i in range(1,10):
-                try: del self.data[self.image_file][i]
-                except: pass
+    def onCategoryTwo(self):
+        if (self.category_two_box.checkState().value == 2) and (1 not in self.data[self.image_file]['category']):
+            self.data[self.image_file]['category'].append(1)
         else:
-            self.data[self.image_file]['problem'] = 0
+            self.data[self.image_file]['category'].remove(1)
         galmark.io.save(self.data,self.username,self.date)
-        self.problem_one_box.setChecked(False)
-        self.problem_three_box.setChecked(False)
-        self.problem_four_box.setChecked(False)
-        self.problem_five_box.setChecked(False)
         self.imageUpdate()
 
-    def onProblemThree(self):
-        if (self.problem_three_box.checkState().value == 2):
-            self.data[self.image_file]['problem'] = 3
-            for i in range(1,10):
-                try: del self.data[self.image_file][i]
-                except: pass
+    def onCategoryThree(self):
+        if (self.category_three_box.checkState().value == 2) and (2 not in self.data[self.image_file]['category']):
+            self.data[self.image_file]['category'].append(2)
         else:
-            self.data[self.image_file]['problem'] = 0
+            self.data[self.image_file]['category'].remove(2)
         galmark.io.save(self.data,self.username,self.date)
-        self.problem_one_box.setChecked(False)
-        self.problem_two_box.setChecked(False)
-        self.problem_four_box.setChecked(False)
-        self.problem_five_box.setChecked(False)
         self.imageUpdate()
 
-    def onProblemFour(self):
-        if (self.problem_four_box.checkState().value == 2):
-            self.data[self.image_file]['problem'] = 4
-            for i in range(1,10):
-                try: del self.data[self.image_file][i]
-                except: pass
+    def onCategoryFour(self):
+        if (self.category_four_box.checkState().value == 2) and (3 not in self.data[self.image_file]['category']):
+            self.data[self.image_file]['category'].append(3)
         else:
-            self.data[self.image_file]['problem'] = 0
+            self.data[self.image_file]['category'].remove(3)
         galmark.io.save(self.data,self.username,self.date)
-        self.problem_one_box.setChecked(False)
-        self.problem_two_box.setChecked(False)
-        self.problem_three_box.setChecked(False)
-        self.problem_five_box.setChecked(False)
         self.imageUpdate()
 
-    def onProblemOther(self):
-        if (self.problem_five_box.checkState().value == 2):
-            self.data[self.image_file]['problem'] = 5
-            for i in range(1,10):
-                try: del self.data[self.image_file][i]
-                except: pass
+    def onCategoryFive(self):
+        if (self.category_five_box.checkState().value == 2) and (4 not in self.data[self.image_file]['category']):
+            self.data[self.image_file]['category'].append(4)
         else:
-            self.data[self.image_file]['problem'] = 0
+            self.data[self.image_file]['category'].remove(4)
         galmark.io.save(self.data,self.username,self.date)
-        self.problem_one_box.setChecked(False)
-        self.problem_two_box.setChecked(False)
-        self.problem_three_box.setChecked(False)
-        self.problem_four_box.setChecked(False)
         self.imageUpdate()
 
     def onMark(self, group=0):
@@ -405,52 +370,61 @@ class MainWindow(QMainWindow):
         
         # Mark if hovering over image
         
-        if (self.data[self.image_file]['problem'] == 0):
-            if (self.region_limits[group - 1] != 'None'):
-                limit = int(self.region_limits[group - 1])
-                if (len(self.data[self.image_file][group]['Regions']) < limit):
-                    if self._pixmap_item is self.image_view.itemAt(ep):
+        if (self.group_max[group - 1] != 'None'):
+            limit = int(self.group_max[group - 1])
 
-                        region = Region(lp.x(),lp.y(),wcs=self.wcs,group=group)
-                        region.draw(self.image_scene)
-
-                        if not self.data[self.image_file][group]['Regions']:
-                            self.data[self.image_file][group]['Regions'] = []
-
-                        self.data[self.image_file][group]['Regions'].append(region)
-                        galmark.io.save(self.data,self.username,self.date)
-            else:
+            if (limit == 1) and (len(self.data[self.image_file][group]['Marks']) == limit):
                 if self._pixmap_item is self.image_view.itemAt(ep):
 
-                    region = Region(lp.x(),lp.y(),wcs=self.wcs,group=group)
-                    region.draw(self.image_scene)
+                    mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
+                    mark.draw(self.image_scene)
 
-                    if not self.data[self.image_file][group]['Regions']:
-                        self.data[self.image_file][group]['Regions'] = []
-
-                    self.data[self.image_file][group]['Regions'].append(region)
+                    self.data[self.image_file][group]['Marks'][0] = mark
                     galmark.io.save(self.data,self.username,self.date)
+
+            elif (len(self.data[self.image_file][group]['Marks']) < limit):
+                if self._pixmap_item is self.image_view.itemAt(ep):
+
+                    mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
+                    mark.draw(self.image_scene)
+
+                    if not self.data[self.image_file][group]['Marks']:
+                        self.data[self.image_file][group]['Marks'] = []
+
+                    self.data[self.image_file][group]['Marks'].append(mark)
+                    galmark.io.save(self.data,self.username,self.date)
+        else:
+            if self._pixmap_item is self.image_view.itemAt(ep):
+
+                mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
+                mark.draw(self.image_scene)
+
+                if not self.data[self.image_file][group]['Marks']:
+                    self.data[self.image_file][group]['Marks'] = []
+
+                self.data[self.image_file][group]['Marks'].append(mark)
+                galmark.io.save(self.data,self.username,self.date)
 
     def onNext(self):
         if self.idx+1 < self.N:
             # Increment the index
             self.idx += 1
+            self.categoryUpdate()
             self.commentUpdate()
             self.imageUpdate()
-            self.regionUpdate()
+            self.markUpdate()
             self.getComment()
-            self.problemUpdate()
             # galmark.io.save(self.data,self.username,self.date)
 
     def onBack(self):
         if self.idx+1 > 1:
             # Increment the index
             self.idx -= 1
+            self.categoryUpdate()
             self.commentUpdate()
             self.imageUpdate()
-            self.regionUpdate()
+            self.markUpdate()
             self.getComment()
-            self.problemUpdate()
             # galmark.io.save(self.data,self.username,self.date)
             
     def onEnter(self):
@@ -512,48 +486,48 @@ class MainWindow(QMainWindow):
             self.data[self.image_file]['comment'] = comment
             self.comment_box.setText('')
 
-    def problemUpdate(self):
-        # Initialize problem and update checkboxes
-        self.problem_one_box.setChecked(False)
-        self.problem_two_box.setChecked(False)
-        self.problem_three_box.setChecked(False)
-        self.problem_four_box.setChecked(False)
-        self.problem_five_box.setChecked(False)
-        if not (self.data[self.image_file]['problem']):
-            self.data[self.image_file]['problem'] = 0
+    def categoryUpdate(self):
+        # Initialize category and update checkboxes
+        self.category_one_box.setChecked(False)
+        self.category_two_box.setChecked(False)
+        self.category_three_box.setChecked(False)
+        self.category_four_box.setChecked(False)
+        self.category_five_box.setChecked(False)
+        if not (self.data[self.image_file]['category']):
+            self.data[self.image_file]['category'] = []
         else:
-            problem = self.data[self.image_file]['problem']
-            if (problem == 1):
-                self.problem_one_box.setChecked(True)
-            if (problem == 2):
-                self.problem_two_box.setChecked(True)
-            if (problem == 3):
-                self.problem_three_box.setChecked(True)
-            if (problem == 4):
-                self.problem_four_box.setChecked(True)
-            if (problem == 5):
-                self.problem_five_box.setChecked(True)
+            category_list = self.data[self.image_file]['category']
+            if (0 in category_list):
+                self.category_one_box.setChecked(True)
+            if (1 in category_list):
+                self.category_two_box.setChecked(True)
+            if (2 in category_list):
+                self.category_three_box.setChecked(True)
+            if (3 in category_list):
+                self.category_four_box.setChecked(True)
+            if (4 in category_list):
+                self.category_five_box.setChecked(True)
 
-    def regionUpdate(self):
-        # Redraws all regions in image
+    def markUpdate(self):
+        # Redraws all marks in image
         for i in range(0,10):
-            region_list = self.data[self.image_file][i]['Regions']
+            mark_list = self.data[self.image_file][i]['Marks']
                 
-            for region in region_list: region.draw(self.image_scene)
+            for mark in mark_list: mark.draw(self.image_scene)
 
-    def getSelectedRegions(self):
+    def getSelectedMarks(self):
         _, pix_pos = self.mouseImagePos()
         pix_pos = pix_pos.toPointF()
         selection_filt = [ item is self.image_scene.itemAt(pix_pos, item.transform()) 
                            for item in self.image_scene.items() 
-                           if isinstance(item,Region) ]
+                           if isinstance(item,Mark) ]
         selected_items = [ item for item in self.image_scene.items() 
-                           if isinstance(item,Region) 
+                           if isinstance(item,Mark) 
                            and (item is self.image_scene.itemAt(pix_pos, item.transform()))]
         
         for item in selected_items:
             self.image_scene.removeItem(item)
-            self.data[self.image_file][item.g]['Regions'].remove(item)
+            self.data[self.image_file][item.g]['Marks'].remove(item)
             galmark.io.save(self.data,self.username,self.date)
 
     # === Transformations ===
