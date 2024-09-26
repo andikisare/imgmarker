@@ -88,7 +88,7 @@ def readConfig(config='galmark.cfg'):
 
     else:
         for l in open(config):
-            var, val = l.replace(' ','').replace('\n','').split('=')
+            var, val = [i.strip() for i in l.replace('\n','').split('=')]
 
             if var == 'out_path':
                 if var == './': out_path = os.getcwd()
@@ -230,7 +230,7 @@ def load(username,config='galmark.cfg'):
         for l in open(outfile):
             if skip: skip = False
             else:
-                date,name,group,x,y,ra,dec,problem,comment = l.replace(' ','').replace('|\n','').split('|')
+                date,name,group,x,y,ra,dec,problem,comment = [i.strip() for i in l.replace('|\n','').split('|')]
                 group_idx = group_names.index(group)
                 problem_idx = problem_names.index(problem)
 
