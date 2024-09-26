@@ -193,7 +193,7 @@ def save(data,username,date):
                 categories_to_print_string = ''
                 categories_to_print_list = [category_names[i] for i in category_list]
                 num_categories = len(category_list)
-                if len(category_list != 0):
+                if (len(category_list) != 0):
                     for category, i in enumerate(categories_to_print_list):
                         if (i != (num_categories - 1)):
                             categories_to_print_string += str(category) + ', '

@@ -409,22 +409,22 @@ class MainWindow(QMainWindow):
         if self.idx+1 < self.N:
             # Increment the index
             self.idx += 1
-            self.categoryUpdate()
             self.commentUpdate()
             self.imageUpdate()
             self.markUpdate()
             self.getComment()
+            self.categoryUpdate()
             # galmark.io.save(self.data,self.username,self.date)
 
     def onBack(self):
         if self.idx+1 > 1:
             # Increment the index
             self.idx -= 1
-            self.categoryUpdate()
             self.commentUpdate()
             self.imageUpdate()
             self.markUpdate()
             self.getComment()
+            self.categoryUpdate()
             # galmark.io.save(self.data,self.username,self.date)
             
     def onEnter(self):
