@@ -478,12 +478,14 @@ class MainWindow(QMainWindow):
         if (self.group_max[group - 1] != 'None'):
             limit = int(self.group_max[group - 1])
 
-            if (limit == 1) and (len(self.data[self.image_file][group]['Marks']) == limit):
+            if (limit == 1) and (len(self.data[self.image_file][group]['Marks']) == 1):
                 if self._pixmap_item is self.image_view.itemAt(ep):
 
                     mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
                     mark.draw(self.image_scene)
-
+                    
+                    prev_mark = self.data[self.image_file][group]['Marks'][0]
+                    self.image_scene.removeItem(prev_mark)
                     self.data[self.image_file][group]['Marks'][0] = mark
                     galmark.io.save(self.data,self.username,self.date)
 
