@@ -257,16 +257,19 @@ class MainWindow(QMainWindow):
         self.back_button = QPushButton(text='Back',parent=self)
         self.back_button.setFixedHeight(40)
         self.back_button.clicked.connect(self.onBack)
+        self.back_button.setShortcut('Shift+Tab')
 
         # Enter Button
         self.submit_button = QPushButton(text='Enter',parent=self)
         self.submit_button.setFixedHeight(40)
         self.submit_button.clicked.connect(self.onEnter)
+        self.submit_button.setShortcut('Return')
 
         # Next widget
         self.next_button = QPushButton(text='Next',parent=self)
         self.next_button.setFixedHeight(40)
         self.next_button.clicked.connect(self.onNext)
+        self.next_button.setShortcut('Tab')
 
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
@@ -368,14 +371,6 @@ class MainWindow(QMainWindow):
             elif x < 0:
                 self.zoomIn()
             return True
-        
-        if (event.type() == QEvent.Type.KeyPress):
-            if (event.key() == Qt.Key.Key_Tab):
-                self.onNext()
-                return True
-            elif (event.key() == Qt.Key.Key_Backtab):
-                self.onBack()
-                return True
 
         return super().eventFilter(source, event)
     
@@ -394,16 +389,6 @@ class MainWindow(QMainWindow):
         for i in range(0,9):
             if markButtons[i]: self.onMark(group=i+1)
 
-        # Check if "Enter" was pressed
-        if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter):
-            self.onEnter()
-
-        if (event.key() == Qt.Key.Key_D):
-            self.onNext()
-
-        elif (event.key() == Qt.Key.Key_A):
-            self.onBack()
-
         if (event.key() == Qt.Key.Key_Backspace) or (event.key() == Qt.Key.Key_Delete):
             self.getSelectedMarks()
 
@@ -420,13 +405,12 @@ class MainWindow(QMainWindow):
             self.getSelectedMarks()
 
     def mouseMoveEvent(self, event):
-        ep, lp = self.mouseImagePos()
-
-        _x, _y = lp.x(), self.wcs._naxis[0] - lp.y()
-        ra, dec = self.wcs.all_pix2world([[_x, _y]], 0)[0]
-        
         # Mark if hovering over image
         if bool(self.image_view.itemAt(ep)):
+            ep, lp = self.mouseImagePos()
+
+            _x, _y = lp.x(), self.wcs._naxis[0] - lp.y()
+            ra, dec = self.wcs.all_pix2world([[_x, _y]], 0)[0]
             self.position_label.setText(f'Pixel: ({lp.x()} , {lp.y()})     WCS: ({ra:.4f}° , {dec:.4f}°)')
         else: 
             self.position_label.setText('')
