@@ -431,15 +431,7 @@ class MainWindow(QMainWindow):
         else:
             self.data[self.image_file]['categories'].remove(i)
         galmark.io.save(self.data,self.username,self.date)
-
-    def onCategoryFive(self):
-        if (self.category_five_box.checkState().value == 2) and (5 not in self.data[self.image_file]['category']):
-            self.data[self.image_file]['category'].append(5)
-        else:
-            self.data[self.image_file]['category'].remove(5)
-        galmark.io.save(self.data,self.username,self.date)
-        self.imageUpdate()
-
+        
     def onMark(self, group=0):
         '''
         Actions to complete when marking
