@@ -57,7 +57,10 @@ class AdjustmentsWindow(QWidget):
         layout.addWidget(self.brightnessSlider)
         layout.addWidget(self.contrastSlider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
+    def show(self):
+        super().show()
+        self.activateWindow()   
 
 class BlurWindow(QWidget):
     """
@@ -102,6 +105,10 @@ class BlurWindow(QWidget):
         self.slider.setValue(floor(pos))
         self.valueLabel.setText(f'Radius: {floor(self.slider.value())/10}')
 
+    def show(self):
+        super().show()
+        self.activateWindow()
+
 class InstructionsWindow(QWidget):
     """
     This window displays the instructions and keymappings
@@ -132,10 +139,10 @@ class InstructionsWindow(QWidget):
         self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         
         # Lists for keybindings
-        actions_list = ['Delete','Enter comment', 'Focus', 'Zoom in/out', 'Exit', 'Help']
+        actions_list = ['Next','Back','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Exit', 'Help']
         group_list = [f'Group \"{group}\"' for group in groupNames[1:]]
-        actions_list = ['D', 'A'] + group_list + actions_list
-        buttons_list = ['Next', 'Back', 'Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'Esc OR Q', 'F1', ]
+        actions_list = group_list + actions_list
+        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Tab', 'Shift+Tab', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'Esc OR Q', 'F1', ]
 
         # Determing widths for keybindings list
         actions_width = max([len(a) for a in actions_list])
@@ -160,6 +167,10 @@ class InstructionsWindow(QWidget):
 
         # Resize window according to size of layout
         self.resize(int(layout_width*1.1),int(layout_height*1.1))
+
+    def show(self):
+        super().show()
+        self.activateWindow()
 
 class StartupWindow(QInputDialog):
     def __init__(self):
