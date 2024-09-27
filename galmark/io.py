@@ -94,6 +94,9 @@ def readConfig(config='galmark.cfg'):
                 if var == './': out_path = os.getcwd()
                 else: out_path = val
                 os.path.join(out_path,'')
+                if not os.path.exists(out_path):
+                    print("WARNING: out_path does not exist. Creating out_path directory.")
+                    os.mkdir(out_path)
 
             if var == 'images_path':
                 if val == './': images_path = os.getcwd()
@@ -145,7 +148,6 @@ def save(data,username,date):
             if (len(category_list) != 0):
                 categories = ','.join([category_names[i] for i in category_list])
             else: categories = 'None'
-
 
             # Get list of groups containing data
             level2_keys = list(data[name].keys())

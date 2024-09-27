@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QSlider, QFrame
 from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QImage
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QEvent
 from galmark.mark import Mark
 from galmark import __dirname__, __icon__ 
 import galmark.io
@@ -132,8 +132,8 @@ class InstructionsWindow(QWidget):
         # Lists for keybindings
         actions_list = ['Delete','Enter comment', 'Focus', 'Zoom in/out', 'Exit', 'Help']
         group_list = [f'Group \"{group}\"' for group in groupNames[1:]]
-        actions_list = group_list + actions_list
-        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Right click', 'Enter', 'Middle click', 'Scroll wheel', 'Esc OR Q', 'F1', ]
+        actions_list = ['D', 'A'] + group_list + actions_list
+        buttons_list = ['Next', 'Back', 'Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'Esc OR Q', 'F1', ]
 
         # Determing widths for keybindings list
         actions_width = max([len(a) for a in actions_list])
@@ -328,7 +328,7 @@ class MainWindow(QMainWindow):
         adjustMenu.setStatusTip("Brightness and Contrast")
         adjustMenu.setShortcuts(['Ctrl+a'])
         adjustMenu.triggered.connect(self.adjustmentsWindow.show)
-        filterMenu.addAction(adjustMenu)
+        # filterMenu.addAction(adjustMenu)
 
         ## Help menu
         helpMenu = menuBar.addMenu('&Help')
@@ -341,6 +341,10 @@ class MainWindow(QMainWindow):
         instructionsMenu.triggered.connect(self.instructionsWindow.show)
         helpMenu.addAction(instructionsMenu)
         self.instructionsWindow.show()
+
+        def focusNextPrevChild(self, next: bool):
+            # Override to do nothing, preventing tab navigation
+            return False
 
         # Initialize some data
         self.getComment()
@@ -363,6 +367,15 @@ class MainWindow(QMainWindow):
             elif x < 0:
                 self.zoomIn()
             return True
+        
+        if (event.type() == QEvent.Type.KeyPress):
+            if (event.key() == Qt.Key.Key_Tab):
+                self.onNext()
+                return True
+            elif (event.key() == Qt.Key.Key_Backtab):
+                self.onBack()
+                return True
+
         return super().eventFilter(source, event)
     
     # === Events ===
@@ -384,7 +397,14 @@ class MainWindow(QMainWindow):
         if (event.key() == Qt.Key.Key_Return) or (event.key() == Qt.Key.Key_Enter):
             self.onEnter()
 
-        # if (event.key() == Qt.Key.Key_Right)
+        if (event.key() == Qt.Key.Key_D):
+            self.onNext()
+
+        elif (event.key() == Qt.Key.Key_A):
+            self.onBack()
+
+        if (event.key() == Qt.Key.Key_Backspace) or (event.key() == Qt.Key.Key_Delete):
+            self.getSelectedMarks()
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
