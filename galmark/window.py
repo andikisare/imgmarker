@@ -431,7 +431,7 @@ class MainWindow(QMainWindow):
         else:
             self.data[self.image_file]['categories'].remove(i)
         galmark.io.save(self.data,self.username,self.date)
-        
+
     def onMark(self, group=0):
         '''
         Actions to complete when marking
@@ -503,6 +503,7 @@ class MainWindow(QMainWindow):
             
     def onEnter(self):
         self.commentUpdate()
+        self.comment_box.clearFocus()
         galmark.io.save(self.data,self.username,self.date)
     
     def closeEvent(self, event):
