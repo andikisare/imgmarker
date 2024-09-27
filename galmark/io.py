@@ -140,7 +140,7 @@ def save(data,username,date):
 
         for name in names:
             comment = data[name]['comment']
-            category_list = data[name]['category']
+            category_list = data[name]['categories']
             category_list.sort()
             if (len(category_list) != 0):
                 categories = ','.join([category_names[i] for i in category_list])
@@ -150,13 +150,13 @@ def save(data,username,date):
             # Get list of groups containing data
             level2_keys = list(data[name].keys())
             groups = [ key for key in level2_keys if isinstance(key,int) 
-                        and data[name][key]['Marks'] ]
+                        and data[name][key]['marks'] ]
 
             # If there is data in groups, then add this data to lines
             if (len(groups) != 0):
                 for group in groups:
                     group_name = group_names[group]
-                    mark_list = data[name][group]['Marks']
+                    mark_list = data[name][group]['marks']
 
                     for mark in mark_list:
                         ra, dec = mark.centerWCS()
@@ -205,7 +205,7 @@ def save(data,username,date):
         yln = max(np.max(y_lengths), 1) + 2
         raln = max(np.max(ra_lengths), 2) + 2
         decln = max(np.max(dec_lengths), 2) + 2
-        categoryln = max(np.max(category_lengths), 12) + 2
+        categoryln = max(np.max(category_lengths), 16) + 2
         commentln = max(np.max(comment_lengths), 7) + 2
         dateln = 12
 
@@ -216,7 +216,7 @@ def save(data,username,date):
                           f'^{xln}', f'^{yln}', f'^{raln}', f'^{decln}',
                           f'^{categoryln}', f'^{commentln}' ]
         
-        header = ['date','image','group','x','y','RA','DEC','category/ies','comment']
+        header = ['date','image','group','x','y','RA','DEC','image categories','comment']
         header = ''.join(f'{h:{l_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
         
         out.write(header)
@@ -247,13 +247,13 @@ def load(username,config='galmark.cfg'):
                     mark_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
                     mark = Mark(*mark_args, **mark_kwargs)
 
-                    if not data[name][group_idx]['Marks']:
-                        data[name][group_idx]['Marks'] = []
+                    if not data[name][group_idx]['marks']:
+                        data[name][group_idx]['marks'] = []
 
-                    data[name][group_idx]['Marks'].append(mark)
+                    data[name][group_idx]['marks'].append(mark)
 
                 data[name]['comment'] = comment
-                data[name]['category'] = category_list
+                data[name]['categories'] = category_list
                 
     return data
 

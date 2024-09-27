@@ -277,31 +277,31 @@ class MainWindow(QMainWindow):
         self.category_one_box = QCheckBox(text=self.category_names[1], parent=self)
         self.category_one_box.setFixedHeight(40)
         self.category_one_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_one_box.clicked.connect(self.onCategoryOne)
+        self.category_one_box.clicked.connect(lambda: self.onCategory(1))
 
         # Category 2
         self.category_two_box = QCheckBox(text=self.category_names[2], parent=self)
         self.category_two_box.setFixedHeight(40)
         self.category_two_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_two_box.clicked.connect(self.onCategoryTwo)
+        self.category_two_box.clicked.connect(lambda: self.onCategory(2))
 
         # Category 3
         self.category_three_box = QCheckBox(text=self.category_names[3], parent=self)
         self.category_three_box.setFixedHeight(40)
         self.category_three_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_three_box.clicked.connect(self.onCategoryThree)
+        self.category_three_box.clicked.connect(lambda: self.onCategory(3))
 
         # Category 4
         self.category_four_box = QCheckBox(text=self.category_names[4], parent=self)
         self.category_four_box.setFixedHeight(40)
         self.category_four_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_four_box.clicked.connect(self.onCategoryFour)
+        self.category_four_box.clicked.connect(lambda: self.onCategory(4))
 
         # Category 5/other
         self.category_five_box = QCheckBox(text=self.category_names[5], parent=self)
         self.category_five_box.setFixedHeight(40)
         self.category_five_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_five_box.clicked.connect(self.onCategoryFive)
+        self.category_five_box.clicked.connect(lambda: self.onCategory(5))
 
         # categories layout
         self.categories_layout = QHBoxLayout()
@@ -425,37 +425,12 @@ class MainWindow(QMainWindow):
             self.position_label.setText('')
 
     # === On-actions ===
-    def onCategoryOne(self):
-        if (self.category_one_box.checkState().value == 2) and (1 not in self.data[self.image_file]['category']):
-            self.data[self.image_file]['category'].append(1)
+    def onCategory(self,i):
+        if (self.category_one_box.checkState().value == 2) and (i not in self.data[self.image_file]['categories']):
+            self.data[self.image_file]['categories'].append(i)
         else:
-            self.data[self.image_file]['category'].remove(1)
+            self.data[self.image_file]['categories'].remove(i)
         galmark.io.save(self.data,self.username,self.date)
-        self.imageUpdate()
-
-    def onCategoryTwo(self):
-        if (self.category_two_box.checkState().value == 2) and (2 not in self.data[self.image_file]['category']):
-            self.data[self.image_file]['category'].append(2)
-        else:
-            self.data[self.image_file]['category'].remove(2)
-        galmark.io.save(self.data,self.username,self.date)
-        self.imageUpdate()
-
-    def onCategoryThree(self):
-        if (self.category_three_box.checkState().value == 2) and (3 not in self.data[self.image_file]['category']):
-            self.data[self.image_file]['category'].append(3)
-        else:
-            self.data[self.image_file]['category'].remove(3)
-        galmark.io.save(self.data,self.username,self.date)
-        self.imageUpdate()
-
-    def onCategoryFour(self):
-        if (self.category_four_box.checkState().value == 2) and (4 not in self.data[self.image_file]['category']):
-            self.data[self.image_file]['category'].append(4)
-        else:
-            self.data[self.image_file]['category'].remove(4)
-        galmark.io.save(self.data,self.username,self.date)
-        self.imageUpdate()
 
     def onCategoryFive(self):
         if (self.category_five_box.checkState().value == 2) and (5 not in self.data[self.image_file]['category']):
@@ -478,27 +453,27 @@ class MainWindow(QMainWindow):
         if (self.group_max[group - 1] != 'None'):
             limit = int(self.group_max[group - 1])
 
-            if (limit == 1) and (len(self.data[self.image_file][group]['Marks']) == 1):
+            if (limit == 1) and (len(self.data[self.image_file][group]['marks']) == 1):
                 if self._pixmap_item is self.image_view.itemAt(ep):
 
                     mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
                     mark.draw(self.image_scene)
                     
-                    prev_mark = self.data[self.image_file][group]['Marks'][0]
+                    prev_mark = self.data[self.image_file][group]['marks'][0]
                     self.image_scene.removeItem(prev_mark)
-                    self.data[self.image_file][group]['Marks'][0] = mark
+                    self.data[self.image_file][group]['marks'][0] = mark
                     galmark.io.save(self.data,self.username,self.date)
 
-            elif (len(self.data[self.image_file][group]['Marks']) < limit):
+            elif (len(self.data[self.image_file][group]['marks']) < limit):
                 if self._pixmap_item is self.image_view.itemAt(ep):
 
                     mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
                     mark.draw(self.image_scene)
 
-                    if not self.data[self.image_file][group]['Marks']:
-                        self.data[self.image_file][group]['Marks'] = []
+                    if not self.data[self.image_file][group]['marks']:
+                        self.data[self.image_file][group]['marks'] = []
 
-                    self.data[self.image_file][group]['Marks'].append(mark)
+                    self.data[self.image_file][group]['marks'].append(mark)
                     galmark.io.save(self.data,self.username,self.date)
         else:
             if self._pixmap_item is self.image_view.itemAt(ep):
@@ -506,10 +481,10 @@ class MainWindow(QMainWindow):
                 mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
                 mark.draw(self.image_scene)
 
-                if not self.data[self.image_file][group]['Marks']:
-                    self.data[self.image_file][group]['Marks'] = []
+                if not self.data[self.image_file][group]['marks']:
+                    self.data[self.image_file][group]['marks'] = []
 
-                self.data[self.image_file][group]['Marks'].append(mark)
+                self.data[self.image_file][group]['marks'].append(mark)
                 galmark.io.save(self.data,self.username,self.date)
 
     def onNext(self):
@@ -611,10 +586,10 @@ class MainWindow(QMainWindow):
         self.category_three_box.setChecked(False)
         self.category_four_box.setChecked(False)
         self.category_five_box.setChecked(False)
-        if not (self.data[self.image_file]['category']):
-            self.data[self.image_file]['category'] = []
+        if not (self.data[self.image_file]['categories']):
+            self.data[self.image_file]['categories'] = []
         else:
-            category_list = self.data[self.image_file]['category']
+            category_list = self.data[self.image_file]['categories']
             if (1 in category_list):
                 self.category_one_box.setChecked(True)
             if (2 in category_list):
@@ -629,7 +604,7 @@ class MainWindow(QMainWindow):
     def markUpdate(self):
         # Redraws all marks in image
         for i in range(0,10):
-            mark_list = self.data[self.image_file][i]['Marks']
+            mark_list = self.data[self.image_file][i]['marks']
                 
             for mark in mark_list: mark.draw(self.image_scene)
 
@@ -645,7 +620,7 @@ class MainWindow(QMainWindow):
         
         for item in selected_items:
             self.image_scene.removeItem(item)
-            self.data[self.image_file][item.g]['Marks'].remove(item)
+            self.data[self.image_file][item.g]['marks'].remove(item)
             galmark.io.save(self.data,self.username,self.date)
 
     # === Transformations ===
