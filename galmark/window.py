@@ -513,9 +513,6 @@ class MainWindow(QMainWindow):
         newY = int(centerY - cursorY)
         self.image_view.translate(newX, newY)
 
-        _center = self.image_view.mapToGlobal(center)
-        self.cursor().setPos(int(_center.x()),int(_center.x()))
-
     def onBlur(self,value):
         value = floor(value)/10
         image_blurred = self.image.filter(GaussianBlur(value))
