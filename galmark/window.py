@@ -176,6 +176,10 @@ class StartupWindow(QInputDialog):
     def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon(__icon__))
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
 
     def getUser(self) -> None:
         # Make popup to get name
