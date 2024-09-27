@@ -568,7 +568,7 @@ class MainWindow(QMainWindow):
             category_list = self.data[self.image_file]['categories']
             for i in range(1,6):
                 if (i in category_list):
-                    self.category_boxes[i].setChecked(True)
+                    self.category_boxes[i-1].setChecked(True)
 
     def markUpdate(self):
         # Redraws all marks in image
