@@ -367,9 +367,9 @@ class MainWindow(QMainWindow):
         if (source == self.image_view.viewport()) and (event.type() == 31):
             x = event.angleDelta().y() / 120
             if x > 0:
-                self.zoomOut()
+                self.zoom(-1)
             elif x < 0:
-                self.zoomIn()
+                self.zoom()
             return True
 
         return super().eventFilter(source, event)
@@ -594,23 +594,13 @@ class MainWindow(QMainWindow):
             galmark.io.save(self.data,self.username,self.date)
 
     # === Transformations ===
-    def zoomIn(self):
+    def zoom(self,scale:int=1):
         # Zoom in on cursor location
         view_pos, _ = self.mouseImagePos()
         transform = self.image_view.transform()
         center = self.image_view.mapToScene(view_pos)
         transform.translate(center.x(), center.y())
-        transform.scale(1.2, 1.2)
-        transform.translate(-center.x(), -center.y())
-        self.image_view.setTransform(transform)
-
-    def zoomOut(self):
-        # Zoom out from cursor location
-        view_pos, _ = self.mouseImagePos()
-        transform = self.image_view.transform()
-        center = self.image_view.mapToScene(view_pos)
-        transform.translate(center.x(), center.y())
-        transform.scale(1/1.2, 1/1.2)
+        transform.scale(1.2**scale, 1.2**scale)
         transform.translate(-center.x(), -center.y())
         self.image_view.setTransform(transform)
 
