@@ -74,14 +74,14 @@ def readConfig(config='galmark.cfg'):
     if not os.path.exists(config):
         config_file = open(config,'w')
         
-        out_path = os.path.join(os.getcwd(),'')
-        images_path = os.path.join(os.getcwd(),'')
+        out_dir = os.path.join(os.getcwd(),'')
+        image_dir = os.path.join(os.getcwd(),'')
         group_names = ['None','1','2','3','4','5','6','7','8','9']
         category_names = ['None','1','2','3','4','5']
         group_max = ['None','None','None','None','None','None','None','None','None']
 
-        config_file.write(f'out_path = {out_path}\n')
-        config_file.write(f'images_path = {images_path}\n')
+        config_file.write(f'out_dir = {out_dir}\n')
+        config_file.write(f'image_dir = {image_dir}\n')
         config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
         config_file.write('categories = 1,2,3,4,5\n')
         config_file.write('group_max = None,None,None,None,None,None,None,None,None')
@@ -90,18 +90,18 @@ def readConfig(config='galmark.cfg'):
         for l in open(config):
             var, val = [i.strip() for i in l.replace('\n','').split('=')]
 
-            if var == 'out_path':
-                if var == './': out_path = os.getcwd()
-                else: out_path = val
-                os.path.join(out_path,'')
-                if not os.path.exists(out_path):
-                    print("WARNING: out_path does not exist. Creating out_path directory.")
-                    os.mkdir(out_path)
+            if var == 'out_dir':
+                if var == './': out_dir = os.getcwd()
+                else: out_dir = val
+                os.path.join(out_dir,'')
+                if not os.path.exists(out_dir):
+                    print("WARNING: out_dir does not exist. Creating out_dir directory.")
+                    os.mkdir(out_dir)
 
-            if var == 'images_path':
-                if val == './': images_path = os.getcwd()
-                else: images_path = val
-                images_path =  os.path.join(images_path,'')
+            if var == 'image_dir':
+                if val == './': image_dir = os.getcwd()
+                else: image_dir = val
+                image_dir =  os.path.join(image_dir,'')
 
             if var == 'groups':
                 group_names = val.split(',')
@@ -114,7 +114,7 @@ def readConfig(config='galmark.cfg'):
             if var == 'group_max':
                 group_max = val.split(',')
         
-    return out_path, images_path, group_names, category_names, group_max
+    return out_dir, image_dir, group_names, category_names, group_max
                 
 def checkUsername(username):
     return (username != "None") and (username != "")
@@ -130,8 +130,8 @@ def save(data,username,date):
     category_lengths = []
     comment_lengths = []
 
-    out_path, images_path, group_names, category_names, group_max = readConfig()
-    outfile = os.path.join(out_path, username + '.txt')
+    out_dir, image_dir, group_names, category_names, group_max = readConfig()
+    outfile = os.path.join(out_dir, username + '.txt')
     
     # Create the file
     if os.path.exists(outfile): 
@@ -229,8 +229,8 @@ def save(data,username,date):
             out.write(outline)
 
 def load(username,config='galmark.cfg'):
-    out_path, images_path, group_names, category_names, group_max = readConfig(config=config)
-    outfile = os.path.join(out_path,username+'.txt')
+    out_dir, image_dir, group_names, category_names, group_max = readConfig(config=config)
+    outfile = os.path.join(out_dir,username+'.txt')
     data = DataDict()
     skip = True
     
@@ -246,7 +246,7 @@ def load(username,config='galmark.cfg'):
                 
                 if (x!='NaN') and (y!='NaN'):
                     mark_args = (int(x),int(y))
-                    mark_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
+                    mark_kwargs = {'wcs': parseWCS(os.path.join(image_dir,name)), 'group': group_idx}
                     mark = Mark(*mark_args, **mark_kwargs)
 
                     if not data[name][group_idx]['marks']:
@@ -283,7 +283,7 @@ def glob(dir,ext,data_filt:DataDict={}):
     return images, idx
 
 def inputs(config='galmark.cfg'):
-    out_path, images_path, group_names, category_names, group_max = readConfig(config)
+    out_dir, image_dir, group_names, category_names, group_max = readConfig(config)
     username = galmark.window.StartupWindow().getUser()
 
-    return username, out_path, images_path, group_names, category_names, group_max
+    return username, out_dir, image_dir, group_names, category_names, group_max

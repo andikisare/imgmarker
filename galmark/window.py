@@ -174,7 +174,7 @@ class StartupWindow(QInputDialog):
         else: sys.exit()
 
 class MainWindow(QMainWindow):
-    def __init__(self, username, out_path, images_path, group_names, category_names, group_max, imtype = 'tif'):
+    def __init__(self, username, out_dir, image_dir, group_names, category_names, group_max, imtype = 'tif'):
         '''
         Constructor
 
@@ -205,7 +205,7 @@ class MainWindow(QMainWindow):
 
         # Find all images in image directory
         self.imtype = imtype
-        self.image_paths, self.idx = galmark.io.glob(images_path,self.imtype,data_filt=self.data)
+        self.image_paths, self.idx = galmark.io.glob(image_dir,self.imtype,data_filt=self.data)
         self.N = len(self.image_paths)
 
         try: self.image = Image.open(self.image_paths[self.idx])
