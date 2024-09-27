@@ -166,7 +166,7 @@ class StartupWindow(QInputDialog):
         super().__init__()
         self.setWindowIcon(QIcon(__icon__))
 
-    def getUser(self):
+    def getUser(self) -> None:
         # Make popup to get name
         text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
 
@@ -174,7 +174,7 @@ class StartupWindow(QInputDialog):
         else: sys.exit()
 
 class MainWindow(QMainWindow):
-    def __init__(self, username, out_dir, image_dir, group_names, category_names, group_max, imtype = 'tif'):
+    def __init__(self, username:str, out_dir:str, image_dir:str, group_names:list[str], category_names:list[str], group_max:int, imtype:str = 'tif'):
         '''
         Constructor
 
@@ -355,7 +355,7 @@ class MainWindow(QMainWindow):
         self.markUpdate()
         self.categoryUpdate()
 
-    def hsep(self):
+    def hsep(self) -> QHLine:
         hline = QHLine()
         hline.setLineWidth(0)
         hline.setMidLineWidth(1)
@@ -416,22 +416,14 @@ class MainWindow(QMainWindow):
     
     # === On-actions ===
     
-    def onCategory(self,i):
+    def onCategory(self,i:int) -> None:
         if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.data[self.image_file]['categories']):
             self.data[self.image_file]['categories'].append(i)
         elif (i in self.data[self.image_file]['categories']):
             self.data[self.image_file]['categories'].remove(i)
         galmark.io.save(self.data,self.username,self.date)
 
-    def onCategoryFive(self):
-        if (self.category_five_box.checkState().value == 2) and (5 not in self.data[self.image_file]['category']):
-            self.data[self.image_file]['category'].append(5)
-        else:
-            self.data[self.image_file]['category'].remove(5)
-        galmark.io.save(self.data,self.username,self.date)
-        self.imageUpdate()
-
-    def onMark(self, group=0):
+    def onMark(self, group:int=0) -> None:
         '''
         Actions to complete when marking
         '''

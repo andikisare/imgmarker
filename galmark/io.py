@@ -40,7 +40,7 @@ def markBindingCheck(event):
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
-def parseWCS(img):
+def parseWCS(img:str|Image.Image) -> WCS:
     #tif_image_data = np.array(Image.open(image_tif))
     if type(img) == str: img = Image.open(img)
     meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
@@ -65,7 +65,7 @@ def parseWCS(img):
     wcs = WCS(header)
     return wcs
 
-def readConfig(config='galmark.cfg'):
+def readConfig(config:str='galmark.cfg') -> tuple[str]:
     '''
     Read each line from the config and parse it
     '''
@@ -116,10 +116,10 @@ def readConfig(config='galmark.cfg'):
         
     return out_dir, image_dir, group_names, category_names, group_max
                 
-def checkUsername(username):
+def checkUsername(username:str) -> bool:
     return (username != "None") and (username != "")
 
-def save(data,username,date):
+def save(data:DataDict,username:str,date) -> None:
     lines = []
     name_lengths = []
     group_lengths = []
@@ -228,7 +228,7 @@ def save(data,username,date):
             except: outline = ''.join(f'{_l:{l_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
             out.write(outline)
 
-def load(username,config='galmark.cfg'):
+def load(username:str,config:str='galmark.cfg') -> DataDict:
     out_dir, image_dir, group_names, category_names, group_max = readConfig(config=config)
     outfile = os.path.join(out_dir,username+'.txt')
     data = DataDict()
@@ -259,7 +259,7 @@ def load(username,config='galmark.cfg'):
                 
     return data
 
-def glob(dir,ext,data_filt:DataDict={}):
+def glob(dir:str,ext:str,data_filt:DataDict={}) -> tuple[list,int]:
      # Find all images in image directory
     all_images = _glob.glob(dir + '*.' + ext)
 
@@ -282,7 +282,7 @@ def glob(dir,ext,data_filt:DataDict={}):
 
     return images, idx
 
-def inputs(config='galmark.cfg'):
+def inputs(config:str='galmark.cfg') -> tuple:
     out_dir, image_dir, group_names, category_names, group_max = readConfig(config)
     username = galmark.window.StartupWindow().getUser()
 
