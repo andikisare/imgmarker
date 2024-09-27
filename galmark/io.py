@@ -239,7 +239,7 @@ def load(username,config='galmark.cfg'):
                 date,name,group,x,y,ra,dec,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
                 group_idx = group_names.index(group)
                 category_list = categories.split(',')
-                category_list = [category_names.index(cat) for cat in category_list]
+                category_list = [category_names.index(cat) for cat in category_list if cat != 'None']
                 category_list.sort()
                 
                 if (x!='NaN') and (y!='NaN'):
