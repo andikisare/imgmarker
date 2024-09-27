@@ -426,42 +426,42 @@ class MainWindow(QMainWindow):
 
     # === On-actions ===
     def onCategoryOne(self):
-        if (self.category_one_box.checkState().value == 2) and (0 not in self.data[self.image_file]['category']):
-            self.data[self.image_file]['category'].append(0)
-        else:
-            self.data[self.image_file]['category'].remove(0)
-        galmark.io.save(self.data,self.username,self.date)
-        self.imageUpdate()
-
-    def onCategoryTwo(self):
-        if (self.category_two_box.checkState().value == 2) and (1 not in self.data[self.image_file]['category']):
+        if (self.category_one_box.checkState().value == 2) and (1 not in self.data[self.image_file]['category']):
             self.data[self.image_file]['category'].append(1)
         else:
             self.data[self.image_file]['category'].remove(1)
         galmark.io.save(self.data,self.username,self.date)
         self.imageUpdate()
 
-    def onCategoryThree(self):
-        if (self.category_three_box.checkState().value == 2) and (2 not in self.data[self.image_file]['category']):
+    def onCategoryTwo(self):
+        if (self.category_two_box.checkState().value == 2) and (2 not in self.data[self.image_file]['category']):
             self.data[self.image_file]['category'].append(2)
         else:
             self.data[self.image_file]['category'].remove(2)
         galmark.io.save(self.data,self.username,self.date)
         self.imageUpdate()
 
-    def onCategoryFour(self):
-        if (self.category_four_box.checkState().value == 2) and (3 not in self.data[self.image_file]['category']):
+    def onCategoryThree(self):
+        if (self.category_three_box.checkState().value == 2) and (3 not in self.data[self.image_file]['category']):
             self.data[self.image_file]['category'].append(3)
         else:
             self.data[self.image_file]['category'].remove(3)
         galmark.io.save(self.data,self.username,self.date)
         self.imageUpdate()
 
-    def onCategoryFive(self):
-        if (self.category_five_box.checkState().value == 2) and (4 not in self.data[self.image_file]['category']):
+    def onCategoryFour(self):
+        if (self.category_four_box.checkState().value == 2) and (4 not in self.data[self.image_file]['category']):
             self.data[self.image_file]['category'].append(4)
         else:
             self.data[self.image_file]['category'].remove(4)
+        galmark.io.save(self.data,self.username,self.date)
+        self.imageUpdate()
+
+    def onCategoryFive(self):
+        if (self.category_five_box.checkState().value == 2) and (5 not in self.data[self.image_file]['category']):
+            self.data[self.image_file]['category'].append(5)
+        else:
+            self.data[self.image_file]['category'].remove(5)
         galmark.io.save(self.data,self.username,self.date)
         self.imageUpdate()
 
@@ -554,6 +554,9 @@ class MainWindow(QMainWindow):
         newY = int(centerY - cursorY)
         self.image_view.translate(newX, newY)
 
+        _center = self.image_view.mapToGlobal(center)
+        self.cursor().setPos(int(_center.x()),int(_center.x()))
+
     def onBlur(self,value):
         value = ceil(value) // 2 * 2 + 1
         self.matimage = cv2.imread(self.image)
@@ -612,15 +615,15 @@ class MainWindow(QMainWindow):
             self.data[self.image_file]['category'] = []
         else:
             category_list = self.data[self.image_file]['category']
-            if (0 in category_list):
-                self.category_one_box.setChecked(True)
             if (1 in category_list):
-                self.category_two_box.setChecked(True)
+                self.category_one_box.setChecked(True)
             if (2 in category_list):
-                self.category_three_box.setChecked(True)
+                self.category_two_box.setChecked(True)
             if (3 in category_list):
-                self.category_four_box.setChecked(True)
+                self.category_three_box.setChecked(True)
             if (4 in category_list):
+                self.category_four_box.setChecked(True)
+            if (5 in category_list):
                 self.category_five_box.setChecked(True)
 
     def markUpdate(self):

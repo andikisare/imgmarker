@@ -76,7 +76,7 @@ def readConfig(config='galmark.cfg'):
         
         out_path = os.path.join(os.getcwd(),'')
         images_path = os.path.join(os.getcwd(),'')
-        group_names = ['1','2','3','4','5','6','7','8','9']
+        group_names = ['None','1','2','3','4','5','6','7','8','9']
         category_names = ['None','1','2','3','4','5']
         group_max = ['None','None','None','None','None','None','None','None','None']
 
@@ -141,8 +141,12 @@ def save(data,username,date):
         for name in names:
             comment = data[name]['comment']
             category_list = data[name]['category']
-            if (len(category_list) > 1):
-                category_list.sort()
+            category_list.sort()
+            if (len(category_list) != 0):
+                categories = ','.join([category_names[i] for i in category_list])
+            else: categories = 'None'
+
+
             # Get list of groups containing data
             level2_keys = list(data[name].keys())
             groups = [ key for key in level2_keys if isinstance(key,int) 
@@ -157,21 +161,8 @@ def save(data,username,date):
                     for mark in mark_list:
                         ra, dec = mark.centerWCS()
                         x, y = mark.center().x(), mark.center().y()
-                        l = [date,name,group_name,x,y,ra,dec,comment]
-
-                        categories_to_print_string = ''
-                        categories_to_print_list = [category_names[i] for i in category_list]
-                        num_categories = len(category_list)
-                        if (num_categories != 0):
-                            for category, i in enumerate(categories_to_print_list):
-                                if (i != (num_categories - 1)):
-                                    categories_to_print_string += str(category) + ', '
-                                else:
-                                    categories_to_print_string += str(category)
-                        else:
-                            categories_to_print_string = 'None'
-
-                        l.insert(7, categories_to_print_string)
+                        l = [date,name,group_name,x,y,ra,dec,categories,comment]
+       
                         lines.append(l)
                         name_lengths.append(len(name))
                         group_lengths.append(len(group_name))
@@ -179,7 +170,7 @@ def save(data,username,date):
                         y_lengths.append(len(str(y)))
                         ra_lengths.append(len(f'{ra:.8f}'))
                         dec_lengths.append(len(f'{dec:.8f}'))
-                        category_lengths.append(len(categories_to_print_string))
+                        category_lengths.append(len(categories))
                         comment_lengths.append(len(comment))
             
             # Otherwise, if there is a category or a comment, replace ra/dec with NaNs
@@ -189,20 +180,8 @@ def save(data,username,date):
                 y = 'NaN'
                 ra = 'NaN'
                 dec = 'NaN'
-                l = [date,name,group_name,x,y,ra,dec,comment]
-                categories_to_print_string = ''
-                categories_to_print_list = [category_names[i] for i in category_list]
-                num_categories = len(category_list)
-                if (len(category_list) != 0):
-                    for category, i in enumerate(categories_to_print_list):
-                        if (i != (num_categories - 1)):
-                            categories_to_print_string += str(category) + ', '
-                        else:
-                            categories_to_print_string += str(category)
-                elif (comment == 'None'):
-                    categories_to_print_string = 'Seen'
 
-                l.insert(7, categories_to_print_string)
+                l = [date,name,group_name,x,y,ra,dec,categories,comment]
 
                 lines.append(l)
                 name_lengths.append(len(name))
@@ -211,7 +190,7 @@ def save(data,username,date):
                 y_lengths.append(len(y))
                 ra_lengths.append(len(ra))
                 dec_lengths.append(len(dec))
-                category_lengths.append(len(categories_to_print_string))
+                category_lengths.append(len(categories))
                 comment_lengths.append(len(comment))
             
             # Otherwise, (no comment, no category, and no data) delete entry from dictionary
@@ -257,10 +236,12 @@ def load(username,config='galmark.cfg'):
         for l in open(outfile):
             if skip: skip = False
             else:
-                date,name,group,x,y,ra,dec,category,comment = [i.strip() for i in l.replace('|\n','').split('|')]
+                date,name,group,x,y,ra,dec,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
                 group_idx = group_names.index(group)
-                category_idx = category_names.index(category)
-
+                category_list = categories.split(',')
+                category_list = [category_names.index(cat) for cat in category_list]
+                category_list.sort()
+                
                 if (x!='NaN') and (y!='NaN'):
                     mark_args = (int(x),int(y))
                     mark_kwargs = {'wcs': parseWCS(os.path.join(images_path,name)), 'group': group_idx}
@@ -272,7 +253,7 @@ def load(username,config='galmark.cfg'):
                     data[name][group_idx]['Marks'].append(mark)
 
                 data[name]['comment'] = comment
-                data[name]['category'] = category_idx
+                data[name]['category'] = category_list
                 
     return data
 
