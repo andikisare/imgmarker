@@ -499,15 +499,15 @@ class MainWindow(QMainWindow):
 
     def onMiddleMouse(self):
         # Center on cursor
-        center = self.image_view.mapToScene(self.image_view.viewport().rect().center())
-        _, pix_pos = self.mouseImagePos()
-        centerX = center.x()
-        centerY = center.y()
-        cursorX = pix_pos.x()
-        cursorY = pix_pos.y()
-        newX = int(centerX - cursorX)
-        newY = int(centerY - cursorY)
+        center = self.image_view.viewport().rect().center()
+        scene_center = self.image_view.mapToScene(center)
+        global_center = self.image_view.mapToGlobal(self.image_view.viewport().rect().center())
+        view_pos, pix_pos = self.mouseImagePos()
+
+        newX = int(scene_center.x() - pix_pos.x())
+        newY = int(scene_center.y() - pix_pos.y())
         self.image_view.translate(newX, newY)
+        self.cursor().setPos(global_center)
 
     def onBlur(self,value):
         value = floor(value)/10
@@ -615,6 +615,5 @@ class MainWindow(QMainWindow):
         pix_pos = self._pixmap_item.mapFromScene(scene_pos).toPoint()
 
         return view_pos, pix_pos
-
 
     
