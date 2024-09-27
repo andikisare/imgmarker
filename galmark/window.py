@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QSlider
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QSlider, QFrame
 from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QImage
 from PyQt6.QtCore import Qt
 from galmark.mark import Mark
@@ -10,6 +10,13 @@ import datetime as dt
 import textwrap
 from math import ceil
 import cv2
+from functools import partial
+
+class QHLine(QFrame):
+    def __init__(self):
+        super(QHLine, self).__init__()
+        self.setFrameShape(QFrame.Shape.HLine)
+        self.setFrameShadow(QFrame.Shadow.Raised)
 
 class AdjustmentsWindow(QWidget):
     """
@@ -272,44 +279,15 @@ class MainWindow(QMainWindow):
         self.bottom_layout.addWidget(self.submit_button)
         
         ### Category widgets
-
-        # Category 1
-        self.category_one_box = QCheckBox(text=self.category_names[1], parent=self)
-        self.category_one_box.setFixedHeight(40)
-        self.category_one_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_one_box.clicked.connect(lambda: self.onCategory(1))
-
-        # Category 2
-        self.category_two_box = QCheckBox(text=self.category_names[2], parent=self)
-        self.category_two_box.setFixedHeight(40)
-        self.category_two_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_two_box.clicked.connect(lambda: self.onCategory(2))
-
-        # Category 3
-        self.category_three_box = QCheckBox(text=self.category_names[3], parent=self)
-        self.category_three_box.setFixedHeight(40)
-        self.category_three_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_three_box.clicked.connect(lambda: self.onCategory(3))
-
-        # Category 4
-        self.category_four_box = QCheckBox(text=self.category_names[4], parent=self)
-        self.category_four_box.setFixedHeight(40)
-        self.category_four_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_four_box.clicked.connect(lambda: self.onCategory(4))
-
-        # Category 5/other
-        self.category_five_box = QCheckBox(text=self.category_names[5], parent=self)
-        self.category_five_box.setFixedHeight(40)
-        self.category_five_box.setStyleSheet("margin-left:50%; margin-right:50%;")
-        self.category_five_box.clicked.connect(lambda: self.onCategory(5))
-
-        # categories layout
         self.categories_layout = QHBoxLayout()
-        self.categories_layout.addWidget(self.category_one_box)
-        self.categories_layout.addWidget(self.category_two_box)
-        self.categories_layout.addWidget(self.category_three_box)
-        self.categories_layout.addWidget(self.category_four_box)
-        self.categories_layout.addWidget(self.category_five_box)
+
+        # Category boxes
+        self.category_boxes = [QCheckBox(text=self.category_names[i], parent=self) for i in range(1,6)]
+        for i, box in enumerate(self.category_boxes):
+            box.setFixedHeight(20)
+            box.setStyleSheet("margin-left:50%; margin-right:50%;")
+            box.clicked.connect(partial(self.onCategory,i+1))
+            self.categories_layout.addWidget(box)
 
         # Add widgets to main layout
         central_widget = QWidget()
@@ -317,6 +295,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.image_label)
         layout.addWidget(self.image_view)
         layout.addWidget(self.position_label)
+        layout.addWidget(self.hsep())
         layout.addLayout(self.bottom_layout)
         layout.addLayout(self.categories_layout)
         self.setCentralWidget(central_widget)
@@ -367,6 +346,13 @@ class MainWindow(QMainWindow):
         self.getComment()
         self.markUpdate()
         self.categoryUpdate()
+
+    def hsep(self):
+        hline = QHLine()
+        hline.setLineWidth(0)
+        hline.setMidLineWidth(1)
+        hline.setMinimumHeight(1)
+        return hline
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
@@ -423,12 +409,13 @@ class MainWindow(QMainWindow):
             self.position_label.setText(f'Pixel: ({lp.x()} , {lp.y()})     WCS: ({ra:.4f}° , {dec:.4f}°)')
         else: 
             self.position_label.setText('')
-
+    
     # === On-actions ===
+    
     def onCategory(self,i):
-        if (self.category_one_box.checkState().value == 2) and (i not in self.data[self.image_file]['categories']):
+        if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.data[self.image_file]['categories']):
             self.data[self.image_file]['categories'].append(i)
-        else:
+        elif (i in self.data[self.image_file]['categories']):
             self.data[self.image_file]['categories'].remove(i)
         galmark.io.save(self.data,self.username,self.date)
 
@@ -574,25 +561,14 @@ class MainWindow(QMainWindow):
 
     def categoryUpdate(self):
         # Initialize category and update checkboxes
-        self.category_one_box.setChecked(False)
-        self.category_two_box.setChecked(False)
-        self.category_three_box.setChecked(False)
-        self.category_four_box.setChecked(False)
-        self.category_five_box.setChecked(False)
+        for box in self.category_boxes: box.setChecked(False)
         if not (self.data[self.image_file]['categories']):
             self.data[self.image_file]['categories'] = []
         else:
             category_list = self.data[self.image_file]['categories']
-            if (1 in category_list):
-                self.category_one_box.setChecked(True)
-            if (2 in category_list):
-                self.category_two_box.setChecked(True)
-            if (3 in category_list):
-                self.category_three_box.setChecked(True)
-            if (4 in category_list):
-                self.category_four_box.setChecked(True)
-            if (5 in category_list):
-                self.category_five_box.setChecked(True)
+            for i in range(1,6):
+                if (i in category_list):
+                    self.category_boxes[i].setChecked(True)
 
     def markUpdate(self):
         # Redraws all marks in image
