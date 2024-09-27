@@ -8,9 +8,11 @@ import sys
 import os
 import datetime as dt
 import textwrap
-from math import ceil
-import cv2
+from math import floor
 from functools import partial
+from PIL import Image
+from PIL.ImageQt import ImageQt
+from PIL.ImageFilter import GaussianBlur
 
 class QHLine(QFrame):
     def __init__(self):
@@ -80,9 +82,9 @@ class BlurWindow(QWidget):
 
         max_blur = int((self.fullw+self.fullh)/20)
         self.slider = QSlider()
-        self.slider.setMinimum(1)
-        self.slider.setTickInterval(2)
-        self.slider.setSingleStep(2)
+        self.slider.setMinimum(0)
+        self.slider.setTickInterval(1)
+        self.slider.setSingleStep(1)
         self.slider.setOrientation(Qt.Orientation.Horizontal)
         self.slider.sliderMoved.connect(self.onSliderMoved) 
 
@@ -95,10 +97,10 @@ class BlurWindow(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFixedWidth(int(self.fullw/6))
         self.setFixedHeight(layout.sizeHint().height())
-        
+
     def onSliderMoved(self, pos):
-        self.slider.setValue(ceil(pos) // 2 * 2 + 1)
-        self.valueLabel.setText(f'Radius: {self.slider.value()}')
+        self.slider.setValue(floor(pos))
+        self.valueLabel.setText(f'Radius: {floor(self.slider.value())/10}')
 
 class InstructionsWindow(QWidget):
     """
@@ -203,22 +205,21 @@ class MainWindow(QMainWindow):
 
         # Find all images in image directory
         self.imtype = imtype
-        self.images, self.idx = galmark.io.glob(images_path,self.imtype,data_filt=self.data)
-        self.N = len(self.images)
+        self.image_paths, self.idx = galmark.io.glob(images_path,self.imtype,data_filt=self.data)
+        self.N = len(self.image_paths)
 
-        try: self.image = self.images[self.idx]
+        try: self.image = Image.open(self.image_paths[self.idx])
         except:
             print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
             sys.exit()
 
-        self.matimage = cv2.imread(self.image)
-        self.qimage = QImage(self.matimage.data, self.matimage.shape[1], self.matimage.shape[0], QImage.Format.Format_RGB888).rgbSwapped()
+        self.qimage = ImageQt(self.image)
 
         # Set max blur based on size of image
-        blur_max = ceil((self.qimage.height()+self.qimage.width())/20)// 2 * 2 + 1
+        blur_max = int((self.qimage.height()+self.qimage.width())/20)
         self.blurWindow.slider.setMaximum(blur_max)
 
-        self.image_file = self.image.split(os.sep)[-1]
+        self.image_file = self.image.filename.split(os.sep)[-1]
         self.wcs = galmark.io.parseWCS(self.image)
 
         qt_rectangle = self.frameGeometry()
@@ -238,7 +239,7 @@ class MainWindow(QMainWindow):
 
         # Create image view
         self.image_scene = QGraphicsScene(self)
-        self.pixmap = QPixmap(self.image)
+        self.pixmap = QPixmap.fromImage(self.qimage)
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)
         self.image_view = QGraphicsView(self.image_scene)       
@@ -439,6 +440,14 @@ class MainWindow(QMainWindow):
             self.data[self.image_file]['categories'].remove(i)
         galmark.io.save(self.data,self.username,self.date)
 
+    def onCategoryFive(self):
+        if (self.category_five_box.checkState().value == 2) and (5 not in self.data[self.image_file]['category']):
+            self.data[self.image_file]['category'].append(5)
+        else:
+            self.data[self.image_file]['category'].remove(5)
+        galmark.io.save(self.data,self.username,self.date)
+        self.imageUpdate()
+
     def onMark(self, group=0):
         '''
         Actions to complete when marking
@@ -529,12 +538,14 @@ class MainWindow(QMainWindow):
         newY = int(centerY - cursorY)
         self.image_view.translate(newX, newY)
 
+        _center = self.image_view.mapToGlobal(center)
+        self.cursor().setPos(int(_center.x()),int(_center.x()))
+
     def onBlur(self,value):
-        value = ceil(value) // 2 * 2 + 1
-        self.matimage = cv2.imread(self.image)
-        self.matimage = cv2.GaussianBlur(self.matimage,(value,value),0)
-        self.qimage = QImage(self.matimage.data, self.matimage.shape[1], self.matimage.shape[0], QImage.Format.Format_RGB888).rgbSwapped()
-        self.pixmap = QPixmap(self.qimage)
+        value = floor(value)/10
+        image_blurred = self.image.filter(GaussianBlur(value))
+        self.qimage = ImageQt(image_blurred)
+        self.pixmap = QPixmap.fromImage(self.qimage)
         self._pixmap_item.setPixmap(self.pixmap)
 
     # === Update methods ===
@@ -543,9 +554,10 @@ class MainWindow(QMainWindow):
         for item in self.image_scene.items(): self.image_scene.removeItem(item)
 
         # Update the pixmap
-        self.image = self.images[self.idx]
-        self.image_file = self.image.split(os.sep)[-1]
-        self.pixmap = QPixmap(self.image)
+        self.image = Image.open(self.image_paths[self.idx])
+        self.image_file = self.image.filename.split(os.sep)[-1]
+        self.qimage = ImageQt(self.image)
+        self.pixmap = QPixmap.fromImage(self.qimage)
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)
 
