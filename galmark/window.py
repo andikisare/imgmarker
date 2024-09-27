@@ -346,10 +346,6 @@ class MainWindow(QMainWindow):
         helpMenu.addAction(instructionsMenu)
         self.instructionsWindow.show()
 
-        def focusNextPrevChild(self, next: bool):
-            # Override to do nothing, preventing tab navigation
-            return False
-
         # Initialize some data
         self.getComment()
         self.markUpdate()
