@@ -406,9 +406,8 @@ class MainWindow(QMainWindow):
 
     def mouseMoveEvent(self, event):
         # Mark if hovering over image
+        ep, lp = self.mouseImagePos()
         if bool(self.image_view.itemAt(ep)):
-            ep, lp = self.mouseImagePos()
-
             _x, _y = lp.x(), self.wcs._naxis[0] - lp.y()
             ra, dec = self.wcs.all_pix2world([[_x, _y]], 0)[0]
             self.position_label.setText(f'Pixel: ({lp.x()} , {lp.y()})     WCS: ({ra:.4f}° , {dec:.4f}°)')
