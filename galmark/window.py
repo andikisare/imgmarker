@@ -33,12 +33,6 @@ class AdjustmentsWindow(QWidget):
         self.fullh = self.screen().size().height()
         self.setWindowTitle('Brightness and Contrast')
         self.setLayout(layout)
-        
-        # Set position of window
-        qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
-        self.move(-qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
 
         # Brightness slider
         self.brightnessSlider = QSlider()
@@ -58,6 +52,12 @@ class AdjustmentsWindow(QWidget):
         layout.addWidget(self.contrastSlider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        # Set position of window
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
+
     def show(self):
         super().show()
         self.activateWindow()   
@@ -75,13 +75,6 @@ class BlurWindow(QWidget):
         self.fullh = self.screen().size().height()
         self.setWindowTitle('Gaussian Blur')
         self.setLayout(layout)
-        
-        
-        # Set position of window
-        qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
-        self.move(-qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
 
         max_blur = int((self.fullw+self.fullh)/20)
         self.slider = QSlider()
@@ -100,6 +93,12 @@ class BlurWindow(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFixedWidth(int(self.fullw/6))
         self.setFixedHeight(layout.sizeHint().height())
+
+        # Set position of window
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
 
     def onSliderMoved(self, pos):
         self.slider.setValue(floor(pos))
@@ -122,12 +121,6 @@ class InstructionsWindow(QWidget):
         self.setWindowTitle('Instructions')
         self.setLayout(layout)
         
-        # Set position of window
-        qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
-        self.move(-qt_rectangle.topLeft().x() + self.fullw, qt_rectangle.topLeft().y())
-
         # Create the scroll area and label
         self.scroll_area = QScrollArea()
         self.label = QLabel()
@@ -236,11 +229,6 @@ class MainWindow(QMainWindow):
 
         self.image_file = self.image.filename.split(os.sep)[-1]
         self.wcs = galmark.io.parseWCS(self.image)
-
-        qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
-        self.move(qt_rectangle.topLeft())
 
         # Current image widget
         self.image_label = QLabel(f'{self.image_file} ({self.idx+1} of {self.N})')
@@ -359,6 +347,14 @@ class MainWindow(QMainWindow):
         instructionsMenu.setStatusTip('Instructions')
         instructionsMenu.triggered.connect(self.instructionsWindow.show)
         helpMenu.addAction(instructionsMenu)
+        
+        # Center MainWindow; move instructions off to the right
+        center = QApplication.primaryScreen().geometry().center()
+        rect_topleft = (center.x()-int(self.sizeHint().width()/2), 
+                        center.y()-int(self.sizeHint().height()/2))
+        self.move(*rect_topleft)
+
+        self.instructionsWindow.move(int(self.x()+self.sizeHint().width()*1.1),self.y())
         self.instructionsWindow.show()
 
         # Initialize some data
