@@ -13,6 +13,7 @@ from functools import partial
 from PIL import Image
 from PIL.ImageQt import ImageQt
 from PIL.ImageFilter import GaussianBlur
+from PIL.ImageEnhance import Contrast, Brightness
 
 class QHLine(QFrame):
     def __init__(self):
@@ -36,27 +37,50 @@ class AdjustmentsWindow(QWidget):
 
         # Brightness slider
         self.brightnessSlider = QSlider()
-        self.brightnessSlider.setMinimum(-100)
-        self.brightnessSlider.setMaximum(100)
+        self.brightnessSlider.setMinimum(-10)
+        self.brightnessSlider.setMaximum(10)
         self.brightnessSlider.setValue(0)
         self.brightnessSlider.setOrientation(Qt.Orientation.Horizontal)
+        self.brightnessSlider.sliderMoved.connect(self.onBrightnessMoved)
+
+        self.brightnessLabel = QLabel()
+        self.brightnessLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.brightnessLabel.setText(f'Brightness: {self.brightnessSlider.value()}')
 
         # Contrast slider
         self.contrastSlider = QSlider()
-        self.contrastSlider.setMinimum(-100)
-        self.contrastSlider.setMaximum(100)
+        self.contrastSlider.setMinimum(-10)
+        self.contrastSlider.setMaximum(10)
         self.contrastSlider.setValue(0)
         self.contrastSlider.setOrientation(Qt.Orientation.Horizontal)
+        self.contrastSlider.sliderMoved.connect(self.onContrastMoved)
 
+        self.contrastLabel = QLabel()
+        self.contrastLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.contrastLabel.setText(f'Contrast: {self.contrastSlider.value()}')
+
+        layout.addWidget(self.brightnessLabel)
         layout.addWidget(self.brightnessSlider)
+        layout.addWidget(self.contrastLabel)
         layout.addWidget(self.contrastSlider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.setFixedWidth(int(self.fullw/6))
+        self.setFixedHeight(layout.sizeHint().height())
 
         # Set position of window
         qt_rectangle = self.frameGeometry()
         center_point = QApplication.primaryScreen().geometry().center()
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
+
+    def onBrightnessMoved(self,pos):
+        self.brightnessSlider.setValue(floor(pos))
+        self.brightnessLabel.setText(f'Brightness: {floor(self.brightnessSlider.value())/10}')
+    
+    def onContrastMoved(self,pos):
+        self.contrastSlider.setValue(floor(pos))
+        self.contrastLabel.setText(f'Contrast: {floor(self.contrastSlider.value())/10}')
 
     def show(self):
         super().show()
@@ -107,6 +131,26 @@ class BlurWindow(QWidget):
     def show(self):
         super().show()
         self.activateWindow()
+
+class ImageFilters():
+    def __init__(self,img:Image.Image,a=1,b=1,r=0):
+        self.a = a
+        self.b = b
+        self.r = r
+        self.img = img
+    
+    def setA(self,a): self.a = a
+    def setB(self,b): self.a = b
+    def setR(self,r): self.a = r
+
+    def apply(self) -> Image.Image:
+        def blur(img:Image.Image):
+            return img.filter(GaussianBlur(self.r))
+        def brighten(img:Image.Image):
+            return Brightness(img).enhance(self.a)
+        def contrast(img:Image.Image):
+            return Contrast(img).enhance(self.b)
+        return contrast(brighten(blur(self.img)))
 
 class InstructionsWindow(QWidget):
     """
@@ -202,6 +246,12 @@ class MainWindow(QMainWindow):
         self.blurWindow = BlurWindow()
         self.blurWindow.slider.valueChanged.connect(self.onBlur)
         self.adjustmentsWindow = AdjustmentsWindow()
+        self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.onContrast)
+        self.adjustmentsWindow.brightnessSlider.valueChanged.connect(self.onBrighten)
+        
+        self.r = 0
+        self.a = 1
+        self.b = 1
 
         # Initialize config
         self.config = 'galmark.cfg'
@@ -335,7 +385,7 @@ class MainWindow(QMainWindow):
         adjustMenu.setStatusTip("Brightness and Contrast")
         adjustMenu.setShortcuts(['Ctrl+a'])
         adjustMenu.triggered.connect(self.adjustmentsWindow.show)
-        # filterMenu.addAction(adjustMenu)
+        filterMenu.addAction(adjustMenu)
 
         ## Help menu
         helpMenu = menuBar.addMenu('&Help')
@@ -521,9 +571,29 @@ class MainWindow(QMainWindow):
         self.cursor().setPos(global_center)
 
     def onBlur(self,value):
-        value = floor(value)/10
-        image_blurred = self.image.filter(GaussianBlur(value))
+        self.r = floor(value)/10
+        imageFilters = ImageFilters(self.image,a=self.a,b=self.b,r=self.r)
+        image_blurred = imageFilters.apply()
+        
         self.qimage = ImageQt(image_blurred)
+        self.pixmap = QPixmap.fromImage(self.qimage)
+        self._pixmap_item.setPixmap(self.pixmap)
+
+    def onBrighten(self,value):
+        self.a = floor(value)/10 + 1
+        imageFilters = ImageFilters(self.image,a=self.a,b=self.b,r=self.r)
+        image_bright = imageFilters.apply()
+        
+        self.qimage = ImageQt(image_bright)
+        self.pixmap = QPixmap.fromImage(self.qimage)
+        self._pixmap_item.setPixmap(self.pixmap)
+
+    def onContrast(self,value):
+        self.b = floor(value)/10 + 1
+        imageFilters = ImageFilters(self.image,a=self.a,b=self.b,r=self.r)
+        image_contrast = imageFilters.apply()
+        
+        self.qimage = ImageQt(image_contrast)
         self.pixmap = QPixmap.fromImage(self.qimage)
         self._pixmap_item.setPixmap(self.pixmap)
 
