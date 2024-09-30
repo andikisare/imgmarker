@@ -132,7 +132,7 @@ def save_fav(data:DataDict,username:str,date,save_list:list) -> None:
 
     out_dir, image_dir, group_names, category_names, group_max = readConfig()
     outfile = os.path.join(out_dir, username + '_fav.txt')
-    print(save_list)
+
     # Create the file
     if os.path.exists(outfile):
         os.remove(outfile)
