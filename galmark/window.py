@@ -342,9 +342,20 @@ class MainWindow(QMainWindow):
         self.category_boxes = [QCheckBox(text=self.category_names[i], parent=self) for i in range(1,6)]
         for i, box in enumerate(self.category_boxes):
             box.setFixedHeight(20)
-            box.setStyleSheet("margin-left:50%; margin-right:50%;")
+            box.setStyleSheet("margin-left:30%; margin-right:30%;")
             box.clicked.connect(partial(self.onCategory,i+1))
             self.categories_layout.addWidget(box)
+
+        # Favorite box
+        self.favorite_file_list = []
+        self.favorite_box = QCheckBox(parent=self)
+        self.favorite_box.setFixedHeight(20)
+        self.favorite_box.setFixedWidth(40)
+        self.favorite_box.setIcon(QIcon('TransparentHeart.png'))
+        self.favorite_box.setTristate(False)
+        self.favorite_box.clicked.connect(self.onFavorite)
+        self.categories_layout.addWidget(self.favorite_box)
+        self.favorite_box.setShortcut('F')
 
         # Add widgets to main layout
         central_widget = QWidget()
@@ -473,12 +484,26 @@ class MainWindow(QMainWindow):
     
     # === On-actions ===
     
+    def onFavorite(self,state):
+        state = Qt.CheckState(state)
+        if state == Qt.CheckState.PartiallyChecked:
+            self.favorite_box.setIcon(QIcon('SolidHeart.png'))
+            self.favorite_file_list.append(self.image_file)
+            galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
+        else:
+            self.favorite_box.setIcon(QIcon('TransparentHeart.png'))
+            try:
+                self.favorite_file_list.remove(self.image_file)
+            except: pass
+            galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
+
     def onCategory(self,i:int) -> None:
         if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.data[self.image_file]['categories']):
             self.data[self.image_file]['categories'].append(i)
         elif (i in self.data[self.image_file]['categories']):
             self.data[self.image_file]['categories'].remove(i)
         galmark.io.save(self.data,self.username,self.date)
+        galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
     def onMark(self, group:int=0) -> None:
         '''
@@ -503,6 +528,7 @@ class MainWindow(QMainWindow):
                     self.image_scene.removeItem(prev_mark)
                     self.data[self.image_file][group]['marks'][0] = mark
                     galmark.io.save(self.data,self.username,self.date)
+                    galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
             elif (len(self.data[self.image_file][group]['marks']) < limit):
                 if self._pixmap_item is self.image_view.itemAt(ep):
@@ -515,6 +541,7 @@ class MainWindow(QMainWindow):
 
                     self.data[self.image_file][group]['marks'].append(mark)
                     galmark.io.save(self.data,self.username,self.date)
+                    galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
         else:
             if self._pixmap_item is self.image_view.itemAt(ep):
 
@@ -526,6 +553,7 @@ class MainWindow(QMainWindow):
 
                 self.data[self.image_file][group]['marks'].append(mark)
                 galmark.io.save(self.data,self.username,self.date)
+                galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
     def onNext(self):
         if self.idx+1 < self.N:
@@ -536,6 +564,7 @@ class MainWindow(QMainWindow):
             self.markUpdate()
             self.getComment()
             self.categoryUpdate()
+            self.favoriteUpdate()
             # galmark.io.save(self.data,self.username,self.date)
 
     def onBack(self):
@@ -547,12 +576,14 @@ class MainWindow(QMainWindow):
             self.markUpdate()
             self.getComment()
             self.categoryUpdate()
+            self.favoriteUpdate()
             # galmark.io.save(self.data,self.username,self.date)
             
     def onEnter(self):
         self.commentUpdate()
         self.comment_box.clearFocus()
         galmark.io.save(self.data,self.username,self.date)
+        galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
     
     def closeEvent(self, event):
         self.commentUpdate()
@@ -599,6 +630,14 @@ class MainWindow(QMainWindow):
 
     # === Update methods ===
 
+    def favoriteUpdate(self):
+        if self.image_file in self.favorite_file_list:
+            self.favorite_box.setChecked(True)
+            self.favorite_box.setIcon(QIcon('SolidHeart.png'))
+        else:
+            self.favorite_box.setIcon(QIcon('TransparentHeart.png'))
+            self.favorite_box.setChecked(False)
+
     def imageUpdate(self):
         for item in self.image_scene.items(): self.image_scene.removeItem(item)
 
@@ -624,6 +663,7 @@ class MainWindow(QMainWindow):
 
         self.data[self.image_file]['comment'] = comment
         galmark.io.save(self.data,self.username,self.date)
+        galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
     def getComment(self):
         if bool(self.data[self.image_file]['comment']):
@@ -669,6 +709,7 @@ class MainWindow(QMainWindow):
             self.image_scene.removeItem(item)
             self.data[self.image_file][item.g]['marks'].remove(item)
             galmark.io.save(self.data,self.username,self.date)
+            galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
     # === Transformations ===
     def zoom(self,scale:int=1):

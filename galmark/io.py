@@ -119,6 +119,117 @@ def readConfig(config:str='galmark.cfg') -> tuple[str]:
 def checkUsername(username:str) -> bool:
     return (username != "None") and (username != "")
 
+def save_fav(data:DataDict,username:str,date,save_list:list) -> None:
+    lines = []
+    name_lengths = []
+    group_lengths = []
+    x_lengths = []
+    y_lengths = []
+    ra_lengths = []
+    dec_lengths = []
+    category_lengths = []
+    comment_lengths = []
+
+    out_dir, image_dir, group_names, category_names, group_max = readConfig()
+    outfile = os.path.join(out_dir, username + '_fav.txt')
+    print(save_list)
+    # Create the file
+    if os.path.exists(outfile):
+        os.remove(outfile)
+    out = open(outfile,"a")
+
+    if checkUsername(username) and data:
+        all_names = list(data.keys())
+        
+    if len(save_list) > 0:
+        fav_names = [i for i in all_names if i in save_list]
+        for name in fav_names:
+            comment = data[name]['comment']
+            category_list = data[name]['categories']
+            category_list.sort()
+            if (len(category_list) != 0):
+                categories = ','.join([category_names[i] for i in category_list])
+            else: categories = 'None'
+
+            # Get list of groups containing data
+            level2_keys = list(data[name].keys())
+            groups = [ key for key in level2_keys if isinstance(key,int) 
+                        and data[name][key]['marks'] ]
+
+            # If there is data in groups, then add this data to lines
+            if (len(groups) != 0):
+                for group in groups:
+                    group_name = group_names[group]
+                    mark_list = data[name][group]['marks']
+
+                    for mark in mark_list:
+                        ra, dec = mark.centerWCS()
+                        x, y = mark.center().x(), mark.center().y()
+                        l = [date,name,group_name,x,y,ra,dec,categories,comment]
+       
+                        lines.append(l)
+                        name_lengths.append(len(name))
+                        group_lengths.append(len(group_name))
+                        x_lengths.append(len(str(x)))
+                        y_lengths.append(len(str(y)))
+                        ra_lengths.append(len(f'{ra:.8f}'))
+                        dec_lengths.append(len(f'{dec:.8f}'))
+                        category_lengths.append(len(categories))
+                        comment_lengths.append(len(comment))
+            
+            # Otherwise, if there is a category or a comment, replace ra/dec with NaNs
+            else: # (len(categories_to_print) != 0) or (comment != 'None'):
+                group_name = 'None'
+                x = 'NaN'
+                y = 'NaN'
+                ra = 'NaN'
+                dec = 'NaN'
+
+                l = [date,name,group_name,x,y,ra,dec,categories,comment]
+
+                lines.append(l)
+                name_lengths.append(len(name))
+                group_lengths.append(len(group_name))
+                x_lengths.append(len(x))
+                y_lengths.append(len(y))
+                ra_lengths.append(len(ra))
+                dec_lengths.append(len(dec))
+                category_lengths.append(len(categories))
+                comment_lengths.append(len(comment))
+            
+            # Otherwise, (no comment, no category, and no data) delete entry from dictionary
+            # else: pass
+
+    # Print out lines if there are lines to print
+    if len(lines) != 0:
+        # Dynamically adjust column widths
+        nameln = np.max(name_lengths) + 2
+        groupln = max(np.max(group_lengths), 5) + 2
+        xln = max(np.max(x_lengths), 1) + 2
+        yln = max(np.max(y_lengths), 1) + 2
+        raln = max(np.max(ra_lengths), 2) + 2
+        decln = max(np.max(dec_lengths), 2) + 2
+        categoryln = max(np.max(category_lengths), 16) + 2
+        commentln = max(np.max(comment_lengths), 7) + 2
+        dateln = 12
+
+        l_fmt = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
+                  f'^{xln}', f'^{yln}', f'^{raln}.8f', f'^{decln}.8f',
+                  f'^{categoryln}', f'^{commentln}' ]
+        l_fmt_nofloat = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
+                          f'^{xln}', f'^{yln}', f'^{raln}', f'^{decln}',
+                          f'^{categoryln}', f'^{commentln}' ]
+        
+        header = ['date','image','group','x','y','RA','DEC','image categories','comment']
+        header = ''.join(f'{h:{l_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
+        
+        out.write(header)
+
+        for l in lines:
+            try: outline = ''.join(f'{_l:{l_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
+            except: outline = ''.join(f'{_l:{l_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
+            out.write(outline)
+
 def save(data:DataDict,username:str,date) -> None:
     lines = []
     name_lengths = []
