@@ -339,6 +339,23 @@ def save(data:DataDict,username:str,date) -> None:
             except: outline = ''.join(f'{_l:{l_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
             out.write(outline)
 
+def load_fav(username:str,config:str='galmark.cfg') -> DataDict:
+    out_dir, image_dir, group_names, category_names, group_max = readConfig(config=config)
+    outfile = os.path.join(out_dir,username+'_fav.txt')
+    skip = True
+    fav_list = []
+    if os.path.exists(outfile):
+        for l in open(outfile):
+            if skip: skip = False
+            else:
+                date,name,group,x,y,ra,dec,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
+                fav_list.append(name)
+    # try:
+    fav_list = list(set(fav_list))
+    # except:
+    #     fav_list = []
+    return fav_list
+
 def load(username:str,config:str='galmark.cfg') -> DataDict:
     out_dir, image_dir, group_names, category_names, group_max = readConfig(config=config)
     outfile = os.path.join(out_dir,username+'.txt')
