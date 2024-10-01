@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
 from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont
 from PyQt6.QtCore import Qt, QEvent
 from galmark.mark import Mark
-from galmark import __dirname__, __icon__ 
+from galmark import __dirname__, __icon__, __heart_solid__, __heart_clear__
 import galmark.io
 import sys
 import os
@@ -414,7 +414,7 @@ class MainWindow(QMainWindow):
         self.favorite_box = QCheckBox(parent=self)
         self.favorite_box.setFixedHeight(20)
         self.favorite_box.setFixedWidth(40)
-        self.favorite_box.setIcon(QIcon('TransparentHeart.png'))
+        self.favorite_box.setIcon(QIcon(__heart_clear__))
         self.favorite_box.setTristate(False)
         self.favorite_box.clicked.connect(self.onFavorite)
         self.categories_layout.addWidget(self.favorite_box)
@@ -564,11 +564,11 @@ class MainWindow(QMainWindow):
     def onFavorite(self,state):
         state = Qt.CheckState(state)
         if state == Qt.CheckState.PartiallyChecked:
-            self.favorite_box.setIcon(QIcon('SolidHeart.png'))
+            self.favorite_box.setIcon(QIcon(__heart_solid__))
             self.favorite_file_list.append(self.image_file)
             galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
         else:
-            self.favorite_box.setIcon(QIcon('TransparentHeart.png'))
+            self.favorite_box.setIcon(QIcon(__heart_clear__))
             try:
                 self.favorite_file_list.remove(self.image_file)
             except: pass
@@ -710,9 +710,9 @@ class MainWindow(QMainWindow):
     def favoriteUpdate(self):
         if self.image_file in self.favorite_file_list:
             self.favorite_box.setChecked(True)
-            self.favorite_box.setIcon(QIcon('SolidHeart.png'))
+            self.favorite_box.setIcon(QIcon(__heart_solid__))
         else:
-            self.favorite_box.setIcon(QIcon('TransparentHeart.png'))
+            self.favorite_box.setIcon(QIcon(__heart_clear__))
             self.favorite_box.setChecked(False)
 
     def imageUpdate(self):
