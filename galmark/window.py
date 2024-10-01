@@ -94,11 +94,7 @@ class AdjustmentsWindow(QWidget):
 
         # Brightness slider
         self.brightnessSlider = QSlider()
-        self.brightnessSlider.setMinimum(-10)
-        self.brightnessSlider.setMaximum(10)
-        self.brightnessSlider.setValue(0)
-        self.brightnessSlider.setOrientation(Qt.Orientation.Horizontal)
-        self.brightnessSlider.sliderMoved.connect(self.onBrightnessMoved)
+        self._slider_setup(self.brightnessSlider,self.onBrightnessMoved)
 
         self.brightnessLabel = QLabel()
         self.brightnessLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -106,11 +102,7 @@ class AdjustmentsWindow(QWidget):
 
         # Contrast slider
         self.contrastSlider = QSlider()
-        self.contrastSlider.setMinimum(-10)
-        self.contrastSlider.setMaximum(10)
-        self.contrastSlider.setValue(0)
-        self.contrastSlider.setOrientation(Qt.Orientation.Horizontal)
-        self.contrastSlider.sliderMoved.connect(self.onContrastMoved)
+        self._slider_setup(self.contrastSlider,self.onContrastMoved)
 
         self.contrastLabel = QLabel()
         self.contrastLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -130,6 +122,13 @@ class AdjustmentsWindow(QWidget):
         center_point = QApplication.primaryScreen().geometry().center()
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
+
+    def _slider_setup(self,slider:QSlider,connect):
+        slider.setMinimum(-10)
+        slider.setMaximum(10)
+        slider.setValue(0)
+        slider.setOrientation(Qt.Orientation.Horizontal)
+        slider.sliderMoved.connect(connect)
 
     def onBrightnessMoved(self,pos):
         self.brightnessSlider.setValue(floor(pos))
@@ -420,14 +419,11 @@ class MainWindow(QMainWindow):
         self.categories_layout.addWidget(self.favorite_box)
         self.favorite_box.setShortcut('F')
 
-        #self.image_view.setSizePolicy(QSizePolicy.Policy.Expanding)
-
         # Add widgets to main layout
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
         layout.addWidget(self.image_label)
         layout.addWidget(self.image_view)
-        layout.addWidget(self.hsep())
         layout.addWidget(self.pos_widget)
         layout.addWidget(self.hsep())
         layout.addLayout(self.bottom_layout)
@@ -716,15 +712,16 @@ class MainWindow(QMainWindow):
             self.favorite_box.setChecked(False)
 
     def imageUpdate(self):
-        for item in self.image_scene.items(): self.image_scene.removeItem(item)
+        # Remove Marks
+        for item in self.image_scene.items(): 
+            if isinstance(item,Mark): self.image_scene.removeItem(item)
 
         # Update the pixmap
         self.image = Image.open(self.image_paths[self.idx])
         self.image_file = self.image.filename.split(os.sep)[-1]
         self.qimage = ImageQt(self.image)
         self.pixmap = QPixmap.fromImage(self.qimage)
-        self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
-        self.image_scene.addItem(self._pixmap_item)
+        self._pixmap_item.setPixmap(self.pixmap)
 
         # Update image label
         self.image_label.setText(f'{self.image_file} ({self.idx+1} of {self.N})')
