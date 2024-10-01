@@ -1,5 +1,8 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, QSlider, QFrame
-from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QImage
+from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
+                              QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
+                              QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
+                              QSlider, QFrame, QLineEdit, QSizePolicy )
+from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont
 from PyQt6.QtCore import Qt, QEvent
 from galmark.mark import Mark
 from galmark import __dirname__, __icon__ 
@@ -20,6 +23,60 @@ class QHLine(QFrame):
         super(QHLine, self).__init__()
         self.setFrameShape(QFrame.Shape.HLine)
         self.setFrameShadow(QFrame.Shadow.Raised)
+
+class PosWidget(QWidget):
+    """
+    This window displays the instructions and keymappings
+    """
+    def __init__(self):
+        super().__init__()
+        self.setWindowIcon(QIcon(__icon__))
+        layout = QHBoxLayout()
+        self.fullw = self.screen().size().width()
+        self.fullh = self.screen().size().height()
+        self.setWindowTitle('Instructions')
+        self.setLayout(layout)
+        
+        # pix text 
+        self.x_text = QLineEdit()
+        self._text_setup(self.x_text)
+        self.y_text = QLineEdit()
+        self._text_setup(self.y_text)
+
+        self.pix_label = QLabel()
+        self._label_setup(self.pix_label,'Pixel:')
+
+        # wcs text 
+        self.ra_text = QLineEdit()
+        self._text_setup(self.ra_text)
+        self.dec_text = QLineEdit()
+        self._text_setup(self.dec_text)
+
+        self.wcs_label = QLabel()
+        self._label_setup(self.wcs_label,'WCS:')
+
+        # Add widgets to layout
+        layout.addStretch(1)
+        layout.addWidget(self.pix_label)
+        layout.addWidget(self.x_text)
+        layout.addWidget(self.y_text)
+        layout.addWidget(self.wcs_label)
+        layout.addWidget(self.ra_text)
+        layout.addWidget(self.dec_text)
+        layout.addStretch(1)
+
+    def _text_setup(self,widget:QLineEdit):
+        widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        widget.setReadOnly(True)
+        widget.setFixedHeight(30)
+        widget.setFixedWidth(100)
+        widget.setSizePolicy(*[QSizePolicy.Policy.Fixed]*2)
+
+    def _label_setup(self,label:QLabel,text:str):
+        label.setText(text)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        label.setFixedHeight(30)
 
 class AdjustmentsWindow(QWidget):
     """
@@ -167,6 +224,7 @@ class InstructionsWindow(QWidget):
         
         # Create the scroll area and label
         self.scroll_area = QScrollArea()
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.label = QLabel()
         self.scroll_area.setWidget(self.label)
         self.scroll_area.setWidgetResizable(True)
@@ -249,6 +307,7 @@ class MainWindow(QMainWindow):
         self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.onContrast)
         self.adjustmentsWindow.brightnessSlider.valueChanged.connect(self.onBrighten)
         
+        ### Default adjustment values
         self.r = 0
         self.a = 1
         self.b = 1
@@ -286,9 +345,7 @@ class MainWindow(QMainWindow):
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Mouse position widget
-        self.position_label = QLabel()
-        self.position_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.position_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.pos_widget = PosWidget()
 
         # Create image view
         self.image_scene = QGraphicsScene(self)
@@ -296,15 +353,21 @@ class MainWindow(QMainWindow):
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
         self.image_scene.addItem(self._pixmap_item)
         self.image_view = QGraphicsView(self.image_scene)       
+        
+        ### Disable scrollbar
         self.image_view.verticalScrollBar().blockSignals(True)
         self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.image_view.horizontalScrollBar().blockSignals(True)
         self.image_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        ### Image view position setup and mouse tracking
         self.image_view.move(0, 0)
         self.image_view.setTransformationAnchor(self.image_view.ViewportAnchor(1))
-        self.image_view.viewport().installEventFilter(self)
         self.image_view.setMouseTracking(True)
         self.image_view.mouseMoveEvent = self.mouseMoveEvent
+
+        ### Install event filters
+        self.image_view.viewport().installEventFilter(self)
 
         # Back widget
         self.back_button = QPushButton(text='Back',parent=self)
@@ -357,12 +420,15 @@ class MainWindow(QMainWindow):
         self.categories_layout.addWidget(self.favorite_box)
         self.favorite_box.setShortcut('F')
 
+        #self.image_view.setSizePolicy(QSizePolicy.Policy.Expanding)
+
         # Add widgets to main layout
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
         layout.addWidget(self.image_label)
         layout.addWidget(self.image_view)
-        layout.addWidget(self.position_label)
+        layout.addWidget(self.hsep())
+        layout.addWidget(self.pos_widget)
         layout.addWidget(self.hsep())
         layout.addLayout(self.bottom_layout)
         layout.addLayout(self.categories_layout)
@@ -476,11 +542,22 @@ class MainWindow(QMainWindow):
         # Mark if hovering over image
         ep, lp = self.mouseImagePos()
         if bool(self.image_view.itemAt(ep)):
+            h, w = self.wcs._naxis
             _x, _y = lp.x(), self.wcs._naxis[0] - lp.y()
             ra, dec = self.wcs.all_pix2world([[_x, _y]], 0)[0]
-            self.position_label.setText(f'Pixel: ({lp.x()} , {lp.y()})     WCS: ({ra:.4f}° , {dec:.4f}°)')
-        else: 
-            self.position_label.setText('')
+
+            self.pos_widget.x_text.setText(f'{lp.x()}')
+            self.pos_widget.y_text.setText(f'{lp.y()}')
+
+            self.pos_widget.ra_text.setText(f'{ra:.4f}°')
+            self.pos_widget.dec_text.setText(f'{dec:.4f}°')
+
+        else:
+            self.pos_widget.x_text.setText('')
+            self.pos_widget.y_text.setText('')
+
+            self.pos_widget.ra_text.setText('')
+            self.pos_widget.dec_text.setText('')
     
     # === On-actions ===
     
