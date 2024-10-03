@@ -25,10 +25,8 @@ def markBindingCheck(event):
     try: button1 = event.button() == Qt.MouseButton.LeftButton
     except: button1 = event.key() == Qt.Key.Key_1
 
-    try: button2 = event.button() == Qt.MouseButton.RightButton
-    except: button2 = event.key() == Qt.Key.Key_2
-
     try:
+        button2 = event.key() == Qt.Key.Key_2
         button3 = event.key() == Qt.Key.Key_3
         button4 = event.key() == Qt.Key.Key_4
         button5 = event.key() == Qt.Key.Key_5
@@ -39,6 +37,12 @@ def markBindingCheck(event):
     except: pass
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
+
+def truePix(x:int,y:int,w:int,h:int):
+    return x - 4*w, y - 4*h
+
+def fullPix(x:int,y:int,w:int,h:int):
+    return x + 4*w, y + 4*h
     
 def parseWCS(img:str|Image.Image) -> WCS:
     #tif_image_data = np.array(Image.open(image_tif))
@@ -162,11 +166,11 @@ def save_fav(data:DataDict,username:str,date,save_list:list) -> None:
             if (len(groups) != 0):
                 for group in groups:
                     group_name = group_names[group]
-                    mark_list = data[name][group]['marks']
+                    mark_list:list[Mark] = data[name][group]['marks']
 
                     for mark in mark_list:
-                        ra, dec = mark.centerWCS()
-                        x, y = mark.center().x(), mark.center().y()
+                        ra, dec = mark.wcs_center()
+                        x, y = mark.img_center().x(), mark.img_center().y()
                         l = [date,name,group_name,x,y,ra,dec,categories,comment]
        
                         lines.append(l)
@@ -271,11 +275,11 @@ def save(data:DataDict,username:str,date) -> None:
             if (len(groups) != 0):
                 for group in groups:
                     group_name = group_names[group]
-                    mark_list = data[name][group]['marks']
+                    mark_list:list[Mark] = data[name][group]['marks']
 
                     for mark in mark_list:
-                        ra, dec = mark.centerWCS()
-                        x, y = mark.center().x(), mark.center().y()
+                        ra, dec = mark.wcs_center()
+                        x, y = mark.img_center().x(), mark.img_center().y()
                         l = [date,name,group_name,x,y,ra,dec,categories,comment]
        
                         lines.append(l)
@@ -369,14 +373,16 @@ def load(username:str,config:str='galmark.cfg') -> DataDict:
             if skip: skip = False
             else:
                 date,name,group,x,y,ra,dec,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
+                image_path = os.path.join(image_dir,name)
+                image = Image.open(image_path)
                 group_idx = group_names.index(group)
                 category_list = categories.split(',')
                 category_list = [category_names.index(cat) for cat in category_list if cat != 'None']
                 category_list.sort()
                 
                 if (x!='NaN') and (y!='NaN'):
-                    mark_args = (int(x),int(y))
-                    mark_kwargs = {'wcs': parseWCS(os.path.join(image_dir,name)), 'group': group_idx}
+                    mark_args = (int(x)+4*image.width,int(y)+4*image.height)
+                    mark_kwargs = {'wcs': parseWCS(image), 'group': group_idx}
                     mark = Mark(*mark_args, **mark_kwargs)
 
                     if not data[name][group_idx]['marks']:

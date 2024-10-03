@@ -2,8 +2,8 @@ from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
                               QSlider, QFrame, QLineEdit, QSizePolicy )
-from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont
-from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QPainter
+from PyQt6.QtCore import Qt, QEvent, QPoint
 from galmark.mark import Mark
 from galmark import __dirname__, __icon__, __heart_solid__, __heart_clear__
 import galmark.io
@@ -298,6 +298,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Galaxy Marker")
         self.setWindowIcon(QIcon(__icon__))
+        self.fullw = self.screen().size().width()
+        self.fullh = self.screen().size().height()
 
         # Filter windows
         self.blurWindow = BlurWindow()
@@ -348,9 +350,14 @@ class MainWindow(QMainWindow):
 
         # Create image view
         self.image_scene = QGraphicsScene(self)
-        self.pixmap = QPixmap.fromImage(self.qimage)
+        self.pixmap = self._pixmap()
+        
+        
+
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
+
         self.image_scene.addItem(self._pixmap_item)
+        
         self.image_view = QGraphicsView(self.image_scene)       
         
         ### Disable scrollbar
@@ -485,6 +492,23 @@ class MainWindow(QMainWindow):
         self.markUpdate()
         self.categoryUpdate()
 
+        self.resize(int(self.fullw/2.5),int(self.fullw/2.5))
+        
+    def _pixmap(self):
+        pixmap_base = QPixmap.fromImage(self.qimage)
+
+        w, h = pixmap_base.height(), pixmap_base.width()
+        _x, _y = int(w*4), int(h*4)
+
+        pixmap = QPixmap(w*9,h*9)
+        pixmap.fill(Qt.GlobalColor.transparent)
+
+        painter = QPainter(pixmap)
+        painter.drawPixmap(_x, _y, pixmap_base)
+        painter.end()
+
+        return pixmap
+
     def hsep(self) -> QHLine:
         hline = QHLine()
         hline.setLineWidth(0)
@@ -510,7 +534,9 @@ class MainWindow(QMainWindow):
         '''
         Resize event; rescales image to fit in window, but keeps aspect ratio
         '''
+        transform = self.image_view.transform()
         self.image_view.fitInView(self._pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+        self.image_view.setTransform(transform)
         super().resizeEvent(event)
 
     def keyPressEvent(self,event):
@@ -537,13 +563,17 @@ class MainWindow(QMainWindow):
     def mouseMoveEvent(self, event):
         # Mark if hovering over image
         ep, lp = self.mouseImagePos()
-        if bool(self.image_view.itemAt(ep)):
+        lp_true = lp - 4*QPoint(self.image.width,self.image.height)
+        x, y = lp_true.x(), lp_true.y()
+
+        if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
             h, w = self.wcs._naxis
-            _x, _y = lp.x(), self.wcs._naxis[0] - lp.y()
+            _x, _y = x, self.image.height - y
+
             ra, dec = self.wcs.all_pix2world([[_x, _y]], 0)[0]
 
-            self.pos_widget.x_text.setText(f'{lp.x()}')
-            self.pos_widget.y_text.setText(f'{lp.y()}')
+            self.pos_widget.x_text.setText(f'{x}')
+            self.pos_widget.y_text.setText(f'{y}')
 
             self.pos_widget.ra_text.setText(f'{ra:.4f}°')
             self.pos_widget.dec_text.setText(f'{dec:.4f}°')
@@ -585,6 +615,8 @@ class MainWindow(QMainWindow):
 
         # get event position and position on image
         ep, lp = self.mouseImagePos()
+        lp_true = lp - 4*QPoint(self.image.width,self.image.height)
+        x, y = lp_true.x(), lp_true.y()
         
         # Mark if hovering over image
         
@@ -592,7 +624,7 @@ class MainWindow(QMainWindow):
             limit = int(self.group_max[group - 1])
 
             if (limit == 1) and (len(self.data[self.image_file][group]['marks']) == 1):
-                if self._pixmap_item is self.image_view.itemAt(ep):
+                if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
 
                     mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
                     mark.draw(self.image_scene)
@@ -604,7 +636,7 @@ class MainWindow(QMainWindow):
                     galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
             elif (len(self.data[self.image_file][group]['marks']) < limit):
-                if self._pixmap_item is self.image_view.itemAt(ep):
+                if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
 
                     mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
                     mark.draw(self.image_scene)
@@ -616,7 +648,7 @@ class MainWindow(QMainWindow):
                     galmark.io.save(self.data,self.username,self.date)
                     galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
         else:
-            if self._pixmap_item is self.image_view.itemAt(ep):
+            if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
 
                 mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
                 mark.draw(self.image_scene)
@@ -680,7 +712,7 @@ class MainWindow(QMainWindow):
         image_blurred = imageFilters.apply()
         
         self.qimage = ImageQt(image_blurred)
-        self.pixmap = QPixmap.fromImage(self.qimage)
+        self.pixmap = self._pixmap()
         self._pixmap_item.setPixmap(self.pixmap)
 
     def onBrighten(self,value):
@@ -689,7 +721,7 @@ class MainWindow(QMainWindow):
         image_bright = imageFilters.apply()
         
         self.qimage = ImageQt(image_bright)
-        self.pixmap = QPixmap.fromImage(self.qimage)
+        self.pixmap = self._pixmap()
         self._pixmap_item.setPixmap(self.pixmap)
 
     def onContrast(self,value):
@@ -698,7 +730,7 @@ class MainWindow(QMainWindow):
         image_contrast = imageFilters.apply()
         
         self.qimage = ImageQt(image_contrast)
-        self.pixmap = QPixmap.fromImage(self.qimage)
+        self.pixmap = self._pixmap()
         self._pixmap_item.setPixmap(self.pixmap)
 
     # === Update methods ===
@@ -720,7 +752,7 @@ class MainWindow(QMainWindow):
         self.image = Image.open(self.image_paths[self.idx])
         self.image_file = self.image.filename.split(os.sep)[-1]
         self.qimage = ImageQt(self.image)
-        self.pixmap = QPixmap.fromImage(self.qimage)
+        self.pixmap = self._pixmap()
         self._pixmap_item.setPixmap(self.pixmap)
 
         # Update image label

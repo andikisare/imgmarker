@@ -25,9 +25,13 @@ class Mark(QGraphicsEllipseItem):
     def y(self) -> int:
         return int(self.rect().y())
     
-    def centerWCS(self) -> list:
+    def img_center(self) -> QPoint:
+        w, h = self.wcs._naxis[1], self.wcs._naxis[0]
+        return self.center() - 4*QPoint(w,h)
+    
+    def wcs_center(self) -> list:
         if self.wcs != None:
-            _x, _y = self.center().x(), self.wcs._naxis[0] - self.center().y()
+            _x, _y = self.img_center().x(), self.wcs._naxis[0] - self.img_center().y()
             return self.wcs.all_pix2world([[_x, _y]], 0)[0]
         else: raise NameError('No WCS solution provided')
 
