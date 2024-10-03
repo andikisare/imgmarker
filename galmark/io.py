@@ -136,7 +136,6 @@ def save_fav(data:DataDict,username:str,date,save_list:list) -> None:
     category_lengths = []
     comment_lengths = []
 
-    out_dir, image_dir, group_names, category_names, group_max = readConfig()
     outfile = os.path.join(out_dir, username + '_fav.txt')
 
     # Create the file
@@ -247,7 +246,6 @@ def save(data:DataDict,username:str,date) -> None:
     category_lengths = []
     comment_lengths = []
 
-    out_dir, image_dir, group_names, category_names, group_max = readConfig()
     outfile = os.path.join(out_dir, username + '.txt')
     
     # Create the file
@@ -423,3 +421,5 @@ def inputs(config:str='galmark.cfg') -> tuple:
     username = galmark.window.StartupWindow().getUser()
 
     return username, out_dir, image_dir, group_names, category_names, group_max
+
+out_dir, image_dir, group_names, category_names, group_max = readConfig()
