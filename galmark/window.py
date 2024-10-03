@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
-                              QSlider, QFrame, QLineEdit, QSizePolicy )
+                              QSlider, QFrame, QLineEdit, QSizePolicy, QStyle)
 from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QPainter
 from PyQt6.QtCore import Qt, QEvent, QPoint
 from galmark.mark import Mark
@@ -300,6 +300,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(__icon__))
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
+        self.zoom_level = 1
 
         # Filter windows
         self.blurWindow = BlurWindow()
@@ -350,14 +351,10 @@ class MainWindow(QMainWindow):
 
         # Create image view
         self.image_scene = QGraphicsScene(self)
+        self.image_scene.setBackgroundBrush(Qt.GlobalColor.black)
         self.pixmap = self._pixmap()
-        
-        
-
         self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
-
         self.image_scene.addItem(self._pixmap_item)
-        
         self.image_view = QGraphicsView(self.image_scene)       
         
         ### Disable scrollbar
@@ -483,9 +480,8 @@ class MainWindow(QMainWindow):
 
 
         center = QApplication.primaryScreen().geometry().center()
-        rect_topleft = (center.x()-int(self.width()/2), 
-                        center.y()-int(self.height()/2))
-        self.move(*rect_topleft)
+        center -= QPoint(self.width(),self.height())/2
+        self.move(center)
 
         self.instructionsWindow.move(int(self.x()+self.width()*1.04),self.y())
         self.instructionsWindow.show()
@@ -495,8 +491,6 @@ class MainWindow(QMainWindow):
         self.markUpdate()
         self.categoryUpdate()
 
-        
-        
     def _pixmap(self):
         pixmap_base = QPixmap.fromImage(self.qimage)
 
@@ -504,7 +498,7 @@ class MainWindow(QMainWindow):
         _x, _y = int(w*4), int(h*4)
 
         pixmap = QPixmap(w*9,h*9)
-        pixmap.fill(Qt.GlobalColor.transparent)
+        pixmap.fill(Qt.GlobalColor.black)
 
         painter = QPainter(pixmap)
         painter.drawPixmap(_x, _y, pixmap_base)
@@ -803,6 +797,8 @@ class MainWindow(QMainWindow):
     # === Transformations ===
     def zoom(self,scale:int=1):
         # Zoom in on cursor location
+        self.zoom_level *= 1.2**scale
+
         view_pos, _ = self.mouseImagePos()
         transform = self.image_view.transform()
         center = self.image_view.mapToScene(view_pos)
