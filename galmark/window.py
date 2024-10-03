@@ -11,7 +11,7 @@ import sys
 import os
 import datetime as dt
 import textwrap
-from math import floor
+from math import floor, inf
 from functools import partial
 from PIL import Image
 from PIL.ImageQt import ImageQt
@@ -619,46 +619,26 @@ class MainWindow(QMainWindow):
         x, y = lp_true.x(), lp_true.y()
         
         # Mark if hovering over image
-        
-        if (self.group_max[group - 1] != 'None'):
-            limit = int(self.group_max[group - 1])
+        if self.group_max[group - 1] == 'None': limit = inf
+        else: limit = int(self.group_max[group - 1])
+
+        if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
+            mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
+            mark.draw(self.image_scene)
 
             if (limit == 1) and (len(self.data[self.image_file][group]['marks']) == 1):
-                if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
-
-                    mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
-                    mark.draw(self.image_scene)
-                    
-                    prev_mark = self.data[self.image_file][group]['marks'][0]
-                    self.image_scene.removeItem(prev_mark)
-                    self.data[self.image_file][group]['marks'][0] = mark
-                    galmark.io.save(self.data,self.username,self.date)
-                    galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
+                prev_mark = self.data[self.image_file][group]['marks'][0]
+                self.image_scene.removeItem(prev_mark)
+                self.data[self.image_file][group]['marks'][0] = mark
 
             elif (len(self.data[self.image_file][group]['marks']) < limit):
-                if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
-
-                    mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
-                    mark.draw(self.image_scene)
-
-                    if not self.data[self.image_file][group]['marks']:
-                        self.data[self.image_file][group]['marks'] = []
-
-                    self.data[self.image_file][group]['marks'].append(mark)
-                    galmark.io.save(self.data,self.username,self.date)
-                    galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
-        else:
-            if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
-
-                mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
-                mark.draw(self.image_scene)
-
                 if not self.data[self.image_file][group]['marks']:
                     self.data[self.image_file][group]['marks'] = []
 
                 self.data[self.image_file][group]['marks'].append(mark)
-                galmark.io.save(self.data,self.username,self.date)
-                galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
+
+            galmark.io.save(self.data,self.username,self.date)
+            galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
     def onNext(self):
         if self.idx+1 < self.N:
