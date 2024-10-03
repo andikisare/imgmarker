@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
-                              QSlider, QFrame, QLineEdit, QSizePolicy, QStyle)
+                              QSlider, QFrame, QLineEdit, QSizePolicy, QStyle, QFileDialog)
 from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QPainter
 from PyQt6.QtCore import Qt, QEvent, QPoint
 from galmark.mark import Mark
@@ -367,6 +367,7 @@ class MainWindow(QMainWindow):
         self.config = 'galmark.cfg'
         self.username, self.group_names, self.category_names, self.group_max = username, group_names, category_names, group_max
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
+        self.image_dir = image_dir
 
         # Initialize output dictionary
         self.data = galmark.io.load(username)
@@ -504,6 +505,13 @@ class MainWindow(QMainWindow):
         exitMenu.setStatusTip('Exit')
         exitMenu.triggered.connect(self.closeEvent)
         fileMenu.addAction(exitMenu)
+
+        ### Open menu
+        openMenu = QAction('&Open', self)
+        openMenu.setShortcuts(['Ctrl+o'])
+        openMenu.setStatusTip('Open save file')
+        openMenu.triggered.connect(self.onLoadFile)
+        fileMenu.addAction(openMenu)
 
         ## View menu
         viewMenu = menuBar.addMenu("&View")
@@ -657,7 +665,40 @@ class MainWindow(QMainWindow):
             self.pos_widget.dec_text.setText('')
     
     # === On-actions ===
-    
+    def onLoadFile(self):
+        ### THIS IS WHERE YOU SELECT FILES, FILES ARE CURRENTLY LIMITED TO *.txt
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.FileMode.AnyFile)
+        fileName = dialog.getSaveFileName(self, 'Open Save File', os.getcwd(), 'Text (*.txt)')
+
+        self.username = str(os.path.split(fileName[0])[1]).removesuffix('.txt')
+        
+        self.data = galmark.io.load(self.username)
+        self.image_paths, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
+        self.N = len(self.image_paths)
+        try: self.image = Image.open(self.image_paths[self.idx])
+        except:
+            print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
+            sys.exit()
+
+        self.qimage = ImageQt(self.image)
+
+        # Set max blur based on size of image
+        blur_max = int((self.qimage.height()+self.qimage.width())/20)
+        self.blurWindow.slider.setMaximum(blur_max)
+
+        self.image_file = self.image.filename.split(os.sep)[-1]
+        self.wcs = galmark.io.parseWCS(self.image)
+
+        self.favorite_file_list = galmark.io.load_fav(self.username)
+
+        self.markUpdate()
+        self.getComment()
+        self.categoryUpdate()
+        self.commentUpdate()
+        self.imageUpdate()
+        self.favoriteUpdate()
+
     def onFavorite(self,state):
         state = Qt.CheckState(state)
         if state == Qt.CheckState.PartiallyChecked:
