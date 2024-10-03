@@ -95,11 +95,10 @@ def readConfig(config:str='galmark.cfg') -> tuple[str]:
             var, val = [i.strip() for i in l.replace('\n','').split('=')]
 
             if var == 'out_dir':
-                if val == './' or val == '':
+                if val == './':
                     out_dir = os.getcwd()
                     print('WARNING: Setting output/save directory to current directory. This can be configured in \'galmark.cfg\'.')
                 else: out_dir = val
-                os.path.join(out_dir,'')
                 if not os.path.exists(out_dir):
                     print("WARNING: out_dir does not exist. Creating out_dir directory.")
                     os.mkdir(out_dir)
