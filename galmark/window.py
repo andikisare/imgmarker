@@ -478,13 +478,16 @@ class MainWindow(QMainWindow):
         instructionsMenu.triggered.connect(self.instructionsWindow.show)
         helpMenu.addAction(instructionsMenu)
         
-        # Center MainWindow; move instructions off to the right
+        # Resize and center MainWindow; move instructions off to the right
+        self.resize(int(self.fullw/2.5),int(self.fullw/2.5))
+
+
         center = QApplication.primaryScreen().geometry().center()
-        rect_topleft = (center.x()-int(self.sizeHint().width()/2), 
-                        center.y()-int(self.sizeHint().height()/2))
+        rect_topleft = (center.x()-int(self.width()/2), 
+                        center.y()-int(self.height()/2))
         self.move(*rect_topleft)
 
-        self.instructionsWindow.move(int(self.x()+self.sizeHint().width()*1.1),self.y())
+        self.instructionsWindow.move(int(self.x()+self.width()*1.04),self.y())
         self.instructionsWindow.show()
 
         # Initialize some data
@@ -492,7 +495,7 @@ class MainWindow(QMainWindow):
         self.markUpdate()
         self.categoryUpdate()
 
-        self.resize(int(self.fullw/2.5),int(self.fullw/2.5))
+        
         
     def _pixmap(self):
         pixmap_base = QPixmap.fromImage(self.qimage)
