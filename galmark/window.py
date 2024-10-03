@@ -188,6 +188,51 @@ class BlurWindow(QWidget):
         super().show()
         self.activateWindow()
 
+class FrameWindow(QWidget):
+    """
+    Blur window
+    """
+    def __init__(self):
+        super().__init__()
+        
+        self.setWindowIcon(QIcon(__icon__))
+        layout = QVBoxLayout()
+        self.fullw = self.screen().size().width()
+        self.fullh = self.screen().size().height()
+        self.setWindowTitle('Frames')
+        self.setLayout(layout)
+
+        self.slider = QSlider()
+        self.slider.setMinimum(0)
+        self.slider.setTickInterval(1)
+        self.slider.setSingleStep(1)
+        self.slider.setOrientation(Qt.Orientation.Horizontal)
+        self.slider.sliderMoved.connect(self.onSliderMoved) 
+
+        self.valueLabel = QLabel()
+        self.valueLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.valueLabel.setText(f'Frame: {self.slider.value()}')
+
+        layout.addWidget(self.valueLabel)
+        layout.addWidget(self.slider)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setFixedWidth(int(self.fullw/6))
+        self.setFixedHeight(layout.sizeHint().height())
+
+        # Set position of window
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
+
+    def onSliderMoved(self, pos):
+        self.slider.setValue(floor(pos))
+        self.valueLabel.setText(f'Frame: {floor(self.slider.value())}')
+
+    def show(self):
+        super().show()
+        self.activateWindow()
+
 class ImageFilters():
     def __init__(self,img:Image.Image,a=1,b=1,r=0):
         self.a = a
@@ -301,6 +346,7 @@ class MainWindow(QMainWindow):
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
         self.zoom_level = 1
+        self.frame = 0
 
         # Filter windows
         self.blurWindow = BlurWindow()
@@ -308,6 +354,9 @@ class MainWindow(QMainWindow):
         self.adjustmentsWindow = AdjustmentsWindow()
         self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.onContrast)
         self.adjustmentsWindow.brightnessSlider.valueChanged.connect(self.onBrighten)
+        self.frameWindow = FrameWindow()
+        self.frameWindow.slider.valueChanged.connect(self.seek)
+        
         
         ### Default adjustment values
         self.r = 0
@@ -333,6 +382,9 @@ class MainWindow(QMainWindow):
             sys.exit()
 
         self.qimage = ImageQt(self.image)
+
+        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+        self.image.seek(self.frame)
 
         # Set max blur based on size of image
         blur_max = int((self.qimage.height()+self.qimage.width())/20)
@@ -377,18 +429,22 @@ class MainWindow(QMainWindow):
         self.back_button.setFixedHeight(40)
         self.back_button.clicked.connect(self.onBack)
         self.back_button.setShortcut('Shift+Tab')
+        self.back_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
 
         # Enter Button
         self.submit_button = QPushButton(text='Enter',parent=self)
         self.submit_button.setFixedHeight(40)
         self.submit_button.clicked.connect(self.onEnter)
         self.submit_button.setShortcut('Return')
+        self.submit_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # Next widget
         self.next_button = QPushButton(text='Next',parent=self)
         self.next_button.setFixedHeight(40)
         self.next_button.clicked.connect(self.onNext)
         self.next_button.setShortcut('Tab')
+        self.next_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # Comment widget
         self.comment_box = QLineEdit(parent=self)
@@ -410,6 +466,7 @@ class MainWindow(QMainWindow):
             box.setFixedHeight(20)
             box.setStyleSheet("margin-left:30%; margin-right:30%;")
             box.clicked.connect(partial(self.onCategory,i+1))
+            box.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             self.categories_layout.addWidget(box)
 
         # Favorite box
@@ -420,6 +477,7 @@ class MainWindow(QMainWindow):
         self.favorite_box.setIcon(QIcon(__heart_clear__))
         self.favorite_box.setTristate(False)
         self.favorite_box.clicked.connect(self.onFavorite)
+        self.favorite_box.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.categories_layout.addWidget(self.favorite_box)
         self.favorite_box.setShortcut('F')
 
@@ -446,6 +504,16 @@ class MainWindow(QMainWindow):
         exitMenu.setStatusTip('Exit')
         exitMenu.triggered.connect(self.closeEvent)
         fileMenu.addAction(exitMenu)
+
+        ## View menu
+        viewMenu = menuBar.addMenu("&View")
+
+        ### Frame menu
+        frameMenu = QAction('&Frames...', self)
+        frameMenu.setShortcuts(['Ctrl+f'])
+        frameMenu.setStatusTip('Frames...')
+        frameMenu.triggered.connect(self.frameWindow.show)
+        viewMenu.addAction(frameMenu)
 
         ## Filter menu
         filterMenu = menuBar.addMenu("&Filters")
@@ -477,7 +545,6 @@ class MainWindow(QMainWindow):
         
         # Resize and center MainWindow; move instructions off to the right
         self.resize(int(self.fullw/2.5),int(self.fullw/2.5))
-
 
         center = QApplication.primaryScreen().geometry().center()
         center -= QPoint(self.width(),self.height())/2
@@ -544,6 +611,13 @@ class MainWindow(QMainWindow):
 
         if (event.key() == Qt.Key.Key_Backspace) or (event.key() == Qt.Key.Key_Delete):
             self.getSelectedMarks()
+
+        if (event.key() == Qt.Key.Key_Space):
+            modifiers = QApplication.keyboardModifiers()
+            if modifiers == Qt.KeyboardModifier.ShiftModifier:
+                self.seek(self.frame - 1)
+            else:
+                self.seek(self.frame + 1)
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
@@ -710,6 +784,17 @@ class MainWindow(QMainWindow):
         self.pixmap = self._pixmap()
         self._pixmap_item.setPixmap(self.pixmap)
 
+    def seek(self,value):
+        self.frame = floor(value)
+        if value > self.image.n_frames - 1: self.frame = 0
+        elif value < 0: self.frame = self.image.n_frames -1
+        
+        print(self.frame)
+        self.image.seek(self.frame)
+        self.qimage = ImageQt(self.image)
+        self.pixmap = self._pixmap()
+        self._pixmap_item.setPixmap(self.pixmap)
+
     # === Update methods ===
 
     def favoriteUpdate(self):
@@ -727,6 +812,8 @@ class MainWindow(QMainWindow):
 
         # Update the pixmap
         self.image = Image.open(self.image_paths[self.idx])
+        self.image.seek(min(self.frame,self.image.n_frames-1))
+        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
         self.image_file = self.image.filename.split(os.sep)[-1]
         self.qimage = ImageQt(self.image)
         self.pixmap = self._pixmap()
