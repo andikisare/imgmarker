@@ -15,6 +15,7 @@ class Mark(QGraphicsEllipseItem):
         self.wcs = wcs
         self.g = group
         self.c = COLORS[self.g]
+        self.setPen(QPen(self.c, 1, Qt.PenStyle.SolidLine))
         
     def center(self) -> QPoint:
         return QPoint(self.x()+self.r,self.y()+self.r)
@@ -34,10 +35,6 @@ class Mark(QGraphicsEllipseItem):
             _x, _y = self.img_center().x(), self.wcs._naxis[0] - self.img_center().y()
             return self.wcs.all_pix2world([[_x, _y]], 0)[0]
         else: raise NameError('No WCS solution provided')
-
-    def draw(self,scene) -> None:
-        self.setPen(QPen(self.c, 1, Qt.PenStyle.SolidLine))
-        scene.addItem(self)
     
     def setCenter(self,x:int,y:int) -> None:
         self.setRect(x-self.r,y-self.r,2*self.r,2*self.r)

@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt, QEvent, QPoint
 from galmark.mark import Mark
 from galmark import __dirname__, __icon__, __heart_solid__, __heart_clear__
 import galmark.io
+import galmark.image
 import sys
 import os
 import datetime as dt
@@ -233,26 +234,6 @@ class FrameWindow(QWidget):
         super().show()
         self.activateWindow()
 
-class ImageFilters():
-    def __init__(self,img:Image.Image,a=1,b=1,r=0):
-        self.a = a
-        self.b = b
-        self.r = r
-        self.img = img
-    
-    def setA(self,a): self.a = a
-    def setB(self,b): self.a = b
-    def setR(self,r): self.a = r
-
-    def apply(self) -> Image.Image:
-        def blur(img:Image.Image):
-            return img.filter(GaussianBlur(self.r))
-        def brighten(img:Image.Image):
-            return Brightness(img).enhance(self.a)
-        def contrast(img:Image.Image):
-            return Contrast(img).enhance(self.b)
-        return contrast(brighten(blur(self.img)))
-
 class InstructionsWindow(QWidget):
     """
     This window displays the instructions and keymappings
@@ -347,21 +328,11 @@ class MainWindow(QMainWindow):
         self.fullh = self.screen().size().height()
         self.zoom_level = 1
         self.frame = 0
-
-        # Filter windows
-        self.blurWindow = BlurWindow()
-        self.blurWindow.slider.valueChanged.connect(self.onBlur)
-        self.adjustmentsWindow = AdjustmentsWindow()
-        self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.onContrast)
-        self.adjustmentsWindow.brightnessSlider.valueChanged.connect(self.onBrighten)
-        self.frameWindow = FrameWindow()
-        self.frameWindow.slider.valueChanged.connect(self.seek)
+        self.setCursorFocus(False)
         
         
         ### Default adjustment values
-        self.r = 0
-        self.a = 1
-        self.b = 1
+        
 
         # Initialize config
         self.config = 'galmark.cfg'
@@ -382,20 +353,30 @@ class MainWindow(QMainWindow):
             print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
             sys.exit()
 
-        self.qimage = ImageQt(self.image)
-
-        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+        
         self.image.seek(self.frame)
 
-        # Set max blur based on size of image
-        blur_max = int((self.qimage.height()+self.qimage.width())/20)
-        self.blurWindow.slider.setMaximum(blur_max)
+        self.image_scene = galmark.image.ImageScene(self.image)
 
-        self.image_file = self.image.filename.split(os.sep)[-1]
-        self.wcs = galmark.io.parseWCS(self.image)
+        # Setup child windows
+        self.blurWindow = BlurWindow()
+        self.blurWindow.slider.valueChanged.connect(self.image_scene.blur)
+        
+        self.adjustmentsWindow = AdjustmentsWindow()
+        self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.image_scene.blur)
+        self.adjustmentsWindow.brightnessSlider.valueChanged.connect(self.image_scene.brighten)
+        
+        self.frameWindow = FrameWindow()
+        self.frameWindow.slider.valueChanged.connect(self.image_scene.seek)
+        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+
+        # Set max blur based on size of image
+        
+        self.blurWindow.slider.setMaximum(self.image_scene.blur_max)
+
 
         # Current image widget
-        self.image_label = QLabel(f'{self.image_file} ({self.idx+1} of {self.N})')
+        self.image_label = QLabel(f'{self.image_scene.file} ({self.idx+1} of {self.N})')
         self.image_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
@@ -403,11 +384,6 @@ class MainWindow(QMainWindow):
         self.pos_widget = PosWidget()
 
         # Create image view
-        self.image_scene = QGraphicsScene(self)
-        self.image_scene.setBackgroundBrush(Qt.GlobalColor.black)
-        self.pixmap = self._pixmap()
-        self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
-        self.image_scene.addItem(self._pixmap_item)
         self.image_view = QGraphicsView(self.image_scene)       
         
         ### Disable scrollbar
@@ -428,10 +404,9 @@ class MainWindow(QMainWindow):
         # Back widget
         self.back_button = QPushButton(text='Back',parent=self)
         self.back_button.setFixedHeight(40)
-        self.back_button.clicked.connect(self.onBack)
+        self.back_button.clicked.connect(partial(self.shift,-1))
         self.back_button.setShortcut('Shift+Tab')
         self.back_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
 
         # Enter Button
         self.submit_button = QPushButton(text='Enter',parent=self)
@@ -443,7 +418,7 @@ class MainWindow(QMainWindow):
         # Next widget
         self.next_button = QPushButton(text='Next',parent=self)
         self.next_button.setFixedHeight(40)
-        self.next_button.clicked.connect(self.onNext)
+        self.next_button.clicked.connect(partial(self.shift,1))
         self.next_button.setShortcut('Tab')
         self.next_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
@@ -523,6 +498,13 @@ class MainWindow(QMainWindow):
         frameMenu.triggered.connect(self.frameWindow.show)
         viewMenu.addAction(frameMenu)
 
+        ### Focus cursor menu
+        cursorFocusMenu = QAction('&Focus cursor', self)
+        cursorFocusMenu.setStatusTip('Focus cursor')
+        cursorFocusMenu.setCheckable(True)
+        cursorFocusMenu.triggered.connect(self.setCursorFocus)
+        viewMenu.addAction(cursorFocusMenu)
+
         ## Filter menu
         filterMenu = menuBar.addMenu("&Filters")
 
@@ -566,20 +548,8 @@ class MainWindow(QMainWindow):
         self.markUpdate()
         self.categoryUpdate()
 
-    def _pixmap(self):
-        pixmap_base = QPixmap.fromImage(self.qimage)
-
-        w, h = pixmap_base.height(), pixmap_base.width()
-        _x, _y = int(w*4), int(h*4)
-
-        pixmap = QPixmap(w*9,h*9)
-        pixmap.fill(Qt.GlobalColor.black)
-
-        painter = QPainter(pixmap)
-        painter.drawPixmap(_x, _y, pixmap_base)
-        painter.end()
-
-        return pixmap
+    def setCursorFocus(self,value:bool) -> None:
+        self.cursorFocus = value
 
     def hsep(self) -> QHLine:
         hline = QHLine()
@@ -607,7 +577,7 @@ class MainWindow(QMainWindow):
         Resize event; rescales image to fit in window, but keeps aspect ratio
         '''
         transform = self.image_view.transform()
-        self.image_view.fitInView(self._pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
+        self.image_view.fitInView(self.image_scene._pixmap_item, Qt.AspectRatioMode.KeepAspectRatio)
         self.image_view.setTransform(transform)
         super().resizeEvent(event)
 
@@ -623,9 +593,9 @@ class MainWindow(QMainWindow):
         if (event.key() == Qt.Key.Key_Space):
             modifiers = QApplication.keyboardModifiers()
             if modifiers == Qt.KeyboardModifier.ShiftModifier:
-                self.seek(self.frame - 1)
+                self.image_scene.seek(self.frame - 1)
             else:
-                self.seek(self.frame + 1)
+                self.image_scene.seek(self.frame + 1)
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
@@ -646,10 +616,9 @@ class MainWindow(QMainWindow):
         x, y = lp_true.x(), lp_true.y()
 
         if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
-            h, w = self.wcs._naxis
             _x, _y = x, self.image.height - y
 
-            ra, dec = self.wcs.all_pix2world([[_x, _y]], 0)[0]
+            ra, dec = self.image_scene.wcs.all_pix2world([[_x, _y]], 0)[0]
 
             self.pos_widget.x_text.setText(f'{x}')
             self.pos_widget.y_text.setText(f'{y}')
@@ -703,20 +672,20 @@ class MainWindow(QMainWindow):
         state = Qt.CheckState(state)
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(__heart_solid__))
-            self.favorite_file_list.append(self.image_file)
+            self.favorite_file_list.append(self.image_scene.file)
             galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
         else:
             self.favorite_box.setIcon(QIcon(__heart_clear__))
             try:
-                self.favorite_file_list.remove(self.image_file)
+                self.favorite_file_list.remove(self.image_scene.file)
             except: pass
             galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
     def onCategory(self,i:int) -> None:
-        if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.data[self.image_file]['categories']):
-            self.data[self.image_file]['categories'].append(i)
-        elif (i in self.data[self.image_file]['categories']):
-            self.data[self.image_file]['categories'].remove(i)
+        if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.data[self.image_scene.file]['categories']):
+            self.data[self.image_scene.file]['categories'].append(i)
+        elif (i in self.data[self.image_scene.file]['categories']):
+            self.data[self.image_scene.file]['categories'].remove(i)
         galmark.io.save(self.data,self.username,self.date)
         galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
@@ -735,46 +704,37 @@ class MainWindow(QMainWindow):
         else: limit = int(self.group_max[group - 1])
 
         if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
-            mark = Mark(lp.x(),lp.y(),wcs=self.wcs,group=group)
-            mark.draw(self.image_scene)
+            mark = self.image_scene.mark(lp.x(),lp.y(),group=group)
 
-            if (limit == 1) and (len(self.data[self.image_file][group]['marks']) == 1):
-                prev_mark = self.data[self.image_file][group]['marks'][0]
+            if (limit == 1) and (len(self.data[self.image_scene.file][group]['marks']) == 1):
+                prev_mark = self.data[self.image_scene.file][group]['marks'][0]
                 self.image_scene.removeItem(prev_mark)
-                self.data[self.image_file][group]['marks'][0] = mark
+                self.data[self.image_scene.file][group]['marks'][0] = mark
 
-            elif (len(self.data[self.image_file][group]['marks']) < limit):
-                if not self.data[self.image_file][group]['marks']:
-                    self.data[self.image_file][group]['marks'] = []
+            elif (len(self.data[self.image_scene.file][group]['marks']) < limit):
+                if not self.data[self.image_scene.file][group]['marks']:
+                    self.data[self.image_scene.file][group]['marks'] = []
 
-                self.data[self.image_file][group]['marks'].append(mark)
+                self.data[self.image_scene.file][group]['marks'].append(mark)
 
             galmark.io.save(self.data,self.username,self.date)
             galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
-    def onNext(self):
-        if self.idx+1 < self.N:
-            # Increment the index
-            self.idx += 1
-            self.commentUpdate()
-            self.imageUpdate()
-            self.markUpdate()
-            self.getComment()
-            self.categoryUpdate()
-            self.favoriteUpdate()
-            # galmark.io.save(self.data,self.username,self.date)
+    def shift(self,delta:int):
+        # Increment the index
+        self.idx += delta
+        if self.idx > self.N-1:
+            self.idx = 0
+        elif self.idx < 0:
+            self.idx = self.N-1
 
-    def onBack(self):
-        if self.idx+1 > 1:
-            # Increment the index
-            self.idx -= 1
-            self.commentUpdate()
-            self.imageUpdate()
-            self.markUpdate()
-            self.getComment()
-            self.categoryUpdate()
-            self.favoriteUpdate()
-            # galmark.io.save(self.data,self.username,self.date)
+        self.commentUpdate()
+        self.imageUpdate()
+        self.markUpdate()
+        self.getComment()
+        self.categoryUpdate()
+        self.favoriteUpdate()
+        # galmark.io.save(self.data,self.username,self.date)
             
     def onEnter(self):
         self.commentUpdate()
@@ -790,56 +750,21 @@ class MainWindow(QMainWindow):
         # Center on cursor
         center = self.image_view.viewport().rect().center()
         scene_center = self.image_view.mapToScene(center)
-        global_center = self.image_view.mapToGlobal(self.image_view.viewport().rect().center())
+        
         view_pos, pix_pos = self.mouseImagePos()
 
         newX = int(scene_center.x() - pix_pos.x())
         newY = int(scene_center.y() - pix_pos.y())
         self.image_view.translate(newX, newY)
-        self.cursor().setPos(global_center)
 
-    def onBlur(self,value):
-        self.r = floor(value)/10
-        imageFilters = ImageFilters(self.image,a=self.a,b=self.b,r=self.r)
-        image_blurred = imageFilters.apply()
-        
-        self.qimage = ImageQt(image_blurred)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
-
-    def onBrighten(self,value):
-        self.a = floor(value)/10 + 1
-        imageFilters = ImageFilters(self.image,a=self.a,b=self.b,r=self.r)
-        image_bright = imageFilters.apply()
-        
-        self.qimage = ImageQt(image_bright)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
-
-    def onContrast(self,value):
-        self.b = floor(value)/10 + 1
-        imageFilters = ImageFilters(self.image,a=self.a,b=self.b,r=self.r)
-        image_contrast = imageFilters.apply()
-        
-        self.qimage = ImageQt(image_contrast)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
-
-    def seek(self,value):
-        self.frame = floor(value)
-        if value > self.image.n_frames - 1: self.frame = 0
-        elif value < 0: self.frame = self.image.n_frames -1
-        
-        print(self.frame)
-        self.image.seek(self.frame)
-        self.qimage = ImageQt(self.image)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
+        if self.cursorFocus:
+            global_center = self.image_view.mapToGlobal(self.image_view.viewport().rect().center())
+            self.cursor().setPos(global_center)
 
     # === Update methods ===
 
     def favoriteUpdate(self):
-        if self.image_file in self.favorite_file_list:
+        if self.image_scene.file in self.favorite_file_list:
             self.favorite_box.setChecked(True)
             self.favorite_box.setIcon(QIcon(__heart_solid__))
         else:
@@ -847,24 +772,13 @@ class MainWindow(QMainWindow):
             self.favorite_box.setChecked(False)
 
     def imageUpdate(self):
-        # Remove Marks
-        for item in self.image_scene.items(): 
-            if isinstance(item,Mark): self.image_scene.removeItem(item)
-
-        # Update the pixmap
-        self.image = Image.open(self.image_paths[self.idx])
-        self.image.seek(min(self.frame,self.image.n_frames-1))
-        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
-        self.image_file = self.image.filename.split(os.sep)[-1]
-        self.qimage = ImageQt(self.image)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
-
+        # Update scene
+        path = self.image_paths[self.idx]
+        self.image_scene.update(path)
+        
         # Update image label
-        self.image_label.setText(f'{self.image_file} ({self.idx+1} of {self.N})')
-
-        #Update WCS
-        self.wcs = galmark.io.parseWCS(self.image)
+        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+        self.image_label.setText(f'{self.image_scene.file} ({self.idx+1} of {self.N})')
     
     def commentUpdate(self):
         # Update the comment in the dictionary
@@ -872,29 +786,29 @@ class MainWindow(QMainWindow):
         if not comment:
             comment = 'None'
 
-        self.data[self.image_file]['comment'] = comment
+        self.data[self.image_scene.file]['comment'] = comment
         galmark.io.save(self.data,self.username,self.date)
         galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
     def getComment(self):
-        if bool(self.data[self.image_file]['comment']):
-            if (self.data[self.image_file]['comment'] == 'None'):
+        if bool(self.data[self.image_scene.file]['comment']):
+            if (self.data[self.image_scene.file]['comment'] == 'None'):
                 self.comment_box.setText('')
             else:
-                comment = self.data[self.image_file]['comment']
+                comment = self.data[self.image_scene.file]['comment']
                 self.comment_box.setText(comment)
         else:
             comment = 'None'
-            self.data[self.image_file]['comment'] = comment
+            self.data[self.image_scene.file]['comment'] = comment
             self.comment_box.setText('')
 
     def categoryUpdate(self):
         # Initialize category and update checkboxes
         for box in self.category_boxes: box.setChecked(False)
-        if not (self.data[self.image_file]['categories']):
-            self.data[self.image_file]['categories'] = []
+        if not (self.data[self.image_scene.file]['categories']):
+            self.data[self.image_scene.file]['categories'] = []
         else:
-            category_list = self.data[self.image_file]['categories']
+            category_list = self.data[self.image_scene.file]['categories']
             for i in range(1,6):
                 if (i in category_list):
                     self.category_boxes[i-1].setChecked(True)
@@ -902,9 +816,9 @@ class MainWindow(QMainWindow):
     def markUpdate(self):
         # Redraws all marks in image
         for i in range(0,10):
-            mark_list = self.data[self.image_file][i]['marks']
+            mark_list = self.data[self.image_scene.file][i]['marks']
                 
-            for mark in mark_list: mark.draw(self.image_scene)
+            for mark in mark_list: self.image_scene.addItem(mark)
 
     def getSelectedMarks(self):
         _, pix_pos = self.mouseImagePos()
@@ -918,7 +832,7 @@ class MainWindow(QMainWindow):
         
         for item in selected_items:
             self.image_scene.removeItem(item)
-            self.data[self.image_file][item.g]['marks'].remove(item)
+            self.data[self.image_scene.file][item.g]['marks'].remove(item)
             galmark.io.save(self.data,self.username,self.date)
             galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
@@ -947,7 +861,7 @@ class MainWindow(QMainWindow):
         '''
         view_pos = self.image_view.mapFromGlobal(QCursor.pos())
         scene_pos = self.image_view.mapToScene(view_pos)
-        pix_pos = self._pixmap_item.mapFromScene(scene_pos).toPoint()
+        pix_pos = self.image_scene._pixmap_item.mapFromScene(scene_pos).toPoint()
 
         return view_pos, pix_pos
 
