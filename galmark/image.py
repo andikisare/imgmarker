@@ -119,7 +119,6 @@ class ImageScene(QGraphicsScene):
         # Remove Marks
         for item in self.items(): 
             if isinstance(item,Mark): self.removeItem(item)
-            print('hi')
 
         # Update the pixmap
         self.image = Image.open(path)
