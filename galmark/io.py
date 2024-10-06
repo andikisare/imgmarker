@@ -19,7 +19,7 @@ class DataDict(defaultdict):
     def __repr__(self):
         return repr(dict(self))
     
-def markBindingCheck(event):
+def markCheck(event):
     button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
 
     try: button1 = event.button() == Qt.MouseButton.LeftButton
@@ -118,7 +118,7 @@ def readConfig(config:str='galmark.cfg') -> tuple[str]:
 def checkUsername(username:str) -> bool:
     return (username != "None") and (username != "")
 
-def save_fav(data:DataDict,username:str,date,save_list:list) -> None:
+def savefav(data:DataDict,username:str,date,save_list:list) -> None:
     lines = []
     name_lengths = []
     group_lengths = []
