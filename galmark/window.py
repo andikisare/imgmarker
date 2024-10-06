@@ -585,12 +585,12 @@ class MainWindow(QMainWindow):
         self.username = str(os.path.split(fileName[0])[1]).removesuffix('.txt')
         
         self.__init_data__()
+        self.imageUpdate()
 
         self.markUpdate()
         self.getComment()
         self.categoryUpdate()
         self.commentUpdate()
-        self.imageUpdate()
         self.favoriteUpdate()
 
     def onFavorite(self,state):
