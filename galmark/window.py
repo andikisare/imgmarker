@@ -428,7 +428,7 @@ class MainWindow(QMainWindow):
         cursorFocusMenu = QAction('&Focus cursor', self)
         cursorFocusMenu.setStatusTip('Focus cursor')
         cursorFocusMenu.setCheckable(True)
-        cursorFocusMenu.triggered.connect(self.setCursorFocus)
+        cursorFocusMenu.triggered.connect(partial(setattr(self,'cursorFocus')))
         viewMenu.addAction(cursorFocusMenu)
 
         ## Filter menu
@@ -491,9 +491,6 @@ class MainWindow(QMainWindow):
 
         self.image = Image.open(path)   
         self.image.seek(self.frame)
-
-    def setCursorFocus(self,value:bool) -> None:
-        self.cursorFocus = value
 
     def hsep(self) -> QHLine:
         hline = QHLine()
