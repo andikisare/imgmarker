@@ -390,13 +390,13 @@ def load(username:str,config:str='galmark.cfg') -> DataDict:
                 
     return data
 
-def glob(dir:str,ext:str,data_filt:DataDict={}) -> tuple[list,int]:
+def glob(image_dir:str,ext:str,data_filt:DataDict={}) -> tuple[list,int]:
      # Find all images in image directory
-    all_images = _glob.glob(dir + '*.' + ext)
+    all_images = _glob.glob(image_dir + '*.' + ext)
 
     # Get list of paths to images if they are in the dictionary (have been edited)
     if (data_filt):
-        edited_images = [dir + f for f in data_filt.keys()]
+        edited_images = [os.path.join(image_dir,f) for f in data_filt.keys()]
         unedited_images = [i for i in all_images if i not in edited_images]
     else:
         edited_images = []
@@ -408,8 +408,7 @@ def glob(dir:str,ext:str,data_filt:DataDict={}) -> tuple[list,int]:
 
     # Put edited images at the beginning, unedited images at front
     images = edited_images + unedited_images
-    if len(edited_images) < len(all_images): idx = len(edited_images)
-    else: idx = len(edited_images) - 1
+    idx = min(len(edited_images),len(all_images)-1)
 
     return images, idx
 
