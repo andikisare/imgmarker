@@ -278,22 +278,10 @@ class MainWindow(QMainWindow):
         self.username, self.group_names, self.category_names, self.group_max = username, group_names, category_names, group_max
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
         self.image_dir = image_dir
+        self.imtype = imtype
 
         # Initialize output dictionary
-        self.data = galmark.io.load(username)
-
-        # Find all images in image directory
-        self.imtype = imtype
-        self.image_paths, self.idx = galmark.io.glob(image_dir,self.imtype,data_filt=self.data)
-        self.N = len(self.image_paths)
-
-        try: self.image = Image.open(self.image_paths[self.idx])
-        except:
-            print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
-            sys.exit()
-
-        
-        self.image.seek(self.frame)
+        self.__init_data__()
 
         self.image_scene = galmark.image.ImageScene(self.image)
 
@@ -487,6 +475,21 @@ class MainWindow(QMainWindow):
         self.markUpdate()
         self.categoryUpdate()
 
+    def __init_data__(self):
+        # Initialize output dictionary
+        self.data = galmark.io.load(self.username)
+        self.favorite_file_list = galmark.io.load_fav(self.username)
+
+        # Find all images in image directory
+        self.image_paths, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
+        self.N = len(self.image_paths)
+        
+        try: self.image = Image.open(self.image_paths[self.idx])
+        except:
+            print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
+            sys.exit()
+        self.image.seek(self.frame)
+
     def setCursorFocus(self,value:bool) -> None:
         self.cursorFocus = value
 
@@ -581,23 +584,7 @@ class MainWindow(QMainWindow):
 
         self.username = str(os.path.split(fileName[0])[1]).removesuffix('.txt')
         
-        self.data = galmark.io.load(self.username)
-        self.image_paths, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
-        self.N = len(self.image_paths)
-        
-        try: self.image = Image.open(self.image_paths[self.idx])
-        except:
-            print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
-            sys.exit()
-        self.image.seek(self.frame)
-
-        # Set max blur based on size of image
-        self.blurWindow.slider.setMaximum(self.image_scene.blur_max)
-
-        self.image_file = self.image.filename.split(os.sep)[-1]
-        self.wcs = galmark.io.parseWCS(self.image)
-
-        self.favorite_file_list = galmark.io.load_fav(self.username)
+        self.__init_data__()
 
         self.markUpdate()
         self.getComment()
@@ -714,8 +701,11 @@ class MainWindow(QMainWindow):
         path = self.image_paths[self.idx]
         self.image_scene.update(path)
         
-        # Update image label
+        # Update slider maxima
         self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+        self.blurWindow.slider.setMaximum(self.image_scene.blur_max)
+
+        # Update image label
         self.image_label.setText(f'{self.image_scene.file} ({self.idx+1} of {self.N})')
     
     def commentUpdate(self):
