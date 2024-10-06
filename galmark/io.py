@@ -10,7 +10,7 @@ from astropy.wcs import WCS
 from astropy.io import fits
 from collections import defaultdict
 import io
-import glob as _glob
+import glob as glob_
 
 class DataDict(defaultdict):
     def __init__(self, *args, **kwargs):
@@ -37,12 +37,6 @@ def markBindingCheck(event):
     except: pass
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
-
-def truePix(x:int,y:int,w:int,h:int):
-    return x - 4*w, y - 4*h
-
-def fullPix(x:int,y:int,w:int,h:int):
-    return x + 4*w, y + 4*h
     
 def parseWCS(img:str|Image.Image) -> WCS:
     #tif_image_data = np.array(Image.open(image_tif))
@@ -392,7 +386,7 @@ def load(username:str,config:str='galmark.cfg') -> DataDict:
 
 def glob(image_dir:str,ext:str,data_filt:DataDict={}) -> tuple[list,int]:
      # Find all images in image directory
-    all_images = _glob.glob(image_dir + '*.' + ext)
+    all_images = glob_.glob(image_dir + '*.' + ext)
 
     # Get list of paths to images if they are in the dictionary (have been edited)
     if (data_filt):

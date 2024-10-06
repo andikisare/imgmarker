@@ -337,7 +337,7 @@ class MainWindow(QMainWindow):
         # Enter Button
         self.submit_button = QPushButton(text='Enter',parent=self)
         self.submit_button.setFixedHeight(40)
-        self.submit_button.clicked.connect(self.onEnter)
+        self.submit_button.clicked.connect(self.enter)
         self.submit_button.setShortcut('Return')
         self.submit_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
@@ -367,7 +367,7 @@ class MainWindow(QMainWindow):
         for i, box in enumerate(self.category_boxes):
             box.setFixedHeight(20)
             box.setStyleSheet("margin-left:30%; margin-right:30%;")
-            box.clicked.connect(partial(self.onCategory,i+1))
+            box.clicked.connect(partial(self.categorize,i+1))
             box.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             self.categories_layout.addWidget(box)
 
@@ -378,7 +378,7 @@ class MainWindow(QMainWindow):
         self.favorite_box.setFixedWidth(40)
         self.favorite_box.setIcon(QIcon(__heart_clear__))
         self.favorite_box.setTristate(False)
-        self.favorite_box.clicked.connect(self.onFavorite)
+        self.favorite_box.clicked.connect(self.favorite)
         self.favorite_box.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.categories_layout.addWidget(self.favorite_box)
         self.favorite_box.setShortcut('F')
@@ -411,7 +411,7 @@ class MainWindow(QMainWindow):
         openMenu = QAction('&Open', self)
         openMenu.setShortcuts(['Ctrl+o'])
         openMenu.setStatusTip('Open save file')
-        openMenu.triggered.connect(self.onLoadFile)
+        openMenu.triggered.connect(self.open)
         fileMenu.addAction(openMenu)
 
         ## View menu
@@ -428,7 +428,7 @@ class MainWindow(QMainWindow):
         cursorFocusMenu = QAction('&Focus cursor', self)
         cursorFocusMenu.setStatusTip('Focus cursor')
         cursorFocusMenu.setCheckable(True)
-        cursorFocusMenu.triggered.connect(partial(setattr, self,'cursorFocus'))
+        cursorFocusMenu.triggered.connect(partial(setattr,self,'cursorFocus'))
         viewMenu.addAction(cursorFocusMenu)
 
         ## Filter menu
@@ -526,10 +526,10 @@ class MainWindow(QMainWindow):
         # Check if key is bound with marking the image
         markButtons = galmark.io.markBindingCheck(event)
         for i in range(0,9):
-            if markButtons[i]: self.onMark(group=i+1)
+            if markButtons[i]: self.mark(group=i+1)
 
         if (event.key() == Qt.Key.Key_Backspace) or (event.key() == Qt.Key.Key_Delete):
-            self.getSelectedMarks()
+            self.deleteMarks()
 
         if (event.key() == Qt.Key.Key_Space):
             modifiers = QApplication.keyboardModifiers()
@@ -542,13 +542,13 @@ class MainWindow(QMainWindow):
         # Check if key is bound with marking the image
         markButtons = galmark.io.markBindingCheck(event)
         for i in range(0,9):
-            if markButtons[i]: self.onMark(group=i+1)
+            if markButtons[i]: self.mark(group=i+1)
         
         if (event.button() == Qt.MouseButton.MiddleButton):
-            self.onMiddleMouse()
+            self.middleMouse()
 
         if (event.button() == Qt.MouseButton.RightButton):
-            self.getSelectedMarks()
+            self.deleteMarks()
 
     def mouseMoveEvent(self, event):
         # Mark if hovering over image
@@ -573,9 +573,13 @@ class MainWindow(QMainWindow):
 
             self.pos_widget.ra_text.setText('')
             self.pos_widget.dec_text.setText('')
+
+    def closeEvent(self, event):
+        self.commentUpdate()
+        sys.exit()
     
-    # === On-actions ===
-    def onLoadFile(self):
+    # === Actions ===
+    def open(self):
         ### THIS IS WHERE YOU SELECT FILES, FILES ARE CURRENTLY LIMITED TO *.txt
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
@@ -592,7 +596,7 @@ class MainWindow(QMainWindow):
         self.commentUpdate()
         self.favoriteUpdate()
 
-    def onFavorite(self,state):
+    def favorite(self,state):
         state = Qt.CheckState(state)
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(__heart_solid__))
@@ -605,7 +609,7 @@ class MainWindow(QMainWindow):
             except: pass
             galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
-    def onCategory(self,i:int) -> None:
+    def categorize(self,i:int) -> None:
         if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.data[self.image_scene.file]['categories']):
             self.data[self.image_scene.file]['categories'].append(i)
         elif (i in self.data[self.image_scene.file]['categories']):
@@ -613,7 +617,7 @@ class MainWindow(QMainWindow):
         galmark.io.save(self.data,self.username,self.date)
         galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
 
-    def onMark(self, group:int=0) -> None:
+    def mark(self, group:int=0) -> None:
         '''
         Actions to complete when marking
         '''
@@ -660,17 +664,13 @@ class MainWindow(QMainWindow):
         self.favoriteUpdate()
         # galmark.io.save(self.data,self.username,self.date)
             
-    def onEnter(self):
+    def enter(self):
         self.commentUpdate()
         self.comment_box.clearFocus()
         galmark.io.save(self.data,self.username,self.date)
         galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
-    
-    def closeEvent(self, event):
-        self.commentUpdate()
-        sys.exit()
 
-    def onMiddleMouse(self):
+    def middleMouse(self):
         # Center on cursor
         center = self.image_view.viewport().rect().center()
         scene_center = self.image_view.mapToScene(center)
@@ -682,6 +682,18 @@ class MainWindow(QMainWindow):
         if self.cursorFocus:
             global_center = self.image_view.mapToGlobal(center)
             self.cursor().setPos(global_center)
+
+    def zoom(self,scale:int=1):
+        # Zoom in on cursor location
+        self.zoom_level *= 1.2**scale
+
+        view_pos = self.mouse_view_pos()
+        transform = self.image_view.transform()
+        center = self.image_view.mapToScene(view_pos)
+        transform.translate(center.x(), center.y())
+        transform.scale(1.2**scale, 1.2**scale)
+        transform.translate(-center.x(), -center.y())
+        self.image_view.setTransform(transform)
 
     # === Update methods ===
 
@@ -744,7 +756,7 @@ class MainWindow(QMainWindow):
                 
             for mark in mark_list: self.image_scene.addItem(mark)
 
-    def getSelectedMarks(self):
+    def deleteMarks(self):
         pix_pos = self.mouse_pix_pos().toPointF()
         selected_items = [ item for item in self.image_scene.items() 
                            if isinstance(item,Mark) 
@@ -755,19 +767,6 @@ class MainWindow(QMainWindow):
             self.data[self.image_scene.file][item.g]['marks'].remove(item)
             galmark.io.save(self.data,self.username,self.date)
             galmark.io.save_fav(self.data,self.username,self.date,self.favorite_file_list)
-
-    # === Transformations ===
-    def zoom(self,scale:int=1):
-        # Zoom in on cursor location
-        self.zoom_level *= 1.2**scale
-
-        view_pos = self.mouse_view_pos()
-        transform = self.image_view.transform()
-        center = self.image_view.mapToScene(view_pos)
-        transform.translate(center.x(), center.y())
-        transform.scale(1.2**scale, 1.2**scale)
-        transform.translate(-center.x(), -center.y())
-        self.image_view.setTransform(transform)
 
     # === Utils ===
 
