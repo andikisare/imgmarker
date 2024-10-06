@@ -484,11 +484,12 @@ class MainWindow(QMainWindow):
         self.N = len(self.image_paths)
 
         try:
-            self.image = Image.open(self.image_paths[self.idx])
+            path = self.image_paths[self.idx]
         except IndexError:
             sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
                      f"Please specify a different image directory in galmark.cfg and try again.")
-                                 
+
+        self.image = Image.open(path)   
         self.image.seek(self.frame)
 
     def setCursorFocus(self,value:bool) -> None:
