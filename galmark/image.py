@@ -1,18 +1,11 @@
-from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
-                              QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
-                              QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
-                              QSlider, QFrame, QLineEdit, QSizePolicy, QStyle)
-from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QPainter, QPen
-from PyQt6.QtCore import Qt, QEvent, QPoint
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem 
+from PyQt6.QtGui import QPixmap, QPainter
+from PyQt6.QtCore import Qt
 from galmark.mark import Mark
 from galmark import __dirname__, __icon__, __heart_solid__, __heart_clear__
 import galmark.io
-import sys
 import os
-import datetime as dt
-import textwrap
-from math import floor, inf
-from functools import partial
+from math import floor
 from PIL import Image
 from PIL.ImageQt import ImageQt
 from PIL.ImageFilter import GaussianBlur

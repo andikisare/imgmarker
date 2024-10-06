@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
-                              QLabel, QScrollArea, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
+                              QLabel, QScrollArea, QGraphicsView,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
-                              QSlider, QFrame, QLineEdit, QSizePolicy, QStyle, QFileDialog)
-from PyQt6.QtGui import QPixmap, QCursor, QAction, QIcon, QFont, QPainter
-from PyQt6.QtCore import Qt, QEvent, QPoint
+                              QSlider, QFrame, QLineEdit, QSizePolicy, QFileDialog)
+from PyQt6.QtGui import QCursor, QAction, QIcon, QFont
+from PyQt6.QtCore import Qt, QPoint
 from galmark.mark import Mark
 from galmark import __dirname__, __icon__, __heart_solid__, __heart_clear__
 import galmark.io
@@ -16,8 +16,6 @@ from math import floor, inf
 from functools import partial
 from PIL import Image
 from PIL.ImageQt import ImageQt
-from PIL.ImageFilter import GaussianBlur
-from PIL.ImageEnhance import Contrast, Brightness
 
 class QHLine(QFrame):
     def __init__(self):
