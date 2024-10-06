@@ -428,7 +428,7 @@ class MainWindow(QMainWindow):
         cursorFocusMenu = QAction('&Focus cursor', self)
         cursorFocusMenu.setStatusTip('Focus cursor')
         cursorFocusMenu.setCheckable(True)
-        cursorFocusMenu.triggered.connect(partial(setattr(self,'cursorFocus')))
+        cursorFocusMenu.triggered.connect(partial(setattr, self,'cursorFocus'))
         viewMenu.addAction(cursorFocusMenu)
 
         ## Filter menu
