@@ -584,16 +584,15 @@ class MainWindow(QMainWindow):
         self.data = galmark.io.load(self.username)
         self.image_paths, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
         self.N = len(self.image_paths)
+        
         try: self.image = Image.open(self.image_paths[self.idx])
         except:
             print('No images found. Please specify image directory in configuration file (galmark.cfg) and try again.')
             sys.exit()
-
-        self.qimage = ImageQt(self.image)
+        self.image.seek(self.frame)
 
         # Set max blur based on size of image
-        blur_max = int((self.qimage.height()+self.qimage.width())/20)
-        self.blurWindow.slider.setMaximum(blur_max)
+        self.blurWindow.slider.setMaximum(self.image_scene.blur_max)
 
         self.image_file = self.image.filename.split(os.sep)[-1]
         self.wcs = galmark.io.parseWCS(self.image)
