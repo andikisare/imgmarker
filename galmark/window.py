@@ -96,7 +96,6 @@ class BlurWindow(QWidget):
         self.setWindowTitle('Gaussian Blur')
         self.setLayout(layout)
 
-        max_blur = int((self.fullw+self.fullh)/20)
         self.slider = QSlider()
         self.slider.setMinimum(0)
         self.slider.setTickInterval(1)
@@ -553,7 +552,7 @@ class MainWindow(QMainWindow):
 
     def mouseMoveEvent(self, event):
         # Mark if hovering over image
-        ep, lp = self.mouseImagePos()
+        lp = self.mouse_pix_pos()
         lp_true = lp - 4*QPoint(self.image.width,self.image.height)
         x, y = lp_true.x(), lp_true.y()
 
@@ -620,7 +619,7 @@ class MainWindow(QMainWindow):
         '''
 
         # get event position and position on image
-        ep, lp = self.mouseImagePos()
+        lp = self.mouse_pix_pos()
         lp_true = lp - 4*QPoint(self.image.width,self.image.height)
         x, y = lp_true.x(), lp_true.y()
         
@@ -675,15 +674,13 @@ class MainWindow(QMainWindow):
         # Center on cursor
         center = self.image_view.viewport().rect().center()
         scene_center = self.image_view.mapToScene(center)
-        
-        view_pos, pix_pos = self.mouseImagePos()
+        pix_pos = self.mouse_pix_pos()
 
-        newX = int(scene_center.x() - pix_pos.x())
-        newY = int(scene_center.y() - pix_pos.y())
-        self.image_view.translate(newX, newY)
+        delta = scene_center.toPoint() - pix_pos
+        self.image_view.translate(delta.x(),delta.y())
 
         if self.cursorFocus:
-            global_center = self.image_view.mapToGlobal(self.image_view.viewport().rect().center())
+            global_center = self.image_view.mapToGlobal(center)
             self.cursor().setPos(global_center)
 
     # === Update methods ===
@@ -737,9 +734,8 @@ class MainWindow(QMainWindow):
             self.data[self.image_scene.file]['categories'] = []
         else:
             category_list = self.data[self.image_scene.file]['categories']
-            for i in range(1,6):
-                if (i in category_list):
-                    self.category_boxes[i-1].setChecked(True)
+            for i in category_list:
+                self.category_boxes[i-1].setChecked(True)
 
     def markUpdate(self):
         # Redraws all marks in image
@@ -749,11 +745,7 @@ class MainWindow(QMainWindow):
             for mark in mark_list: self.image_scene.addItem(mark)
 
     def getSelectedMarks(self):
-        _, pix_pos = self.mouseImagePos()
-        pix_pos = pix_pos.toPointF()
-        selection_filt = [ item is self.image_scene.itemAt(pix_pos, item.transform()) 
-                           for item in self.image_scene.items() 
-                           if isinstance(item,Mark) ]
+        pix_pos = self.mouse_pix_pos().toPointF()
         selected_items = [ item for item in self.image_scene.items() 
                            if isinstance(item,Mark) 
                            and (item is self.image_scene.itemAt(pix_pos, item.transform()))]
@@ -769,7 +761,7 @@ class MainWindow(QMainWindow):
         # Zoom in on cursor location
         self.zoom_level *= 1.2**scale
 
-        view_pos, _ = self.mouseImagePos()
+        view_pos = self.mouse_view_pos()
         transform = self.image_view.transform()
         center = self.image_view.mapToScene(view_pos)
         transform.translate(center.x(), center.y())
@@ -778,19 +770,26 @@ class MainWindow(QMainWindow):
         self.image_view.setTransform(transform)
 
     # === Utils ===
-    
-    def mouseImagePos(self):
+
+    def mouse_view_pos(self):
         '''
         Gets mouse positions
 
         Returns:
-            view_pos: position of mouse in image_view
+            view_pos: position of mouse in the pixmap
+        '''
+        return self.image_view.mapFromGlobal(QCursor.pos())
+    
+    def mouse_pix_pos(self):
+        '''
+        Gets mouse positions
+
+        Returns:
             pix_pos: position of mouse in the pixmap
         '''
         view_pos = self.image_view.mapFromGlobal(QCursor.pos())
         scene_pos = self.image_view.mapToScene(view_pos)
-        pix_pos = self.image_scene._pixmap_item.mapFromScene(scene_pos).toPoint()
-
-        return view_pos, pix_pos
+        
+        return self.image_scene._pixmap_item.mapFromScene(scene_pos).toPoint()
 
     
