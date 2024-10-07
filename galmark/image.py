@@ -32,14 +32,14 @@ class ImageFilter():
         return contrast(brighten(blur(self.img)))
     
 class ImageScene(QGraphicsScene):
-    def __init__(self,image:Image.Image):
+    def __init__(self,path):
         super().__init__()
 
         # Initial frame
         self.frame = 0
 
-        self.image = image
-        self.qimage = ImageQt(image)
+        self.image = Image.open(path)
+        self.qimage = ImageQt(self.image)
 
         self.setBackgroundBrush(Qt.GlobalColor.black)
         self.pixmap = self._pixmap()

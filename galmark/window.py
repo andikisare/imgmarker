@@ -281,7 +281,7 @@ class MainWindow(QMainWindow):
         # Initialize output dictionary
         self.__init_data__()
 
-        self.imageScene = galmark.image.ImageScene(self.image)
+        self.imageScene = galmark.image.ImageScene(self.imagePath)
 
         # Setup child windows
         self.blurWindow = BlurWindow()
@@ -293,7 +293,7 @@ class MainWindow(QMainWindow):
         
         self.frameWindow = FrameWindow()
         self.frameWindow.slider.valueChanged.connect(self.imageScene.seek)
-        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+        self.frameWindow.slider.setMaximum(self.imageScene.image.n_frames-1)
 
         # Set max blur based on size of image
         
@@ -479,17 +479,14 @@ class MainWindow(QMainWindow):
         self.favorite_file_list = galmark.io.loadfav(self.username)
 
         # Find all images in image directory
-        self.image_paths, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
-        self.N = len(self.image_paths)
+        self.imagePaths, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
+        self.N = len(self.imagePaths)
 
         try:
-            path = self.image_paths[self.idx]
+            self.imagePath = self.imagePaths[self.idx]
         except IndexError:
             sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
                      f"Please specify a different image directory in galmark.cfg and try again.")
-
-        self.image = Image.open(path)   
-        self.image.seek(self.frame)
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
@@ -545,11 +542,12 @@ class MainWindow(QMainWindow):
     def mouseMoveEvent(self, event):
         # Mark if hovering over image
         lp = self.mousePixPos()
-        lp_true = lp - 4*QPoint(self.image.width,self.image.height)
+        lp_true = lp - 4*QPoint(self.imageScene.image.width,self.imageScene.image.height)
         x, y = lp_true.x(), lp_true.y()
+        w, h = self.imageScene.image.width, self.imageScene.image.height
 
-        if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
-            _x, _y = x, self.image.height - y
+        if (x>=0) and (x<=w) and (y>=0) and  (y<=h):
+            _x, _y = x, h - y
 
             ra, dec = self.imageScene.wcs.all_pix2world([[_x, _y]], 0)[0]
 
@@ -615,14 +613,15 @@ class MainWindow(QMainWindow):
 
         # get event position and position on image
         lp = self.mousePixPos()
-        lp_true = lp - 4*QPoint(self.image.width,self.image.height)
+        w, h = self.imageScene.image.width, self.imageScene.image.height
+        lp_true = lp - 4*QPoint(w,h)
         x, y = lp_true.x(), lp_true.y()
         
         # Mark if hovering over image
         if self.group_max[group - 1] == 'None': limit = inf
         else: limit = int(self.group_max[group - 1])
 
-        if (x>=0) and (x<=self.image.width) and (y>=0) and  (y<=self.image.height):
+        if (x>=0) and (x<=w) and (y>=0) and  (y<=h):
             mark = self.imageScene.mark(lp.x(),lp.y(),group=group)
 
             if (limit == 1) and (len(self.data[self.imageScene.file][group]['marks']) == 1):
@@ -697,11 +696,11 @@ class MainWindow(QMainWindow):
 
     def imageUpdate(self):
         # Update scene
-        path = self.image_paths[self.idx]
-        self.imageScene.update(path)
+        self.imagePath = self.imagePaths[self.idx]
+        self.imageScene.update(self.imagePath)
         
         # Update slider maxima
-        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+        self.frameWindow.slider.setMaximum(self.imageScene.image.n_frames-1)
         self.blurWindow.slider.setMaximum(self.imageScene.blur_max)
 
         # Update image label
