@@ -7,6 +7,9 @@ class QHLine(QFrame):
         super(QHLine, self).__init__()
         self.setFrameShape(QFrame.Shape.HLine)
         self.setFrameShadow(QFrame.Shadow.Raised)
+        self.setLineWidth(0)
+        self.setMidLineWidth(1)
+        self.setMinimumHeight(1)
 
 class PosWidget(QWidget):
     """

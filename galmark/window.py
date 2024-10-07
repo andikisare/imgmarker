@@ -16,7 +16,6 @@ import textwrap
 from math import floor, inf
 from functools import partial
 from PIL import Image
-from PIL.ImageQt import ImageQt
 
 class AdjustmentsWindow(QWidget):
     """
@@ -372,7 +371,7 @@ class MainWindow(QMainWindow):
             self.categories_layout.addWidget(box)
 
         # Favorite box
-        self.favorite_file_list = galmark.io.load_fav(username)
+        self.favorite_file_list = galmark.io.loadfav(username)
         self.favorite_box = QCheckBox(parent=self)
         self.favorite_box.setFixedHeight(20)
         self.favorite_box.setFixedWidth(40)
@@ -389,7 +388,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.imageLabel)
         layout.addWidget(self.imageView)
         layout.addWidget(self.pos_widget)
-        layout.addWidget(self.hsep())
+        layout.addWidget(QHLine())
         layout.addLayout(self.bottomLayout)
         layout.addLayout(self.categories_layout)
         self.setCentralWidget(central_widget)
@@ -477,7 +476,7 @@ class MainWindow(QMainWindow):
     def __init_data__(self):
         # Initialize output dictionary
         self.data = galmark.io.load(self.username)
-        self.favorite_file_list = galmark.io.load_fav(self.username)
+        self.favorite_file_list = galmark.io.loadfav(self.username)
 
         # Find all images in image directory
         self.image_paths, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
@@ -491,13 +490,6 @@ class MainWindow(QMainWindow):
 
         self.image = Image.open(path)   
         self.image.seek(self.frame)
-
-    def hsep(self) -> QHLine:
-        hline = QHLine()
-        hline.setLineWidth(0)
-        hline.setMidLineWidth(1)
-        hline.setMinimumHeight(1)
-        return hline
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
@@ -604,9 +596,8 @@ class MainWindow(QMainWindow):
             galmark.io.savefav(self.data,self.username,self.date,self.favorite_file_list)
         else:
             self.favorite_box.setIcon(QIcon(__heart_clear__))
-            try:
+            if self.imageScene.file in self.favorite_file_list: 
                 self.favorite_file_list.remove(self.imageScene.file)
-            except: pass
             galmark.io.savefav(self.data,self.username,self.date,self.favorite_file_list)
 
     def categorize(self,i:int) -> None:

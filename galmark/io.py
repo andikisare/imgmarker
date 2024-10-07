@@ -336,7 +336,7 @@ def save(data:DataDict,username:str,date) -> None:
             except: outline = ''.join(f'{_l:{l_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
             out.write(outline)
 
-def load_fav(username:str,config:str='galmark.cfg') -> DataDict:
+def loadfav(username:str,config:str='galmark.cfg') -> list[str]:
     outfile = os.path.join(out_dir,username+'_fav.txt')
     skip = True
     fav_list = []
@@ -346,10 +346,7 @@ def load_fav(username:str,config:str='galmark.cfg') -> DataDict:
             else:
                 date,name,group,x,y,ra,dec,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
                 fav_list.append(name)
-    # try:
     fav_list = list(set(fav_list))
-    # except:
-    #     fav_list = []
     return fav_list
 
 def load(username:str,config:str='galmark.cfg') -> DataDict:
@@ -406,7 +403,7 @@ def glob(image_dir:str,ext:str,data_filt:DataDict={}) -> tuple[list,int]:
 
     return images, idx
 
-def inputs(config:str='galmark.cfg') -> tuple:
+def inputs(config:str='galmark.cfg') -> tuple[str,str,str,list[str],list[str],int]:
     username = galmark.window.StartupWindow().getUser()
 
     return username, out_dir, image_dir, group_names, category_names, group_max
