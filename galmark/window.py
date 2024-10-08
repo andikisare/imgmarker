@@ -475,11 +475,7 @@ class MainWindow(QMainWindow):
     def __init_data__(self):
         # Initialize output dictionary
         self.data = galmark.io.load(self.username)
-        if (self.data == 0):
-            self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", str(os.getcwd())),'')
-            galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
-            self.data = galmark.io.load(self.username)
-            
+        
         self.favorite_file_list = galmark.io.loadfav(self.username)
 
         # Find all images in image directory
@@ -488,8 +484,14 @@ class MainWindow(QMainWindow):
             self.image = self.images[self.idx]
             self.N = len(self.images)
         except:
-            sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
-                     f"Please specify a different image directory in galmark.cfg and try again.")
+
+            # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
+            #          f"Please specify a different image directory in galmark.cfg and try again.")
+            self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", str(os.getcwd())),'')
+            galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
+            self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
+            self.image = self.images[self.idx]
+            self.N = len(self.images)
             
         self.image.comment = 'None'
         self.image.categories = []
