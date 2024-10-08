@@ -11,6 +11,7 @@ from astropy.io import fits
 from collections import defaultdict
 import io
 import glob as glob_
+import shutil
 
 class DataDict(defaultdict):
     def __init__(self, *args, **kwargs):
@@ -229,7 +230,9 @@ def savefav(data:DataDict,username:str,date,save_list:list) -> None:
             out.write(outline)
 
 def save(data:DataDict,username:str,date) -> None:
-    lines = []
+    mark_lines = []
+    image_lines = []
+
     name_lengths = []
     group_lengths = []
     x_lengths = []
@@ -239,12 +242,17 @@ def save(data:DataDict,username:str,date) -> None:
     category_lengths = []
     comment_lengths = []
 
-    outfile = os.path.join(out_dir, username + '.txt')
-    
+    save_dir = os.path.join(out_dir, username)
+    mark_out_path = os.path.join(save_dir,'marks.txt')
+    images_out_path = os.path.join(save_dir,'images.txt')
+
     # Create the file
-    if os.path.exists(outfile): 
-        os.remove(outfile)
-    out = open(outfile,"a")
+    if os.path.exists(save_dir): 
+        shutil.rmtree(save_dir)
+    os.makedirs(save_dir)
+
+    mark_out = open(mark_out_path,"a")
+    images_out = open(images_out_path,"a")
 
     if checkUsername(username) and data:
         names = list(data.keys())
@@ -271,9 +279,15 @@ def save(data:DataDict,username:str,date) -> None:
                     for mark in mark_list:
                         ra, dec = mark.wcs_center()
                         x, y = mark.img_center().x(), mark.img_center().y()
-                        l = [date,name,group_name,x,y,ra,dec,categories,comment]
+                        ml = [date,name,group_name,x,y,ra,dec]
+                        il = [date,name,categories,comment]
        
-                        lines.append(l)
+                        mark_lines.append(ml)
+
+                        for l in image_lines:
+                            if l[1] == name: image_lines.remove(l)
+                        image_lines.append(il)
+                        
                         name_lengths.append(len(name))
                         group_lengths.append(len(group_name))
                         x_lengths.append(len(str(x)))
@@ -291,9 +305,15 @@ def save(data:DataDict,username:str,date) -> None:
                 ra = 'NaN'
                 dec = 'NaN'
 
-                l = [date,name,group_name,x,y,ra,dec,categories,comment]
+                ml = [date,name,group_name,x,y,ra,dec]
+                il = [date,name,categories,comment]
 
-                lines.append(l)
+                mark_lines.append(ml)
+                
+                for l in image_lines:
+                    if l[1] == name: image_lines.remove(l)
+                image_lines.append(il)
+
                 name_lengths.append(len(name))
                 group_lengths.append(len(group_name))
                 x_lengths.append(len(x))
@@ -302,12 +322,10 @@ def save(data:DataDict,username:str,date) -> None:
                 dec_lengths.append(len(dec))
                 category_lengths.append(len(categories))
                 comment_lengths.append(len(comment))
-            
-            # Otherwise, (no comment, no category, and no data) delete entry from dictionary
-            # else: pass
+
 
     # Print out lines if there are lines to print
-    if len(lines) != 0:
+    if len(mark_lines) != 0:
         # Dynamically adjust column widths
         nameln = np.max(name_lengths) + 2
         groupln = max(np.max(group_lengths), 5) + 2
@@ -315,26 +333,41 @@ def save(data:DataDict,username:str,date) -> None:
         yln = max(np.max(y_lengths), 1) + 2
         raln = max(np.max(ra_lengths), 2) + 2
         decln = max(np.max(dec_lengths), 2) + 2
-        categoryln = max(np.max(category_lengths), 16) + 2
-        commentln = max(np.max(comment_lengths), 7) + 2
         dateln = 12
 
-        l_fmt = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
-                  f'^{xln}', f'^{yln}', f'^{raln}.8f', f'^{decln}.8f',
-                  f'^{categoryln}', f'^{commentln}' ]
-        l_fmt_nofloat = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
-                          f'^{xln}', f'^{yln}', f'^{raln}', f'^{decln}',
-                          f'^{categoryln}', f'^{commentln}' ]
+        ml_fmt = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
+                  f'^{xln}', f'^{yln}', f'^{raln}.8f', f'^{decln}.8f' ]
         
-        header = ['date','image','group','x','y','RA','DEC','image categories','comment']
-        header = ''.join(f'{h:{l_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
+        ml_fmt_nofloat = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
+                          f'^{xln}', f'^{yln}', f'^{raln}', f'^{decln}' ]
         
-        out.write(header)
+        header = ['date','image','group','x','y','RA','DEC']
+        header = ''.join(f'{h:{ml_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
+        
+        mark_out.write(header)
 
-        for l in lines:
-            try: outline = ''.join(f'{_l:{l_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
-            except: outline = ''.join(f'{_l:{l_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
-            out.write(outline)
+        for l in mark_lines:
+            try: outline = ''.join(f'{_l:{ml_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
+            except: outline = ''.join(f'{_l:{ml_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
+            mark_out.write(outline)
+
+    if len(image_lines) != 0:
+        # Dynamically adjust column widths
+        dateln = 12
+        nameln = np.max(name_lengths) + 2
+        categoryln = max(np.max(category_lengths), 16) + 2
+        commentln = max(np.max(comment_lengths), 7) + 2 
+
+        il_fmt = [ f'^{dateln}',f'^{nameln}',f'^{categoryln}', f'^{commentln}' ]
+        
+        header = ['date','image','image categories','comment']
+        header = ''.join(f'{h:{il_fmt[i]}}|' for i, h in enumerate(header)) + '\n'
+        
+        images_out.write(header)
+
+        for l in image_lines:
+            outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
+            images_out.write(outline)
 
 def loadfav(username:str,config:str='galmark.cfg') -> list[str]:
     outfile = os.path.join(out_dir,username+'_fav.txt')
@@ -350,21 +383,22 @@ def loadfav(username:str,config:str='galmark.cfg') -> list[str]:
     return fav_list
 
 def load(username:str,config:str='galmark.cfg') -> DataDict:
-    outfile = os.path.join(out_dir,username+'.txt')
+
+    save_dir = os.path.join(out_dir, username)
+    mark_out_path = os.path.join(save_dir,'marks.txt')
+    images_out_path = os.path.join(save_dir,'images.txt')
+
     data = DataDict()
     skip = True
     
-    if os.path.exists(outfile):
-        for l in open(outfile):
+    if os.path.exists(mark_out_path):
+        for l in open(mark_out_path):
             if skip: skip = False
             else:
-                date,name,group,x,y,ra,dec,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
+                date,name,group,x,y,ra,dec = [i.strip() for i in l.replace('|\n','').split('|')]
                 image_path = os.path.join(image_dir,name)
                 image = Image.open(image_path)
                 group_idx = group_names.index(group)
-                category_list = categories.split(',')
-                category_list = [category_names.index(cat) for cat in category_list if cat != 'None']
-                category_list.sort()
                 
                 if (x!='NaN') and (y!='NaN'):
                     mark_args = (int(x)+4*image.width,int(y)+4*image.height)
@@ -375,6 +409,17 @@ def load(username:str,config:str='galmark.cfg') -> DataDict:
                         data[name][group_idx]['marks'] = []
 
                     data[name][group_idx]['marks'].append(mark)
+    
+    skip = True
+    
+    if os.path.exists(images_out_path):
+        for l in open(images_out_path):
+            if skip: skip = False
+            else:
+                date,name,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
+                category_list = categories.split(',')
+                category_list = [category_names.index(cat) for cat in category_list if cat != 'None']
+                category_list.sort()
 
                 data[name]['comment'] = comment
                 data[name]['categories'] = category_list

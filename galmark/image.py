@@ -50,7 +50,7 @@ class ImageScene(QGraphicsScene):
         self.r = 0
         self.a = 1
         self.b = 1
-        self.blur_max = int((self.qimage.height()+self.qimage.width())/20)
+        self.blur_max = int((self.image.height+self.image.width)/20)
 
         self.wcs = galmark.io.parseWCS(self.image)
 
@@ -70,6 +70,11 @@ class ImageScene(QGraphicsScene):
         painter.end()
 
         return pixmap
+    
+    def wcs_center(self) -> list:
+        x, y = self.image.width/2, self.image.height/2
+        
+        return self.wcs.all_pix2world([[x, y]], 0)[0]
     
     def blur(self,value):
         self.r = floor(value)/10
