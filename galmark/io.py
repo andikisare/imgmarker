@@ -115,7 +115,9 @@ def readConfig(config:str='galmark.cfg') -> tuple[str]:
                 group_max = val.split(',')
         
     return out_dir, image_dir, group_names, category_names, group_max
-                
+
+out_dir, image_dir, group_names, category_names, group_max = readConfig()
+
 def checkUsername(username:str) -> bool:
     return (username != "None") and (username != "")
 
@@ -397,7 +399,11 @@ def load(username:str,config:str='galmark.cfg') -> DataDict:
             else:
                 date,name,group,x,y,ra,dec = [i.strip() for i in l.replace('|\n','').split('|')]
                 image_path = os.path.join(image_dir,name)
-                image = Image.open(image_path)
+                if os.path.exists(image_path):
+                    image = Image.open(image_path)
+                else:
+                    return 0
+                
                 group_idx = group_names.index(group)
                 
                 if (x!='NaN') and (y!='NaN'):
@@ -454,4 +460,17 @@ def inputs(config:str='galmark.cfg') -> tuple[str,str,str,list[str],list[str],in
 
     return username, out_dir, image_dir, group_names, category_names, group_max
 
-out_dir, image_dir, group_names, category_names, group_max = readConfig()
+def configUpdate(outDir=out_dir, imageDir=image_dir, groupNames=group_names, categoryNames=category_names, groupMax=group_max, config:str='galmark.cfg'):
+    print('running')
+    config_file = open(config,'w')
+
+    config_file.write(f'out_dir = {outDir}\n')
+    config_file.write(f'image_dir = {imageDir}\n')
+    config_file.write(f'groups = {groupNames[1]},{groupNames[2]},{groupNames[3]},{groupNames[4]},'
+                        f'{groupNames[5]},{groupNames[6]},{groupNames[7]},{groupNames[8]},'
+                        f'{groupNames[9]}\n')
+    config_file.write(f'categories = {categoryNames[1]},{categoryNames[2]},{categoryNames[3]},'
+                        f'{categoryNames[4]},{categoryNames[5]}\n')
+    config_file.write(f'group_max = {groupMax[0]},{groupMax[1]},{groupMax[2]},{groupMax[3]},'
+                        f'{groupMax[4]},{groupMax[5]},{groupMax[6]},{groupMax[7]},'
+                        f'{groupMax[8]}\n')

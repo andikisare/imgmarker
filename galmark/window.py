@@ -273,9 +273,8 @@ class MainWindow(QMainWindow):
 
         # Initialize config
         self.config = 'galmark.cfg'
-        self.username, self.group_names, self.category_names, self.group_max = username, group_names, category_names, group_max
+        self.username, self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max = username, out_dir, image_dir, group_names, category_names, group_max
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
-        self.image_dir = image_dir
         self.imtype = imtype
 
         # Initialize output dictionary
@@ -476,6 +475,11 @@ class MainWindow(QMainWindow):
     def __init_data__(self):
         # Initialize output dictionary
         self.data = galmark.io.load(self.username)
+        if (self.data == 0):
+            self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", str(os.getcwd())),'')
+            galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
+            self.data = galmark.io.load(self.username)
+            
         self.favorite_file_list = galmark.io.loadfav(self.username)
 
         # Find all images in image directory
