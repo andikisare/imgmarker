@@ -6,7 +6,7 @@ from galmark import __dirname__, __icon__, __heart_solid__, __heart_clear__
 import galmark.io
 import os
 from math import floor
-from PIL import Image
+from PIL import Image, ImageFile
 from PIL.ImageQt import ImageQt
 from PIL.ImageFilter import GaussianBlur
 from PIL.ImageEnhance import Contrast, Brightness
@@ -22,23 +22,23 @@ class ImageFilter():
     def setB(self,b): self.a = b
     def setR(self,r): self.a = r
 
-    def apply(self) -> Image.Image:
-        def blur(img:Image.Image):
+    def apply(self) -> ImageFile.ImageFile:
+        def blur(img:ImageFile.ImageFile):
             return img.filter(GaussianBlur(self.r))
-        def brighten(img:Image.Image):
+        def brighten(img:ImageFile.ImageFile):
             return Brightness(img).enhance(self.a)
-        def contrast(img:Image.Image):
+        def contrast(img:ImageFile.ImageFile):
             return Contrast(img).enhance(self.b)
         return contrast(brighten(blur(self.img)))
     
 class ImageScene(QGraphicsScene):
-    def __init__(self,path):
+    def __init__(self,image:ImageFile.ImageFile):
         super().__init__()
 
         # Initial frame
         self.frame = 0
 
-        self.image = Image.open(path)
+        self.image = image
         self.qimage = ImageQt(self.image)
 
         self.setBackgroundBrush(Qt.GlobalColor.black)
@@ -113,13 +113,13 @@ class ImageScene(QGraphicsScene):
         self.pixmap = self._pixmap()
         self._pixmap_item.setPixmap(self.pixmap)
 
-    def update(self,path):
+    def update(self,image:ImageFile.ImageFile):
         # Remove Marks
         for item in self.items(): 
             if isinstance(item,Mark): self.removeItem(item)
 
         # Update the pixmap
-        self.image = Image.open(path)
+        self.image = image
         self.image.seek(min(self.frame,self.image.n_frames-1))
         
         self.file = self.image.filename.split(os.sep)[-1]
