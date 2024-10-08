@@ -132,12 +132,15 @@ def savefav(data:DataDict,username:str,date,save_list:list) -> None:
     category_lengths = []
     comment_lengths = []
 
-    outfile = os.path.join(out_dir, username + '_fav.txt')
+    save_dir = os.path.join(out_dir, username)
+    fav_out_path = os.path.join(save_dir, '_fav.txt')
 
     # Create the file
-    if os.path.exists(outfile):
-        os.remove(outfile)
-    out = open(outfile,"a")
+    if os.path.exists(fav_out_path):
+        os.remove(fav_out_path)
+    out = open(fav_out_path,"a")
+
+
 
     if checkUsername(username) and data:
         all_names = list(data.keys())
