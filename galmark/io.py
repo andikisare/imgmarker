@@ -133,7 +133,7 @@ def savefav(data:DataDict,username:str,date,save_list:list) -> None:
     comment_lengths = []
 
     save_dir = os.path.join(out_dir, username)
-    fav_out_path = os.path.join(save_dir, '_fav.txt')
+    fav_out_path = os.path.join(save_dir, 'fav.txt')
 
     # Create the file
     if os.path.exists(fav_out_path):
@@ -375,10 +375,13 @@ def save(data:DataDict,username:str,date) -> None:
             images_out.write(outline)
 
 def loadfav(username:str,config:str='galmark.cfg') -> list[str]:
-    outfile = os.path.join(out_dir,username+'_fav.txt')
+    out_path = os.path.join(out_dir, username)
+    outfile = os.path.join(out_path, 'fav.txt')
+
     skip = True
     fav_list = []
     if os.path.exists(outfile):
+        print('saved loaded')
         for l in open(outfile):
             if skip: skip = False
             else:
