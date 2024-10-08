@@ -2,6 +2,7 @@ import os
 import numpy as np
 import galmark.window
 from galmark.mark import Mark
+from galmark.image import GImage
 from galmark import __dirname__
 from PyQt6.QtCore import Qt
 from PIL import Image, ImageFile
@@ -454,7 +455,7 @@ def glob(image_dir:str,ext:str,data_filt:DataDict={}) -> tuple[list[ImageFile.Im
 
     # Put edited images at the beginning, unedited images at front
     images = edited_images + unedited_images
-    images = [Image.open(im) for im in images]
+    images = [GImage(im) for im in images]
     idx = min(len(edited_images),len(all_images)-1)
 
     return images, idx

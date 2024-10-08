@@ -31,8 +31,25 @@ class ImageFilter():
             return Contrast(img).enhance(self.b)
         return contrast(brighten(blur(self.img)))
     
+class GImage(Image.Image,QGraphicsPixmapItem):
+    def __init__(self,path):
+        # Initialize from parents
+        super().__init__()
+
+        # Load in data from image
+        image = Image.open(path)
+        self.__dict__ = image.__dict__
+        self.n_frames = image.n_frames
+        self.frombytes(image.tobytes())
+
+        # Initialize pixmap
+        super(QGraphicsPixmapItem,self).__init__(self.toqpixmap())
+
+        self.wcs = galmark.io.parseWCS(image)
+            
+
 class ImageScene(QGraphicsScene):
-    def __init__(self,image:ImageFile.ImageFile):
+    def __init__(self,image:Image.Image):
         super().__init__()
 
         # Initial frame
