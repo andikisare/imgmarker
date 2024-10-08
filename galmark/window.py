@@ -405,12 +405,19 @@ class MainWindow(QMainWindow):
         exitMenu.triggered.connect(self.closeEvent)
         fileMenu.addAction(exitMenu)
 
-        ### Open menu
+        ### Open file menu
         openMenu = QAction('&Open', self)
         openMenu.setShortcuts(['Ctrl+o'])
         openMenu.setStatusTip('Open save file')
         openMenu.triggered.connect(self.open)
         fileMenu.addAction(openMenu)
+
+        ### Open image folder menu
+        openDirMenu = QAction('&Open image directory', self)
+        openDirMenu.setShortcuts(['Ctrl+Shift+o'])
+        openDirMenu.setStatusTip('Open image directory')
+        openDirMenu.triggered.connect(self.openDir)
+        fileMenu.addAction(openDirMenu)
 
         ## View menu
         viewMenu = menuBar.addMenu("&View")
@@ -487,7 +494,7 @@ class MainWindow(QMainWindow):
 
             # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
             #          f"Please specify a different image directory in galmark.cfg and try again.")
-            self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", str(os.getcwd())),'')
+            self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", self.image_dir),'')
             galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
             self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
             self.image = self.images[self.idx]
@@ -594,6 +601,13 @@ class MainWindow(QMainWindow):
         self.categoryUpdate()
         self.commentUpdate()
         self.favoriteUpdate()
+
+    def openDir(self):
+        self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", self.image_dir),'')
+        galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
+        self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
+        self.image = self.images[self.idx]
+        self.N = len(self.images)
 
     def favorite(self,state):
         state = Qt.CheckState(state)
