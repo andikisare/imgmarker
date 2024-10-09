@@ -287,7 +287,7 @@ class MainWindow(QMainWindow):
         self.blurWindow.slider.valueChanged.connect(self.imageScene.blur)
         
         self.adjustmentsWindow = AdjustmentsWindow()
-        self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.imageScene.blur)
+        self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.imageScene.contrast)
         self.adjustmentsWindow.brightnessSlider.valueChanged.connect(self.imageScene.brighten)
         
         self.frameWindow = FrameWindow()
