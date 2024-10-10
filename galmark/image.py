@@ -80,13 +80,15 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         new.info = self.info.copy()
         return new
     
+    def tell(self) -> None: return self.image_file.tell()
+
     def seek(self,value) -> None:
-        self.frame = floor(value)
+        frame = floor(value)
+        
+        if frame > self.n_frames - 1: frame = 0
+        elif frame < 0: frame = self.n_frames - 1
 
-        if value > self.n_frames - 1: self.frame = 0
-        elif value < 0: self.frame = self.n_frames -1
-
-        self.image_file.seek(self.frame)
+        self.image_file.seek(frame)
 
         self.__dict__ = self.image_file.__dict__
         self.frombytes(self.image_file.tobytes())

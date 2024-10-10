@@ -264,7 +264,6 @@ class MainWindow(QMainWindow):
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
         self.zoomLevel = 1
-        self.frame = 0
         self.cursorFocus = False
     
         # Initialize config
@@ -289,6 +288,8 @@ class MainWindow(QMainWindow):
         self.frameWindow = FrameWindow()
         self.frameWindow.slider.valueChanged.connect(self.image.seek)
         self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+
+        
 
         # Set max blur based on size of image
         self.blur_max = int((self.image.height+self.image.width)/20)
@@ -532,9 +533,9 @@ class MainWindow(QMainWindow):
         if (event.key() == Qt.Key.Key_Space):
             modifiers = QApplication.keyboardModifiers()
             if modifiers == Qt.KeyboardModifier.ShiftModifier:
-                self.image.seek(self.frame - 1)
+                self.image.seek(self.image.tell()-1)
             else:
-                self.image.seek(self.frame + 1)
+                self.image.seek(self.image.tell()+1)
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
@@ -716,7 +717,17 @@ class MainWindow(QMainWindow):
         self.image.seen = True
         self.imageScene.update(self.image)
         
-        # Update slider maxima
+        # Update sliders
+        self.blurWindow.slider.valueChanged.disconnect()
+        self.adjustmentsWindow.contrastSlider.valueChanged.disconnect()
+        self.adjustmentsWindow.brightnessSlider.valueChanged.disconnect()
+        self.frameWindow.slider.valueChanged.disconnect()
+
+        self.blurWindow.slider.valueChanged.connect(self.image.blur)
+        self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.image.contrast)
+        self.adjustmentsWindow.brightnessSlider.valueChanged.connect(self.image.brighten)
+        self.frameWindow.slider.valueChanged.connect(self.image.seek)
+
         self.frameWindow.slider.setMaximum(self.image.n_frames-1)
         self.blur_max = int((self.image.height+self.image.width)/20)
         self.blurWindow.slider.setMaximum(self.blur_max)
