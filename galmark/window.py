@@ -484,7 +484,7 @@ class MainWindow(QMainWindow):
         # Find all images in image directory
         
         try:
-            self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,edited_images=self.images)
+            self.images, self.idx = galmark.io.glob(self.imtype,edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seen = True
             self.N = len(self.images)
@@ -493,7 +493,7 @@ class MainWindow(QMainWindow):
             #          f"Please specify a different image directory in galmark.cfg and try again.")
             self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", self.image_dir),'')
             galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
-            self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,edited_images=self.images)
+            self.images, self.idx = galmark.io.glob(self.imtype,edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seen = True
             self.N = len(self.images)
@@ -599,7 +599,7 @@ class MainWindow(QMainWindow):
     def openDir(self):
         self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", self.image_dir),'')
         galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
-        self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,edited_images=self.images)
+        self.images, self.idx = galmark.io.glob(self.imtype,edited_images=self.images)
         self.image = self.images[self.idx]
         self.image.seen = True
         self.N = len(self.images)

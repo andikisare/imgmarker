@@ -327,12 +327,12 @@ def load(username:str) -> list[galmark.image.GImage]:
 
     return images
 
-def glob(image_dir:str,ext:str,edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
+def glob(ext:str,edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
      # Find all images in image directory
-    all_images = glob_.glob(image_dir + '*.' + ext)
+    all_images = glob_.glob(IMAGE_DIR + '*.' + ext)
 
     # Get list of paths to images if they are in the dictionary (have been edited)
-    edited_image_paths = [os.path.join(image_dir,img.name) for img in edited_images]
+    edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
     unedited_image_paths = [fp for fp in all_images if fp not in edited_image_paths]
 
     # Shuffle the remaining unedited images
