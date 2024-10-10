@@ -14,57 +14,6 @@ import io
 import glob as glob_
 import shutil
 
-class DataDict(defaultdict):
-    def __init__(self, *args, **kwargs):
-        super(DataDict, self).__init__(DataDict, *args, **kwargs)
-
-    def __repr__(self):
-        return repr(dict(self))
-    
-def markCheck(event):
-    button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
-
-    try: button1 = event.button() == Qt.MouseButton.LeftButton
-    except: button1 = event.key() == Qt.Key.Key_1
-
-    try:
-        button2 = event.key() == Qt.Key.Key_2
-        button3 = event.key() == Qt.Key.Key_3
-        button4 = event.key() == Qt.Key.Key_4
-        button5 = event.key() == Qt.Key.Key_5
-        button6 = event.key() == Qt.Key.Key_6
-        button7 = event.key() == Qt.Key.Key_7
-        button8 = event.key() == Qt.Key.Key_8
-        button9 = event.key() == Qt.Key.Key_9
-    except: pass
-
-    return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
-    
-def parseWCS(img:str|Image.Image) -> WCS:
-    #tif_image_data = np.array(Image.open(image_tif))
-    if type(img) == str: img = Image.open(img)
-    meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
-    
-    long_header_str = meta_dict['ImageDescription'][0]
-
-    line_length = 80
-
-    # Splitting the string into lines of 80 characters
-    lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
-    
-    # Join the lines with newline characters to form a properly formatted header string
-    corrected_header_str = "\n".join(lines)
-
-    # Use an IO stream to mimic a file
-    header_stream = io.StringIO(corrected_header_str)
-
-    # Read the header using astropy.io.fits
-    header = fits.Header.fromtextfile(header_stream)
-
-    # Create a WCS object from the header
-    wcs = WCS(header)
-    return wcs
-
 def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],int]:
     '''
     Read each line from the config and parse it
@@ -118,6 +67,57 @@ def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],in
     return out_dir, image_dir, group_names, category_names, group_max
 
 OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX = readConfig()
+
+class DataDict(defaultdict):
+    def __init__(self, *args, **kwargs):
+        super(DataDict, self).__init__(DataDict, *args, **kwargs)
+
+    def __repr__(self):
+        return repr(dict(self))
+    
+def markCheck(event):
+    button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
+
+    try: button1 = event.button() == Qt.MouseButton.LeftButton
+    except: button1 = event.key() == Qt.Key.Key_1
+
+    try:
+        button2 = event.key() == Qt.Key.Key_2
+        button3 = event.key() == Qt.Key.Key_3
+        button4 = event.key() == Qt.Key.Key_4
+        button5 = event.key() == Qt.Key.Key_5
+        button6 = event.key() == Qt.Key.Key_6
+        button7 = event.key() == Qt.Key.Key_7
+        button8 = event.key() == Qt.Key.Key_8
+        button9 = event.key() == Qt.Key.Key_9
+    except: pass
+
+    return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
+    
+def parseWCS(img:str|Image.Image) -> WCS:
+    #tif_image_data = np.array(Image.open(image_tif))
+    if type(img) == str: img = Image.open(img)
+    meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
+    
+    long_header_str = meta_dict['ImageDescription'][0]
+
+    line_length = 80
+
+    # Splitting the string into lines of 80 characters
+    lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
+    
+    # Join the lines with newline characters to form a properly formatted header string
+    corrected_header_str = "\n".join(lines)
+
+    # Use an IO stream to mimic a file
+    header_stream = io.StringIO(corrected_header_str)
+
+    # Read the header using astropy.io.fits
+    header = fits.Header.fromtextfile(header_stream)
+
+    # Create a WCS object from the header
+    wcs = WCS(header)
+    return wcs
 
 def checkUsername(username:str) -> bool:
     return (username != "None") and (username != "")
