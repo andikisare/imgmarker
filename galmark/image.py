@@ -37,7 +37,6 @@ def open(path:str) -> GImage:
     else:
         image = Image.open(path)
         filename = image.filename
-        image = image.convert('RGB')
         gimage = GImage()
 
     # Setup  __dict__

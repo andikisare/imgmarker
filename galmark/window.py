@@ -245,7 +245,7 @@ class StartupWindow(QInputDialog):
         else: sys.exit()
 
 class MainWindow(QMainWindow):
-    def __init__(self, username:str, imtype:str = 'fits'):
+    def __init__(self, username:str, imtype:str = 'tif'):
         '''
         Constructor
 
