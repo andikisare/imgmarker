@@ -1,3 +1,4 @@
+from __future__ import annotations
 from PyQt6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem 
 from PyQt6.QtGui import QPixmap, QPainter
 from PyQt6.QtCore import Qt
@@ -10,46 +11,125 @@ from PIL import Image, ImageFile
 from PIL.ImageQt import ImageQt
 from PIL.ImageFilter import GaussianBlur
 from PIL.ImageEnhance import Contrast, Brightness
+from astropy.wcs import WCS
 
-class ImageFilter():
-    def __init__(self,img:Image.Image,a=1,b=1,r=0):
-        self.a = a
-        self.b = b
-        self.r = r
-        self.img = img
-    
-    def setA(self,a): self.a = a
-    def setB(self,b): self.a = b
-    def setR(self,r): self.a = r
+def open(path:str) -> GImage:
+    """
+    Opens the given image file.
 
-    def apply(self) -> ImageFile.ImageFile:
-        def blur(img:ImageFile.ImageFile):
-            return img.filter(GaussianBlur(self.r))
-        def brighten(img:ImageFile.ImageFile):
-            return Brightness(img).enhance(self.a)
-        def contrast(img:ImageFile.ImageFile):
-            return Contrast(img).enhance(self.b)
-        return contrast(brighten(blur(self.img)))
-    
+    :param path: Path to the image
+    :returns gimage: An :py:class:`galmark.image.GImage` object.
+    """
+
+    image = Image.open(path)
+    gimage = GImage()
+
+    # Setup  __dict__
+    gimage.__dict__ =  image.__dict__
+    gimage.n_frames = image.n_frames
+    gimage.wcs = galmark.io.parseWCS(image)
+    gimage.image_file = image
+    gimage.name = image.filename.split(os.sep)[-1] 
+
+    gimage.r = 0.0
+    gimage.a = 1.0
+    gimage.b = 1.0
+
+    # Get bytes from image (I dont think this does anything)
+    gimage.frombytes(image.tobytes())
+
+    # Initialize QGraphicsPixmapItem
+    super(QGraphicsPixmapItem,gimage).__init__(gimage.pixmap())
+
+    return gimage
+
 class GImage(Image.Image,QGraphicsPixmapItem):
-    def __init__(self,path):
+    def __init__(self):
         # Initialize from parents
         super().__init__()
 
-        # Load in data from image
-        image = Image.open(path)
-        self.__dict__ = image.__dict__
-        self.n_frames = image.n_frames
-        self.frombytes(image.tobytes())
+        self.image_file:ImageFile.ImageFile
+        self.wcs:WCS
+        self.n_frames:int
+        self.name:str
+ 
+    def _new(self, im) -> GImage:
+        new = GImage()
+        new.im = im
+        new._mode = im.mode
+        new._size = im.size
+        if im.mode in ("P", "PA"):
+            if self.palette:
+                new.palette = self.palette.copy()
+            else:
+                from PIL import ImagePalette
 
-        # Initialize pixmap
-        super(QGraphicsPixmapItem,self).__init__(self.toqpixmap())
+                new.palette = ImagePalette.ImagePalette()
+        new.info = self.info.copy()
+        return new
+    
+    def seek(self,value) -> None:
+        self.frame = floor(value)
 
-        self.wcs = galmark.io.parseWCS(image)
+        if value > self.n_frames - 1: self.frame = 0
+        elif value < 0: self.frame = self.n_frames -1
+
+        self.image_file.seek(self.frame)
+
+        self.__dict__ = self.image_file.__dict__
+        self.frombytes(self.image_file.tobytes())
+        self.setPixmap(self.pixmap())
+    
+    def pixmap(self) -> QPixmap:
+        qimage = self.toqimage()
+        pixmap_base = QPixmap.fromImage(qimage)
+
+        w, h = self.height, self.width
+        _x, _y = int(w*4), int(h*4)
+
+        pixmap = QPixmap(w*9,h*9)
+        pixmap.fill(Qt.GlobalColor.black)
+
+        painter = QPainter(pixmap)
+        painter.drawPixmap(_x, _y, pixmap_base)
+        painter.end()
+
+        return pixmap
+    
+    def adjust(self) -> GImage:
+        def _blur(img:GImage):
+            return img.filter(GaussianBlur(self.r))
+        def _brighten(img:GImage):
+            return Brightness(img).enhance(self.a)
+        def _contrast(img:GImage):
+            return Contrast(img).enhance(self.b)
+        
+        img_filt = _contrast(_brighten(_blur(self)))
+        gimg_filt = self.copy()
+        gimg_filt.frombytes(img_filt.tobytes())
+
+        return gimg_filt
+    
+    def blur(self,value):
+        self.r = floor(value)/10
+        pixmap_blurred = self.adjust().pixmap()
+        self.setPixmap(pixmap_blurred)
+
+    def brighten(self,value):
+        self.a = floor(value)/10 + 1
+        pixmap_bright = self.adjust().pixmap()
+        self.setPixmap(pixmap_bright)
+
+    def contrast(self,value):
+        self.b = floor(value)/10 + 1
+        pixmap_contrast = self.adjust().pixmap()
+        self.setPixmap(pixmap_contrast)
+
+    def wcs_center(self) -> list:
+        return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
             
-
 class ImageScene(QGraphicsScene):
-    def __init__(self,image:Image.Image):
+    def __init__(self,image:GImage):
         super().__init__()
 
         # Initial frame
@@ -59,20 +139,9 @@ class ImageScene(QGraphicsScene):
         self.qimage = ImageQt(self.image)
 
         self.setBackgroundBrush(Qt.GlobalColor.black)
-        self.pixmap = self._pixmap()
-        self._pixmap_item = QGraphicsPixmapItem(self.pixmap)
-        self.addItem(self._pixmap_item)
-
-        # Initial adjustment values:
-        self.r = 0
-        self.a = 1
-        self.b = 1
-        self.blur_max = int((self.image.height+self.image.width)/20)
-
-        self.wcs = galmark.io.parseWCS(self.image)
-
-        self.file = self.image.filename.split(os.sep)[-1]
-
+        self._pixmap_item = self.image
+        self.addItem(self.image)
+        
     def _pixmap(self) -> QPixmap:
         pixmap_base = QPixmap.fromImage(self.qimage)
 
@@ -87,66 +156,18 @@ class ImageScene(QGraphicsScene):
         painter.end()
 
         return pixmap
-    
-    def wcs_center(self) -> list:
-        x, y = self.image.width/2, self.image.height/2
-        
-        return self.wcs.all_pix2world([[x, y]], 0)[0]
-    
-    def blur(self,value):
-        self.r = floor(value)/10
-        imageFilter = ImageFilter(self.image,a=self.a,b=self.b,r=self.r)
-        image_blurred = imageFilter.apply()
-        
-        self.qimage = ImageQt(image_blurred)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
 
-    def brighten(self,value):
-        self.a = floor(value)/10 + 1
-        imageFilter = ImageFilter(self.image,a=self.a,b=self.b,r=self.r)
-        image_bright = imageFilter.apply()
-        
-        self.qimage = ImageQt(image_bright)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
-
-    def contrast(self,value):
-        self.b = floor(value)/10 + 1
-        imageFilter = ImageFilter(self.image,a=self.a,b=self.b,r=self.r)
-        image_contrast = imageFilter.apply()
-        
-        self.qimage = ImageQt(image_contrast)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
-
-    def seek(self,value):
-        self.frame = floor(value)
-        if value > self.image.n_frames - 1: self.frame = 0
-        elif value < 0: self.frame = self.image.n_frames -1
-        
-        self.image.seek(self.frame)
-        self.qimage = ImageQt(self.image)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
-
-    def update(self,image:ImageFile.ImageFile):
-        # Remove Marks
-        for item in self.items(): 
-            if isinstance(item,Mark): self.removeItem(item)
+    def update(self,image:GImage):
+        # Remove items
+        for item in self.items(): self.removeItem(item)
 
         # Update the pixmap
         self.image = image
         self.image.seek(min(self.frame,self.image.n_frames-1))
         
-        self.file = self.image.filename.split(os.sep)[-1]
-        self.qimage = ImageQt(self.image)
-        self.pixmap = self._pixmap()
-        self._pixmap_item.setPixmap(self.pixmap)
-
-        self.wcs = galmark.io.parseWCS(self.image)
+        self.addItem(self.image)
 
     def mark(self,x,y,group):
-        mark = Mark(x,y,wcs=self.wcs,group=group)
+        mark = Mark(x,y,wcs=self.image.wcs,group=group)
         self.addItem(mark)
         return mark
