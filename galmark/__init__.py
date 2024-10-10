@@ -16,7 +16,7 @@ from galmark.io import inputs
 
 def main():
     app = QApplication(sys.argv)
-    window = MainWindow(*inputs())
+    window = MainWindow(inputs())
     window.show()
     app.exec()
 

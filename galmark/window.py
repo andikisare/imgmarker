@@ -246,7 +246,7 @@ class StartupWindow(QInputDialog):
         else: sys.exit()
 
 class MainWindow(QMainWindow):
-    def __init__(self, username:str, out_dir:str, image_dir:str, group_names:list[str], category_names:list[str], group_max:int, imtype:str = 'tif'):
+    def __init__(self, username:str, imtype:str = 'tif'):
         '''
         Constructor
 
@@ -268,7 +268,7 @@ class MainWindow(QMainWindow):
     
         # Initialize config
         self.config = 'galmark.cfg'
-        self.username, self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max = username, out_dir, image_dir, group_names, category_names, group_max
+        self.username = username
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
         self.imtype = imtype
 
@@ -357,7 +357,7 @@ class MainWindow(QMainWindow):
         self.categories_layout = QHBoxLayout()
 
         # Category boxes
-        self.category_boxes = [QCheckBox(text=self.category_names[i], parent=self) for i in range(1,6)]
+        self.category_boxes = [QCheckBox(text=galmark.io.CATEGORY_NAMES[i], parent=self) for i in range(1,6)]
         for i, box in enumerate(self.category_boxes):
             box.setFixedHeight(20)
             box.setStyleSheet("margin-left:30%; margin-right:30%;")
@@ -453,7 +453,7 @@ class MainWindow(QMainWindow):
         helpMenu = menuBar.addMenu('&Help')
 
         ### Instructions and Keymapping window
-        self.instructionsWindow = InstructionsWindow(self.group_names)
+        self.instructionsWindow = InstructionsWindow(galmark.io.GROUP_NAMES)
         instructionsMenu = QAction('&Instructions', self)
         instructionsMenu.setShortcuts(['F1'])
         instructionsMenu.setStatusTip('Instructions')
@@ -491,8 +491,8 @@ class MainWindow(QMainWindow):
         except:
             # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
             #          f"Please specify a different image directory in galmark.cfg and try again.")
-            self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", self.image_dir),'')
-            galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
+            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", galmark.io.IMAGE_DIR),'')
+            galmark.io.configUpdate(image_dir=image_dir)
             self.images, self.idx = galmark.io.glob(self.imtype,edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seen = True
@@ -597,8 +597,8 @@ class MainWindow(QMainWindow):
         self.favoriteUpdate()
 
     def openDir(self):
-        self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", self.image_dir),'')
-        galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
+        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
+        galmark.io.configUpdate(image_dir=image_dir)
         self.images, self.idx = galmark.io.glob(self.imtype,edited_images=self.images)
         self.image = self.images[self.idx]
         self.image.seen = True
@@ -637,8 +637,8 @@ class MainWindow(QMainWindow):
         x, y = lp_true.x(), lp_true.y()
         
         # Mark if hovering over image
-        if self.group_max[group - 1] == 'None': limit = inf
-        else: limit = int(self.group_max[group - 1])
+        if galmark.io.GROUP_MAX[group - 1] == 'None': limit = inf
+        else: limit = int(galmark.io.GROUP_MAX[group - 1])
 
         if (x>=0) and (x<=w) and (y>=0) and  (y<=h):
             mark = self.imageScene.mark(lp.x(),lp.y(),group=group)

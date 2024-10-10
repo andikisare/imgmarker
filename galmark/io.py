@@ -345,10 +345,9 @@ def glob(ext:str,edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galm
 
     return images, idx
 
-def inputs() -> tuple[str,str,str,list[str],list[str],int]:
+def inputs() -> str:
     username = galmark.window.StartupWindow().getUser()
-
-    return username, OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX
+    return username
 
 def configUpdate(out_dir=OUT_DIR, image_dir=IMAGE_DIR, group_names=GROUP_NAMES, category_names=CATEGORY_NAMES, group_max=GROUP_MAX, config:str='galmark.cfg'):
     global OUT_DIR; OUT_DIR = out_dir
