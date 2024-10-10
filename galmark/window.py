@@ -264,6 +264,7 @@ class MainWindow(QMainWindow):
         self.fullh = self.screen().size().height()
         self.zoomLevel = 1
         self.cursorFocus = False
+        self.frame = 0
     
         # Initialize config
         self.config = 'galmark.cfg'
@@ -532,9 +533,11 @@ class MainWindow(QMainWindow):
         if (event.key() == Qt.Key.Key_Space):
             modifiers = QApplication.keyboardModifiers()
             if modifiers == Qt.KeyboardModifier.ShiftModifier:
-                self.image.seek(self.image.tell()-1)
+                self.image.seek(self.frame-1)
+                self.frame = self.image.tell()
             else:
-                self.image.seek(self.image.tell()+1)
+                self.image.seek(self.frame+1)
+                self.frame = self.image.tell()
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
@@ -718,6 +721,7 @@ class MainWindow(QMainWindow):
         self.image = self.images[self.idx]
         self.image.seen = True
         self.imageScene.update(self.image)
+        self.image.seek(self.frame)
         
         # Update sliders
         self.blurWindow.slider.valueChanged.disconnect()
