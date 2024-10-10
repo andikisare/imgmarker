@@ -245,7 +245,7 @@ class StartupWindow(QInputDialog):
         else: sys.exit()
 
 class MainWindow(QMainWindow):
-    def __init__(self, username:str, imtype:str = 'tif'):
+    def __init__(self, username:str):
         '''
         Constructor
 
@@ -270,7 +270,6 @@ class MainWindow(QMainWindow):
         self.config = 'galmark.cfg'
         self.username = username
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
-        self.imtype = imtype
 
         # Initialize output dictionary
         self.__init_data__()
@@ -484,7 +483,7 @@ class MainWindow(QMainWindow):
         # Find all images in image directory
         
         try:
-            self.images, self.idx = galmark.io.glob(self.imtype,edited_images=self.images)
+            self.images, self.idx = galmark.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seen = True
             self.N = len(self.images)
@@ -493,7 +492,7 @@ class MainWindow(QMainWindow):
             #          f"Please specify a different image directory in galmark.cfg and try again.")
             image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", galmark.io.IMAGE_DIR),'')
             galmark.io.configUpdate(image_dir=image_dir)
-            self.images, self.idx = galmark.io.glob(self.imtype,edited_images=self.images)
+            self.images, self.idx = galmark.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seen = True
             self.N = len(self.images)
@@ -602,7 +601,7 @@ class MainWindow(QMainWindow):
     def openDir(self):
         image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
         galmark.io.configUpdate(image_dir=image_dir)
-        self.images, self.idx = galmark.io.glob(self.imtype,edited_images=self.images)
+        self.images, self.idx = galmark.io.glob(edited_images=self.images)
         self.image = self.images[self.idx]
         self.image.seen = True
         self.N = len(self.images)

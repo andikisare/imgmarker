@@ -320,9 +320,9 @@ def load(username:str) -> list[galmark.image.GImage]:
 
     return images
 
-def glob(ext:str,edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
+def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
      # Find all images in image directory
-    all_images = glob_.glob(IMAGE_DIR + '*.' + ext)
+    all_images = glob_.glob(IMAGE_DIR + '*.*')
 
     # Get list of paths to images if they are in the dictionary (have been edited)
     edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
@@ -352,6 +352,6 @@ def configUpdate(out_dir=OUT_DIR, image_dir=IMAGE_DIR, group_names=GROUP_NAMES, 
     config_file = open(config,'w')
     config_file.write(f'out_dir = {out_dir}\n')
     config_file.write(f'image_dir = {image_dir}\n')
-    config_file.write(f'groups = {','.join(group_names)}\n')
-    config_file.write(f'categories = {','.join(category_names)}\n')
+    config_file.write(f'groups = {','.join(group_names[1:])}\n')
+    config_file.write(f'categories = {','.join(category_names[1:])}\n')
     config_file.write(f'group_max = {','.join(group_max)}\n')
