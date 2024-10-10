@@ -245,7 +245,7 @@ class StartupWindow(QInputDialog):
         else: sys.exit()
 
 class MainWindow(QMainWindow):
-    def __init__(self, username:str, imtype:str = 'tif'):
+    def __init__(self, username:str, imtype:str = 'fits'):
         '''
         Constructor
 
@@ -640,16 +640,18 @@ class MainWindow(QMainWindow):
         if galmark.io.GROUP_MAX[group - 1] == 'None': limit = inf
         else: limit = int(galmark.io.GROUP_MAX[group - 1])
 
+        marks_in_group = [m for m in self.image.marks if m.g == group]
+
         if (x>=0) and (x<=w) and (y>=0) and  (y<=h):
             mark = self.imageScene.mark(lp.x(),lp.y(),group=group)
-
-            if (limit == 1) and (len(self.image.marks) == 1):
-                prev_mark = self.image.marks[0]
+            
+            if (limit == 1) and (len(marks_in_group) == 1):
+                prev_mark = marks_in_group[0]
                 self.imageScene.removeItem(prev_mark)
                 self.image.marks.remove(prev_mark)
-                self.image.marks[0] = mark
+                self.image.marks.append(mark)
 
-            elif len(self.image.marks) < limit:
+            elif len(marks_in_group) < limit:
                 self.image.marks.append(mark)
 
             galmark.io.save(self.username,self.date,self.images)
