@@ -411,7 +411,7 @@ class MainWindow(QMainWindow):
         openDirMenu = QAction('&Open image directory', self)
         openDirMenu.setShortcuts(['Ctrl+Shift+o'])
         openDirMenu.setStatusTip('Open image directory')
-        openDirMenu.triggered.connect(self.__init_data__)
+        openDirMenu.triggered.connect(self.openDir)
         fileMenu.addAction(openDirMenu)
 
         ## View menu
@@ -601,11 +601,17 @@ class MainWindow(QMainWindow):
     def openDir(self):
         image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
         galmark.io.configUpdate(image_dir=image_dir)
-        self.images, self.idx = galmark.io.glob(edited_images=self.images)
+        self.images, self.idx = galmark.io.glob(edited_images=[])
         self.image = self.images[self.idx]
         self.image.seen = True
         self.N = len(self.images)
-        self.imageLabel = QLabel(f'{self.image.name} ({self.idx+1} of {self.N})')
+
+        self.imageUpdate()
+
+        self.markUpdate()
+        self.getComment()
+        self.categoryUpdate()
+        self.commentUpdate()
 
     def favorite(self,state):
         state = Qt.CheckState(state)
