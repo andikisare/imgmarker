@@ -351,6 +351,12 @@ def inputs() -> tuple[str,str,str,list[str],list[str],int]:
     return username, OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX
 
 def configUpdate(out_dir=OUT_DIR, image_dir=IMAGE_DIR, group_names=GROUP_NAMES, category_names=CATEGORY_NAMES, group_max=GROUP_MAX, config:str='galmark.cfg'):
+    global OUT_DIR; OUT_DIR = out_dir
+    global IMAGE_DIR; IMAGE_DIR = image_dir
+    global GROUP_NAMES; GROUP_NAMES = group_names
+    global CATEGORY_NAMES; CATEGORY_NAMES = category_names
+    global GROUP_MAX; GROUP_MAX = group_max
+    
     config_file = open(config,'w')
     config_file.write(f'out_dir = {out_dir}\n')
     config_file.write(f'image_dir = {image_dir}\n')
