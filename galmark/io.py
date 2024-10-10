@@ -323,6 +323,7 @@ def load(username:str) -> list[galmark.image.GImage]:
 def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
      # Find all images in image directory
     all_images = glob_.glob(IMAGE_DIR + '*.*')
+    all_images = [img for img in all_images if img != None]
 
     # Get list of paths to images if they are in the dictionary (have been edited)
     edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]

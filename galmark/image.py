@@ -15,7 +15,9 @@ from math import nan
 from astropy.io import fits
 import numpy as np
 
-def open(path:str) -> GImage:
+SUPPORTED_EXTS = ['tif','tiff','fits','fit','png','jpeg','jpg']
+
+def open(path:str) -> GImage | None:
     """
     Opens the given image file.
 
@@ -24,45 +26,47 @@ def open(path:str) -> GImage:
     """
     Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
     ext = path.split('.')[-1]
-    if (ext == 'fits') or (ext == 'fit'):
-        file = fits.open(path)
-        img_array = file[0].data
-        img_array = np.flipud(img_array)
-        img_array = img_array.byteswap()
-        image = Image.fromarray(img_array, mode='F')
-        filename = path.split(os.sep)[-1]
-        print(filename)
-        image = image.convert('RGB')
-        gimage = GImage()
-    else:
-        image = Image.open(path)
-        filename = image.filename
+
+    if ext in SUPPORTED_EXTS:
         gimage = GImage()
 
-    # Setup  __dict__
-    gimage.__dict__ =  image.__dict__
-    try: gimage.n_frames = image.n_frames
-    except: gimage.n_frames = 1
-    gimage.wcs = galmark.io.parseWCS(image)
-    gimage.image_file = image
-    gimage.name = filename.split(os.sep)[-1] 
+        if (ext == 'fits') or (ext == 'fit'):
+            file = fits.open(path)
+            img_array = file[0].data
+            img_array = np.flipud(img_array)
+            img_array = img_array.byteswap()
+            image = Image.fromarray(img_array, mode='F')
+            filename = path.split(os.sep)[-1]
+            print(filename)
+            image = image.convert('RGB') 
+        else:
+            image = Image.open(path)
+            filename = image.filename
 
-    gimage.r = 0.0
-    gimage.a = 1.0
-    gimage.b = 1.0
+        # Setup  __dict__
+        gimage.__dict__ =  image.__dict__
+        try: gimage.n_frames = image.n_frames
+        except: gimage.n_frames = 1
+        gimage.wcs = galmark.io.parseWCS(image)
+        gimage.image_file = image
+        gimage.name = filename.split(os.sep)[-1] 
 
-    gimage.comment = 'None'
-    gimage.categories = []
-    gimage.marks = []
-    gimage.seen = False
+        gimage.r = 0.0
+        gimage.a = 1.0
+        gimage.b = 1.0
 
-    # Get bytes from image (I dont think this does anything)
-    gimage.frombytes(image.tobytes())
-    
-    # Initialize QGraphicsPixmapItem
-    super(QGraphicsPixmapItem,gimage).__init__(gimage.pixmap())
+        gimage.comment = 'None'
+        gimage.categories = []
+        gimage.marks = []
+        gimage.seen = False
 
-    return gimage
+        # Get bytes from image (I dont think this does anything)
+        gimage.frombytes(image.tobytes())
+        
+        # Initialize QGraphicsPixmapItem
+        super(QGraphicsPixmapItem,gimage).__init__(gimage.pixmap())
+
+        return gimage
 
 class GImage(Image.Image,QGraphicsPixmapItem):
     def __init__(self):
