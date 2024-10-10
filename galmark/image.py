@@ -132,30 +132,11 @@ class ImageScene(QGraphicsScene):
     def __init__(self,image:GImage):
         super().__init__()
 
-        # Initial frame
         self.frame = 0
-
         self.image = image
-        self.qimage = ImageQt(self.image)
 
         self.setBackgroundBrush(Qt.GlobalColor.black)
-        self._pixmap_item = self.image
         self.addItem(self.image)
-        
-    def _pixmap(self) -> QPixmap:
-        pixmap_base = QPixmap.fromImage(self.qimage)
-
-        w, h = pixmap_base.height(), pixmap_base.width()
-        _x, _y = int(w*4), int(h*4)
-
-        pixmap = QPixmap(w*9,h*9)
-        pixmap.fill(Qt.GlobalColor.black)
-
-        painter = QPainter(pixmap)
-        painter.drawPixmap(_x, _y, pixmap_base)
-        painter.end()
-
-        return pixmap
 
     def update(self,image:GImage):
         # Remove items
@@ -164,7 +145,6 @@ class ImageScene(QGraphicsScene):
         # Update the pixmap
         self.image = image
         self.image.seek(min(self.frame,self.image.n_frames-1))
-        
         self.addItem(self.image)
 
     def mark(self,x,y,group):
