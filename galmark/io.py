@@ -9,7 +9,6 @@ from PIL import Image
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
 from astropy.io import fits
-from collections import defaultdict
 import io
 import glob as glob_
 import shutil
@@ -67,13 +66,6 @@ def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],in
     return out_dir, image_dir, group_names, category_names, group_max
 
 OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX = readConfig()
-
-class DataDict(defaultdict):
-    def __init__(self, *args, **kwargs):
-        super(DataDict, self).__init__(DataDict, *args, **kwargs)
-
-    def __repr__(self):
-        return repr(dict(self))
     
 def markCheck(event):
     button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
