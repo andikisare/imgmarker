@@ -3,12 +3,11 @@ from PyQt6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem
 from PyQt6.QtGui import QPixmap, QPainter
 from PyQt6.QtCore import Qt
 from galmark.mark import Mark
-from galmark import __dirname__, __icon__, __heart_solid__, __heart_clear__
+from galmark import __dirname__
 import galmark.io
 import os
 from math import floor
 from PIL import Image, ImageFile
-from PIL.ImageQt import ImageQt
 from PIL.ImageFilter import GaussianBlur
 from PIL.ImageEnhance import Contrast, Brightness
 from astropy.wcs import WCS

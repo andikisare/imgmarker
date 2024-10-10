@@ -1,11 +1,11 @@
 from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QLabel, QScrollArea, QGraphicsView,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
-                              QSlider, QLineEdit, QFileDialog)
+                              QSlider, QLineEdit, QFileDialog )
 from PyQt6.QtGui import QCursor, QAction, QIcon, QFont
 from PyQt6.QtCore import Qt, QPoint
 from galmark.mark import Mark
-from galmark import __dirname__, __icon__, __heart_solid__, __heart_clear__
+from galmark import __dirname__, ICON, HEART_SOLID, HEART_CLEAR
 import galmark.io
 import galmark.image
 from galmark.widget import QHLine, PosWidget
@@ -15,7 +15,6 @@ import datetime as dt
 import textwrap
 from math import floor, inf
 from functools import partial
-from PIL import Image
 
 class AdjustmentsWindow(QWidget):
     """
@@ -24,7 +23,7 @@ class AdjustmentsWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowIcon(QIcon(__icon__))
+        self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
@@ -88,7 +87,7 @@ class BlurWindow(QWidget):
     def __init__(self):
         super().__init__()
         
-        self.setWindowIcon(QIcon(__icon__))
+        self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
@@ -133,7 +132,7 @@ class FrameWindow(QWidget):
     def __init__(self):
         super().__init__()
         
-        self.setWindowIcon(QIcon(__icon__))
+        self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
@@ -177,7 +176,7 @@ class InstructionsWindow(QWidget):
     """
     def __init__(self,groupNames):
         super().__init__()
-        self.setWindowIcon(QIcon(__icon__))
+        self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
@@ -232,7 +231,7 @@ class InstructionsWindow(QWidget):
 class StartupWindow(QInputDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QIcon(__icon__))
+        self.setWindowIcon(QIcon(ICON))
         qt_rectangle = self.frameGeometry()
         center_point = QApplication.primaryScreen().geometry().center()
         qt_rectangle.moveCenter(center_point)
@@ -260,7 +259,7 @@ class MainWindow(QMainWindow):
         '''
         super().__init__()
         self.setWindowTitle("Galaxy Marker")
-        self.setWindowIcon(QIcon(__icon__))
+        self.setWindowIcon(QIcon(ICON))
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
         self.zoomLevel = 1
@@ -370,7 +369,7 @@ class MainWindow(QMainWindow):
         self.favorite_box = QCheckBox(parent=self)
         self.favorite_box.setFixedHeight(20)
         self.favorite_box.setFixedWidth(40)
-        self.favorite_box.setIcon(QIcon(__heart_clear__))
+        self.favorite_box.setIcon(QIcon(HEART_CLEAR))
         self.favorite_box.setTristate(False)
         self.favorite_box.clicked.connect(self.favorite)
         self.favorite_box.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -608,11 +607,11 @@ class MainWindow(QMainWindow):
     def favorite(self,state):
         state = Qt.CheckState(state)
         if state == Qt.CheckState.PartiallyChecked:
-            self.favorite_box.setIcon(QIcon(__heart_solid__))
+            self.favorite_box.setIcon(QIcon(HEART_SOLID))
             self.favorite_file_list.append(self.image.name)
             galmark.io.savefav(self.username,self.favorite_file_list)
         else:
-            self.favorite_box.setIcon(QIcon(__heart_clear__))
+            self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             if self.image.name in self.favorite_file_list: 
                 self.favorite_file_list.remove(self.image.name)
             galmark.io.savefav(self.username,self.favorite_file_list)
@@ -706,9 +705,9 @@ class MainWindow(QMainWindow):
     def favoriteUpdate(self):
         if self.image.name in self.favorite_file_list:
             self.favorite_box.setChecked(True)
-            self.favorite_box.setIcon(QIcon(__heart_solid__))
+            self.favorite_box.setIcon(QIcon(HEART_SOLID))
         else:
-            self.favorite_box.setIcon(QIcon(__heart_clear__))
+            self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             self.favorite_box.setChecked(False)
 
     def imageUpdate(self):

@@ -4,9 +4,9 @@ import sys
 import os
 
 __dirname__ = os.path.dirname(os.path.realpath(__file__))
-__icon__ = os.path.join(__dirname__,'icon.png')
-__heart_solid__ = os.path.join(__dirname__,'heart_solid.png')
-__heart_clear__ = os.path.join(__dirname__,'heart_clear.png')
+ICON = os.path.join(__dirname__,'icon.png')
+HEART_SOLID = os.path.join(__dirname__,'heart_solid.png')
+HEART_CLEAR = os.path.join(__dirname__,'heart_clear.png')
 
 sys.path.append(__dirname__.removesuffix('galmark'))
 
