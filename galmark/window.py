@@ -266,11 +266,7 @@ class MainWindow(QMainWindow):
         self.zoomLevel = 1
         self.frame = 0
         self.cursorFocus = False
-        
-        
-        ### Default adjustment values
-        
-
+    
         # Initialize config
         self.config = 'galmark.cfg'
         self.username, self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max = username, out_dir, image_dir, group_names, category_names, group_max
@@ -297,7 +293,6 @@ class MainWindow(QMainWindow):
         # Set max blur based on size of image
         self.blur_max = int((self.image.height+self.image.width)/20)
         self.blurWindow.slider.setMaximum(self.blur_max)
-
 
         # Current image widget
         self.imageLabel = QLabel(f'{self.image.name} ({self.idx+1} of {self.N})')
@@ -481,28 +476,26 @@ class MainWindow(QMainWindow):
 
     def __init_data__(self):
         # Initialize output dictionary
-        self.data = galmark.io.load(self.username)
+        self.images = galmark.io.load(self.username)
         
         self.favorite_file_list = galmark.io.loadfav(self.username)
 
         # Find all images in image directory
         
-        self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
-        self.image = self.images[self.idx]
-        self.N = len(self.images)
-        '''except:
-
+        try:
+            self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,edited_images=self.images)
+            self.image = self.images[self.idx]
+            self.image.seen = True
+            self.N = len(self.images)
+        except:
             # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
             #          f"Please specify a different image directory in galmark.cfg and try again.")
             self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", self.image_dir),'')
             galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
-            self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
+            self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,edited_images=self.images)
             self.image = self.images[self.idx]
-            self.N = len(self.images)'''
-            
-        self.image.comment = 'None'
-        self.image.categories = []
-        self.image.marks = []
+            self.image.seen = True
+            self.N = len(self.images)
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
@@ -605,8 +598,9 @@ class MainWindow(QMainWindow):
     def openDir(self):
         self.image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", self.image_dir),'')
         galmark.io.configUpdate(self.out_dir, self.image_dir, self.group_names, self.category_names, self.group_max)
-        self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,data_filt=self.data)
+        self.images, self.idx = galmark.io.glob(self.image_dir,self.imtype,edited_images=self.images)
         self.image = self.images[self.idx]
+        self.image.seen = True
         self.N = len(self.images)
         self.imageLabel = QLabel(f'{self.image.name} ({self.idx+1} of {self.N})')
 
@@ -615,20 +609,20 @@ class MainWindow(QMainWindow):
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(__heart_solid__))
             self.favorite_file_list.append(self.image.name)
-            galmark.io.savefav(self.data,self.username,self.date,self.favorite_file_list)
+            galmark.io.savefav(self.username,self.favorite_file_list)
         else:
             self.favorite_box.setIcon(QIcon(__heart_clear__))
             if self.image.name in self.favorite_file_list: 
                 self.favorite_file_list.remove(self.image.name)
-            galmark.io.savefav(self.data,self.username,self.date,self.favorite_file_list)
+            galmark.io.savefav(self.username,self.favorite_file_list)
 
     def categorize(self,i:int) -> None:
-        if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.data[self.image.name]['categories']):
-            self.data[self.image.name]['categories'].append(i)
-        elif (i in self.data[self.image.name]['categories']):
-            self.data[self.image.name]['categories'].remove(i)
-        galmark.io.save(self.data,self.username,self.date)
-        galmark.io.savefav(self.data,self.username,self.date,self.favorite_file_list)
+        if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.image.categories):
+            self.image.categories.append(i)
+        elif (i in self.image.categories):
+            self.image.categories.remove(i)
+        galmark.io.save(self.username,self.date,self.images)
+        galmark.io.savefav(self.username,self.favorite_file_list)
 
     def mark(self, group:int=0) -> None:
         '''
@@ -648,19 +642,17 @@ class MainWindow(QMainWindow):
         if (x>=0) and (x<=w) and (y>=0) and  (y<=h):
             mark = self.imageScene.mark(lp.x(),lp.y(),group=group)
 
-            if (limit == 1) and (len(self.data[self.image.name][group]['marks']) == 1):
-                prev_mark = self.data[self.image.name][group]['marks'][0]
+            if (limit == 1) and (len(self.image.marks) == 1):
+                prev_mark = self.image.marks[0]
                 self.imageScene.removeItem(prev_mark)
-                self.data[self.image.name][group]['marks'][0] = mark
+                self.image.marks.remove(prev_mark)
+                self.image.marks[0] = mark
 
-            elif (len(self.data[self.image.name][group]['marks']) < limit):
-                if not self.data[self.image.name][group]['marks']:
-                    self.data[self.image.name][group]['marks'] = []
+            elif len(self.image.marks) < limit:
+                self.image.marks.append(mark)
 
-                self.data[self.image.name][group]['marks'].append(mark)
-
-            galmark.io.save(self.data,self.username,self.date)
-            galmark.io.savefav(self.data,self.username,self.date,self.favorite_file_list)
+            galmark.io.save(self.username,self.date,self.images)
+            galmark.io.savefav(self.username,self.favorite_file_list)
 
     def shift(self,delta:int):
         # Increment the index
@@ -680,8 +672,8 @@ class MainWindow(QMainWindow):
     def enter(self):
         self.commentUpdate()
         self.commentBox.clearFocus()
-        galmark.io.save(self.data,self.username,self.date)
-        galmark.io.savefav(self.data,self.username,self.date,self.favorite_file_list)
+        galmark.io.save(self.username,self.date,self.images)
+        galmark.io.savefav(self.username,self.favorite_file_list)
 
     def middleMouse(self):
         # Center on cursor
@@ -721,6 +713,7 @@ class MainWindow(QMainWindow):
     def imageUpdate(self):
         # Update scene
         self.image = self.images[self.idx]
+        self.image.seen = True
         self.imageScene.update(self.image)
         
         # Update slider maxima
@@ -737,38 +730,35 @@ class MainWindow(QMainWindow):
         if not comment:
             comment = 'None'
 
-        self.data[self.image.name]['comment'] = comment
-        galmark.io.save(self.data,self.username,self.date)
-        galmark.io.savefav(self.data,self.username,self.date,self.favorite_file_list)
+        self.image.comment = comment
+        galmark.io.save(self.username,self.date,self.images)
+        galmark.io.savefav(self.username,self.favorite_file_list)
 
     def getComment(self):
-        if bool(self.data[self.image.name]['comment']):
-            if (self.data[self.image.name]['comment'] == 'None'):
+        if bool(self.image.comment):
+            if (self.image.comment == 'None'):
                 self.commentBox.setText('')
             else:
-                comment = self.data[self.image.name]['comment']
+                comment = self.image.comment
                 self.commentBox.setText(comment)
         else:
             comment = 'None'
-            self.data[self.image.name]['comment'] = comment
+            self.image.comment = comment
             self.commentBox.setText('')
 
     def categoryUpdate(self):
         # Initialize category and update checkboxes
         for box in self.category_boxes: box.setChecked(False)
-        if not (self.data[self.image.name]['categories']):
-            self.data[self.image.name]['categories'] = []
+        if not self.image.categories:
+            self.image.categories = []
         else:
-            category_list = self.data[self.image.name]['categories']
+            category_list = self.image.categories
             for i in category_list:
                 self.category_boxes[i-1].setChecked(True)
 
     def markUpdate(self):
         # Redraws all marks in image
-        for i in range(0,10):
-            mark_list = self.data[self.image.name][i]['marks']
-                
-            for mark in mark_list: self.imageScene.addItem(mark)
+        for mark in self.image.marks: self.imageScene.addItem(mark)
 
     def deleteMarks(self):
         pixPos = self.mousePixPos().toPointF()
@@ -778,9 +768,9 @@ class MainWindow(QMainWindow):
         
         for item in selected_items:
             self.imageScene.removeItem(item)
-            self.data[self.image.name][item.g]['marks'].remove(item)
-            galmark.io.save(self.data,self.username,self.date)
-            galmark.io.savefav(self.data,self.username,self.date,self.favorite_file_list)
+            self.image.marks.remove(item)
+            galmark.io.save(self.username,self.date,self.images)
+            galmark.io.savefav(self.username,self.favorite_file_list)
 
     # === Utils ===
 

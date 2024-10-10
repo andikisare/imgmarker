@@ -35,6 +35,11 @@ def open(path:str) -> GImage:
     gimage.a = 1.0
     gimage.b = 1.0
 
+    gimage.comment = 'None'
+    gimage.categories = []
+    gimage.marks = []
+    gimage.seen = False
+
     # Get bytes from image (I dont think this does anything)
     gimage.frombytes(image.tobytes())
 
@@ -52,6 +57,13 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.wcs:WCS
         self.n_frames:int
         self.name:str
+        self.r:float
+        self.a:float
+        self.b:float
+        self.comment:str
+        self.categories:list[str]
+        self.marks:list[Mark]
+        self.seen:bool
  
     def _new(self, im) -> GImage:
         new = GImage()
@@ -150,4 +162,4 @@ class ImageScene(QGraphicsScene):
     def mark(self,x,y,group):
         mark = Mark(x,y,wcs=self.image.wcs,group=group)
         self.addItem(mark)
-        return mark
+        return mark  
