@@ -13,7 +13,7 @@ import sys
 import os
 import datetime as dt
 import textwrap
-from math import floor, inf
+from math import floor, inf, nan
 from functools import partial
 
 class AdjustmentsWindow(QWidget):
@@ -245,7 +245,7 @@ class StartupWindow(QInputDialog):
         else: sys.exit()
 
 class MainWindow(QMainWindow):
-    def __init__(self, username:str, imtype:str = 'tif'):
+    def __init__(self, username:str, imtype:str = 'jpg'):
         '''
         Constructor
 
@@ -558,7 +558,8 @@ class MainWindow(QMainWindow):
         if (x>=0) and (x<=w) and (y>=0) and  (y<=h):
             _x, _y = x, h - y
 
-            ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
+            try: ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
+            except: ra, dec = nan, nan
 
             self.pos_widget.x_text.setText(f'{x}')
             self.pos_widget.y_text.setText(f'{y}')

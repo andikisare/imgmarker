@@ -12,6 +12,7 @@ from astropy.io import fits
 import io
 import glob as glob_
 import shutil
+from math import nan, isnan
 
 def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],list[int]]:
     '''
@@ -87,29 +88,31 @@ def markCheck(event):
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
 def parseWCS(img:str|Image.Image) -> WCS:
-    #tif_image_data = np.array(Image.open(image_tif))
-    if type(img) == str: img = Image.open(img)
-    meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
-    
-    long_header_str = meta_dict['ImageDescription'][0]
+    try:
+        #tif_image_data = np.array(Image.open(image_tif))
+        if type(img) == str: img = Image.open(img)
+        meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
+        
+        long_header_str = meta_dict['ImageDescription'][0]
 
-    line_length = 80
+        line_length = 80
 
-    # Splitting the string into lines of 80 characters
-    lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
-    
-    # Join the lines with newline characters to form a properly formatted header string
-    corrected_header_str = "\n".join(lines)
+        # Splitting the string into lines of 80 characters
+        lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
+        
+        # Join the lines with newline characters to form a properly formatted header string
+        corrected_header_str = "\n".join(lines)
 
-    # Use an IO stream to mimic a file
-    header_stream = io.StringIO(corrected_header_str)
+        # Use an IO stream to mimic a file
+        header_stream = io.StringIO(corrected_header_str)
 
-    # Read the header using astropy.io.fits
-    header = fits.Header.fromtextfile(header_stream)
+        # Read the header using astropy.io.fits
+        header = fits.Header.fromtextfile(header_stream)
 
-    # Create a WCS object from the header
-    wcs = WCS(header)
-    return wcs
+        # Create a WCS object from the header
+        wcs = WCS(header)
+        return wcs
+    except: return None
 
 def checkUsername(username:str) -> bool:
     return (username != "None") and (username != "")
@@ -195,10 +198,8 @@ def save(username:str,date,images:list[galmark.image.GImage]) -> None:
             # Otherwise, if there is a category or a comment, replace ra/dec with NaNs
             elif img.seen: # (len(categories_to_print) != 0) or (comment != 'None'):
                 group_name = 'None'
-                x = 'NaN'
-                y = 'NaN'
-                ra = 'NaN'
-                dec = 'NaN'
+                x, y = nan, nan
+                ra, dec = nan, nan
                 img_ra, img_dec = img.wcs_center()
 
                 ml = [date,name,group_name,x,y,ra,dec]
@@ -212,10 +213,10 @@ def save(username:str,date,images:list[galmark.image.GImage]) -> None:
 
                 name_lengths.append(len(name))
                 group_lengths.append(len(group_name))
-                x_lengths.append(len(x))
-                y_lengths.append(len(y))
-                ra_lengths.append(len(ra))
-                dec_lengths.append(len(dec))
+                x_lengths.append(len(str(x)))
+                y_lengths.append(len(str(y)))
+                ra_lengths.append(len(f'{ra:.8f}'))
+                dec_lengths.append(len(f'{dec:.8f}'))
                 img_ra_lengths.append(len(f'{img_ra:.8f}'))
                 img_dec_lengths.append(len(f'{img_dec:.8f}'))
                 category_lengths.append(len(categories))
@@ -310,10 +311,10 @@ def load(username:str) -> list[galmark.image.GImage]:
             else:
                 date,name,group,x,y,ra,dec = [i.strip() for i in l.replace('|\n','').split('|')]
 
-                if (name == img.name) and (x!='NaN') and (y!='NaN'):
+                if (name == img.name) and (not isnan(float(x))) and (not isnan(float(y))):
                     group = GROUP_NAMES.index(group)
                     mark_args = (int(x)+4*img.width,int(y)+4*img.height)
-                    mark_kwargs = {'wcs': img.wcs, 'group': group}
+                    mark_kwargs = {'image': img, 'group': group}
                     mark = Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)
 

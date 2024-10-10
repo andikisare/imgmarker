@@ -11,6 +11,7 @@ from PIL import Image, ImageFile
 from PIL.ImageFilter import GaussianBlur
 from PIL.ImageEnhance import Contrast, Brightness
 from astropy.wcs import WCS
+from math import nan
 
 def open(path:str) -> GImage:
     """
@@ -25,7 +26,8 @@ def open(path:str) -> GImage:
 
     # Setup  __dict__
     gimage.__dict__ =  image.__dict__
-    gimage.n_frames = image.n_frames
+    try: gimage.n_frames = image.n_frames
+    except: gimage.n_frames = 1
     gimage.wcs = galmark.io.parseWCS(image)
     gimage.image_file = image
     gimage.name = image.filename.split(os.sep)[-1] 
@@ -97,7 +99,7 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         qimage = self.toqimage()
         pixmap_base = QPixmap.fromImage(qimage)
 
-        w, h = self.height, self.width
+        w, h = self.width, self.height
         _x, _y = int(w*4), int(h*4)
 
         pixmap = QPixmap(w*9,h*9)
@@ -139,7 +141,8 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.setPixmap(pixmap_contrast)
 
     def wcs_center(self) -> list:
-        return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
+        try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
+        except: return nan, nan
             
 class ImageScene(QGraphicsScene):
     def __init__(self,image:GImage):
@@ -161,6 +164,6 @@ class ImageScene(QGraphicsScene):
         self.addItem(self.image)
 
     def mark(self,x,y,group):
-        mark = Mark(x,y,wcs=self.image.wcs,group=group)
+        mark = Mark(x,y,image=self.image,group=group)
         self.addItem(mark)
         return mark  
