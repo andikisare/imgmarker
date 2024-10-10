@@ -13,7 +13,7 @@ import io
 import glob as glob_
 import shutil
 
-def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],int]:
+def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],list[int]]:
     '''
     Read each line from the config and parse it
     '''
