@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QGraphicsEllipseItem
 from PyQt6.QtGui import QPen, QColor
 from PyQt6.QtCore import Qt, QPoint
-from astropy.wcs import WCS
 from math import nan
 
 COLORS = [ QColor(0,0,0), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),

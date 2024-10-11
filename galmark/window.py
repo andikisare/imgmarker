@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QLabel, QScrollArea, QGraphicsView,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
                               QSlider, QLineEdit, QFileDialog )
-from PyQt6.QtGui import QCursor, QAction, QIcon, QFont
+from PyQt6.QtGui import QAction, QIcon, QFont
 from PyQt6.QtCore import Qt, QPoint, QPointF
 from galmark.mark import Mark
 from galmark import __dirname__, ICON, HEART_SOLID, HEART_CLEAR
@@ -267,14 +267,10 @@ class MainWindow(QMainWindow):
         self.cursorFocus = False
         self.frame = 0
     
-        # Initialize config
-        self.config = 'galmark.cfg'
+        # Initialize data
         self.username = username
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
-
-        # Initialize output dictionary
         self.__init_data__()
-
         self.imageScene = galmark.image.ImageScene(self.image)
 
         # Setup child windows
@@ -288,8 +284,6 @@ class MainWindow(QMainWindow):
         self.frameWindow = FrameWindow()
         self.frameWindow.slider.valueChanged.connect(self.image.seek)
         self.frameWindow.slider.setMaximum(self.image.n_frames-1)
-
-        
 
         # Set max blur based on size of image
         self.blur_max = int((self.image.height+self.image.width)/20)
@@ -366,7 +360,7 @@ class MainWindow(QMainWindow):
             self.categories_layout.addWidget(box)
 
         # Favorite box
-        self.favorite_file_list = galmark.io.loadfav(username)
+        self.favorite_list = galmark.io.loadfav(username)
         self.favorite_box = QCheckBox(parent=self)
         self.favorite_box.setFixedHeight(20)
         self.favorite_box.setFixedWidth(40)
@@ -404,7 +398,7 @@ class MainWindow(QMainWindow):
         ### Open file menu
         openMenu = QAction('&Open', self)
         openMenu.setShortcuts(['Ctrl+o'])
-        openMenu.setStatusTip('Open save file')
+        openMenu.setStatusTip('Open save directory')
         openMenu.triggered.connect(self.open)
         fileMenu.addAction(openMenu)
 
@@ -479,7 +473,7 @@ class MainWindow(QMainWindow):
         # Initialize output dictionary
         self.images = galmark.io.load(self.username)
         
-        self.favorite_file_list = galmark.io.loadfav(self.username)
+        self.favorite_list = galmark.io.loadfav(self.username)
 
         # Find all images in image directory
         
@@ -491,7 +485,7 @@ class MainWindow(QMainWindow):
         except:
             # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
             #          f"Please specify a different image directory in galmark.cfg and try again.")
-            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select correct image directory", galmark.io.IMAGE_DIR),'')
+            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", galmark.io.IMAGE_DIR),'')
             galmark.io.configUpdate(image_dir=image_dir)
             self.images, self.idx = galmark.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
@@ -586,14 +580,13 @@ class MainWindow(QMainWindow):
         ### THIS IS WHERE YOU SELECT FILES, FILES ARE CURRENTLY LIMITED TO *.txt
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
-        fileName = dialog.getSaveFileName(self, 'Open Save File', os.getcwd())
+        fileName = dialog.getSaveFileName(self, 'Open save directory', os.getcwd())
 
         self.username = str(os.path.split(fileName[0])[1])
         if not self.username.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR
         
         self.__init_data__()
         self.imageUpdate()
-
         self.markUpdate()
         self.getComment()
         self.categoryUpdate()
@@ -609,7 +602,6 @@ class MainWindow(QMainWindow):
         self.N = len(self.images)
 
         self.imageUpdate()
-
         self.markUpdate()
         self.getComment()
         self.categoryUpdate()
@@ -619,13 +611,13 @@ class MainWindow(QMainWindow):
         state = Qt.CheckState(state)
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
-            self.favorite_file_list.append(self.image.name)
-            galmark.io.savefav(self.username,self.favorite_file_list)
+            self.favorite_list.append(self.image.name)
+            galmark.io.savefav(self.username,self.favorite_list)
         else:
             self.favorite_box.setIcon(QIcon(HEART_CLEAR))
-            if self.image.name in self.favorite_file_list: 
-                self.favorite_file_list.remove(self.image.name)
-            galmark.io.savefav(self.username,self.favorite_file_list)
+            if self.image.name in self.favorite_list: 
+                self.favorite_list.remove(self.image.name)
+            galmark.io.savefav(self.username,self.favorite_list)
 
     def categorize(self,i:int) -> None:
         if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.image.categories):
@@ -633,7 +625,7 @@ class MainWindow(QMainWindow):
         elif (i in self.image.categories):
             self.image.categories.remove(i)
         galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.favorite_file_list)
+        galmark.io.savefav(self.username,self.favorite_list)
 
     def mark(self, group:int=0) -> None:
         '''
@@ -663,7 +655,7 @@ class MainWindow(QMainWindow):
                 self.image.marks.append(mark)
 
             galmark.io.save(self.username,self.date,self.images)
-            galmark.io.savefav(self.username,self.favorite_file_list)
+            galmark.io.savefav(self.username,self.favorite_list)
 
     def shift(self,delta:int):
         # Increment the index
@@ -684,7 +676,7 @@ class MainWindow(QMainWindow):
         self.commentUpdate()
         self.commentBox.clearFocus()
         galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.favorite_file_list)
+        galmark.io.savefav(self.username,self.favorite_list)
 
     def middleMouse(self):
         # Center on cursor
@@ -714,7 +706,7 @@ class MainWindow(QMainWindow):
     # === Update methods ===
 
     def favoriteUpdate(self):
-        if self.image.name in self.favorite_file_list:
+        if self.image.name in self.favorite_list:
             self.favorite_box.setChecked(True)
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
         else:
@@ -754,7 +746,7 @@ class MainWindow(QMainWindow):
 
         self.image.comment = comment
         galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.favorite_file_list)
+        galmark.io.savefav(self.username,self.favorite_list)
 
     def getComment(self):
         if bool(self.image.comment):
@@ -792,7 +784,7 @@ class MainWindow(QMainWindow):
             self.imageScene.removeItem(item)
             self.image.marks.remove(item)
             galmark.io.save(self.username,self.date,self.images)
-            galmark.io.savefav(self.username,self.favorite_file_list)
+            galmark.io.savefav(self.username,self.favorite_list)
 
     # === Utils ===
 

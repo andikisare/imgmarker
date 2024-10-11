@@ -116,12 +116,12 @@ def parseWCS(img:str|Image.Image) -> WCS:
         return wcs
     except: return None
 
-def checkUsername(username:str) -> bool:
-    return (username != 'None') and (username != '')
+def saveCheck(savename:str) -> bool:
+    return (savename != 'None') and (savename != '')
 
-def savefav(username:str,save_list:list) -> None:
+def savefav(savename:str,save_list:list) -> None:
 
-    save_dir = os.path.join(OUT_DIR, username)
+    save_dir = os.path.join(OUT_DIR, savename)
     fav_out_path = os.path.join(save_dir, 'favorites.txt')
 
     # Create the file
@@ -132,7 +132,7 @@ def savefav(username:str,save_list:list) -> None:
     for name in save_list:
         out.write(f'{name}\n')
 
-def save(username:str,date,images:list[galmark.image.GImage]) -> None:
+def save(savename:str,date,images:list[galmark.image.GImage]) -> None:
     mark_lines = []
     image_lines = []
 
@@ -147,7 +147,7 @@ def save(username:str,date,images:list[galmark.image.GImage]) -> None:
     category_lengths = []
     comment_lengths = []
 
-    save_dir = os.path.join(OUT_DIR, username)
+    save_dir = os.path.join(OUT_DIR, savename)
     mark_out_path = os.path.join(save_dir,'marks.txt')
     images_out_path = os.path.join(save_dir,'images.txt')
 
@@ -159,29 +159,37 @@ def save(username:str,date,images:list[galmark.image.GImage]) -> None:
     mark_out = open(mark_out_path,"a")
     images_out = open(images_out_path,"a")
 
-    if checkUsername(username) and images:
-
+    if saveCheck(savename) and images:
         for img in images:
-            name = img.name
-            comment = img.comment
+            if img.seen:
+                name = img.name
+                comment = img.comment
 
-            category_list = img.categories
-            category_list.sort()
-            if (len(category_list) != 0):
-                categories = ','.join([CATEGORY_NAMES[i] for i in category_list])
-            else: categories = 'None'
+                category_list = img.categories
+                category_list.sort()
+                if (len(category_list) != 0):
+                    categories = ','.join([CATEGORY_NAMES[i] for i in category_list])
+                else: categories = 'None'
 
-            if img.marks:
-                for mark in img.marks:
-                    group_name = GROUP_NAMES[mark.g]
-                    ra, dec = mark.wcs_center()
-                    img_ra, img_dec = img.wcs_center()
-                    x, y = mark.img_center().x(), mark.img_center().y()
+                if not img.marks: mark_list = [None]
+                else: mark_list = img.marks.copy()
+                
+                for mark in mark_list:
+                    if mark != None:
+                        group_name = GROUP_NAMES[mark.g]
+                        ra, dec = mark.wcs_center()
+                        img_ra, img_dec = img.wcs_center()
+                        x, y = mark.img_center().x(), mark.img_center().y()
+                    else:
+                        group_name = 'None'
+                        ra, dec = nan, nan
+                        img_ra, img_dec = img.wcs_center()
+                        x, y = nan, nan
+                        
                     ml = [date,name,group_name,x,y,ra,dec]
-                    il = [date,name,img_ra,img_dec,categories,comment]
-
                     mark_lines.append(ml)
 
+                    il = [date,name,img_ra,img_dec,categories,comment]
                     for l in image_lines:
                         if l[1] == name: image_lines.remove(l)
                     image_lines.append(il)
@@ -196,33 +204,6 @@ def save(username:str,date,images:list[galmark.image.GImage]) -> None:
                     img_dec_lengths.append(len(f'{img_dec:.8f}'))
                     category_lengths.append(len(categories))
                     comment_lengths.append(len(comment))
-            
-            # Otherwise, if there is a category or a comment, replace ra/dec with NaNs
-            elif img.seen: # (len(categories_to_print) != 0) or (comment != 'None'):
-                group_name = 'None'
-                x, y = nan, nan
-                ra, dec = nan, nan
-                img_ra, img_dec = img.wcs_center()
-
-                ml = [date,name,group_name,x,y,ra,dec]
-                il = [date,name,img_ra,img_dec,categories,comment]
-
-                mark_lines.append(ml)
-                
-                for l in image_lines:
-                    if l[1] == name: image_lines.remove(l)
-                image_lines.append(il)
-
-                name_lengths.append(len(name))
-                group_lengths.append(len(group_name))
-                x_lengths.append(len(str(x)))
-                y_lengths.append(len(str(y)))
-                ra_lengths.append(len(f'{ra:.8f}'))
-                dec_lengths.append(len(f'{dec:.8f}'))
-                img_ra_lengths.append(len(f'{img_ra:.8f}'))
-                img_dec_lengths.append(len(f'{img_dec:.8f}'))
-                category_lengths.append(len(categories))
-                comment_lengths.append(len(comment))
 
     # Print out lines if there are lines to print
     if len(mark_lines) != 0:
@@ -272,18 +253,18 @@ def save(username:str,date,images:list[galmark.image.GImage]) -> None:
             outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
             images_out.write(outline)
 
-def loadfav(username:str) -> list[str]:
-    out_path = os.path.join(OUT_DIR, username)
-    favfile = os.path.join(out_path, 'favorites.txt')
+def loadfav(savename:str) -> list[str]:
+    save_dir = os.path.join(OUT_DIR, savename)
+    fav_out_path = os.path.join(save_dir, 'favorites.txt')
     
-    if os.path.exists(favfile):
-        fav_list = [ l.replace('\n','') for l in open(favfile) ]
+    if os.path.exists(fav_out_path):
+        fav_list = [ l.replace('\n','') for l in open(fav_out_path) ]
     else: fav_list = []
     
     return list(set(fav_list))
 
-def load(username:str) -> list[galmark.image.GImage]:
-    save_dir = os.path.join(OUT_DIR, username)
+def load(savename:str) -> list[galmark.image.GImage]:
+    save_dir = os.path.join(OUT_DIR, savename)
     mark_out_path = os.path.join(save_dir,'marks.txt')
     images_out_path = os.path.join(save_dir,'images.txt')
     images:list[galmark.image.GImage] = []
@@ -318,12 +299,11 @@ def load(username:str) -> list[galmark.image.GImage]:
                     mark_kwargs = {'image': img, 'group': group}
                     mark = Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)
-
     return images
 
 def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
      # Find all images in image directory
-    all_images = glob_.glob(IMAGE_DIR + '*.*')
+    all_images = glob_.glob(os.path.join(IMAGE_DIR, '*.*'))
     all_images = [img for img in all_images if img.split('.')[-1] in galmark.image.SUPPORTED_EXTS]
 
     # Get list of paths to images if they are in the dictionary (have been edited)
@@ -341,8 +321,8 @@ def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.imag
     return images, idx
 
 def inputs() -> str:
-    username = galmark.window.StartupWindow().getUser()
-    return username
+    savename = galmark.window.StartupWindow().getUser()
+    return savename
 
 def configUpdate(out_dir=OUT_DIR, image_dir=IMAGE_DIR, group_names=GROUP_NAMES, category_names=CATEGORY_NAMES, group_max=GROUP_MAX, config:str='galmark.cfg'):
     global OUT_DIR; OUT_DIR = out_dir
