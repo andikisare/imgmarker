@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
                               QSlider, QLineEdit, QFileDialog )
 from PyQt6.QtGui import QCursor, QAction, QIcon, QFont
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt, QPoint, QPointF
 from galmark.mark import Mark
 from galmark import __dirname__, ICON, HEART_SOLID, HEART_CLEAR
 import galmark.io
@@ -497,6 +497,8 @@ class MainWindow(QMainWindow):
             self.image.seen = True
             self.N = len(self.images)
 
+    def inview(self,x,y): return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
+
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
         if (source == self.imageView.viewport()) and (event.type() == 31):
@@ -554,11 +556,10 @@ class MainWindow(QMainWindow):
         # Mark if hovering over image
         lp = self.mousePixPos()
         lp_true = lp - 4*QPoint(self.image.width,self.image.height)
-        x, y = lp_true.x(), lp_true.y()
-        w, h = self.image.width, self.image.height
+        x, y = lp_true.x()-0, lp_true.y()
 
-        if (x>=0) and (x<=w) and (y>=0) and  (y<=h):
-            _x, _y = x, h - y
+        if self.inview(x,y):
+            _x, _y = x, self.image.height - y
 
             try: ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
             except: ra, dec = nan, nan
@@ -640,8 +641,7 @@ class MainWindow(QMainWindow):
 
         # get event position and position on image
         lp = self.mousePixPos()
-        w, h = self.image.width, self.image.height
-        lp_true = lp - 4*QPoint(w,h)
+        lp_true = lp - 4*QPoint(self.image.width,self.image.height)
         x, y = lp_true.x(), lp_true.y()
         
         # Mark if hovering over image
@@ -650,7 +650,7 @@ class MainWindow(QMainWindow):
 
         marks_in_group = [m for m in self.image.marks if m.g == group]
 
-        if (x>=0) and (x<=w) and (y>=0) and  (y<=h):
+        if self.inview(x,y):
             mark = self.imageScene.mark(lp.x(),lp.y(),group=group)
             
             if (limit == 1) and (len(marks_in_group) == 1):
@@ -803,7 +803,7 @@ class MainWindow(QMainWindow):
         Returns:
             viewPos: position of mouse in the pixmap
         '''
-        return self.imageView.mapFromGlobal(QCursor.pos())
+        return self.imageView.mapFromGlobal(self.cursor().pos())
     
     def mousePixPos(self):
         '''
@@ -812,9 +812,10 @@ class MainWindow(QMainWindow):
         Returns:
             pixPos: position of mouse in the pixmap
         '''
-        viewPos = self.imageView.mapFromGlobal(QCursor.pos())
+        viewPos = self.imageView.mapFromGlobal(self.cursor().pos())
         scenePos = self.imageView.mapToScene(viewPos)
+        pixPos = self.image.mapFromScene(scenePos) - QPointF(0.5,0.5)
         
-        return self.image.mapFromScene(scenePos).toPoint()
+        return pixPos.toPoint()
 
     
