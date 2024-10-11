@@ -14,6 +14,8 @@ import glob as glob_
 import shutil
 from math import nan, isnan
 
+SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or numbers.')
+
 def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],list[int]]:
     '''
     Read each line from the config and parse it

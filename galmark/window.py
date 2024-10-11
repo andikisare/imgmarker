@@ -240,6 +240,7 @@ class StartupWindow(QInputDialog):
     def getUser(self) -> None:
         # Make popup to get name
         text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
+        if not text.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR
 
         if OK: return text
         else: sys.exit()
@@ -585,9 +586,10 @@ class MainWindow(QMainWindow):
         ### THIS IS WHERE YOU SELECT FILES, FILES ARE CURRENTLY LIMITED TO *.txt
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
-        fileName = dialog.getSaveFileName(self, 'Open Save File', os.getcwd(), 'Text (*.txt)')
+        fileName = dialog.getSaveFileName(self, 'Open Save File', os.getcwd())
 
-        self.username = str(os.path.split(fileName[0])[1]).removesuffix('.txt')
+        self.username = str(os.path.split(fileName[0])[1])
+        if not self.username.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR
         
         self.__init_data__()
         self.imageUpdate()
