@@ -715,11 +715,18 @@ class MainWindow(QMainWindow):
 
     def imageUpdate(self):
         # Update scene
+        _w, _h = self.image.width, self.image.height
         self.image = self.images[self.idx]
         self.image.seen = True
         self.imageScene.update(self.image)
         self.image.seek(self.frame)
-        
+
+        # Fit back to view if the image dimensions have changed
+        if (self.image.width != _w) or (self.image.height != _h):
+            transform = self.imageView.transform()
+            self.imageView.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
+            self.imageView.setTransform(transform)
+
         # Update sliders
         self.blurWindow.slider.valueChanged.disconnect()
         self.adjustmentsWindow.contrastSlider.valueChanged.disconnect()
