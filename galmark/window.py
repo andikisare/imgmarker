@@ -554,9 +554,8 @@ class MainWindow(QMainWindow):
 
     def mouseMoveEvent(self, event):
         # Mark if hovering over image
-        lp = self.mousePixPos()
-        lp_true = lp - 4*QPoint(self.image.width,self.image.height)
-        x, y = lp_true.x()-0, lp_true.y()
+        pixPos = self.mousePixPos()
+        x, y = pixPos.x(), pixPos.y()
 
         if self.inview(x,y):
             _x, _y = x, self.image.height - y
@@ -640,9 +639,8 @@ class MainWindow(QMainWindow):
         '''
 
         # get event position and position on image
-        lp = self.mousePixPos()
-        lp_true = lp - 4*QPoint(self.image.width,self.image.height)
-        x, y = lp_true.x(), lp_true.y()
+        pixPos = self.mousePixPos()
+        x, y = pixPos.x(), pixPos.y()
         
         # Mark if hovering over image
         if galmark.io.GROUP_MAX[group - 1] == 'None': limit = inf
@@ -651,7 +649,7 @@ class MainWindow(QMainWindow):
         marks_in_group = [m for m in self.image.marks if m.g == group]
 
         if self.inview(x,y):
-            mark = self.imageScene.mark(lp.x(),lp.y(),group=group)
+            mark = self.imageScene.mark(x,y,group=group)
             
             if (limit == 1) and (len(marks_in_group) == 1):
                 prev_mark = marks_in_group[0]
@@ -690,7 +688,7 @@ class MainWindow(QMainWindow):
         # Center on cursor
         center = self.imageView.viewport().rect().center()
         scene_center = self.imageView.mapToScene(center)
-        pixPos = self.mousePixPos()
+        pixPos = self.mousePixPos() + 4*QPoint(self.image.width,self.image.height)
 
         delta = scene_center.toPoint() - pixPos
         self.imageView.translate(delta.x(),delta.y())
@@ -783,7 +781,7 @@ class MainWindow(QMainWindow):
         for mark in self.image.marks: self.imageScene.addItem(mark)
 
     def deleteMarks(self):
-        pixPos = self.mousePixPos().toPointF()
+        pixPos = self.mousePixPos().toPointF() + 4*QPointF(self.image.width,self.image.height)
         selected_items = [ item for item in self.imageScene.items() 
                            if isinstance(item,Mark) 
                            and (item is self.imageScene.itemAt(pixPos, item.transform()))]
@@ -814,7 +812,12 @@ class MainWindow(QMainWindow):
         '''
         viewPos = self.imageView.mapFromGlobal(self.cursor().pos())
         scenePos = self.imageView.mapToScene(viewPos)
+
+        # Get the pixel coordinates (including padding; half-pixel offset required)
         pixPos = self.image.mapFromScene(scenePos) - QPointF(0.5,0.5)
+
+        # Get the true pixel coordinates (ignoring padding)
+        pixPos -= 4*QPointF(self.image.width,self.image.height)
         
         return pixPos.toPoint()
 

@@ -313,7 +313,7 @@ def load(username:str) -> list[galmark.image.GImage]:
 
                 if (name == img.name) and (not isnan(float(x))) and (not isnan(float(y))):
                     group = GROUP_NAMES.index(group)
-                    mark_args = (int(x)+4*img.width,int(y)+4*img.height)
+                    mark_args = (int(x),int(y))
                     mark_kwargs = {'image': img, 'group': group}
                     mark = Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)

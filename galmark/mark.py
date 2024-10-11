@@ -10,12 +10,14 @@ COLORS = [ QColor(0,0,0), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
 
 class Mark(QGraphicsEllipseItem):
     def __init__(self,x:int,y:int,r:int=5,image=None,group:int=0):
-        super(Mark, self).__init__(x-r,y-r,2*r,2*r)
-
         self.r = r
         self.image = image
         self.g = group
         self.c = COLORS[self.g]
+        _x, _y = x + 4*self.image.width, y + 4*self.image.width
+
+        super(Mark, self).__init__(_x-r,_y-r,2*r,2*r)
+
         self.setPen(QPen(self.c, 1, Qt.PenStyle.SolidLine))
         
     def center(self) -> QPoint:
