@@ -115,20 +115,20 @@ def parseWCS(img:str|Image.Image) -> WCS:
     except: return None
 
 def checkUsername(username:str) -> bool:
-    return (username != "None") and (username != "")
+    return (username != 'None') and (username != '')
 
 def savefav(username:str,save_list:list) -> None:
 
     save_dir = os.path.join(OUT_DIR, username)
-    fav_out_path = os.path.join(save_dir, 'fav.txt')
+    fav_out_path = os.path.join(save_dir, 'favorites.txt')
 
     # Create the file
     if os.path.exists(fav_out_path):
         os.remove(fav_out_path)
-    out = open(fav_out_path,"a")
+    out = open(fav_out_path,'a')
 
     for name in save_list:
-        out.write(name)
+        out.write(f'{name}\n')
 
 def save(username:str,date,images:list[galmark.image.GImage]) -> None:
     mark_lines = []
@@ -272,14 +272,13 @@ def save(username:str,date,images:list[galmark.image.GImage]) -> None:
 
 def loadfav(username:str) -> list[str]:
     out_path = os.path.join(OUT_DIR, username)
-    favfile = os.path.join(out_path, 'fav.txt')
+    favfile = os.path.join(out_path, 'favorites.txt')
     
     if os.path.exists(favfile):
-        fav_list = [ l for l in open(favfile) ]
+        fav_list = [ l.replace('\n','') for l in open(favfile) ]
     else: fav_list = []
-
-    fav_list = list(set(fav_list))
-    return fav_list
+    
+    return list(set(fav_list))
 
 def load(username:str) -> list[galmark.image.GImage]:
     save_dir = os.path.join(OUT_DIR, username)
