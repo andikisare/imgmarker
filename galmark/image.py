@@ -122,7 +122,7 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         _x, _y = int(w*4), int(h*4)
 
         pixmap = QPixmap(w*9,h*9)
-        pixmap.fill(Qt.GlobalColor.black)
+        pixmap.fill(Qt.GlobalColor.red)
 
         painter = QPainter(pixmap)
         painter.drawPixmap(_x, _y, pixmap_base)
@@ -181,6 +181,7 @@ class ImageScene(QGraphicsScene):
         self.image = image
         self.image.seek(min(self.frame,self.image.n_frames-1))
         self.addItem(self.image)
+        self.setSceneRect(0,0,9*self.image.width,9*self.image.height)
 
     def mark(self,x,y,group):
         mark = Mark(x,y,image=self.image,group=group)
