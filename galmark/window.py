@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
                               QSlider, QLineEdit, QFileDialog )
 from PyQt6.QtGui import QAction, QIcon, QFont
-from PyQt6.QtCore import Qt, QPoint, QPointF
+from PyQt6.QtCore import Qt, QPoint, QPointF, QRectF
 from galmark.mark import Mark
 from galmark import __dirname__, ICON, HEART_SOLID, HEART_CLEAR
 import galmark.io
@@ -298,7 +298,8 @@ class MainWindow(QMainWindow):
         self.pos_widget = PosWidget()
 
         # Create image view
-        self.imageView = QGraphicsView(self.imageScene)       
+        self.imageView = QGraphicsView(self.imageScene)
+        self.fitImage()   
         
         ### Disable scrollbar
         self.imageView.verticalScrollBar().blockSignals(True)
@@ -494,28 +495,19 @@ class MainWindow(QMainWindow):
 
     def inview(self,x,y): return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
 
+    # === Events ===
+
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
         if (source == self.imageView.viewport()) and (event.type() == 31):
             x = event.angleDelta().y() / 120
             if x > 0:
-                self.zoom(-1)
+                self.zoom(1/1.2)
             elif x < 0:
-                self.zoom()
+                self.zoom(1.2)
             return True
 
         return super().eventFilter(source, event)
-    
-    # === Events ===
-
-    def resizeEvent(self, event):
-        '''
-        Resize event; rescales image to fit in window, but keeps aspect ratio
-        '''
-        transform = self.imageView.transform()
-        self.imageView.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
-        self.imageView.setTransform(transform)
-        super().resizeEvent(event)
 
     def keyPressEvent(self,event):
         # Check if key is bound with marking the image
@@ -691,17 +683,22 @@ class MainWindow(QMainWindow):
             global_center = self.imageView.mapToGlobal(center)
             self.cursor().setPos(global_center)
 
-    def zoom(self,scale:int=1):
+    def zoom(self,scale:int=1,mode:str='mouse'):
         # Zoom in on cursor location
-        self.zoomLevel *= 1.2**scale
+        self.zoomLevel *= scale
+        if mode == 'viewport': center = self.imageView.viewport().rect().center()
+        if mode == 'mouse': center = self.mouseViewPos()
 
-        viewPos = self.mouseViewPos()
         transform = self.imageView.transform()
-        center = self.imageView.mapToScene(viewPos)
+        center = self.imageView.mapToScene(center)
         transform.translate(center.x(), center.y())
-        transform.scale(1.2**scale, 1.2**scale)
+        transform.scale(scale, scale)
         transform.translate(-center.x(), -center.y())
         self.imageView.setTransform(transform)
+
+    def fitImage(self):
+        self.imageView.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
+        self.zoom(scale=9,mode='viewport')
 
     # === Update methods ===
 
@@ -722,11 +719,8 @@ class MainWindow(QMainWindow):
         self.image.seek(self.frame)
 
         # Fit back to view if the image dimensions have changed
-        if (self.image.width != _w) or (self.image.height != _h):
-            transform = self.imageView.transform()
-            self.imageView.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
-            self.imageView.setTransform(transform)
-
+        if (self.image.width != _w) or (self.image.height != _h): self.fitImage()
+            
         # Update sliders
         self.blurWindow.slider.valueChanged.disconnect()
         self.adjustmentsWindow.contrastSlider.valueChanged.disconnect()

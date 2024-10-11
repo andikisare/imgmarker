@@ -122,7 +122,7 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         _x, _y = int(w*4), int(h*4)
 
         pixmap = QPixmap(w*9,h*9)
-        pixmap.fill(Qt.GlobalColor.red)
+        pixmap.fill(Qt.GlobalColor.black)
 
         painter = QPainter(pixmap)
         painter.drawPixmap(_x, _y, pixmap_base)
