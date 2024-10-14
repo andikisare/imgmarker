@@ -283,6 +283,7 @@ def load(savename:str) -> list[galmark.image.GImage]:
                 img = galmark.image.open(os.path.join(IMAGE_DIR,name))
                 img.comment = comment
                 img.categories = categories
+                img.seen = True
                 images.append(img)
     
     # Get list of marks for each image
