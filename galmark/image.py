@@ -3,19 +3,17 @@ from PyQt6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem
 from PyQt6.QtGui import QPixmap, QPainter
 from PyQt6.QtCore import Qt
 from galmark.mark import Mark
-from galmark import __dirname__
+from galmark import __dirname__, SUPPORTED_EXTS
 import galmark.io
 import os
 from math import floor
-from PIL import Image, ImageFile
+from PIL import Image, ImageFile, ImageOps
 from PIL.ImageFilter import GaussianBlur
 from PIL.ImageEnhance import Contrast, Brightness
 from astropy.wcs import WCS
 from math import nan
 from astropy.io import fits
 import numpy as np
-
-SUPPORTED_EXTS = ['tif','tiff','fits','fit','png','jpeg','jpg']
 
 def open(path:str) -> GImage | None:
     """
@@ -47,7 +45,7 @@ def open(path:str) -> GImage | None:
         gimage.__dict__ =  image.__dict__
         try: gimage.n_frames = image.n_frames
         except: gimage.n_frames = 1
-        gimage.wcs = galmark.io.parseWCS(image)
+        gimage.wcs = galmark.io.parse_wcs(image)
         gimage.image_file = image
         gimage.name = filename.split(os.sep)[-1] 
 
@@ -115,17 +113,10 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.setPixmap(self.pixmap())
     
     def pixmap(self) -> QPixmap:
-        qimage = self.toqimage()
-        pixmap_base = QPixmap.fromImage(qimage)
-
-        w, h = self.width, self.height
-        _x, _y = int(w*4), int(h*4)
-
-        pixmap = QPixmap(w*9,h*9)
-        pixmap.fill(Qt.GlobalColor.black)
-
+        expanded = ImageOps.expand(self, border = (4*self.width,4*self.height))
+        qimage = expanded.toqimage()
+        pixmap = QPixmap.fromImage(qimage)
         painter = QPainter(pixmap)
-        painter.drawPixmap(_x, _y, pixmap_base)
         painter.end()
 
         return pixmap

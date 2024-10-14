@@ -31,25 +31,25 @@ class AdjustmentsWindow(QWidget):
         self.setLayout(layout)
 
         # Brightness slider
-        self.brightnessSlider = QSlider()
-        self._slider_setup(self.brightnessSlider,self.onBrightnessMoved)
+        self.brightness_slider = QSlider()
+        self._slider_setup(self.brightness_slider,self.brightness_moved)
 
-        self.brightnessLabel = QLabel()
-        self.brightnessLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.brightnessLabel.setText(f'Brightness: {self.brightnessSlider.value()}')
+        self.brightness_label = QLabel()
+        self.brightness_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.brightness_label.setText(f'Brightness: {self.brightness_slider.value()}')
 
         # Contrast slider
-        self.contrastSlider = QSlider()
-        self._slider_setup(self.contrastSlider,self.onContrastMoved)
+        self.contrast_slider = QSlider()
+        self._slider_setup(self.contrast_slider,self.contrast_moved)
 
-        self.contrastLabel = QLabel()
-        self.contrastLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.contrastLabel.setText(f'Contrast: {self.contrastSlider.value()}')
+        self.contrast_label = QLabel()
+        self.contrast_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.contrast_label.setText(f'Contrast: {self.contrast_slider.value()}')
 
-        layout.addWidget(self.brightnessLabel)
-        layout.addWidget(self.brightnessSlider)
-        layout.addWidget(self.contrastLabel)
-        layout.addWidget(self.contrastSlider)
+        layout.addWidget(self.brightness_label)
+        layout.addWidget(self.brightness_slider)
+        layout.addWidget(self.contrast_label)
+        layout.addWidget(self.contrast_slider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.setFixedWidth(int(self.fullw/6))
@@ -68,13 +68,13 @@ class AdjustmentsWindow(QWidget):
         slider.setOrientation(Qt.Orientation.Horizontal)
         slider.sliderMoved.connect(connect)
 
-    def onBrightnessMoved(self,pos):
-        self.brightnessSlider.setValue(floor(pos))
-        self.brightnessLabel.setText(f'Brightness: {floor(self.brightnessSlider.value())/10}')
+    def brightness_moved(self,pos):
+        self.brightness_slider.setValue(floor(pos))
+        self.brightness_label.setText(f'Brightness: {floor(self.brightness_slider.value())/10}')
     
-    def onContrastMoved(self,pos):
-        self.contrastSlider.setValue(floor(pos))
-        self.contrastLabel.setText(f'Contrast: {floor(self.contrastSlider.value())/10}')
+    def contrast_moved(self,pos):
+        self.contrast_slider.setValue(floor(pos))
+        self.contrast_label.setText(f'Contrast: {floor(self.contrast_slider.value())/10}')
 
     def show(self):
         super().show()
@@ -99,13 +99,13 @@ class BlurWindow(QWidget):
         self.slider.setTickInterval(1)
         self.slider.setSingleStep(1)
         self.slider.setOrientation(Qt.Orientation.Horizontal)
-        self.slider.sliderMoved.connect(self.onSliderMoved) 
+        self.slider.sliderMoved.connect(self.slider_moved) 
 
-        self.valueLabel = QLabel()
-        self.valueLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.valueLabel.setText(f'Radius: {self.slider.value()}')
+        self.value_label = QLabel()
+        self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.value_label.setText(f'Radius: {self.slider.value()}')
 
-        layout.addWidget(self.valueLabel)
+        layout.addWidget(self.value_label)
         layout.addWidget(self.slider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFixedWidth(int(self.fullw/6))
@@ -117,9 +117,9 @@ class BlurWindow(QWidget):
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
 
-    def onSliderMoved(self, pos):
+    def slider_moved(self, pos):
         self.slider.setValue(floor(pos))
-        self.valueLabel.setText(f'Radius: {floor(self.slider.value())/10}')
+        self.value_label.setText(f'Radius: {floor(self.slider.value())/10}')
 
     def show(self):
         super().show()
@@ -144,13 +144,13 @@ class FrameWindow(QWidget):
         self.slider.setTickInterval(1)
         self.slider.setSingleStep(1)
         self.slider.setOrientation(Qt.Orientation.Horizontal)
-        self.slider.sliderMoved.connect(self.onSliderMoved) 
+        self.slider.sliderMoved.connect(self.slider_moved) 
 
-        self.valueLabel = QLabel()
-        self.valueLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.valueLabel.setText(f'Frame: {self.slider.value()}')
+        self.value_label = QLabel()
+        self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.value_label.setText(f'Frame: {self.slider.value()}')
 
-        layout.addWidget(self.valueLabel)
+        layout.addWidget(self.value_label)
         layout.addWidget(self.slider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFixedWidth(int(self.fullw/6))
@@ -162,9 +162,9 @@ class FrameWindow(QWidget):
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
 
-    def onSliderMoved(self, pos):
+    def slider_moved(self, pos):
         self.slider.setValue(floor(pos))
-        self.valueLabel.setText(f'Frame: {floor(self.slider.value())}')
+        self.value_label.setText(f'Frame: {floor(self.slider.value())}')
 
     def show(self):
         super().show()
@@ -264,7 +264,7 @@ class MainWindow(QMainWindow):
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
         self.zoomLevel = 1
-        self.cursorFocus = False
+        self.cursor_focus = False
         self.frame = 0
     
         # Initialize data
@@ -274,79 +274,79 @@ class MainWindow(QMainWindow):
         self.imageScene = galmark.image.ImageScene(self.image)
 
         # Setup child windows
-        self.blurWindow = BlurWindow()
-        self.blurWindow.slider.valueChanged.connect(self.image.blur)
+        self.blur_window = BlurWindow()
+        self.blur_window.slider.valueChanged.connect(self.image.blur)
         
-        self.adjustmentsWindow = AdjustmentsWindow()
-        self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.image.contrast)
-        self.adjustmentsWindow.brightnessSlider.valueChanged.connect(self.image.brighten)
+        self.adjust_menu = AdjustmentsWindow()
+        self.adjust_menu.contrast_slider.valueChanged.connect(self.image.contrast)
+        self.adjust_menu.brightness_slider.valueChanged.connect(self.image.brighten)
         
-        self.frameWindow = FrameWindow()
-        self.frameWindow.slider.valueChanged.connect(self.image.seek)
-        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+        self.frame_window = FrameWindow()
+        self.frame_window.slider.valueChanged.connect(self.image.seek)
+        self.frame_window.slider.setMaximum(self.image.n_frames-1)
 
         # Set max blur based on size of image
         self.blur_max = int((self.image.height+self.image.width)/20)
-        self.blurWindow.slider.setMaximum(self.blur_max)
+        self.blur_window.slider.setMaximum(self.blur_max)
 
         # Current image widget
-        self.imageLabel = QLabel(f'{self.image.name} ({self.idx+1} of {self.N})')
-        self.imageLabel.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.imageLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.image_label = QLabel(f'{self.image.name} ({self.idx+1} of {self.N})')
+        self.image_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         # Mouse position widget
         self.pos_widget = PosWidget()
 
         # Create image view
-        self.imageView = QGraphicsView(self.imageScene)
-        self.fitImage()   
+        self.image_view = QGraphicsView(self.imageScene)
+        self.fit_image()   
         
         ### Disable scrollbar
-        self.imageView.verticalScrollBar().blockSignals(True)
-        self.imageView.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.imageView.horizontalScrollBar().blockSignals(True)
-        self.imageView.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.image_view.verticalScrollBar().blockSignals(True)
+        self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.image_view.horizontalScrollBar().blockSignals(True)
+        self.image_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         ### Image view position setup and mouse tracking
-        self.imageView.move(0, 0)
-        self.imageView.setTransformationAnchor(self.imageView.ViewportAnchor(1))
-        self.imageView.setMouseTracking(True)
-        self.imageView.mouseMoveEvent = self.mouseMoveEvent
+        self.image_view.move(0, 0)
+        self.image_view.setTransformationAnchor(self.image_view.ViewportAnchor(1))
+        self.image_view.setMouseTracking(True)
+        self.image_view.mouseMoveEvent = self.mouseMoveEvent
 
         ### Install event filters
-        self.imageView.viewport().installEventFilter(self)
+        self.image_view.viewport().installEventFilter(self)
 
         # Back widget
-        self.backButton = QPushButton(text='Back',parent=self)
-        self.backButton.setFixedHeight(40)
-        self.backButton.clicked.connect(partial(self.shift,-1))
-        self.backButton.setShortcut('Shift+Tab')
-        self.backButton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.back_button = QPushButton(text='Back',parent=self)
+        self.back_button.setFixedHeight(40)
+        self.back_button.clicked.connect(partial(self.shift,-1))
+        self.back_button.setShortcut('Shift+Tab')
+        self.back_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # Enter Button
-        self.submitButton = QPushButton(text='Enter',parent=self)
-        self.submitButton.setFixedHeight(40)
-        self.submitButton.clicked.connect(self.enter)
-        self.submitButton.setShortcut('Return')
-        self.submitButton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.submit_button = QPushButton(text='Enter',parent=self)
+        self.submit_button.setFixedHeight(40)
+        self.submit_button.clicked.connect(self.enter)
+        self.submit_button.setShortcut('Return')
+        self.submit_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # Next widget
-        self.nextButton = QPushButton(text='Next',parent=self)
-        self.nextButton.setFixedHeight(40)
-        self.nextButton.clicked.connect(partial(self.shift,1))
-        self.nextButton.setShortcut('Tab')
-        self.nextButton.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.next_button = QPushButton(text='Next',parent=self)
+        self.next_button.setFixedHeight(40)
+        self.next_button.clicked.connect(partial(self.shift,1))
+        self.next_button.setShortcut('Tab')
+        self.next_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # Comment widget
-        self.commentBox = QLineEdit(parent=self)
-        self.commentBox.setFixedHeight(40)
+        self.comment_box = QLineEdit(parent=self)
+        self.comment_box.setFixedHeight(40)
     
         # Botton Bar layout
-        self.bottomLayout = QHBoxLayout()
-        self.bottomLayout.addWidget(self.backButton)
-        self.bottomLayout.addWidget(self.nextButton)
-        self.bottomLayout.addWidget(self.commentBox)
-        self.bottomLayout.addWidget(self.submitButton)
+        self.bottom_layout = QHBoxLayout()
+        self.bottom_layout.addWidget(self.back_button)
+        self.bottom_layout.addWidget(self.next_button)
+        self.bottom_layout.addWidget(self.comment_box)
+        self.bottom_layout.addWidget(self.submit_button)
         
         ### Category widgets
         self.categories_layout = QHBoxLayout()
@@ -375,85 +375,85 @@ class MainWindow(QMainWindow):
         # Add widgets to main layout
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
-        layout.addWidget(self.imageLabel)
-        layout.addWidget(self.imageView)
+        layout.addWidget(self.image_label)
+        layout.addWidget(self.image_view)
         layout.addWidget(self.pos_widget)
         layout.addWidget(QHLine())
-        layout.addLayout(self.bottomLayout)
+        layout.addLayout(self.bottom_layout)
         layout.addLayout(self.categories_layout)
         self.setCentralWidget(central_widget)
         
         # Menu bar
-        menuBar = self.menuBar()
+        menu_bar = self.menuBar()
 
         ## File menu
-        fileMenu = menuBar.addMenu("&File")
+        file_menu = menu_bar.addMenu("&File")
 
         ### Exit menu
-        exitMenu = QAction('&Exit', self)
-        exitMenu.setShortcuts(['Esc','q'])
-        exitMenu.setStatusTip('Exit')
-        exitMenu.triggered.connect(self.closeEvent)
-        fileMenu.addAction(exitMenu)
+        exit_menu = QAction('&Exit', self)
+        exit_menu.setShortcuts(['Esc','q'])
+        exit_menu.setStatusTip('Exit')
+        exit_menu.triggered.connect(self.closeEvent)
+        file_menu.addAction(exit_menu)
 
         ### Open file menu
-        openMenu = QAction('&Open', self)
-        openMenu.setShortcuts(['Ctrl+o'])
-        openMenu.setStatusTip('Open save directory')
-        openMenu.triggered.connect(self.open)
-        fileMenu.addAction(openMenu)
+        open_menu = QAction('&Open', self)
+        open_menu.setShortcuts(['Ctrl+o'])
+        open_menu.setStatusTip('Open save directory')
+        open_menu.triggered.connect(self.open)
+        file_menu.addAction(open_menu)
 
         ### Open image folder menu
-        openDirMenu = QAction('&Open image directory', self)
-        openDirMenu.setShortcuts(['Ctrl+Shift+o'])
-        openDirMenu.setStatusTip('Open image directory')
-        openDirMenu.triggered.connect(self.openDir)
-        fileMenu.addAction(openDirMenu)
+        open_ims_menu = QAction('&Open image directory', self)
+        open_ims_menu.setShortcuts(['Ctrl+Shift+o'])
+        open_ims_menu.setStatusTip('Open image directory')
+        open_ims_menu.triggered.connect(self.open_ims)
+        file_menu.addAction(open_ims_menu)
 
         ## View menu
-        viewMenu = menuBar.addMenu("&View")
+        view_menu = menu_bar.addMenu("&View")
 
         ### Frame menu
-        frameMenu = QAction('&Frames...', self)
-        frameMenu.setShortcuts(['Ctrl+f'])
-        frameMenu.setStatusTip('Frames...')
-        frameMenu.triggered.connect(self.frameWindow.show)
-        viewMenu.addAction(frameMenu)
+        frame_menu = QAction('&Frames...', self)
+        frame_menu.setShortcuts(['Ctrl+f'])
+        frame_menu.setStatusTip('Frames...')
+        frame_menu.triggered.connect(self.frame_window.show)
+        view_menu.addAction(frame_menu)
 
         ### Focus cursor menu
-        cursorFocusMenu = QAction('&Focus cursor', self)
-        cursorFocusMenu.setStatusTip('Focus cursor')
-        cursorFocusMenu.setCheckable(True)
-        cursorFocusMenu.triggered.connect(partial(setattr,self,'cursorFocus'))
-        viewMenu.addAction(cursorFocusMenu)
+        cursor_focus_menu = QAction('&Focus cursor', self)
+        cursor_focus_menu.setStatusTip('Focus cursor')
+        cursor_focus_menu.setCheckable(True)
+        cursor_focus_menu.triggered.connect(partial(setattr,self,'cursor_focus'))
+        view_menu.addAction(cursor_focus_menu)
 
         ## Filter menu
-        filterMenu = menuBar.addMenu("&Filters")
+        filter_menu = menu_bar.addMenu("&Filters")
 
         ### Blur
-        blurMenu = QAction('&Gaussian Blur...',self)
-        blurMenu.setStatusTip("Gaussian Blur")
-        blurMenu.setShortcuts(['Ctrl+b'])
-        blurMenu.triggered.connect(self.blurWindow.show)
-        filterMenu.addAction(blurMenu)
+        blur_menu = QAction('&Gaussian Blur...',self)
+        blur_menu.setStatusTip("Gaussian Blur")
+        blur_menu.setShortcuts(['Ctrl+b'])
+        blur_menu.triggered.connect(self.blur_window.show)
+        filter_menu.addAction(blur_menu)
 
         ### Brightness and Contrast
-        adjustMenu = QAction('&Brightness and Contrast...',self)
-        adjustMenu.setStatusTip("Brightness and Contrast")
-        adjustMenu.setShortcuts(['Ctrl+a'])
-        adjustMenu.triggered.connect(self.adjustmentsWindow.show)
-        filterMenu.addAction(adjustMenu)
+        adjust_menu = QAction('&Brightness and Contrast...',self)
+        adjust_menu.setStatusTip("Brightness and Contrast")
+        adjust_menu.setShortcuts(['Ctrl+a'])
+        adjust_menu.triggered.connect(self.adjust_menu.show)
+        filter_menu.addAction(adjust_menu)
 
         ## Help menu
-        helpMenu = menuBar.addMenu('&Help')
+        help_menu = menu_bar.addMenu('&Help')
 
         ### Instructions and Keymapping window
-        self.instructionsWindow = InstructionsWindow(galmark.io.GROUP_NAMES)
-        instructionsMenu = QAction('&Instructions', self)
-        instructionsMenu.setShortcuts(['F1'])
-        instructionsMenu.setStatusTip('Instructions')
-        instructionsMenu.triggered.connect(self.instructionsWindow.show)
-        helpMenu.addAction(instructionsMenu)
+        self.instructions_window = InstructionsWindow(galmark.io.GROUP_NAMES)
+        instructions_menu = QAction('&Instructions', self)
+        instructions_menu.setShortcuts(['F1'])
+        instructions_menu.setStatusTip('Instructions')
+        instructions_menu.triggered.connect(self.instructions_window.show)
+        help_menu.addAction(instructions_menu)
         
         # Resize and center MainWindow; move instructions off to the right
         self.resize(int(self.fullw/2.5),int(self.fullw/2.5))
@@ -462,13 +462,13 @@ class MainWindow(QMainWindow):
         center -= QPoint(self.width(),self.height())/2
         self.move(center)
 
-        self.instructionsWindow.move(int(self.x()+self.width()*1.04),self.y())
-        self.instructionsWindow.show()
+        self.instructions_window.move(int(self.x()+self.width()*1.04),self.y())
+        self.instructions_window.show()
 
         # Initialize some data
-        self.getComment()
-        self.markUpdate()
-        self.categoryUpdate()
+        self.get_comment()
+        self.update_marks()
+        self.update_categories()
 
     def __init_data__(self):
         # Initialize output dictionary
@@ -487,7 +487,7 @@ class MainWindow(QMainWindow):
             # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
             #          f"Please specify a different image directory in galmark.cfg and try again.")
             image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", galmark.io.IMAGE_DIR),'')
-            galmark.io.configUpdate(image_dir=image_dir)
+            galmark.io.update_config(image_dir=image_dir)
             self.images, self.idx = galmark.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seen = True
@@ -499,7 +499,7 @@ class MainWindow(QMainWindow):
 
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
-        if (source == self.imageView.viewport()) and (event.type() == 31):
+        if (source == self.image_view.viewport()) and (event.type() == 31):
             x = event.angleDelta().y() / 120
             if x > 0:
                 self.zoom(1/1.2)
@@ -511,12 +511,12 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self,event):
         # Check if key is bound with marking the image
-        markButtons = galmark.io.markCheck(event)
+        markButtons = galmark.io.check_marks(event)
         for i in range(0,9):
             if markButtons[i]: self.mark(group=i+1)
 
         if (event.key() == Qt.Key.Key_Backspace) or (event.key() == Qt.Key.Key_Delete):
-            self.deleteMarks()
+            self.del_marks()
 
         if (event.key() == Qt.Key.Key_Space):
             modifiers = QApplication.keyboardModifiers()
@@ -529,20 +529,20 @@ class MainWindow(QMainWindow):
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
-        markButtons = galmark.io.markCheck(event)
+        markButtons = galmark.io.check_marks(event)
         for i in range(0,9):
             if markButtons[i]: self.mark(group=i+1)
         
         if (event.button() == Qt.MouseButton.MiddleButton):
-            self.middleMouse()
+            self.middle_mouse()
 
         if (event.button() == Qt.MouseButton.RightButton):
-            self.deleteMarks()
+            self.del_marks()
 
     def mouseMoveEvent(self, event):
         # Mark if hovering over image
-        pixPos = self.mousePixPos()
-        x, y = pixPos.x(), pixPos.y()
+        pix_pos = self.mouse_pix_pos()
+        x, y = pix_pos.x(), pix_pos.y()
 
         if self.inview(x,y):
             _x, _y = x, self.image.height - y
@@ -564,7 +564,7 @@ class MainWindow(QMainWindow):
             self.pos_widget.dec_text.setText('')
 
     def closeEvent(self, event):
-        self.commentUpdate()
+        self.update_comments()
         sys.exit()
     
     # === Actions ===
@@ -578,26 +578,26 @@ class MainWindow(QMainWindow):
         if not self.username.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR
         
         self.__init_data__()
-        self.imageUpdate()
-        self.markUpdate()
-        self.getComment()
-        self.categoryUpdate()
-        self.commentUpdate()
-        self.favoriteUpdate()
+        self.update_images()
+        self.update_marks()
+        self.get_comment()
+        self.update_categories()
+        self.update_comments()
+        self.update_favorites()
 
-    def openDir(self):
+    def open_ims(self):
         image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
-        galmark.io.configUpdate(image_dir=image_dir)
+        galmark.io.update_config(image_dir=image_dir)
         self.images, self.idx = galmark.io.glob(edited_images=[])
         self.image = self.images[self.idx]
         self.image.seen = True
         self.N = len(self.images)
 
-        self.imageUpdate()
-        self.markUpdate()
-        self.getComment()
-        self.categoryUpdate()
-        self.commentUpdate()
+        self.update_images()
+        self.update_marks()
+        self.get_comment()
+        self.update_categories()
+        self.update_comments()
 
     def favorite(self,state):
         state = Qt.CheckState(state)
@@ -625,8 +625,8 @@ class MainWindow(QMainWindow):
         '''
 
         # get event position and position on image
-        pixPos = self.mousePixPos()
-        x, y = pixPos.x(), pixPos.y()
+        pix_pos = self.mouse_pix_pos()
+        x, y = pix_pos.x(), pix_pos.y()
         
         # Mark if hovering over image
         if galmark.io.GROUP_MAX[group - 1] == 'None': limit = inf
@@ -657,52 +657,52 @@ class MainWindow(QMainWindow):
         elif self.idx < 0:
             self.idx = self.N-1
 
-        self.commentUpdate()
-        self.imageUpdate()
-        self.markUpdate()
-        self.getComment()
-        self.categoryUpdate()
-        self.favoriteUpdate()
+        self.update_comments()
+        self.update_images()
+        self.update_marks()
+        self.get_comment()
+        self.update_categories()
+        self.update_favorites()
             
     def enter(self):
-        self.commentUpdate()
-        self.commentBox.clearFocus()
+        self.update_comments()
+        self.comment_box.clearFocus()
         galmark.io.save(self.username,self.date,self.images)
         galmark.io.savefav(self.username,self.favorite_list)
 
-    def middleMouse(self):
+    def middle_mouse(self):
         # Center on cursor
-        center = self.imageView.viewport().rect().center()
-        scene_center = self.imageView.mapToScene(center)
-        pixPos = self.mousePixPos() + 4*QPoint(self.image.width,self.image.height)
+        center = self.image_view.viewport().rect().center()
+        scene_center = self.image_view.mapToScene(center)
+        pix_pos = self.mouse_pix_pos() + 4*QPoint(self.image.width,self.image.height)
 
-        delta = scene_center.toPoint() - pixPos
-        self.imageView.translate(delta.x(),delta.y())
+        delta = scene_center.toPoint() - pix_pos
+        self.image_view.translate(delta.x(),delta.y())
 
-        if self.cursorFocus:
-            global_center = self.imageView.mapToGlobal(center)
+        if self.cursor_focus:
+            global_center = self.image_view.mapToGlobal(center)
             self.cursor().setPos(global_center)
 
     def zoom(self,scale:int=1,mode:str='mouse'):
         # Zoom in on cursor location
         self.zoomLevel *= scale
-        if mode == 'viewport': center = self.imageView.viewport().rect().center()
-        if mode == 'mouse': center = self.mouseViewPos()
+        if mode == 'viewport': center = self.image_view.viewport().rect().center()
+        if mode == 'mouse': center = self.mouse_view_pos()
 
-        transform = self.imageView.transform()
-        center = self.imageView.mapToScene(center)
+        transform = self.image_view.transform()
+        center = self.image_view.mapToScene(center)
         transform.translate(center.x(), center.y())
         transform.scale(scale, scale)
         transform.translate(-center.x(), -center.y())
-        self.imageView.setTransform(transform)
+        self.image_view.setTransform(transform)
 
-    def fitImage(self):
-        self.imageView.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
+    def fit_image(self):
+        self.image_view.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
         self.zoom(scale=9,mode='viewport')
 
     # === Update methods ===
 
-    def favoriteUpdate(self):
+    def update_favorites(self):
         if self.image.name in self.favorite_list:
             self.favorite_box.setChecked(True)
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
@@ -710,7 +710,7 @@ class MainWindow(QMainWindow):
             self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             self.favorite_box.setChecked(False)
 
-    def imageUpdate(self):
+    def update_images(self):
         # Update scene
         _w, _h = self.image.width, self.image.height
         self.image = self.images[self.idx]
@@ -719,29 +719,29 @@ class MainWindow(QMainWindow):
         self.image.seek(self.frame)
 
         # Fit back to view if the image dimensions have changed
-        if (self.image.width != _w) or (self.image.height != _h): self.fitImage()
+        if (self.image.width != _w) or (self.image.height != _h): self.fit_image()
             
         # Update sliders
-        self.blurWindow.slider.valueChanged.disconnect()
-        self.adjustmentsWindow.contrastSlider.valueChanged.disconnect()
-        self.adjustmentsWindow.brightnessSlider.valueChanged.disconnect()
-        self.frameWindow.slider.valueChanged.disconnect()
+        self.blur_window.slider.valueChanged.disconnect()
+        self.adjust_menu.contrast_slider.valueChanged.disconnect()
+        self.adjust_menu.brightness_slider.valueChanged.disconnect()
+        self.frame_window.slider.valueChanged.disconnect()
 
-        self.blurWindow.slider.valueChanged.connect(self.image.blur)
-        self.adjustmentsWindow.contrastSlider.valueChanged.connect(self.image.contrast)
-        self.adjustmentsWindow.brightnessSlider.valueChanged.connect(self.image.brighten)
-        self.frameWindow.slider.valueChanged.connect(self.image.seek)
+        self.blur_window.slider.valueChanged.connect(self.image.blur)
+        self.adjust_menu.contrast_slider.valueChanged.connect(self.image.contrast)
+        self.adjust_menu.brightness_slider.valueChanged.connect(self.image.brighten)
+        self.frame_window.slider.valueChanged.connect(self.image.seek)
 
-        self.frameWindow.slider.setMaximum(self.image.n_frames-1)
+        self.frame_window.slider.setMaximum(self.image.n_frames-1)
         self.blur_max = int((self.image.height+self.image.width)/20)
-        self.blurWindow.slider.setMaximum(self.blur_max)
+        self.blur_window.slider.setMaximum(self.blur_max)
 
         # Update image label
-        self.imageLabel.setText(f'{self.image.name} ({self.idx+1} of {self.N})')
+        self.image_label.setText(f'{self.image.name} ({self.idx+1} of {self.N})')
     
-    def commentUpdate(self):
+    def update_comments(self):
         # Update the comment in the dictionary
-        comment = self.commentBox.text()
+        comment = self.comment_box.text()
         if not comment:
             comment = 'None'
 
@@ -749,19 +749,19 @@ class MainWindow(QMainWindow):
         galmark.io.save(self.username,self.date,self.images)
         galmark.io.savefav(self.username,self.favorite_list)
 
-    def getComment(self):
+    def get_comment(self):
         if bool(self.image.comment):
             if (self.image.comment == 'None'):
-                self.commentBox.setText('')
+                self.comment_box.setText('')
             else:
                 comment = self.image.comment
-                self.commentBox.setText(comment)
+                self.comment_box.setText(comment)
         else:
             comment = 'None'
             self.image.comment = comment
-            self.commentBox.setText('')
+            self.comment_box.setText('')
 
-    def categoryUpdate(self):
+    def update_categories(self):
         # Initialize category and update checkboxes
         for box in self.category_boxes: box.setChecked(False)
         if not self.image.categories:
@@ -771,15 +771,15 @@ class MainWindow(QMainWindow):
             for i in category_list:
                 self.category_boxes[i-1].setChecked(True)
 
-    def markUpdate(self):
+    def update_marks(self):
         # Redraws all marks in image
         for mark in self.image.marks: self.imageScene.addItem(mark)
 
-    def deleteMarks(self):
-        pixPos = self.mousePixPos().toPointF() + 4*QPointF(self.image.width,self.image.height)
+    def del_marks(self):
+        pix_pos = self.mouse_pix_pos().toPointF() + 4*QPointF(self.image.width,self.image.height)
         selected_items = [ item for item in self.imageScene.items() 
                            if isinstance(item,Mark) 
-                           and (item is self.imageScene.itemAt(pixPos, item.transform()))]
+                           and (item is self.imageScene.itemAt(pix_pos, item.transform()))]
         
         for item in selected_items:
             self.imageScene.removeItem(item)
@@ -789,31 +789,31 @@ class MainWindow(QMainWindow):
 
     # === Utils ===
 
-    def mouseViewPos(self):
+    def mouse_view_pos(self):
         '''
         Gets mouse positions
 
         Returns:
-            viewPos: position of mouse in the pixmap
+            view_pos: position of mouse in the pixmap
         '''
-        return self.imageView.mapFromGlobal(self.cursor().pos())
+        return self.image_view.mapFromGlobal(self.cursor().pos())
     
-    def mousePixPos(self):
+    def mouse_pix_pos(self):
         '''
         Gets mouse positions
 
         Returns:
-            pixPos: position of mouse in the pixmap
+            pix_pos: position of mouse in the pixmap
         '''
-        viewPos = self.imageView.mapFromGlobal(self.cursor().pos())
-        scenePos = self.imageView.mapToScene(viewPos)
+        view_pos = self.image_view.mapFromGlobal(self.cursor().pos())
+        scene_pos = self.image_view.mapToScene(view_pos)
 
         # Get the pixel coordinates (including padding; half-pixel offset required)
-        pixPos = self.image.mapFromScene(scenePos) - QPointF(0.5,0.5)
+        pix_pos = self.image.mapFromScene(scene_pos) - QPointF(0.5,0.5)
 
         # Get the true pixel coordinates (ignoring padding)
-        pixPos -= 4*QPointF(self.image.width,self.image.height)
+        pix_pos -= 4*QPointF(self.image.width,self.image.height)
         
-        return pixPos.toPoint()
+        return pix_pos.toPoint()
 
     

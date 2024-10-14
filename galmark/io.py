@@ -3,7 +3,7 @@ import numpy as np
 import galmark.window
 from galmark.mark import Mark
 import galmark.image
-from galmark import __dirname__
+from galmark import __dirname__, CONFIG
 from PyQt6.QtCore import Qt
 from PIL import Image
 from PIL.TiffTags import TAGS
@@ -16,14 +16,14 @@ from math import nan, isnan
 
 SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or numbers.')
 
-def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],list[int]]:
+def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
     '''
     Read each line from the config and parse it
     '''
 
     # If the config doesn't exist, create one
-    if not os.path.exists(config):
-        config_file = open(config,'w')
+    if not os.path.exists(CONFIG):
+        config_file = open(CONFIG,'w')
         
         out_dir = os.path.join(os.getcwd(),'')
         image_dir = os.path.join(os.getcwd(),'')
@@ -38,7 +38,7 @@ def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],li
         config_file.write('group_max = None,None,None,None,None,None,None,None,None')
 
     else:
-        for l in open(config):
+        for l in open(CONFIG):
             var, val = [i.strip() for i in l.replace('\n','').split('=')]
 
             if var == 'out_dir':
@@ -68,9 +68,9 @@ def readConfig(config:str='galmark.cfg') -> tuple[str,str,list[str],list[str],li
         
     return out_dir, image_dir, group_names, category_names, group_max
 
-OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX = readConfig()
+OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX = read_config()
     
-def markCheck(event):
+def check_marks(event):
     button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
 
     try: button1 = event.button() == Qt.MouseButton.LeftButton
@@ -89,7 +89,7 @@ def markCheck(event):
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
-def parseWCS(img:str|Image.Image) -> WCS:
+def parse_wcs(img:str|Image.Image) -> WCS:
     try:
         #tif_image_data = np.array(Image.open(image_tif))
         if type(img) == str: img = Image.open(img)
@@ -116,7 +116,7 @@ def parseWCS(img:str|Image.Image) -> WCS:
         return wcs
     except: return None
 
-def saveCheck(savename:str) -> bool:
+def check_save(savename:str) -> bool:
     return (savename != 'None') and (savename != '')
 
 def savefav(savename:str,save_list:list) -> None:
@@ -159,7 +159,7 @@ def save(savename:str,date,images:list[galmark.image.GImage]) -> None:
     mark_out = open(mark_out_path,"a")
     images_out = open(images_out_path,"a")
 
-    if saveCheck(savename) and images:
+    if check_save(savename) and images:
         for img in images:
             if img.seen:
                 name = img.name
@@ -324,14 +324,14 @@ def inputs() -> str:
     savename = galmark.window.StartupWindow().getUser()
     return savename
 
-def configUpdate(out_dir=OUT_DIR, image_dir=IMAGE_DIR, group_names=GROUP_NAMES, category_names=CATEGORY_NAMES, group_max=GROUP_MAX, config:str='galmark.cfg'):
+def update_config(out_dir=OUT_DIR, image_dir=IMAGE_DIR, group_names=GROUP_NAMES, category_names=CATEGORY_NAMES, group_max=GROUP_MAX):
     global OUT_DIR; OUT_DIR = out_dir
     global IMAGE_DIR; IMAGE_DIR = image_dir
     global GROUP_NAMES; GROUP_NAMES = group_names
     global CATEGORY_NAMES; CATEGORY_NAMES = category_names
     global GROUP_MAX; GROUP_MAX = group_max
     
-    config_file = open(config,'w')
+    config_file = open(CONFIG,'w')
     config_file.write(f'out_dir = {out_dir}\n')
     config_file.write(f'image_dir = {image_dir}\n')
     config_file.write(f'groups = {','.join(group_names[1:])}\n')
