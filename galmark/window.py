@@ -263,7 +263,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(ICON))
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
-        self.zoomLevel = 1
+        self.zoom_level = 1
         self.cursor_focus = False
         self.frame = 0
     
@@ -674,7 +674,7 @@ class MainWindow(QMainWindow):
         # Center on cursor
         center = self.image_view.viewport().rect().center()
         scene_center = self.image_view.mapToScene(center)
-        pix_pos = self.mouse_pix_pos() + 4*QPoint(self.image.width,self.image.height)
+        pix_pos = self.mouse_pix_pos(correction=False)
 
         delta = scene_center.toPoint() - pix_pos
         self.image_view.translate(delta.x(),delta.y())
@@ -685,7 +685,7 @@ class MainWindow(QMainWindow):
 
     def zoom(self,scale:int=1,mode:str='mouse'):
         # Zoom in on cursor location
-        self.zoomLevel *= scale
+        self.zoom_level *= scale
         if mode == 'viewport': center = self.image_view.viewport().rect().center()
         if mode == 'mouse': center = self.mouse_view_pos()
 
@@ -742,41 +742,31 @@ class MainWindow(QMainWindow):
     def update_comments(self):
         # Update the comment in the dictionary
         comment = self.comment_box.text()
-        if not comment:
-            comment = 'None'
+        if not comment: comment = 'None'
 
         self.image.comment = comment
         galmark.io.save(self.username,self.date,self.images)
         galmark.io.savefav(self.username,self.favorite_list)
 
     def get_comment(self):
-        if bool(self.image.comment):
-            if (self.image.comment == 'None'):
-                self.comment_box.setText('')
-            else:
-                comment = self.image.comment
-                self.comment_box.setText(comment)
-        else:
-            comment = 'None'
-            self.image.comment = comment
+        if (self.image.comment == 'None'):
             self.comment_box.setText('')
+        else:
+            comment = self.image.comment
+            self.comment_box.setText(comment)
 
     def update_categories(self):
         # Initialize category and update checkboxes
         for box in self.category_boxes: box.setChecked(False)
-        if not self.image.categories:
-            self.image.categories = []
-        else:
-            category_list = self.image.categories
-            for i in category_list:
-                self.category_boxes[i-1].setChecked(True)
+        for i in self.image.categories:
+            self.category_boxes[i-1].setChecked(True)
 
     def update_marks(self):
         # Redraws all marks in image
         for mark in self.image.marks: self.imageScene.addItem(mark)
 
     def del_marks(self):
-        pix_pos = self.mouse_pix_pos().toPointF() + 4*QPointF(self.image.width,self.image.height)
+        pix_pos = self.mouse_pix_pos(correction=False).toPointF()
         selected_items = [ item for item in self.imageScene.items() 
                            if isinstance(item,Mark) 
                            and (item is self.imageScene.itemAt(pix_pos, item.transform()))]
@@ -798,7 +788,7 @@ class MainWindow(QMainWindow):
         '''
         return self.image_view.mapFromGlobal(self.cursor().pos())
     
-    def mouse_pix_pos(self):
+    def mouse_pix_pos(self,correction:bool=True):
         '''
         Gets mouse positions
 
@@ -812,7 +802,7 @@ class MainWindow(QMainWindow):
         pix_pos = self.image.mapFromScene(scene_pos) - QPointF(0.5,0.5)
 
         # Get the true pixel coordinates (ignoring padding)
-        pix_pos -= 4*QPointF(self.image.width,self.image.height)
+        if correction: pix_pos -= 4*QPointF(self.image.width,self.image.height)
         
         return pix_pos.toPoint()
 
