@@ -242,8 +242,9 @@ class StartupWindow(QInputDialog):
         text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
         if not text.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR
 
-        if OK: return text
-        else: sys.exit()
+        if not OK: sys.exit()
+        elif not text.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR 
+        else: return text
 
 class MainWindow(QMainWindow):
     def __init__(self, username:str):
