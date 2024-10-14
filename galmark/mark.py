@@ -13,7 +13,7 @@ class Mark(QGraphicsEllipseItem):
         self.image = image
         self.g = group
         self.c = COLORS[self.g]
-        _x, _y = x + 4*self.image.width, y + 4*self.image.width
+        _x, _y = x + 4*self.image.width + 0.5, y + 4*self.image.height + 0.5
 
         super(Mark, self).__init__(_x-r,_y-r,2*r,2*r)
 
