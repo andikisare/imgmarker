@@ -60,6 +60,8 @@ def open(path:str) -> GImage | None:
         # Get bytes from image (I dont think this does anything)
         gimage.frombytes(image.tobytes())
 
+        super(QGraphicsPixmapItem,gimage).__init__(QPixmap())
+
         return gimage
     
 class GImage(Image.Image,QGraphicsPixmapItem):
@@ -81,7 +83,7 @@ class GImage(Image.Image,QGraphicsPixmapItem):
     
     def __init_item__(self):
         # Initialize QGraphicsPixmapItem
-        super(QGraphicsPixmapItem,self).__init__(self.pixmap())
+        self.setPixmap(self.pixmap())
 
     def _new(self, im) -> GImage:
         new = GImage()

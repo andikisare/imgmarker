@@ -248,17 +248,6 @@ class StartupWindow(QInputDialog):
 
 class MainWindow(QMainWindow):
     def __init__(self, username:str):
-        '''
-        Constructor
-
-        Required Inputs:
-            main (Tk): root to which the tkinter widgets are added
-
-        Optional Inputs:
-            path (string): path to directory containing candidate images
-            imtype (string): file extension of images to be ranked
-            outfile (string): filename of text file for saving data
-        '''
         super().__init__()
         self.setWindowTitle("Galaxy Marker")
         self.setWindowIcon(QIcon(ICON))
@@ -592,7 +581,9 @@ class MainWindow(QMainWindow):
         self.update_favorites()
 
     def open_ims(self):
-        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
+        image_dir = ''
+        while (image_dir == ''):
+            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
         galmark.io.update_config(image_dir=image_dir)
         self.images, self.idx = galmark.io.glob(edited_images=[])
         try: self.image.clear_pixmap()
@@ -601,7 +592,7 @@ class MainWindow(QMainWindow):
         self.image.__init_item__()
         self.image.seen = True
         self.N = len(self.images)
-
+    
         self.update_images()
         self.update_marks()
         self.get_comment()
