@@ -35,7 +35,6 @@ def open(path:str) -> GImage | None:
             img_array = img_array.byteswap()
             image = Image.fromarray(img_array, mode='F')
             filename = path.split(os.sep)[-1]
-            print(filename)
             image = image.convert('RGB') 
         else:
             image = Image.open(path)
