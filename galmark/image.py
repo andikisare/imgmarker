@@ -112,10 +112,17 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.setPixmap(self.pixmap())
     
     def pixmap(self) -> QPixmap:
-        expanded = ImageOps.expand(self, border = (4*self.width,4*self.height))
-        qimage = expanded.toqimage()
-        pixmap = QPixmap.fromImage(qimage)
+        qimage = self.toqimage()
+        pixmap_base = QPixmap.fromImage(qimage)
+
+        w, h = self.height, self.width
+        _x, _y = int(w*4), int(h*4)
+
+        pixmap = QPixmap(w*9,h*9)
+        pixmap.fill(Qt.GlobalColor.black)
+
         painter = QPainter(pixmap)
+        painter.drawPixmap(_x, _y, pixmap_base)
         painter.end()
 
         return pixmap
