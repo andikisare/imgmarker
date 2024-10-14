@@ -59,12 +59,9 @@ def open(path:str) -> GImage | None:
 
         # Get bytes from image (I dont think this does anything)
         gimage.frombytes(image.tobytes())
-        
-        # Initialize QGraphicsPixmapItem
-        super(QGraphicsPixmapItem,gimage).__init__(gimage.pixmap())
 
         return gimage
-
+    
 class GImage(Image.Image,QGraphicsPixmapItem):
     def __init__(self):
         # Initialize from parents
@@ -81,7 +78,11 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.categories:list[str]
         self.marks:list[Mark]
         self.seen:bool
- 
+    
+    def __init_item__(self):
+        # Initialize QGraphicsPixmapItem
+        super(QGraphicsPixmapItem,self).__init__(self.pixmap())
+
     def _new(self, im) -> GImage:
         new = GImage()
         new.im = im
@@ -96,6 +97,9 @@ class GImage(Image.Image,QGraphicsPixmapItem):
                 new.palette = ImagePalette.ImagePalette()
         new.info = self.info.copy()
         return new
+    
+    def clear_pixmap(self):
+        self.setPixmap(QPixmap())
     
     def tell(self) -> None: return self.image_file.tell()
 

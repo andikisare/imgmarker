@@ -478,10 +478,14 @@ class MainWindow(QMainWindow):
         self.favorite_list = galmark.io.loadfav(self.username)
 
         # Find all images in image directory
+
+        try: self.image.clear_pixmap()
+        except: pass
         
         try:
             self.images, self.idx = galmark.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
+            self.image.__init_item__()
             self.image.seen = True
             self.N = len(self.images)
         except:
@@ -491,6 +495,7 @@ class MainWindow(QMainWindow):
             galmark.io.update_config(image_dir=image_dir)
             self.images, self.idx = galmark.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
+            self.image.__init_item__()
             self.image.seen = True
             self.N = len(self.images)
 
@@ -590,7 +595,10 @@ class MainWindow(QMainWindow):
         image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
         galmark.io.update_config(image_dir=image_dir)
         self.images, self.idx = galmark.io.glob(edited_images=[])
+        try: self.image.clear_pixmap()
+        except: pass
         self.image = self.images[self.idx]
+        self.image.__init_item__()
         self.image.seen = True
         self.N = len(self.images)
 
@@ -714,7 +722,10 @@ class MainWindow(QMainWindow):
     def update_images(self):
         # Update scene
         _w, _h = self.image.width, self.image.height
+        try: self.image.clear_pixmap()
+        except: pass
         self.image = self.images[self.idx]
+        self.image.__init_item__()
         self.image.seen = True
         self.imageScene.update(self.image)
         self.image.seek(self.frame)
