@@ -121,7 +121,7 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         qimage = self.toqimage()
         pixmap_base = QPixmap.fromImage(qimage)
 
-        w, h = self.height, self.width
+        w, h = self.width, self.height
         _x, _y = int(w*4), int(h*4)
 
         pixmap = QPixmap(w*9,h*9)
