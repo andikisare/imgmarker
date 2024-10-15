@@ -14,6 +14,7 @@ from astropy.wcs import WCS
 from math import nan
 from astropy.io import fits
 import numpy as np
+import time
 
 def open(path:str) -> GImage | None:
     """
@@ -56,15 +57,15 @@ def open(path:str) -> GImage | None:
         gimage.categories = []
         gimage.marks = []
         gimage.seen = False
+        gimage.frame = 0
 
         # Get bytes from image (I dont think this does anything)
         gimage.frombytes(image.tobytes())
-        
-        # Initialize QGraphicsPixmapItem
-        super(QGraphicsPixmapItem,gimage).__init__(gimage.pixmap())
+
+        super(QGraphicsPixmapItem,gimage).__init__(QPixmap())
 
         return gimage
-
+    
 class GImage(Image.Image,QGraphicsPixmapItem):
     def __init__(self):
         # Initialize from parents
@@ -81,7 +82,12 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.categories:list[str]
         self.marks:list[Mark]
         self.seen:bool
- 
+        self.frame:int
+    
+    def __init_item__(self):
+        # Initialize QGraphicsPixmapItem
+        self.seek(self.frame)
+
     def _new(self, im) -> GImage:
         new = GImage()
         new.im = im
@@ -96,6 +102,9 @@ class GImage(Image.Image,QGraphicsPixmapItem):
                 new.palette = ImagePalette.ImagePalette()
         new.info = self.info.copy()
         return new
+    
+    def clear_pixmap(self):
+        self.setPixmap(QPixmap())
     
     def tell(self) -> None: return self.image_file.tell()
 
@@ -115,7 +124,7 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         qimage = self.toqimage()
         pixmap_base = QPixmap.fromImage(qimage)
 
-        w, h = self.height, self.width
+        w, h = self.width, self.height
         _x, _y = int(w*4), int(h*4)
 
         pixmap = QPixmap(w*9,h*9)
@@ -163,8 +172,6 @@ class GImage(Image.Image,QGraphicsPixmapItem):
 class ImageScene(QGraphicsScene):
     def __init__(self,image:GImage):
         super().__init__()
-
-        self.frame = 0
         self.image = image
 
         self.setBackgroundBrush(Qt.GlobalColor.black)
@@ -176,7 +183,6 @@ class ImageScene(QGraphicsScene):
 
         # Update the pixmap
         self.image = image
-        self.image.seek(min(self.frame,self.image.n_frames-1))
         self.addItem(self.image)
         self.setSceneRect(0,0,9*self.image.width,9*self.image.height)
 

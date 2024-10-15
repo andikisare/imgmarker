@@ -89,10 +89,8 @@ def check_marks(event):
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
-def parse_wcs(img:str|Image.Image) -> WCS:
+def parse_wcs(img:galmark.image.GImage) -> WCS:
     try:
-        #tif_image_data = np.array(Image.open(image_tif))
-        if type(img) == str: img = Image.open(img)
         meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
         
         long_header_str = meta_dict['ImageDescription'][0]
