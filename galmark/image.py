@@ -31,17 +31,12 @@ def open(path:str) -> GImage | None:
 
         if (ext == 'fits') or (ext == 'fit'):
             file = fits.open(path)
-            img_array = file[0].data
-            img_array = np.flipud(img_array)
-            img_array = img_array.byteswap()
-            image = Image.fromarray(img_array, mode='F')
-            filename = path.split(os.sep)[-1]
-            image = image.convert('RGB')
+            img_array = np.flipud(file[0].data).byteswap()
+            image = Image.fromarray(img_array, mode='F').convert('RGB')
             image.format = 'FITS'
             image.filename = path
-        else:
-            image = Image.open(path)
-            filename = image.filename
+
+        else: image = Image.open(path)
 
         # Setup  __dict__
         gimage.__dict__ =  image.__dict__
@@ -49,7 +44,7 @@ def open(path:str) -> GImage | None:
         except: gimage.n_frames = 1
         gimage.wcs = galmark.io.parse_wcs(image)
         gimage.image_file = image
-        gimage.name = filename.split(os.sep)[-1] 
+        gimage.name = path.split(os.sep)[-1] 
 
         gimage.r = 0.0
         gimage.a = 1.0
@@ -103,9 +98,9 @@ class GImage(Image.Image,QGraphicsPixmapItem):
     
     def clear(self): self.setPixmap(QPixmap())
     
-    def tell(self) -> None: return self.image_file.tell()
+    def tell(self): return self.image_file.tell()
 
-    def seek(self,frame:int=0) -> None:
+    def seek(self,frame:int=0):
         frame = floor(frame)
         
         if frame > self.n_frames - 1: frame = 0

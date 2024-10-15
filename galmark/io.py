@@ -116,7 +116,6 @@ def parse_wcs(img:galmark.image.GImage) -> WCS:
 
             # Create a WCS object from the header
             wcs = WCS(header)
-            print(wcs)
         return wcs
     except: return None
 
