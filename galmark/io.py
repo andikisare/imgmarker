@@ -122,18 +122,75 @@ def parse_wcs(img:galmark.image.GImage) -> WCS:
 def check_save(savename:str) -> bool:
     return (savename != 'None') and (savename != '')
 
-def savefav(savename:str,save_list:list) -> None:
+def savefav(savename:str,date,images:list[galmark.image.GImage],save_list:list) -> None:
+    image_lines = []
+
+    name_lengths = []
+    img_ra_lengths = []
+    img_dec_lengths = []
+    category_lengths = []
+    comment_lengths = []
 
     save_dir = os.path.join(OUT_DIR, savename)
     fav_out_path = os.path.join(save_dir, 'favorites.txt')
 
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
     # Create the file
     if os.path.exists(fav_out_path):
         os.remove(fav_out_path)
-    out = open(fav_out_path,'a')
+    
+    fav_out = open(fav_out_path,'a')
 
-    for name in save_list:
-        out.write(f'{name}\n')
+    fav_images = [img for img in images if img.name in save_list]
+
+    if check_save(savename) and (len(save_list) != 0):
+        for img in fav_images:
+            if img.seen:
+                name = img.name
+                comment = img.comment
+
+                category_list = img.categories
+                category_list.sort()
+                if (len(category_list) != 0):
+                    categories = ','.join([CATEGORY_NAMES[i] for i in category_list])
+                else: categories = 'None'
+
+                img_ra, img_dec = img.wcs_center()
+
+                il = [date,name,img_ra,img_dec,categories,comment]
+                for l in image_lines:
+                    if l[1] == name: image_lines.remove(l)
+                image_lines.append(il)
+                
+                name_lengths.append(len(name))
+                img_ra_lengths.append(len(f'{img_ra:.8f}'))
+                img_dec_lengths.append(len(f'{img_dec:.8f}'))
+                category_lengths.append(len(categories))
+                comment_lengths.append(len(comment))
+
+    if len(image_lines) != 0:
+        # Dynamically adjust column widths
+        dateln = 12
+        nameln = np.max(name_lengths) + 2
+        img_raln = max(np.max(img_ra_lengths), 2) + 2 
+        img_decln = max(np.max(img_ra_lengths), 3) + 2
+        categoryln = max(np.max(category_lengths), 10) + 2
+        commentln = max(np.max(comment_lengths), 7) + 2 
+        
+        il_fmt = [ f'^{dateln}',f'^{nameln}', f'^{img_raln}.8f', f'^{img_decln}.8f', f'^{categoryln}', f'^{commentln}' ]
+        il_fmt_nofloat = [ f'^{dateln}',f'^{nameln}', f'^{img_raln}', f'^{img_decln}', f'^{categoryln}', f'^{commentln}' ]
+        
+        header = ['date','image','RA', 'DEC','categories','comment']
+        header = ''.join(f'{h:{il_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
+        
+        fav_out.write(header)
+
+        for l in image_lines:
+            outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
+            fav_out.write(outline)
+
 
 def save(savename:str,date,images:list[galmark.image.GImage]) -> None:
     mark_lines = []

@@ -616,12 +616,12 @@ class MainWindow(QMainWindow):
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
             self.favorite_list.append(self.image.name)
-            galmark.io.savefav(self.username,self.favorite_list)
+            galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
         else:
             self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             if self.image.name in self.favorite_list: 
                 self.favorite_list.remove(self.image.name)
-            galmark.io.savefav(self.username,self.favorite_list)
+            galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def categorize(self,i:int) -> None:
         if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.image.categories):
@@ -629,7 +629,7 @@ class MainWindow(QMainWindow):
         elif (i in self.image.categories):
             self.image.categories.remove(i)
         galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.favorite_list)
+        galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def mark(self, group:int=0) -> None:
         '''
@@ -659,7 +659,7 @@ class MainWindow(QMainWindow):
                 self.image.marks.append(mark)
 
             galmark.io.save(self.username,self.date,self.images)
-            galmark.io.savefav(self.username,self.favorite_list)
+            galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def shift(self,delta:int):
         # Increment the index
@@ -680,7 +680,7 @@ class MainWindow(QMainWindow):
         self.update_comments()
         self.comment_box.clearFocus()
         galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.favorite_list)
+        galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def middle_mouse(self):
         # Center on cursor
@@ -777,7 +777,7 @@ class MainWindow(QMainWindow):
 
         self.image.comment = comment
         galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.favorite_list)
+        galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def get_comment(self):
         if (self.image.comment == 'None'):
@@ -806,7 +806,7 @@ class MainWindow(QMainWindow):
             self.imageScene.removeItem(item)
             self.image.marks.remove(item)
             galmark.io.save(self.username,self.date,self.images)
-            galmark.io.savefav(self.username,self.favorite_list)
+            galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     # === Utils ===
 
