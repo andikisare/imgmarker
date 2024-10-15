@@ -14,6 +14,7 @@ from astropy.wcs import WCS
 from math import nan
 from astropy.io import fits
 import numpy as np
+import time
 
 def open(path:str) -> GImage | None:
     """
@@ -56,6 +57,7 @@ def open(path:str) -> GImage | None:
         gimage.categories = []
         gimage.marks = []
         gimage.seen = False
+        gimage.frame = 0
 
         # Get bytes from image (I dont think this does anything)
         gimage.frombytes(image.tobytes())
@@ -80,10 +82,11 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.categories:list[str]
         self.marks:list[Mark]
         self.seen:bool
+        self.frame:int
     
     def __init_item__(self):
         # Initialize QGraphicsPixmapItem
-        self.setPixmap(self.pixmap())
+        self.seek(self.frame)
 
     def _new(self, im) -> GImage:
         new = GImage()
@@ -169,8 +172,6 @@ class GImage(Image.Image,QGraphicsPixmapItem):
 class ImageScene(QGraphicsScene):
     def __init__(self,image:GImage):
         super().__init__()
-
-        self.frame = 0
         self.image = image
 
         self.setBackgroundBrush(Qt.GlobalColor.black)
@@ -182,7 +183,6 @@ class ImageScene(QGraphicsScene):
 
         # Update the pixmap
         self.image = image
-        self.image.seek(min(self.frame,self.image.n_frames-1))
         self.addItem(self.image)
         self.setSceneRect(0,0,9*self.image.width,9*self.image.height)
 
