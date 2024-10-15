@@ -386,7 +386,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(exit_menu)
 
         ### Open file menu
-        open_menu = QAction('&Open', self)
+        open_menu = QAction('&Open save directory', self)
         open_menu.setShortcuts(['Ctrl+o'])
         open_menu.setStatusTip('Open save directory')
         open_menu.triggered.connect(self.open)
@@ -563,12 +563,13 @@ class MainWindow(QMainWindow):
     
     # === Actions ===
     def open(self):
-        ### THIS IS WHERE YOU SELECT FILES, FILES ARE CURRENTLY LIMITED TO *.txt
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
-        fileName = dialog.getSaveFileName(self, 'Open save directory', os.getcwd())
-
-        self.username = str(os.path.split(fileName[0])[1])
+        saveDir = dialog.getExistingDirectory(self, 'Open save directory', os.getcwd())
+        if (saveDir == ''):
+            return
+        
+        self.username = str(os.path.split(saveDir)[-1])
         if not self.username.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR
         
         self.__init_data__()
@@ -580,9 +581,9 @@ class MainWindow(QMainWindow):
         self.update_favorites()
 
     def open_ims(self):
-        image_dir = ''
-        while (image_dir == ''):
-            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
+        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
+        if (image_dir == ''):
+            return
         galmark.io.update_config(image_dir=image_dir)
         self.images, self.idx = galmark.io.glob(edited_images=[])
         try: self.image.clear_pixmap()
