@@ -91,26 +91,32 @@ def check_marks(event):
     
 def parse_wcs(img:galmark.image.GImage) -> WCS:
     try:
-        meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
-        
-        long_header_str = meta_dict['ImageDescription'][0]
+        if (img.format == 'FITS'):
+            hdulist = fits.open(img.filename)
+            wcs = WCS(hdulist[0].header)
+            return wcs
+        else:
+            meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
+            
+            long_header_str = meta_dict['ImageDescription'][0]
 
-        line_length = 80
+            line_length = 80
 
-        # Splitting the string into lines of 80 characters
-        lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
-        
-        # Join the lines with newline characters to form a properly formatted header string
-        corrected_header_str = "\n".join(lines)
+            # Splitting the string into lines of 80 characters
+            lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
+            
+            # Join the lines with newline characters to form a properly formatted header string
+            corrected_header_str = "\n".join(lines)
 
-        # Use an IO stream to mimic a file
-        header_stream = io.StringIO(corrected_header_str)
+            # Use an IO stream to mimic a file
+            header_stream = io.StringIO(corrected_header_str)
 
-        # Read the header using astropy.io.fits
-        header = fits.Header.fromtextfile(header_stream)
+            # Read the header using astropy.io.fits
+            header = fits.Header.fromtextfile(header_stream)
 
-        # Create a WCS object from the header
-        wcs = WCS(header)
+            # Create a WCS object from the header
+            wcs = WCS(header)
+            print(wcs)
         return wcs
     except: return None
 
