@@ -255,6 +255,7 @@ class MainWindow(QMainWindow):
         self.fullh = self.screen().size().height()
         self.zoom_level = 1
         self.cursor_focus = False
+        self.frame = 0
     
         # Initialize data
         self.username = username
@@ -467,13 +468,13 @@ class MainWindow(QMainWindow):
 
         # Find all images in image directory
 
-        try: self.image.clear_pixmap()
+        try: self.image.clear()
         except: pass
         
         try:
             self.images, self.idx = galmark.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
-            self.image.__init_item__()
+            self.image.seek(self.frame)
             self.image.seen = True
             self.N = len(self.images)
         except:
@@ -483,7 +484,7 @@ class MainWindow(QMainWindow):
             galmark.io.update_config(image_dir=image_dir)
             self.images, self.idx = galmark.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
-            self.image.__init_item__()
+            self.image.seek(self.frame)
             self.image.seen = True
             self.N = len(self.images)
 
@@ -515,11 +516,11 @@ class MainWindow(QMainWindow):
         if (event.key() == Qt.Key.Key_Space):
             modifiers = QApplication.keyboardModifiers()
             if modifiers == Qt.KeyboardModifier.ShiftModifier:
-                self.image.seek(self.image.frame-1)
-                self.image.frame = self.image.tell()
+                self.image.seek(self.frame-1)
+                self.frame = self.image.tell()
             else:
-                self.image.seek(self.image.frame+1)
-                self.image.frame = self.image.tell()
+                self.image.seek(self.frame+1)
+                self.frame = self.image.tell()
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
@@ -586,10 +587,10 @@ class MainWindow(QMainWindow):
             return
         galmark.io.update_config(image_dir=image_dir)
         self.images, self.idx = galmark.io.glob(edited_images=[])
-        try: self.image.clear_pixmap()
+        try: self.image.clear()
         except: pass
         self.image = self.images[self.idx]
-        self.image.__init_item__()
+        self.image.seek(self.frame)
         self.image.seen = True
         self.N = len(self.images)
     
@@ -713,10 +714,10 @@ class MainWindow(QMainWindow):
     def update_images(self):
         # Update scene
         _w, _h = self.image.width, self.image.height
-        try: self.image.clear_pixmap()
+        try: self.image.clear()
         except: pass
         self.image = self.images[self.idx]
-        self.image.__init_item__()
+        self.image.seek(self.frame)
         self.image.seen = True
         self.imageScene.update(self.image)
 

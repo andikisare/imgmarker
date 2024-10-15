@@ -85,10 +85,6 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.marks:list[Mark]
         self.seen:bool
         self.frame:int
-    
-    def __init_item__(self):
-        # Initialize QGraphicsPixmapItem
-        self.seek(self.frame)
 
     def _new(self, im) -> GImage:
         new = GImage()
@@ -105,13 +101,12 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         new.info = self.info.copy()
         return new
     
-    def clear_pixmap(self):
-        self.setPixmap(QPixmap())
+    def clear(self): self.setPixmap(QPixmap())
     
     def tell(self) -> None: return self.image_file.tell()
 
-    def seek(self,value) -> None:
-        frame = floor(value)
+    def seek(self,frame:int=0) -> None:
+        frame = floor(frame)
         
         if frame > self.n_frames - 1: frame = 0
         elif frame < 0: frame = self.n_frames - 1
