@@ -286,6 +286,14 @@ class MainWindow(QMainWindow):
 
         # Mouse position widget
         self.pos_widget = PosWidget()
+        if self.image.wcs == None: 
+            self.pos_widget.wcs_label.hide()
+            self.pos_widget.ra_text.hide()
+            self.pos_widget.dec_text.hide()
+        else:
+            self.pos_widget.wcs_label.show()
+            self.pos_widget.ra_text.show()
+            self.pos_widget.dec_text.show()
 
         # Create image view
         self.image_view = QGraphicsView(self.imageScene)
@@ -715,6 +723,16 @@ class MainWindow(QMainWindow):
 
         # Fit back to view if the image dimensions have changed
         if (self.image.width != _w) or (self.image.height != _h): self.fitview()
+
+        # Update position widget
+        if self.image.wcs == None: 
+            self.pos_widget.wcs_label.hide()
+            self.pos_widget.ra_text.hide()
+            self.pos_widget.dec_text.hide()
+        else:
+            self.pos_widget.wcs_label.show()
+            self.pos_widget.ra_text.show()
+            self.pos_widget.dec_text.show()
             
         # Update sliders
         self.blur_window.slider.valueChanged.disconnect()
