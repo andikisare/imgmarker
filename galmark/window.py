@@ -289,7 +289,7 @@ class MainWindow(QMainWindow):
 
         # Create image view
         self.image_view = QGraphicsView(self.imageScene)
-        self.fit_image()   
+        self.fitview()   
         
         ### Disable scrollbar
         self.image_view.verticalScrollBar().blockSignals(True)
@@ -495,11 +495,9 @@ class MainWindow(QMainWindow):
     def eventFilter(self, source, event):
         # Event filter for zooming without scrolling
         if (source == self.image_view.viewport()) and (event.type() == 31):
-            x = event.angleDelta().y() / 120
-            if x > 0:
-                self.zoom(1/1.2)
-            elif x < 0:
-                self.zoom(1.2)
+            x = event.angleDelta().y()
+            if x > 0: self.zoom(1/1.2)
+            elif x < 0: self.zoom(1.2)
             return True
 
         return super().eventFilter(source, event)
@@ -567,8 +565,7 @@ class MainWindow(QMainWindow):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
         saveDir = dialog.getExistingDirectory(self, 'Open save directory', os.getcwd())
-        if (saveDir == ''):
-            return
+        if (saveDir == ''): return
         
         self.username = str(os.path.split(saveDir)[-1])
         if not self.username.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR
@@ -582,18 +579,12 @@ class MainWindow(QMainWindow):
         self.update_favorites()
 
     def open_ims(self):
-        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Select image directory", galmark.io.IMAGE_DIR),'')
-        if (image_dir == ''):
-            return
+        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", galmark.io.IMAGE_DIR),'')
+        if (image_dir == ''): return
         galmark.io.update_config(image_dir=image_dir)
         self.images, self.idx = galmark.io.glob(edited_images=[])
-        try: self.image.clear()
-        except: pass
-        self.image = self.images[self.idx]
-        self.image.seek(self.frame)
-        self.image.seen = True
         self.N = len(self.images)
-    
+        
         self.update_images()
         self.update_marks()
         self.get_comment()
@@ -697,7 +688,7 @@ class MainWindow(QMainWindow):
         transform.translate(-center.x(), -center.y())
         self.image_view.setTransform(transform)
 
-    def fit_image(self):
+    def fitview(self):
         self.image_view.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
         self.zoom(scale=9,mode='viewport')
 
@@ -716,13 +707,14 @@ class MainWindow(QMainWindow):
         _w, _h = self.image.width, self.image.height
         try: self.image.clear()
         except: pass
+
         self.image = self.images[self.idx]
         self.image.seek(self.frame)
         self.image.seen = True
         self.imageScene.update(self.image)
 
         # Fit back to view if the image dimensions have changed
-        if (self.image.width != _w) or (self.image.height != _h): self.fit_image()
+        if (self.image.width != _w) or (self.image.height != _h): self.fitview()
             
         # Update sliders
         self.blur_window.slider.valueChanged.disconnect()
