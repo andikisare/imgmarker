@@ -18,7 +18,30 @@ SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or
 
 def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
     '''
-    Read each line from the config and parse it
+    Reads in each line from galmark.cfg. If there is no configuration file,
+    a default configuration file will be created using the required text
+    format.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    ----------
+    out_dir: str
+        Output directory for all save files.
+
+    image_dir: str
+        Directory containing desired image files.
+
+    group_names: list[str]
+        A list containing labels for each mark button.
+
+    category_names: list[str]
+        A list containing labels for each image category.
+
+    group_max: list[int]
+        A list containing the maximum allowed number of marks for each group.
     '''
 
     # If the config doesn't exist, create one
@@ -71,6 +94,18 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
 OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX = read_config()
     
 def check_marks(event):
+    '''
+    Checks and resets each group's activation key on the keyboard.
+
+    Parameters
+    ----------
+    event: PyQt6 event
+        Event
+
+    Returns
+    ----------
+    A list containing each mapped button's PyQt6 key ID.
+    '''
     button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
 
     try: button1 = event.button() == Qt.MouseButton.LeftButton
@@ -90,6 +125,23 @@ def check_marks(event):
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
 def parse_wcs(img:galmark.image.GImage) -> WCS:
+    '''
+    Reads WCS information from TIFf/TIF metadata and FITS/FIT headers if available.
+
+    Parameters
+    ----------
+    img: GImage object
+        A modified PIL image object containing PyQt6 pixmap data.
+
+    Returns
+    ----------
+    wcs: astropy.wcs.WCS object
+        Astropy WCS object containing WCS data.
+    
+    None: None
+        If there is no WCS data, returns None.
+    '''
+        
     try:
         if (img.format == 'FITS'):
             hdulist = fits.open(img.filename)
@@ -120,9 +172,51 @@ def parse_wcs(img:galmark.image.GImage) -> WCS:
     except: return None
 
 def check_save(savename:str) -> bool:
+    '''
+    Checks if savename is empty.
+
+    Parameters
+    ----------
+    savename: str
+        A string containing the savename/username.
+    
+    Returns
+    ----------
+    True: bool
+        If the savename is not empty and not \'None\'.
+    
+    False: bool
+        If the savename is empty and/or \'None\'.
+    '''
+
     return (savename != 'None') and (savename != '')
 
-def savefav(savename:str,date,images:list[galmark.image.GImage],save_list:list) -> None:
+def savefav(savename:str,date:str,images:list[galmark.image.GImage],fav_list:list[str]) -> None:
+    '''
+    Creates a file, \'favorites.txt\', in the save directory containing all images that were favorited.
+    This file is in the same format as \'images.txt\' so that a user can open their favorites file to show
+    only favorited images with a little bit of file name manipulation. More details on how to do this can
+    be found in \'README.md\'.
+
+    Parameters
+    ----------
+    savename: str
+        A string containing the savename/username.
+
+    date: str
+        A string containing the current date in ISO 8601 extended format.
+
+    images: list[GImage]
+        A list of GImage objects for each image from the specified image directory.
+
+    fav_list: list[str]
+        A list of strings containing the file names of each favorited image.
+
+    Returns
+    ----------
+    None: None
+    '''
+
     image_lines = []
 
     name_lengths = []
@@ -143,9 +237,9 @@ def savefav(savename:str,date,images:list[galmark.image.GImage],save_list:list) 
     
     fav_out = open(fav_out_path,'a')
 
-    fav_images = [img for img in images if img.name in save_list]
+    fav_images = [img for img in images if img.name in fav_list]
 
-    if check_save(savename) and (len(save_list) != 0):
+    if check_save(savename) and (len(fav_list) != 0):
         for img in fav_images:
             if img.seen:
                 name = img.name
