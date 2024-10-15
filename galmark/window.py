@@ -32,7 +32,7 @@ class AdjustmentsWindow(QWidget):
 
         # Brightness slider
         self.brightness_slider = QSlider()
-        self._slider_setup(self.brightness_slider,self.brightness_moved)
+        self._slider_setup(self.brightness_slider,self.brightness_moved,self.brightness_changed)
 
         self.brightness_label = QLabel()
         self.brightness_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -40,7 +40,7 @@ class AdjustmentsWindow(QWidget):
 
         # Contrast slider
         self.contrast_slider = QSlider()
-        self._slider_setup(self.contrast_slider,self.contrast_moved)
+        self._slider_setup(self.contrast_slider,self.contrast_moved,self.contrast_changed)
 
         self.contrast_label = QLabel()
         self.contrast_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -61,19 +61,24 @@ class AdjustmentsWindow(QWidget):
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
 
-    def _slider_setup(self,slider:QSlider,connect):
+    def _slider_setup(self,slider:QSlider,moved_connect,value_connect):
         slider.setMinimum(-10)
         slider.setMaximum(10)
         slider.setValue(0)
         slider.setOrientation(Qt.Orientation.Horizontal)
-        slider.sliderMoved.connect(connect)
+        slider.sliderMoved.connect(moved_connect)
+        slider.valueChanged.connect(value_connect)
 
     def brightness_moved(self,pos):
         self.brightness_slider.setValue(floor(pos))
-        self.brightness_label.setText(f'Brightness: {floor(self.brightness_slider.value())/10}')
-    
+
     def contrast_moved(self,pos):
         self.contrast_slider.setValue(floor(pos))
+
+    def brightness_changed(self,value):
+        self.brightness_label.setText(f'Brightness: {floor(self.brightness_slider.value())/10}')
+
+    def contrast_changed(self,value):
         self.contrast_label.setText(f'Contrast: {floor(self.contrast_slider.value())/10}')
 
     def show(self):
@@ -100,6 +105,7 @@ class BlurWindow(QWidget):
         self.slider.setSingleStep(1)
         self.slider.setOrientation(Qt.Orientation.Horizontal)
         self.slider.sliderMoved.connect(self.slider_moved) 
+        self.slider.valueChanged.connect(self.value_changed) 
 
         self.value_label = QLabel()
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -119,6 +125,8 @@ class BlurWindow(QWidget):
 
     def slider_moved(self, pos):
         self.slider.setValue(floor(pos))
+
+    def value_changed(self,value):
         self.value_label.setText(f'Radius: {floor(self.slider.value())/10}')
 
     def show(self):
@@ -145,6 +153,7 @@ class FrameWindow(QWidget):
         self.slider.setSingleStep(1)
         self.slider.setOrientation(Qt.Orientation.Horizontal)
         self.slider.sliderMoved.connect(self.slider_moved) 
+        self.slider.valueChanged.connect(self.value_changed)
 
         self.value_label = QLabel()
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -164,7 +173,9 @@ class FrameWindow(QWidget):
 
     def slider_moved(self, pos):
         self.slider.setValue(floor(pos))
-        self.value_label.setText(f'Frame: {floor(self.slider.value())}')
+
+    def value_changed(self,value):
+        self.value_label.setText(f'Frame: {self.slider.value()}')
 
     def show(self):
         super().show()
@@ -523,10 +534,11 @@ class MainWindow(QMainWindow):
             modifiers = QApplication.keyboardModifiers()
             if modifiers == Qt.KeyboardModifier.ShiftModifier:
                 self.image.seek(self.frame-1)
-                self.frame = self.image.tell()
             else:
                 self.image.seek(self.frame+1)
-                self.frame = self.image.tell()
+
+            self.frame = self.image.tell()
+            self.frame_window.slider.setValue(self.frame)
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
@@ -711,6 +723,12 @@ class MainWindow(QMainWindow):
             self.favorite_box.setChecked(False)
 
     def update_images(self):
+        # Disconnect sliders from previous image
+        self.blur_window.slider.valueChanged.disconnect(self.image.blur)
+        self.adjust_menu.contrast_slider.valueChanged.disconnect(self.image.contrast)
+        self.adjust_menu.brightness_slider.valueChanged.disconnect(self.image.brighten)
+        self.frame_window.slider.valueChanged.disconnect(self.image.seek)
+
         # Update scene
         _w, _h = self.image.width, self.image.height
         try: self.image.clear()
@@ -733,12 +751,12 @@ class MainWindow(QMainWindow):
             self.pos_widget.wcs_label.show()
             self.pos_widget.ra_text.show()
             self.pos_widget.dec_text.show()
-            
+             
         # Update sliders
-        self.blur_window.slider.valueChanged.disconnect()
-        self.adjust_menu.contrast_slider.valueChanged.disconnect()
-        self.adjust_menu.brightness_slider.valueChanged.disconnect()
-        self.frame_window.slider.valueChanged.disconnect()
+        self.blur_window.slider.setValue(0)
+        self.adjust_menu.contrast_slider.setValue(0)
+        self.adjust_menu.brightness_slider.setValue(0)
+        self.frame_window.slider.setValue(self.frame)
 
         self.blur_window.slider.valueChanged.connect(self.image.blur)
         self.adjust_menu.contrast_slider.valueChanged.connect(self.image.contrast)
