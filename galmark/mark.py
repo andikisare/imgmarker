@@ -24,15 +24,7 @@ class Mark(QGraphicsEllipseItem):
         self.label.setPos(_x,_y)
         self.label.setDefaultTextColor(self.c)
         self.label.setPlainText(GROUP_NAMES[self.g])
-
-    def hide(self):
-        super().hide()
-        self.label.hide()
-    
-    def show(self):
-        super().show()
-        self.label.show()
-
+        
     def center(self) -> QPoint:
         return QPoint(self.x()+self.r,self.y()+self.r)
     

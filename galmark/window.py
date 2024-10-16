@@ -930,8 +930,13 @@ class MainWindow(QMainWindow):
     def toggle_marks(self):
         for item in self.imageScene.items():
             if isinstance(item,Mark):
-                if item.isVisible(): item.hide()
-                else: item.show()
+                if item.isVisible(): 
+                    item.hide()
+                    item.label.hide()
+                else: 
+                    item.show()
+                    if self.mark_labels_menu.isChecked(): item.label.show()
+
 
     def toggle_mark_labels(self):
         for item in self.imageScene.items():
