@@ -410,9 +410,9 @@ def loadfav(savename:str) -> list[str]:
     fav_out_path = os.path.join(save_dir, 'favorites.txt')
     
     if os.path.exists(fav_out_path):
-        fav_list = [ l.replace('\n','') for l in open(fav_out_path) ]
+        fav_list = [ l.split('|')[1].strip() for l in open(fav_out_path) ][1:]
     else: fav_list = []
-    
+
     return list(set(fav_list))
 
 def load(savename:str) -> list[galmark.image.GImage]:
