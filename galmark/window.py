@@ -880,6 +880,9 @@ class MainWindow(QMainWindow):
         else:
             self.marks_menu.setEnabled(True)
             self.mark_labels_menu.setEnabled(True)
+
+        self.toggle_marks()
+        self.toggle_mark_labels()
     
     def update_comments(self):
         """Updates image comment with the contents of the comment box."""
@@ -928,21 +931,20 @@ class MainWindow(QMainWindow):
         galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def toggle_marks(self):
-        for item in self.imageScene.items():
-            if isinstance(item,Mark):
-                if item.isVisible(): 
-                    item.hide()
-                    item.label.hide()
-                else: 
-                    item.show()
-                    if self.mark_labels_menu.isChecked(): item.label.show()
-
+        state = self.marks_menu.isChecked()
+        for item in self.image.marks:
+            if state: 
+                item.show()
+                if self.mark_labels_menu.isChecked(): item.label.show()
+            else: 
+                item.hide()
+                item.label.hide()
 
     def toggle_mark_labels(self):
-        for item in self.imageScene.items():
-            if isinstance(item,Mark):
-                if item.label.isVisible(): item.label.hide()
-                else: item.label.show()
+        state = self.mark_labels_menu.isChecked()
+        for item in self.image.marks:
+            if state: item.label.show()
+            else: item.label.hide()
 
     # === Utils ===
 
