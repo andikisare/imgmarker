@@ -724,10 +724,12 @@ class MainWindow(QMainWindow):
 
     def update_images(self):
         # Disconnect sliders from previous image
-        self.blur_window.slider.valueChanged.disconnect(self.image.blur)
-        self.adjust_menu.contrast_slider.valueChanged.disconnect(self.image.contrast)
-        self.adjust_menu.brightness_slider.valueChanged.disconnect(self.image.brighten)
-        self.frame_window.slider.valueChanged.disconnect(self.image.seek)
+        try:
+            self.blur_window.slider.valueChanged.disconnect(self.image.blur)
+            self.adjust_menu.contrast_slider.valueChanged.disconnect(self.image.contrast)
+            self.adjust_menu.brightness_slider.valueChanged.disconnect(self.image.brighten)
+            self.frame_window.slider.valueChanged.disconnect(self.image.seek)
+        except: pass
 
         # Update scene
         _w, _h = self.image.width, self.image.height
