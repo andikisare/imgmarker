@@ -880,10 +880,10 @@ class MainWindow(QMainWindow):
         scene_pos = self.image_view.mapToScene(view_pos)
 
         # Get the pixel coordinates (including padding; half-pixel offset required)
-        pix_pos = self.image.mapFromScene(scene_pos) - QPointF(0.5,0.5)
+        pix_pos = self.image.mapFromScene(scene_pos)
 
         # Get the true pixel coordinates (ignoring padding)
-        if correction: pix_pos -= 4*QPointF(self.image.width,self.image.height)
+        if correction: pix_pos -= 4*QPointF(self.image.width,self.image.height) + QPointF(0.5,0.5)
         
         return pix_pos.toPoint()
 
