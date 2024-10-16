@@ -1,7 +1,8 @@
-from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsRectItem
 from PyQt6.QtGui import QPen, QColor
 from PyQt6.QtCore import Qt, QPoint
 from math import nan
+from galmark.io import GROUP_NAMES
 
 COLORS = [ QColor(0,0,0), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
            QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
@@ -18,7 +19,20 @@ class Mark(QGraphicsEllipseItem):
         super(Mark, self).__init__(_x-self.r,_y-self.r,2*self.r,2*self.r)
 
         self.setPen(QPen(self.c, int(self.r/5), Qt.PenStyle.SolidLine))
-        
+
+        self.label = QGraphicsTextItem()
+        self.label.setPos(_x,_y)
+        self.label.setDefaultTextColor(self.c)
+        self.label.setPlainText(GROUP_NAMES[self.g])
+
+    def hide(self):
+        super().hide()
+        self.label.hide()
+    
+    def show(self):
+        super().show()
+        self.label.show()
+
     def center(self) -> QPoint:
         return QPoint(self.x()+self.r,self.y()+self.r)
     

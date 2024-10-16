@@ -2,7 +2,7 @@ from __future__ import annotations
 from PyQt6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem 
 from PyQt6.QtGui import QPixmap, QPainter
 from PyQt6.QtCore import Qt
-from galmark.mark import Mark, RectMark
+import galmark.mark
 from galmark import __dirname__, SUPPORTED_EXTS
 import galmark.io
 import os
@@ -15,6 +15,7 @@ from math import nan
 from astropy.io import fits
 import numpy as np
 import time
+import typing
 
 def open(path:str) -> GImage | None:
     """
@@ -77,8 +78,8 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.b:float
         self.comment:str
         self.categories:list[str]
-        self.marks:list[Mark]
-        self.ext_marks:list[RectMark]
+        self.marks:list[galmark.mark.Mark]
+        self.ext_marks:list[galmark.mark.RectMark]
         self.seen:bool
         self.frame:int
 
@@ -179,12 +180,27 @@ class ImageScene(QGraphicsScene):
         self.addItem(self.image)
         self.setSceneRect(0,0,9*self.image.width,9*self.image.height)
 
-    def mark(self,x,y,group):
-        mark = Mark(x,y,image=self.image,group=group)
-        self.addItem(mark)
-        return mark 
+    @typing.overload
+    def mark(self,x:float,y:float,group:int=0) -> galmark.mark.Mark: ...
     
+    @typing.overload
+    def mark(self,mark:galmark.mark.Mark) -> galmark.mark.Mark: ... 
+
+    def mark(self,*args,**kwargs) -> galmark.mark.Mark:
+        if len(args) == 2: 
+            x,y = args
+            mark = galmark.mark.Mark(x,y,image=self.image,group=kwargs['group'])
+        if len(args) == 1: 
+            mark = args[0]
+        self.addItem(mark.label)
+        self.addItem(mark)
+        return mark
+    
+    def rmmark(self,mark:galmark.mark.Mark) -> None:
+        self.removeItem(mark)
+        self.removeItem(mark.label)
+
     def rectmark(self,label,x_ra,y_dec,input_wcs):
-        mark = RectMark(label,x_ra,y_dec,input_wcs=input_wcs,image=self.image)
+        mark = galmark.mark.RectMark(label,x_ra,y_dec,input_wcs=input_wcs,image=self.image)
         self.addItem(mark)
         return mark

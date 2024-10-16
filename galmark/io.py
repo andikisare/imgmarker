@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import galmark.window
-from galmark.mark import Mark
+import galmark.mark
 import galmark.image
 from galmark import __dirname__, CONFIG
 from PyQt6.QtCore import Qt
@@ -453,7 +453,7 @@ def load(savename:str) -> list[galmark.image.GImage]:
                     group = GROUP_NAMES.index(group)
                     mark_args = (int(x),int(y))
                     mark_kwargs = {'image': img, 'group': group}
-                    mark = Mark(*mark_args, **mark_kwargs)
+                    mark = galmark.mark.Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)
     return images
 

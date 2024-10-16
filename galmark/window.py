@@ -452,13 +452,29 @@ class MainWindow(QMainWindow):
         view_menu.addAction(frame_menu)
 
         ### Toggle marks menu
-        marks_menu = QAction('&Marks visible', self)
-        marks_menu.setShortcuts(['Ctrl+m'])
-        marks_menu.setStatusTip('Marks visible')
-        marks_menu.setCheckable(True)
-        marks_menu.setChecked(True)
-        marks_menu.triggered.connect(self.toggle_marks)
-        view_menu.addAction(marks_menu)
+        self.marks_menu = QAction('&Marks visible', self)
+        self.marks_menu.setShortcuts(['Ctrl+m'])
+        self.marks_menu.setStatusTip('Marks visible')
+        self.marks_menu.setCheckable(True)
+        self.marks_menu.setChecked(True)
+        self.marks_menu.triggered.connect(self.toggle_marks)
+        view_menu.addAction(self.marks_menu)
+
+        ### Toggle mark labels menu
+        self.mark_labels_menu = QAction('&Mark labels visible', self)
+        self.mark_labels_menu.setShortcuts(['Ctrl+l'])
+        self.mark_labels_menu.setStatusTip('Mark labels visible')
+        self.mark_labels_menu.setCheckable(True)
+        self.mark_labels_menu.setChecked(True)
+        self.mark_labels_menu.triggered.connect(self.toggle_mark_labels)
+        view_menu.addAction(self.mark_labels_menu)
+
+        if len(self.image.marks) == 0:
+            self.marks_menu.setEnabled(False)
+            self.mark_labels_menu.setEnabled(False)
+        else:
+            self.marks_menu.setEnabled(True)
+            self.mark_labels_menu.setEnabled(True)
 
         ### Focus cursor menu
         cursor_focus_menu = QAction('&Focus cursor', self)
@@ -709,7 +725,7 @@ class MainWindow(QMainWindow):
             
             if (limit == 1) and (len(marks_in_group) == 1):
                 prev_mark = marks_in_group[0]
-                self.imageScene.removeItem(prev_mark)
+                self.imageScene.rmmark(prev_mark)
                 self.image.marks.remove(prev_mark)
                 self.image.marks.append(mark)
 
@@ -718,6 +734,13 @@ class MainWindow(QMainWindow):
 
             galmark.io.save(self.username,self.date,self.images)
             galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+        
+        if len(self.image.marks) == 0:
+            self.marks_menu.setEnabled(False)
+            self.mark_labels_menu.setEnabled(False)
+        else:
+            self.marks_menu.setEnabled(True)
+            self.mark_labels_menu.setEnabled(True)
 
     def shift(self,delta:int):
         """Move back or forward *delta* number of images."""
@@ -849,6 +872,14 @@ class MainWindow(QMainWindow):
 
         # Update image label
         self.image_label.setText(f'{self.image.name} ({self.idx+1} of {self.N})')
+
+        # Update menus
+        if len(self.image.marks) == 0:
+            self.marks_menu.setEnabled(False)
+            self.mark_labels_menu.setEnabled(False)
+        else:
+            self.marks_menu.setEnabled(True)
+            self.mark_labels_menu.setEnabled(True)
     
     def update_comments(self):
         """Updates image comment with the contents of the comment box."""
@@ -874,9 +905,8 @@ class MainWindow(QMainWindow):
             self.category_boxes[i-1].setChecked(True)
 
     def update_marks(self):
-        """"""
-        # Redraws all marks in image
-        for mark in self.image.marks: self.imageScene.addItem(mark)
+        """Redraws all marks in image"""
+        for mark in self.image.marks: self.imageScene.mark(mark)
 
     def del_marks(self,del_all=False):
         if not del_all:
@@ -887,8 +917,12 @@ class MainWindow(QMainWindow):
         else: selected_items = [item for item in self.imageScene.items() if isinstance(item,Mark)]
         
         for item in selected_items:
-            self.imageScene.removeItem(item)
+            self.imageScene.rmmark(item)
             self.image.marks.remove(item)
+        
+        if len(self.image.marks) == 0:
+            self.marks_menu.setEnabled(False)
+            self.mark_labels_menu.setEnabled(False)
             
         galmark.io.save(self.username,self.date,self.images)
         galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
@@ -898,6 +932,12 @@ class MainWindow(QMainWindow):
             if isinstance(item,Mark):
                 if item.isVisible(): item.hide()
                 else: item.show()
+
+    def toggle_mark_labels(self):
+        for item in self.imageScene.items():
+            if isinstance(item,Mark):
+                if item.label.isVisible(): item.label.hide()
+                else: item.label.show()
 
     # === Utils ===
 
