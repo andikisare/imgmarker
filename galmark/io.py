@@ -5,7 +5,6 @@ from galmark.mark import Mark
 import galmark.image
 from galmark import __dirname__, CONFIG
 from PyQt6.QtCore import Qt
-from PIL import Image
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
 from astropy.io import fits
@@ -17,14 +16,10 @@ from math import nan, isnan
 SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or numbers.')
 
 def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
-    '''
+    """
     Reads in each line from galmark.cfg. If there is no configuration file,
     a default configuration file will be created using the required text
     format.
-
-    Parameters
-    ----------
-    None
 
     Returns
     ----------
@@ -35,14 +30,14 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
         Directory containing desired image files.
 
     group_names: list[str]
-        A list containing labels for each mark button.
+        A list of containing labels for each mark button.
 
     category_names: list[str]
         A list containing labels for each image category.
 
     group_max: list[int]
         A list containing the maximum allowed number of marks for each group.
-    '''
+    """
 
     # If the config doesn't exist, create one
     if not os.path.exists(CONFIG):
@@ -93,19 +88,18 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
 
 OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX = read_config()
     
-def check_marks(event):
-    '''
+def check_marks(event) -> list[bool]:
+    """
     Checks and resets each group's activation key on the keyboard.
 
     Parameters
     ----------
     event: PyQt6 event
-        Event
 
     Returns
     ----------
-    A list containing each mapped button's PyQt6 key ID.
-    '''
+    A list of bools corresponding to if the respective button was pressed or not. 
+    """
     button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
 
     try: button1 = event.button() == Qt.MouseButton.LeftButton
@@ -125,22 +119,18 @@ def check_marks(event):
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
 def parse_wcs(img:galmark.image.GImage) -> WCS:
-    '''
+    """
     Reads WCS information from TIFf/TIF metadata and FITS/FIT headers if available.
 
     Parameters
     ----------
-    img: GImage object
-        A modified PIL image object containing PyQt6 pixmap data.
+    img: `galmark.image.GImage` object
 
     Returns
     ----------
-    wcs: astropy.wcs.WCS object
-        Astropy WCS object containing WCS data.
-    
-    None: None
-        If there is no WCS data, returns None.
-    '''
+    wcs: `astropy.wcs.WCS` or None
+        Astropy WCS object. Returns None if there is no WCS present.
+    """
         
     try:
         if (img.format == 'FITS'):
@@ -172,27 +162,13 @@ def parse_wcs(img:galmark.image.GImage) -> WCS:
     except: return None
 
 def check_save(savename:str) -> bool:
-    '''
+    """
     Checks if savename is empty.
-
-    Parameters
-    ----------
-    savename: str
-        A string containing the savename/username.
-    
-    Returns
-    ----------
-    True: bool
-        If the savename is not empty and not \'None\'.
-    
-    False: bool
-        If the savename is empty and/or \'None\'.
-    '''
-
+    """
     return (savename != 'None') and (savename != '')
 
 def savefav(savename:str,date:str,images:list[galmark.image.GImage],fav_list:list[str]) -> None:
-    '''
+    """
     Creates a file, \'favorites.txt\', in the save directory containing all images that were favorited.
     This file is in the same format as \'images.txt\' so that a user can open their favorites file to show
     only favorited images with a little bit of file name manipulation. More details on how to do this can
@@ -206,7 +182,7 @@ def savefav(savename:str,date:str,images:list[galmark.image.GImage],fav_list:lis
     date: str
         A string containing the current date in ISO 8601 extended format.
 
-    images: list[GImage]
+    images: list[`galmark.image.GImage`]
         A list of GImage objects for each image from the specified image directory.
 
     fav_list: list[str]
@@ -214,8 +190,8 @@ def savefav(savename:str,date:str,images:list[galmark.image.GImage],fav_list:lis
 
     Returns
     ----------
-    None: None
-    '''
+    None
+    """
 
     image_lines = []
 
@@ -287,6 +263,25 @@ def savefav(savename:str,date:str,images:list[galmark.image.GImage],fav_list:lis
 
 
 def save(savename:str,date,images:list[galmark.image.GImage]) -> None:
+    """
+    Saves image data.
+
+    Parameters
+    ----------
+    savename: str
+        A string containing the savename/username.
+
+    date: str
+        A string containing the current date in ISO 8601 extended format.
+
+    images: list[`galmark.image.GImage`]
+        A list of GImage objects for each image from the specified image directory.
+
+    Returns
+    ----------
+    None
+    """
+
     mark_lines = []
     image_lines = []
 
@@ -408,6 +403,9 @@ def save(savename:str,date,images:list[galmark.image.GImage]) -> None:
             images_out.write(outline)
 
 def loadfav(savename:str) -> list[str]:
+    """
+    Loads list of favorited files from favorites.txt
+    """
     save_dir = os.path.join(OUT_DIR, savename)
     fav_out_path = os.path.join(save_dir, 'favorites.txt')
     
@@ -418,6 +416,9 @@ def loadfav(savename:str) -> list[str]:
     return list(set(fav_list))
 
 def load(savename:str) -> list[galmark.image.GImage]:
+    """
+    Takes data from marks.txt and images.txt and from them returns a list of `galmark.image.GImage` objects.
+    """
     save_dir = os.path.join(OUT_DIR, savename)
     mark_out_path = os.path.join(save_dir,'marks.txt')
     images_out_path = os.path.join(save_dir,'images.txt')
@@ -457,6 +458,10 @@ def load(savename:str) -> list[galmark.image.GImage]:
     return images
 
 def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
+    """
+    Globs in IMAGE_DIR, using edited_images to sort, with edited_images in order at the beginning of the list
+    and the remaining unedited images in randomized order at the end of the list.
+    """
      # Find all images in image directory
     all_images = glob_.glob(os.path.join(IMAGE_DIR, '*.*'))
     all_images = [img for img in all_images if img.split('.')[-1] in galmark.image.SUPPORTED_EXTS]
@@ -476,10 +481,22 @@ def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.imag
     return images, idx
 
 def inputs() -> str:
+    """
+    Returns the savename from `StartupWindow`.
+    """
     savename = galmark.window.StartupWindow().getUser()
     return savename
 
-def update_config(out_dir=OUT_DIR, image_dir=IMAGE_DIR, group_names=GROUP_NAMES, category_names=CATEGORY_NAMES, group_max=GROUP_MAX):
+def update_config(out_dir:str = OUT_DIR,
+                  image_dir:str = IMAGE_DIR, 
+                  group_names:list[str] = GROUP_NAMES, 
+                  category_names:list[str] = CATEGORY_NAMES, 
+                  group_max:list[int] = GROUP_MAX
+    ) -> None:
+    """
+    Updates any of the global config variables with the corresponding parameter.
+    """
+    
     global OUT_DIR; OUT_DIR = out_dir
     global IMAGE_DIR; IMAGE_DIR = image_dir
     global GROUP_NAMES; GROUP_NAMES = group_names

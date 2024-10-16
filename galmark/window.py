@@ -18,7 +18,7 @@ from functools import partial
 
 class AdjustmentsWindow(QWidget):
     """
-    Blur window
+    Class for the brightness and contrast window
     """
     def __init__(self):
         super().__init__()
@@ -87,7 +87,7 @@ class AdjustmentsWindow(QWidget):
 
 class BlurWindow(QWidget):
     """
-    Blur window
+    Class for the blur adjustment window
     """
     def __init__(self):
         super().__init__()
@@ -135,7 +135,7 @@ class BlurWindow(QWidget):
 
 class FrameWindow(QWidget):
     """
-    Blur window
+    Class for the window for switching between frames in an image
     """
     def __init__(self):
         super().__init__()
@@ -183,7 +183,7 @@ class FrameWindow(QWidget):
 
 class InstructionsWindow(QWidget):
     """
-    This window displays the instructions and keymappings
+    Class for the window that displays the instructions and keymappings
     """
     def __init__(self,groupNames):
         super().__init__()
@@ -240,6 +240,9 @@ class InstructionsWindow(QWidget):
         self.activateWindow()
 
 class StartupWindow(QInputDialog):
+    """
+    Class for the startup window
+    """
     def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon(ICON))
@@ -258,6 +261,9 @@ class StartupWindow(QInputDialog):
         else: return text
 
 class MainWindow(QMainWindow):
+    """
+    Class for the main window
+    """
     def __init__(self, username:str):
         super().__init__()
         self.setWindowTitle("Galaxy Marker")
@@ -480,6 +486,9 @@ class MainWindow(QMainWindow):
         self.update_categories()
 
     def __init_data__(self):
+        """
+        Initializes images.
+        """
         # Initialize output dictionary
         self.images = galmark.io.load(self.username)
         
@@ -508,6 +517,9 @@ class MainWindow(QMainWindow):
             self.N = len(self.images)
 
     def inview(self,x,y): return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
+    """
+    Checks if x and y are within the image.
+    """
 
     # === Events ===
 
@@ -547,7 +559,7 @@ class MainWindow(QMainWindow):
             if markButtons[i]: self.mark(group=i+1)
         
         if (event.button() == Qt.MouseButton.MiddleButton):
-            self.middle_mouse()
+            self.center_cursor()
 
         if (event.button() == Qt.MouseButton.RightButton):
             self.del_marks()
@@ -581,7 +593,10 @@ class MainWindow(QMainWindow):
         sys.exit()
     
     # === Actions ===
-    def open(self):
+    def open(self) -> None:
+        """
+        Method for the open save directory dialog.
+        """
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
         saveDir = dialog.getExistingDirectory(self, 'Open save directory', os.getcwd())
@@ -598,7 +613,10 @@ class MainWindow(QMainWindow):
         self.update_comments()
         self.update_favorites()
 
-    def open_ims(self):
+    def open_ims(self) -> None:
+        """
+        Method for the open image directory dialog.
+        """
         image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", galmark.io.IMAGE_DIR),'')
         if (image_dir == ''): return
         galmark.io.update_config(image_dir=image_dir)
@@ -611,7 +629,10 @@ class MainWindow(QMainWindow):
         self.update_categories()
         self.update_comments()
 
-    def favorite(self,state):
+    def favorite(self,state) -> None:
+        """
+        Favorite the current image.
+        """
         state = Qt.CheckState(state)
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
@@ -624,6 +645,9 @@ class MainWindow(QMainWindow):
             galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def categorize(self,i:int) -> None:
+        """
+        Categorize the current image
+        """
         if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.image.categories):
             self.image.categories.append(i)
         elif (i in self.image.categories):
@@ -632,9 +656,7 @@ class MainWindow(QMainWindow):
         galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def mark(self, group:int=0) -> None:
-        '''
-        Actions to complete when marking
-        '''
+        """Add a mark to the current image."""
 
         # get event position and position on image
         pix_pos = self.mouse_pix_pos()
@@ -662,6 +684,7 @@ class MainWindow(QMainWindow):
             galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def shift(self,delta:int):
+        """Move back or forward *delta* number of images."""
         # Increment the index
         self.idx += delta
         if self.idx > self.N-1:
@@ -677,13 +700,14 @@ class MainWindow(QMainWindow):
         self.update_favorites()
             
     def enter(self):
+        """Enter the text in the comment box into the image."""
         self.update_comments()
         self.comment_box.clearFocus()
         galmark.io.save(self.username,self.date,self.images)
         galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
-    def middle_mouse(self):
-        # Center on cursor
+    def center_cursor(self):
+        """Center on the cursor."""
         center = self.image_view.viewport().rect().center()
         scene_center = self.image_view.mapToScene(center)
         pix_pos = self.mouse_pix_pos(correction=False)
@@ -695,8 +719,23 @@ class MainWindow(QMainWindow):
             global_center = self.image_view.mapToGlobal(center)
             self.cursor().setPos(global_center)
 
-    def zoom(self,scale:int=1,mode:str='mouse'):
-        # Zoom in on cursor location
+    def zoom(self,scale:float,mode:str='mouse'):
+        """
+        Zoom in on the image.
+
+        Parameters
+        ----------
+        scale: str
+            Scale of the zoom. Greater than 1 means zooming in, less than 1 means zooming out
+        mode: str, optional
+            Zoom mode. To zoom from the center of the viewport, use mode='viewport'. To zoom from the mouse
+            cursor location, use mode='mouse'. Defaults to 'mouse'.
+        
+        Returns
+        ----------
+        None
+
+        """
         self.zoom_level *= scale
         if mode == 'viewport': center = self.image_view.viewport().rect().center()
         if mode == 'mouse': center = self.mouse_view_pos()
@@ -709,12 +748,14 @@ class MainWindow(QMainWindow):
         self.image_view.setTransform(transform)
 
     def fitview(self):
+        """Fit the image view in the viewport."""
         self.image_view.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
         self.zoom(scale=9,mode='viewport')
 
     # === Update methods ===
 
     def update_favorites(self):
+        """Update favorite boxes based on the contents of favorite_list."""
         if self.image.name in self.favorite_list:
             self.favorite_box.setChecked(True)
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
@@ -723,6 +764,7 @@ class MainWindow(QMainWindow):
             self.favorite_box.setChecked(False)
 
     def update_images(self):
+        """Updates previous image with a new image."""
         # Disconnect sliders from previous image
         try:
             self.blur_window.slider.valueChanged.disconnect(self.image.blur)
@@ -773,7 +815,7 @@ class MainWindow(QMainWindow):
         self.image_label.setText(f'{self.image.name} ({self.idx+1} of {self.N})')
     
     def update_comments(self):
-        # Update the comment in the dictionary
+        """Updates image comment with the contents of the comment box."""
         comment = self.comment_box.text()
         if not comment: comment = 'None'
 
@@ -782,6 +824,7 @@ class MainWindow(QMainWindow):
         galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def get_comment(self):
+        """If the image has a comment, sets the text of the comment box to the image's comment"""
         if (self.image.comment == 'None'):
             self.comment_box.setText('')
         else:
@@ -789,12 +832,13 @@ class MainWindow(QMainWindow):
             self.comment_box.setText(comment)
 
     def update_categories(self):
-        # Initialize category and update checkboxes
+        """Resets all category boxes to unchecked, then checks the boxes based on the current image's categories"""
         for box in self.category_boxes: box.setChecked(False)
         for i in self.image.categories:
             self.category_boxes[i-1].setChecked(True)
 
     def update_marks(self):
+        """"""
         # Redraws all marks in image
         for mark in self.image.marks: self.imageScene.addItem(mark)
 
@@ -813,21 +857,25 @@ class MainWindow(QMainWindow):
     # === Utils ===
 
     def mouse_view_pos(self):
-        '''
-        Gets mouse positions
+        """
+        Gets mouse position.
 
-        Returns:
-            view_pos: position of mouse in the pixmap
-        '''
+        Returns
+        ----------
+        view_pos: `QPoint`
+            position of mouse in the image view.
+        """
         return self.image_view.mapFromGlobal(self.cursor().pos())
     
     def mouse_pix_pos(self,correction:bool=True):
-        '''
-        Gets mouse positions
+        """
+        Gets mouse position.
 
-        Returns:
-            pix_pos: position of mouse in the pixmap
-        '''
+        Returns
+        ----------
+        pix_pos: `QPoint`
+            position of mouse in the image.
+        """
         view_pos = self.image_view.mapFromGlobal(self.cursor().pos())
         scene_pos = self.image_view.mapToScene(view_pos)
 
