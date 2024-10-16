@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QGraphicsEllipseItem
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem
 from PyQt6.QtGui import QPen, QColor
 from PyQt6.QtCore import Qt, QPoint
 from math import nan
@@ -41,3 +41,22 @@ class Mark(QGraphicsEllipseItem):
     def setCenter(self,x:int,y:int) -> None:
         self.setRect(x-self.r,y-self.r,2*self.r,2*self.r)
         self.setPos(x-self.r,y-self.r)
+
+class RectMark(QGraphicsRectItem):
+    def __init__(self,label,x_ra_center,y_dec_center,image=None,input_wcs=False):
+        self.image = image
+        self.side_length = int((self.image.width+self.image.height)/200)
+        self.c = QColor(238, 130, 238)
+
+        if not input_wcs:
+            x_center, y_center = x_ra_center + 4*self.image.width + 0.5, y_dec_center + 4*self.image.height + 0.5
+        else:
+            ra_center = x_ra_center
+            dec_center = y_dec_center
+            x_center, y_center = image.wcs.all_world2pix([[ra_center, dec_center]], 0)[0]
+            y_center = self.image.height - y_center
+            x_center, y_center = x_center + 4*self.image.width + 0.5, y_center + 4*self.image.height + 0.5
+
+        super(RectMark, self).__init__(x_center-self.side_length/2, y_center-self.side_length/2, 1.5*self.side_length, 1.5*self.side_length)
+
+        self.setPen(QPen(self.c, int(self.side_length/5), Qt.PenStyle.SolidLine))

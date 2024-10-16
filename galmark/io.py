@@ -457,6 +457,21 @@ def load(savename:str) -> list[galmark.image.GImage]:
                     img.marks.append(mark)
     return images
 
+def load_ext_marks(filename:str) -> dict:
+    mark_labels = []
+    mark_ras = []
+    mark_decs = []
+
+    file = open(filename, 'r')
+
+    for line in file:
+        line = line.split(',')
+        mark_labels.append(line[0])
+        mark_ras.append(float(line[1].replace('\n', '')))
+        mark_decs.append(float(line[2].replace('\n', '')))
+    
+    return mark_labels, mark_ras, mark_decs
+
 def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
     """
     Globs in IMAGE_DIR, using edited_images to sort, with edited_images in order at the beginning of the list

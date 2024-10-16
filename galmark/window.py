@@ -425,6 +425,13 @@ class MainWindow(QMainWindow):
         open_ims_menu.triggered.connect(self.open_ims)
         file_menu.addAction(open_ims_menu)
 
+        ### Open external marks file
+        open_ext_marks_menu = QAction('&Open external marks file', self)
+        open_ext_marks_menu.setShortcuts(['Ctrl+Shift+m'])
+        open_ext_marks_menu.setStatusTip('Open external marks file')
+        open_ext_marks_menu.triggered.connect(self.open_ext_marks)
+        file_menu.addAction(open_ext_marks_menu)
+
         ## Edit menu
         edit_menu = menu_bar.addMenu("&Edit")
 
@@ -646,6 +653,17 @@ class MainWindow(QMainWindow):
         self.get_comment()
         self.update_categories()
         self.update_comments()
+
+    def open_ext_marks(self):
+        ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', os.getcwd(), '*.txt')[0]
+        labels, x_ra, y_dec = galmark.io.load_ext_marks(ext_mark_file)
+        
+        for i in range(len(labels)):
+            label = labels[i]
+            alpha = x_ra[i]
+            beta = y_dec[i]
+            mark = self.imageScene.rectmark(label, alpha, beta, input_wcs=True)
+        return
 
     def favorite(self,state) -> None:
         """

@@ -2,7 +2,7 @@ from __future__ import annotations
 from PyQt6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem 
 from PyQt6.QtGui import QPixmap, QPainter
 from PyQt6.QtCore import Qt
-from galmark.mark import Mark
+from galmark.mark import Mark, RectMark
 from galmark import __dirname__, SUPPORTED_EXTS
 import galmark.io
 import os
@@ -78,6 +78,7 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.comment:str
         self.categories:list[str]
         self.marks:list[Mark]
+        self.ext_marks:list[RectMark]
         self.seen:bool
         self.frame:int
 
@@ -181,4 +182,9 @@ class ImageScene(QGraphicsScene):
     def mark(self,x,y,group):
         mark = Mark(x,y,image=self.image,group=group)
         self.addItem(mark)
-        return mark  
+        return mark 
+    
+    def rectmark(self,label,x_ra,y_dec,input_wcs):
+        mark = RectMark(label,x_ra,y_dec,input_wcs=input_wcs,image=self.image)
+        self.addItem(mark)
+        return mark
