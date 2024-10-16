@@ -284,9 +284,9 @@ class MainWindow(QMainWindow):
         self.blur_window = BlurWindow()
         self.blur_window.slider.valueChanged.connect(self.image.blur)
         
-        self.adjust_menu = AdjustmentsWindow()
-        self.adjust_menu.contrast_slider.valueChanged.connect(self.image.contrast)
-        self.adjust_menu.brightness_slider.valueChanged.connect(self.image.brighten)
+        self.adjust_window = AdjustmentsWindow()
+        self.adjust_window.contrast_slider.valueChanged.connect(self.image.contrast)
+        self.adjust_window.brightness_slider.valueChanged.connect(self.image.brighten)
         
         self.frame_window = FrameWindow()
         self.frame_window.slider.valueChanged.connect(self.image.seek)
@@ -425,6 +425,15 @@ class MainWindow(QMainWindow):
         open_ims_menu.triggered.connect(self.open_ims)
         file_menu.addAction(open_ims_menu)
 
+        ## Edit menu
+        edit_menu = menu_bar.addMenu("&Edit")
+
+        ### Delete marks menu
+        del_menu = QAction('&Delete all marks', self)
+        del_menu.setStatusTip('Delete all marks')
+        del_menu.triggered.connect(partial(self.del_marks,True))
+        edit_menu.addAction(del_menu)
+
         ## View menu
         view_menu = menu_bar.addMenu("&View")
 
@@ -434,6 +443,15 @@ class MainWindow(QMainWindow):
         frame_menu.setStatusTip('Frames...')
         frame_menu.triggered.connect(self.frame_window.show)
         view_menu.addAction(frame_menu)
+
+        ### Toggle marks menu
+        marks_menu = QAction('&Marks visible', self)
+        marks_menu.setShortcuts(['Ctrl+m'])
+        marks_menu.setStatusTip('Marks visible')
+        marks_menu.setCheckable(True)
+        marks_menu.setChecked(True)
+        marks_menu.triggered.connect(self.toggle_marks)
+        view_menu.addAction(marks_menu)
 
         ### Focus cursor menu
         cursor_focus_menu = QAction('&Focus cursor', self)
@@ -456,7 +474,7 @@ class MainWindow(QMainWindow):
         adjust_menu = QAction('&Brightness and Contrast...',self)
         adjust_menu.setStatusTip("Brightness and Contrast")
         adjust_menu.setShortcuts(['Ctrl+a'])
-        adjust_menu.triggered.connect(self.adjust_menu.show)
+        adjust_menu.triggered.connect(self.adjust_window.show)
         filter_menu.addAction(adjust_menu)
 
         ## Help menu
@@ -768,8 +786,8 @@ class MainWindow(QMainWindow):
         # Disconnect sliders from previous image
         try:
             self.blur_window.slider.valueChanged.disconnect(self.image.blur)
-            self.adjust_menu.contrast_slider.valueChanged.disconnect(self.image.contrast)
-            self.adjust_menu.brightness_slider.valueChanged.disconnect(self.image.brighten)
+            self.adjust_window.contrast_slider.valueChanged.disconnect(self.image.contrast)
+            self.adjust_window.brightness_slider.valueChanged.disconnect(self.image.brighten)
             self.frame_window.slider.valueChanged.disconnect(self.image.seek)
         except: pass
 
@@ -798,13 +816,13 @@ class MainWindow(QMainWindow):
              
         # Update sliders
         self.blur_window.slider.setValue(0)
-        self.adjust_menu.contrast_slider.setValue(0)
-        self.adjust_menu.brightness_slider.setValue(0)
+        self.adjust_window.contrast_slider.setValue(0)
+        self.adjust_window.brightness_slider.setValue(0)
         self.frame_window.slider.setValue(self.frame)
 
         self.blur_window.slider.valueChanged.connect(self.image.blur)
-        self.adjust_menu.contrast_slider.valueChanged.connect(self.image.contrast)
-        self.adjust_menu.brightness_slider.valueChanged.connect(self.image.brighten)
+        self.adjust_window.contrast_slider.valueChanged.connect(self.image.contrast)
+        self.adjust_window.brightness_slider.valueChanged.connect(self.image.brighten)
         self.frame_window.slider.valueChanged.connect(self.image.seek)
 
         self.frame_window.slider.setMaximum(self.image.n_frames-1)
@@ -842,17 +860,26 @@ class MainWindow(QMainWindow):
         # Redraws all marks in image
         for mark in self.image.marks: self.imageScene.addItem(mark)
 
-    def del_marks(self):
-        pix_pos = self.mouse_pix_pos(correction=False).toPointF()
-        selected_items = [ item for item in self.imageScene.items() 
-                           if isinstance(item,Mark) 
-                           and (item is self.imageScene.itemAt(pix_pos, item.transform()))]
+    def del_marks(self,del_all=False):
+        if not del_all:
+            pix_pos = self.mouse_pix_pos(correction=False).toPointF()
+            selected_items = [ item for item in self.imageScene.items() 
+                            if isinstance(item,Mark) 
+                            and (item is self.imageScene.itemAt(pix_pos, item.transform()))]
+        else: selected_items = [item for item in self.imageScene.items() if isinstance(item,Mark)]
         
         for item in selected_items:
             self.imageScene.removeItem(item)
             self.image.marks.remove(item)
-            galmark.io.save(self.username,self.date,self.images)
-            galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+            
+        galmark.io.save(self.username,self.date,self.images)
+        galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+
+    def toggle_marks(self):
+        for item in self.imageScene.items():
+            if isinstance(item,Mark):
+                if item.isVisible(): item.hide()
+                else: item.show()
 
     # === Utils ===
 
