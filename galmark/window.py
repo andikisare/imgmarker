@@ -672,14 +672,13 @@ class MainWindow(QMainWindow):
 
     def open_ext_marks(self):
         ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', os.getcwd(), '*.txt')[0]
-        labels, x_ra, y_dec = galmark.io.load_ext_marks(ext_mark_file)
+        labels, ras, decs = galmark.io.load_ext_marks(ext_mark_file)
         
         for i in range(len(labels)):
             label = labels[i]
-            alpha = x_ra[i]
-            beta = y_dec[i]
-            mark = self.imageScene.rectmark(label, alpha, beta, input_wcs=True)
-        return
+            ra = ras[i]
+            dec = decs[i]
+            self.imageScene.mark(ra=ra,dec=dec,shape='rect',text=label)
 
     def favorite(self,state) -> None:
         """

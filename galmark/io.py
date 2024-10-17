@@ -326,9 +326,9 @@ def save(savename:str,date,images:list[galmark.image.GImage]) -> None:
                 for mark in mark_list:
                     if mark != None:
                         group_name = GROUP_NAMES[mark.g]
-                        ra, dec = mark.wcs_center()
+                        ra, dec = mark.wcs_center
                         img_ra, img_dec = img.wcs_center()
-                        x, y = mark.img_center().x(), mark.img_center().y()
+                        x, y = mark.center.x(), mark.center.y()
                     else:
                         group_name = 'None'
                         ra, dec = nan, nan
@@ -451,26 +451,24 @@ def load(savename:str) -> list[galmark.image.GImage]:
 
                 if (name == img.name) and (not isnan(float(x))) and (not isnan(float(y))):
                     group = GROUP_NAMES.index(group)
-                    mark_args = (int(x),int(y))
+                    mark_args = (float(x),float(y))
                     mark_kwargs = {'image': img, 'group': group}
                     mark = galmark.mark.Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)
     return images
 
-def load_ext_marks(filename:str) -> dict:
-    mark_labels = []
-    mark_ras = []
-    mark_decs = []
+def load_ext_marks(f:str) -> dict:
+    labels = []
+    ras = []
+    decs = []
 
-    file = open(filename, 'r')
-
-    for line in file:
-        line = line.split(',')
-        mark_labels.append(line[0])
-        mark_ras.append(float(line[1].replace('\n', '')))
-        mark_decs.append(float(line[2].replace('\n', '')))
+    for l in open(f):
+        var = l.split(',')
+        labels.append(var[0])
+        ras.append(float(var[1].replace('\n', '')))
+        decs.append(float(var[2].replace('\n', '')))
     
-    return mark_labels, mark_ras, mark_decs
+    return labels, ras, decs
 
 def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
     """
