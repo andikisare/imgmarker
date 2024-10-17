@@ -1,6 +1,7 @@
-from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsRectItem, QAbstractGraphicsShapeItem 
+from __future__ import annotations
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget,QLineEdit
 from PyQt6.QtGui import QPen, QColor
-from PyQt6.QtCore import Qt, QPoint, QPointF
+from PyQt6.QtCore import Qt, QPointF 
 from math import nan, ceil
 from galmark.io import GROUP_NAMES
 import typing
@@ -27,7 +28,6 @@ class AbstractMark:
                 _x, _y = self.center.x(), self.image.height - self.center.y()
                 self.wcs_center = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
             else: self.wcs_center = (nan, nan)
-            
         else:
             self.d = args[0]
             self.wcs_center = (kwargs['ra'],kwargs['dec'])
@@ -35,12 +35,42 @@ class AbstractMark:
             self.center = QPointF(int(_x), self.image.height-int(_y))
             self.view_center = self.center + 4*QPointF(self.image.width,self.image.height) + QPointF(0.5,0.5)
 
+class MarkLabel(QGraphicsProxyWidget):
+    def __init__(self,mark:Mark):
+        super().__init__()
+        self.mark = mark
+        self.lineedit = QLineEdit()
+        self.lineedit.setReadOnly(False)
+        self.lineedit.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self.lineedit.setText(self.mark.text)
+        self.lineedit.setStyleSheet(f"""background-color: rgba(0,0,0,0);
+                                     border: none; 
+                                     color: rgba{self.mark.c.getRgb()}""")
+        self.lineedit.textChanged.connect(self.autoresize)
+        self.setWidget(self.lineedit)
+        self.autoresize()
+        
+    def keyPressEvent(self, event):
+        if (event.key() == Qt.Key.Key_Return):
+            self.lineedit.setReadOnly(True)
+            self.lineedit.clearFocus()
+            self.mark.text = self.lineedit.text()
+        else: return super().keyPressEvent(event)
+
+    def focusInEvent(self, a0):
+        self.lineedit.setReadOnly(False)
+        return super().focusInEvent(a0)
+    
+    def autoresize(self):
+        fm = self.lineedit.fontMetrics()
+        w = fm.boundingRect(self.lineedit.text()).width()+fm.boundingRect('AA').width()
+        self.lineedit.setFixedWidth(w)   
+    
 class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
     @typing.overload
     def __init__(self,x:int,y:int,
                  shape:str='ellipse',
-                 image=None,group:int=0,text:str=None,
-                 
+                 image=None,group:int=0,text:str=None,        
     ) -> None: ...
     @typing.overload
     def __init__(self,ra:float=None,dec:float=None,
@@ -89,7 +119,5 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
         self.paint = shapeitem.paint
         
         # Set up label
-        self.label = QGraphicsTextItem()
-        self.label.setPos(self.view_center)
-        self.label.setDefaultTextColor(self.c)
-        self.label.setPlainText(self.text)
+        self.label = MarkLabel(self)
+        self.label.setPos(self.view_center+QPointF(3,3))

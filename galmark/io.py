@@ -120,7 +120,7 @@ def check_marks(event) -> list[bool]:
     
 def parse_wcs(img:galmark.image.GImage) -> WCS:
     """
-    Reads WCS information from TIFf/TIF metadata and FITS/FIT headers if available.
+    Reads WCS information from TIFF/TIF metadata and FITS/FIT headers if available.
 
     Parameters
     ----------
@@ -131,7 +131,6 @@ def parse_wcs(img:galmark.image.GImage) -> WCS:
     wcs: `astropy.wcs.WCS` or None
         Astropy WCS object. Returns None if there is no WCS present.
     """
-        
     try:
         if (img.format == 'FITS'):
             hdulist = fits.open(img.filename)

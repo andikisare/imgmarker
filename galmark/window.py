@@ -278,7 +278,7 @@ class MainWindow(QMainWindow):
         self.username = username
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
         self.__init_data__()
-        self.imageScene = galmark.image.ImageScene(self.image)
+        self.image_scene = galmark.image.ImageScene(self.image)
 
         # Setup child windows
         self.blur_window = BlurWindow()
@@ -313,7 +313,7 @@ class MainWindow(QMainWindow):
             self.pos_widget.dec_text.show()
 
         # Create image view
-        self.image_view = QGraphicsView(self.imageScene)
+        self.image_view = QGraphicsView(self.image_scene)
         self.fitview()   
         
         ### Disable scrollbar
@@ -342,7 +342,7 @@ class MainWindow(QMainWindow):
         self.submit_button = QPushButton(text='Enter',parent=self)
         self.submit_button.setFixedHeight(40)
         self.submit_button.clicked.connect(self.enter)
-        self.submit_button.setShortcut('Return')
+        #self.submit_button.setShortcut('Return')
         self.submit_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # Next widget
@@ -557,10 +557,11 @@ class MainWindow(QMainWindow):
             self.image.seen = True
             self.N = len(self.images)
 
-    def inview(self,x,y): return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
-    """
-    Checks if x and y are within the image.
-    """
+    def inview(self,x,y):
+        """
+        Checks if x and y are within the image.
+        """
+        return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
 
     # === Events ===
 
@@ -678,7 +679,8 @@ class MainWindow(QMainWindow):
             label = labels[i]
             ra = ras[i]
             dec = decs[i]
-            self.imageScene.mark(ra=ra,dec=dec,shape='rect',text=label)
+            mark = self.image_scene.mark(ra=ra,dec=dec,shape='rect',text=label)
+        return
 
     def favorite(self,state) -> None:
         """
@@ -720,11 +722,11 @@ class MainWindow(QMainWindow):
         marks_in_group = [m for m in self.image.marks if m.g == group]
 
         if self.inview(x,y):
-            mark = self.imageScene.mark(x,y,group=group)
+            mark = self.image_scene.mark(x,y,group=group)
             
             if (limit == 1) and (len(marks_in_group) == 1):
                 prev_mark = marks_in_group[0]
-                self.imageScene.rmmark(prev_mark)
+                self.image_scene.rmmark(prev_mark)
                 self.image.marks.remove(prev_mark)
                 self.image.marks.append(mark)
 
@@ -792,7 +794,6 @@ class MainWindow(QMainWindow):
         Returns
         ----------
         None
-
         """
         self.zoom_level *= scale
         if mode == 'viewport': center = self.image_view.viewport().rect().center()
@@ -839,7 +840,7 @@ class MainWindow(QMainWindow):
         self.image = self.images[self.idx]
         self.image.seek(self.frame)
         self.image.seen = True
-        self.imageScene.update(self.image)
+        self.image_scene.update(self.image)
 
         # Fit back to view if the image dimensions have changed
         if (self.image.width != _w) or (self.image.height != _h): self.fitview()
@@ -908,18 +909,18 @@ class MainWindow(QMainWindow):
 
     def update_marks(self):
         """Redraws all marks in image"""
-        for mark in self.image.marks: self.imageScene.mark(mark)
+        for mark in self.image.marks: self.image_scene.mark(mark)
 
     def del_marks(self,del_all=False):
         if not del_all:
             pix_pos = self.mouse_pix_pos(correction=False).toPointF()
-            selected_items = [ item for item in self.imageScene.items() 
-                            if isinstance(item,Mark) 
-                            and (item is self.imageScene.itemAt(pix_pos, item.transform()))]
-        else: selected_items = [item for item in self.imageScene.items() if isinstance(item,Mark)]
+
+            selected_items = [item for item in self.image.marks 
+                              if item is self.image_scene.itemAt(pix_pos, item.transform())]
+        else: selected_items = self.image.marks
         
         for item in selected_items:
-            self.imageScene.rmmark(item)
+            self.image_scene.rmmark(item)
             self.image.marks.remove(item)
         
         if len(self.image.marks) == 0:
