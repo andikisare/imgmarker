@@ -1,9 +1,9 @@
 import os
 import numpy as np
-import galmark.window
-import galmark.mark
-import galmark.image
-from galmark import __dirname__, CONFIG
+import imgmarker.window
+import imgmarker.mark
+import imgmarker.image
+from imgmarker import __dirname__, CONFIG
 from PyQt6.QtCore import Qt
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
@@ -17,7 +17,7 @@ SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or
 
 def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
     """
-    Reads in each line from galmark.cfg. If there is no configuration file,
+    Reads in each line from imgmarker.cfg. If there is no configuration file,
     a default configuration file will be created using the required text
     format.
 
@@ -62,7 +62,7 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
             if var == 'out_dir':
                 if val == './':
                     out_dir = os.getcwd()
-                    print('WARNING: Setting output/save directory to current directory. This can be configured in \'galmark.cfg\'.')
+                    print('WARNING: Setting output/save directory to current directory. This can be configured in \'imgmarker.cfg\'.')
                 else: out_dir = val
                 if not os.path.exists(out_dir):
                     print("WARNING: out_dir does not exist. Creating out_dir directory.")
@@ -118,13 +118,13 @@ def check_marks(event) -> list[bool]:
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
-def parse_wcs(img:galmark.image.GImage) -> WCS:
+def parse_wcs(img:imgmarker.image.GImage) -> WCS:
     """
     Reads WCS information from TIFF/TIF metadata and FITS/FIT headers if available.
 
     Parameters
     ----------
-    img: `galmark.image.GImage` object
+    img: `imgmarker.image.GImage` object
 
     Returns
     ----------
@@ -166,7 +166,7 @@ def check_save(savename:str) -> bool:
     """
     return (savename != 'None') and (savename != '')
 
-def savefav(savename:str,date:str,images:list[galmark.image.GImage],fav_list:list[str]) -> None:
+def savefav(savename:str,date:str,images:list[imgmarker.image.GImage],fav_list:list[str]) -> None:
     """
     Creates a file, \'favorites.txt\', in the save directory containing all images that were favorited.
     This file is in the same format as \'images.txt\' so that a user can open their favorites file to show
@@ -181,7 +181,7 @@ def savefav(savename:str,date:str,images:list[galmark.image.GImage],fav_list:lis
     date: str
         A string containing the current date in ISO 8601 extended format.
 
-    images: list[`galmark.image.GImage`]
+    images: list[`imgmarker.image.GImage`]
         A list of GImage objects for each image from the specified image directory.
 
     fav_list: list[str]
@@ -261,7 +261,7 @@ def savefav(savename:str,date:str,images:list[galmark.image.GImage],fav_list:lis
             fav_out.write(outline)
 
 
-def save(savename:str,date,images:list[galmark.image.GImage]) -> None:
+def save(savename:str,date,images:list[imgmarker.image.GImage]) -> None:
     """
     Saves image data.
 
@@ -273,7 +273,7 @@ def save(savename:str,date,images:list[galmark.image.GImage]) -> None:
     date: str
         A string containing the current date in ISO 8601 extended format.
 
-    images: list[`galmark.image.GImage`]
+    images: list[`imgmarker.image.GImage`]
         A list of GImage objects for each image from the specified image directory.
 
     Returns
@@ -414,14 +414,14 @@ def loadfav(savename:str) -> list[str]:
 
     return list(set(fav_list))
 
-def load(savename:str) -> list[galmark.image.GImage]:
+def load(savename:str) -> list[imgmarker.image.GImage]:
     """
-    Takes data from marks.txt and images.txt and from them returns a list of `galmark.image.GImage` objects.
+    Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.GImage` objects.
     """
     save_dir = os.path.join(OUT_DIR, savename)
     mark_out_path = os.path.join(save_dir,'marks.txt')
     images_out_path = os.path.join(save_dir,'images.txt')
-    images:list[galmark.image.GImage] = []
+    images:list[imgmarker.image.GImage] = []
     
     # Get list of images from images.txt
     if os.path.exists(images_out_path):
@@ -434,7 +434,7 @@ def load(savename:str) -> list[galmark.image.GImage]:
                 categories = [CATEGORY_NAMES.index(cat) for cat in categories if cat != 'None']
                 categories.sort()
 
-                img = galmark.image.open(os.path.join(IMAGE_DIR,name))
+                img = imgmarker.image.open(os.path.join(IMAGE_DIR,name))
                 img.comment = comment
                 img.categories = categories
                 img.seen = True
@@ -452,7 +452,7 @@ def load(savename:str) -> list[galmark.image.GImage]:
                     group = GROUP_NAMES.index(group)
                     mark_args = (float(x),float(y))
                     mark_kwargs = {'image': img, 'group': group}
-                    mark = galmark.mark.Mark(*mark_args, **mark_kwargs)
+                    mark = imgmarker.mark.Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)
     return images
 
@@ -469,14 +469,14 @@ def load_ext_marks(f:str) -> dict:
     
     return labels, ras, decs
 
-def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.image.GImage],int]:
+def glob(edited_images:list[imgmarker.image.GImage]=[]) -> tuple[list[imgmarker.image.GImage],int]:
     """
     Globs in IMAGE_DIR, using edited_images to sort, with edited_images in order at the beginning of the list
     and the remaining unedited images in randomized order at the end of the list.
     """
      # Find all images in image directory
     all_images = glob_.glob(os.path.join(IMAGE_DIR, '*.*'))
-    all_images = [img for img in all_images if img.split('.')[-1] in galmark.image.SUPPORTED_EXTS]
+    all_images = [img for img in all_images if img.split('.')[-1] in imgmarker.image.SUPPORTED_EXTS]
 
     # Get list of paths to images if they are in the dictionary (have been edited)
     edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
@@ -487,7 +487,7 @@ def glob(edited_images:list[galmark.image.GImage]=[]) -> tuple[list[galmark.imag
     rng.shuffle(unedited_image_paths)
 
     # Put edited images at the beginning, unedited images at front
-    images = edited_images + [galmark.image.open(fp) for fp in unedited_image_paths]
+    images = edited_images + [imgmarker.image.open(fp) for fp in unedited_image_paths]
     idx = min(len(edited_images),len(all_images)-1)
 
     return images, idx
@@ -496,7 +496,7 @@ def inputs() -> str:
     """
     Returns the savename from `StartupWindow`.
     """
-    savename = galmark.window.StartupWindow().getUser()
+    savename = imgmarker.window.StartupWindow().getUser()
     return savename
 
 def update_config(out_dir:str = OUT_DIR,

@@ -2,9 +2,9 @@ from __future__ import annotations
 from PyQt6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem 
 from PyQt6.QtGui import QPixmap, QPainter
 from PyQt6.QtCore import Qt
-import galmark.mark
-from galmark import __dirname__, SUPPORTED_EXTS
-import galmark.io
+import imgmarker.mark
+from imgmarker import __dirname__, SUPPORTED_EXTS
+import imgmarker.io
 import os
 from math import floor
 from PIL import Image, ImageFile, ImageOps
@@ -22,7 +22,7 @@ def open(path:str) -> GImage | None:
     Opens the given image file.
 
     :param path: Path to the image
-    :returns gimage: An :py:class:`galmark.image.GImage` object.
+    :returns gimage: An :py:class:`imgmarker.image.GImage` object.
     """
     Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
     ext = path.split('.')[-1]
@@ -43,7 +43,7 @@ def open(path:str) -> GImage | None:
         gimage.__dict__ =  image.__dict__
         try: gimage.n_frames = image.n_frames
         except: gimage.n_frames = 1
-        gimage.wcs = galmark.io.parse_wcs(image)
+        gimage.wcs = imgmarker.io.parse_wcs(image)
         gimage.image_file = image
         gimage.name = path.split(os.sep)[-1] 
 
@@ -78,8 +78,8 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.b:float
         self.comment:str
         self.categories:list[str]
-        self.marks:list[galmark.mark.Mark]
-        self.ext_marks:list[galmark.mark.Mark]
+        self.marks:list[imgmarker.mark.Mark]
+        self.ext_marks:list[imgmarker.mark.Mark]
         self.seen:bool
         self.frame:int
 
@@ -181,19 +181,19 @@ class ImageScene(QGraphicsScene):
         self.setSceneRect(0,0,9*self.image.width,9*self.image.height)
 
     @typing.overload
-    def mark(self,x:float,y:float,shape='ellipse',text:int|str=0) -> galmark.mark.Mark: ...
+    def mark(self,x:float,y:float,shape='ellipse',text:int|str=0) -> imgmarker.mark.Mark: ...
     @typing.overload
-    def mark(self,ra:float=None,dec:float=None,shape='ellipse',text:int|str=0) -> galmark.mark.Mark: ...
+    def mark(self,ra:float=None,dec:float=None,shape='ellipse',text:int|str=0) -> imgmarker.mark.Mark: ...
     @typing.overload
-    def mark(self,mark:galmark.mark.Mark) -> galmark.mark.Mark: ... 
+    def mark(self,mark:imgmarker.mark.Mark) -> imgmarker.mark.Mark: ... 
 
-    def mark(self,*args,**kwargs) -> galmark.mark.Mark:
+    def mark(self,*args,**kwargs) -> imgmarker.mark.Mark:
         if len(args) == 1: mark = args[0]
-        else: mark = galmark.mark.Mark(*args,image=self.image,**kwargs)
+        else: mark = imgmarker.mark.Mark(*args,image=self.image,**kwargs)
         self.addItem(mark.label)
         self.addItem(mark)
         return mark
     
-    def rmmark(self,mark:galmark.mark.Mark) -> None:
+    def rmmark(self,mark:imgmarker.mark.Mark) -> None:
         self.removeItem(mark)
         self.removeItem(mark.label)

@@ -4,11 +4,11 @@ from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QSlider, QLineEdit, QFileDialog )
 from PyQt6.QtGui import QAction, QIcon, QFont
 from PyQt6.QtCore import Qt, QPoint, QPointF, QRectF
-from galmark.mark import Mark
-from galmark import __dirname__, ICON, HEART_SOLID, HEART_CLEAR
-import galmark.io
-import galmark.image
-from galmark.widget import QHLine, PosWidget
+from imgmarker.mark import Mark
+from imgmarker import __dirname__, ICON, HEART_SOLID, HEART_CLEAR
+import imgmarker.io
+import imgmarker.image
+from imgmarker.widget import QHLine, PosWidget
 import sys
 import os
 import datetime as dt
@@ -254,10 +254,10 @@ class StartupWindow(QInputDialog):
     def getUser(self) -> None:
         # Make popup to get name
         text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
-        if not text.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR
+        if not text.isalnum(): raise imgmarker.io.SAVE_ALPHANUM_ERR
 
         if not OK: sys.exit()
-        elif not text.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR 
+        elif not text.isalnum(): raise imgmarker.io.SAVE_ALPHANUM_ERR 
         else: return text
 
 class MainWindow(QMainWindow):
@@ -266,7 +266,7 @@ class MainWindow(QMainWindow):
     """
     def __init__(self, username:str):
         super().__init__()
-        self.setWindowTitle("Galaxy Marker")
+        self.setWindowTitle("Image Marker")
         self.setWindowIcon(QIcon(ICON))
         self.fullw = self.screen().size().width()
         self.fullh = self.screen().size().height()
@@ -278,7 +278,7 @@ class MainWindow(QMainWindow):
         self.username = username
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
         self.__init_data__()
-        self.image_scene = galmark.image.ImageScene(self.image)
+        self.image_scene = imgmarker.image.ImageScene(self.image)
 
         # Setup child windows
         self.blur_window = BlurWindow()
@@ -367,7 +367,7 @@ class MainWindow(QMainWindow):
         self.categories_layout = QHBoxLayout()
 
         # Category boxes
-        self.category_boxes = [QCheckBox(text=galmark.io.CATEGORY_NAMES[i], parent=self) for i in range(1,6)]
+        self.category_boxes = [QCheckBox(text=imgmarker.io.CATEGORY_NAMES[i], parent=self) for i in range(1,6)]
         for i, box in enumerate(self.category_boxes):
             box.setFixedHeight(20)
             box.setStyleSheet("margin-left:30%; margin-right:30%;")
@@ -376,7 +376,7 @@ class MainWindow(QMainWindow):
             self.categories_layout.addWidget(box)
 
         # Favorite box
-        self.favorite_list = galmark.io.loadfav(username)
+        self.favorite_list = imgmarker.io.loadfav(username)
         self.favorite_box = QCheckBox(parent=self)
         self.favorite_box.setFixedHeight(20)
         self.favorite_box.setFixedWidth(40)
@@ -504,7 +504,7 @@ class MainWindow(QMainWindow):
         help_menu = menu_bar.addMenu('&Help')
 
         ### Instructions and Keymapping window
-        self.instructions_window = InstructionsWindow(galmark.io.GROUP_NAMES)
+        self.instructions_window = InstructionsWindow(imgmarker.io.GROUP_NAMES)
         instructions_menu = QAction('&Instructions', self)
         instructions_menu.setShortcuts(['F1'])
         instructions_menu.setStatusTip('Instructions')
@@ -531,9 +531,9 @@ class MainWindow(QMainWindow):
         Initializes images.
         """
         # Initialize output dictionary
-        self.images = galmark.io.load(self.username)
+        self.images = imgmarker.io.load(self.username)
         
-        self.favorite_list = galmark.io.loadfav(self.username)
+        self.favorite_list = imgmarker.io.loadfav(self.username)
 
         # Find all images in image directory
 
@@ -541,17 +541,17 @@ class MainWindow(QMainWindow):
         except: pass
         
         try:
-            self.images, self.idx = galmark.io.glob(edited_images=self.images)
+            self.images, self.idx = imgmarker.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seek(self.frame)
             self.image.seen = True
             self.N = len(self.images)
         except:
             # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
-            #          f"Please specify a different image directory in galmark.cfg and try again.")
-            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", galmark.io.IMAGE_DIR),'')
-            galmark.io.update_config(image_dir=image_dir)
-            self.images, self.idx = galmark.io.glob(edited_images=self.images)
+            #          f"Please specify a different image directory in imgmarker.cfg and try again.")
+            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", imgmarker.io.IMAGE_DIR),'')
+            imgmarker.io.update_config(image_dir=image_dir)
+            self.images, self.idx = imgmarker.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seek(self.frame)
             self.image.seen = True
@@ -577,7 +577,7 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self,event):
         # Check if key is bound with marking the image
-        markButtons = galmark.io.check_marks(event)
+        markButtons = imgmarker.io.check_marks(event)
         for i in range(0,9):
             if markButtons[i]: self.mark(group=i+1)
 
@@ -596,7 +596,7 @@ class MainWindow(QMainWindow):
 
     def mousePressEvent(self,event):
         # Check if key is bound with marking the image
-        markButtons = galmark.io.check_marks(event)
+        markButtons = imgmarker.io.check_marks(event)
         for i in range(0,9):
             if markButtons[i]: self.mark(group=i+1)
         
@@ -645,7 +645,7 @@ class MainWindow(QMainWindow):
         if (saveDir == ''): return
         
         self.username = str(os.path.split(saveDir)[-1])
-        if not self.username.isalnum(): raise galmark.io.SAVE_ALPHANUM_ERR
+        if not self.username.isalnum(): raise imgmarker.io.SAVE_ALPHANUM_ERR
         
         self.__init_data__()
         self.update_images()
@@ -659,10 +659,10 @@ class MainWindow(QMainWindow):
         """
         Method for the open image directory dialog.
         """
-        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", galmark.io.IMAGE_DIR),'')
+        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", imgmarker.io.IMAGE_DIR),'')
         if (image_dir == ''): return
-        galmark.io.update_config(image_dir=image_dir)
-        self.images, self.idx = galmark.io.glob(edited_images=[])
+        imgmarker.io.update_config(image_dir=image_dir)
+        self.images, self.idx = imgmarker.io.glob(edited_images=[])
         self.N = len(self.images)
         
         self.update_images()
@@ -673,7 +673,7 @@ class MainWindow(QMainWindow):
 
     def open_ext_marks(self):
         ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', os.getcwd(), '*.txt')[0]
-        labels, ras, decs = galmark.io.load_ext_marks(ext_mark_file)
+        labels, ras, decs = imgmarker.io.load_ext_marks(ext_mark_file)
         
         for i in range(len(labels)):
             label = labels[i]
@@ -690,12 +690,12 @@ class MainWindow(QMainWindow):
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
             self.favorite_list.append(self.image.name)
-            galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+            imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
         else:
             self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             if self.image.name in self.favorite_list: 
                 self.favorite_list.remove(self.image.name)
-            galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+            imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def categorize(self,i:int) -> None:
         """
@@ -705,8 +705,8 @@ class MainWindow(QMainWindow):
             self.image.categories.append(i)
         elif (i in self.image.categories):
             self.image.categories.remove(i)
-        galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+        imgmarker.io.save(self.username,self.date,self.images)
+        imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def mark(self, group:int=0) -> None:
         """Add a mark to the current image."""
@@ -716,8 +716,8 @@ class MainWindow(QMainWindow):
         x, y = pix_pos.x(), pix_pos.y()
         
         # Mark if hovering over image
-        if galmark.io.GROUP_MAX[group - 1] == 'None': limit = inf
-        else: limit = int(galmark.io.GROUP_MAX[group - 1])
+        if imgmarker.io.GROUP_MAX[group - 1] == 'None': limit = inf
+        else: limit = int(imgmarker.io.GROUP_MAX[group - 1])
 
         marks_in_group = [m for m in self.image.marks if m.g == group]
 
@@ -733,8 +733,8 @@ class MainWindow(QMainWindow):
             elif len(marks_in_group) < limit:
                 self.image.marks.append(mark)
 
-            galmark.io.save(self.username,self.date,self.images)
-            galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+            imgmarker.io.save(self.username,self.date,self.images)
+            imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
         
         if len(self.image.marks) == 0:
             self.marks_menu.setEnabled(False)
@@ -763,8 +763,8 @@ class MainWindow(QMainWindow):
         """Enter the text in the comment box into the image."""
         self.update_comments()
         self.comment_box.clearFocus()
-        galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+        imgmarker.io.save(self.username,self.date,self.images)
+        imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def center_cursor(self):
         """Center on the cursor."""
@@ -890,8 +890,8 @@ class MainWindow(QMainWindow):
         if not comment: comment = 'None'
 
         self.image.comment = comment
-        galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+        imgmarker.io.save(self.username,self.date,self.images)
+        imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def get_comment(self):
         """If the image has a comment, sets the text of the comment box to the image's comment"""
@@ -927,8 +927,8 @@ class MainWindow(QMainWindow):
             self.marks_menu.setEnabled(False)
             self.mark_labels_menu.setEnabled(False)
             
-        galmark.io.save(self.username,self.date,self.images)
-        galmark.io.savefav(self.username,self.date,self.images,self.favorite_list)
+        imgmarker.io.save(self.username,self.date,self.images)
+        imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def toggle_marks(self):
         state = self.marks_menu.isChecked()

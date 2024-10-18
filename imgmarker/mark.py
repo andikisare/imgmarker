@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsPr
 from PyQt6.QtGui import QPen, QColor
 from PyQt6.QtCore import Qt, QPointF 
 from math import nan, ceil
-from galmark.io import GROUP_NAMES
+from imgmarker.io import GROUP_NAMES
 import typing
 
 COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),

@@ -8,13 +8,13 @@ ICON = os.path.join(__dirname__,'icon.png')
 HEART_SOLID = os.path.join(__dirname__,'heart_solid.png')
 HEART_CLEAR = os.path.join(__dirname__,'heart_clear.png')
 SUPPORTED_EXTS = ['tif','tiff','fits','fit','png','jpeg','jpg']
-CONFIG = os.path.join(os.getcwd(),'galmark.cfg')
+CONFIG = os.path.join(os.getcwd(),'imgmarker.cfg')
 
-sys.path.append(__dirname__.removesuffix('galmark'))
+sys.path.append(__dirname__.removesuffix('imgmarker'))
 
 from PyQt6.QtWidgets import QApplication
-from galmark.window import MainWindow
-from galmark.io import inputs
+from imgmarker.window import MainWindow
+from imgmarker.io import inputs
 
 def main():
     app = QApplication(sys.argv)

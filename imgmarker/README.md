@@ -1,15 +1,16 @@
-Galaxy Marker (galmark) is a tool for marking Brightest Cluster Galaxies, interesting phenomena, and more in galaxy clusters.
-It is designed to be configurable for multiple purposes using the configuration file generated upon first running galmark
-(galmark.cfg).
+Image Marker (imgmarker) is a tool for marking and annotating TIFF, FITS, PNG and JPEG files.
 
-To install galmark, clone the galmark repository from github, then in the python environment of your choice, run:
+It is designed to be configurable for multiple purposes using the configuration file generated upon first running imgmarker
+(imgmarker.cfg).
 
-pip install ./galmark
+To install imgmarker, clone the imgmarker repository from github, then in the python environment of your choice, run:
 
-outside of the 'galmark' directory.
+pip install ./imgmarker
 
-You can now run galmark from anywhere. The configuration file generated upon first running galmark is made in the directory
-that you run galmark.
+outside of the 'imgmarker' directory.
+
+You can now run imgmarker from anywhere. The configuration file generated upon first running imgmarker is made in the directory
+that you run imgmarker.
 
 Within the configuration file, the output path ('out_path', where your data files will be saved) can be configured. Make sure to include
 the final forward or backward slash ('/' or '\' depending on your operating system) at the end of the directory. The directory

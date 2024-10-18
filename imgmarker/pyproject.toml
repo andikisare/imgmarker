@@ -3,7 +3,7 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "galmark"
+name = "imgmarker"
 version = "0.1.0"
 readme = "README.md"
 
@@ -20,12 +20,12 @@ authors = [
 
 [tool.setuptools.packages.find]
 where = [".."]
-include = ["galmark"]
+include = ["imgmarker"]
 
 [tool.setuptools.package-data]
-galmark = ["*.png"]
+imgmarker = ["*.png"]
 
 [project.scripts]
-galmark = "galmark.__init__:main"
+imgmarker = "imgmarker.__init__:main"
 
 
