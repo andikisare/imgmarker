@@ -6,6 +6,10 @@ from math import nan, ceil
 from imgmarker.io import GROUP_NAMES
 import typing
 
+if typing.TYPE_CHECKING:
+    from imgmark.image import GImage
+    from PyQt6.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
+
 COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
            QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
            QColor(0,0,255),QColor(128,0,255),QColor(255,0,255) ]
@@ -14,11 +18,11 @@ SHAPES = {'ellipse':QGraphicsEllipseItem, 'rect':QGraphicsRectItem}
 
 class AbstractMark:
     @typing.overload
-    def __init__(self,r:int,x:int,y:int,image=None) -> None: ...
+    def __init__(self,r:int,x:int,y:int,image:GImage=None) -> None: ...
     @typing.overload
-    def __init__(self,r:int,ra:float=None,dec:float=None,image=None) -> None: ...
+    def __init__(self,r:int,ra:float=None,dec:float=None,image:GImage=None) -> None: ...
     def __init__(self,*args,**kwargs):
-        self.image = kwargs['image']
+        self.image:GImage = kwargs['image']
         if 'ra' not in kwargs.keys(): 
             self.d, x, y = args
             self.center = QPointF(x,y)
@@ -70,12 +74,12 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
     @typing.overload
     def __init__(self,x:int,y:int,
                  shape:str='ellipse',
-                 image=None,group:int=0,text:str=None,        
+                 image:GImage=None,group:int=0,text:str=None,        
     ) -> None: ...
     @typing.overload
     def __init__(self,ra:float=None,dec:float=None,
                  shape:str='ellipse',
-                 image=None,group:int=0,text:str=None,
+                 image:GImage=None,group:int=0,text:str=None,
     ) -> None: ...
     def __init__(self,*args,**kwargs) -> None:
         abstract_kwargs = kwargs.copy()
@@ -83,16 +87,16 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
 
         # Set up some default values
         if not 'image' in keys: raise ValueError('No image provided')
-        else: image = kwargs['image']
+        else: image:GImage = kwargs['image']
 
         if not 'group' in keys: self.g = 0
-        else: self.g = kwargs['group']
+        else: self.g:int = kwargs['group']
 
         if not 'text' in keys: self.text = GROUP_NAMES[self.g]
-        else: self.text = kwargs['text']
+        else: self.text:str = kwargs['text']
 
         if not 'shape' in keys: shape = QGraphicsEllipseItem
-        else: shape = SHAPES[kwargs['shape']]
+        else: shape:str = SHAPES[kwargs['shape']]
 
         self.c = COLORS[self.g]
         d = ceil((image.width+image.height)/200)*2
@@ -114,7 +118,7 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
         # Initialize shape
         item_args = self.view_center.x()-self.d/2, self.view_center.y()-self.d/2, self.d, self.d
         super(shape,self).__init__(*item_args)
-        shapeitem = shape(*item_args)
+        shapeitem: QAbstractItem = shape(*item_args)
         shapeitem.setPen(QPen(self.c, int(self.d/10), Qt.PenStyle.SolidLine))
         self.paint = shapeitem.paint
         
