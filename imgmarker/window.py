@@ -797,21 +797,23 @@ class MainWindow(QMainWindow):
         ----------
         None
         """
-        self.zoom_level *= scale
-        if mode == 'viewport': center = self.image_view.viewport().rect().center()
-        if mode == 'mouse': center = self.mouse_view_pos()
+        if self.zoom_level*scale > 1/3:
+            self.zoom_level *= scale
+            if mode == 'viewport': center = self.image_view.viewport().rect().center()
+            if mode == 'mouse': center = self.mouse_view_pos()
 
-        transform = self.image_view.transform()
-        center = self.image_view.mapToScene(center)
-        transform.translate(center.x(), center.y())
-        transform.scale(scale, scale)
-        transform.translate(-center.x(), -center.y())
-        self.image_view.setTransform(transform)
+            transform = self.image_view.transform()
+            center = self.image_view.mapToScene(center)
+            transform.translate(center.x(), center.y())
+            transform.scale(scale, scale)
+            transform.translate(-center.x(), -center.y())
+            self.image_view.setTransform(transform)
 
     def fitview(self):
         """Fit the image view in the viewport."""
         self.image_view.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
         self.zoom(scale=9,mode='viewport')
+        self.zoom_level = 1
 
     # === Update methods ===
 
