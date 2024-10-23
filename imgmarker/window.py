@@ -2,8 +2,8 @@ from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QLabel, QScrollArea, QGraphicsView,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
                               QSlider, QLineEdit, QFileDialog )
-from PyQt6.QtGui import QAction, QIcon, QFont
-from PyQt6.QtCore import Qt, QPoint, QPointF, QRectF
+from PyQt6.QtGui import QAction, QIcon, QFont, QKeyEvent
+from PyQt6.QtCore import Qt, QPoint, QPointF, QRectF, QEvent
 from imgmarker.mark import Mark
 from imgmarker import __dirname__, ICON, HEART_SOLID, HEART_CLEAR
 import imgmarker.io
@@ -720,6 +720,8 @@ class MainWindow(QMainWindow):
         else: limit = int(imgmarker.io.GROUP_MAX[group - 1])
 
         marks_in_group = [m for m in self.image.marks if m.g == group]
+
+        if len(self.image.marks) >= 1: self.image.marks[-1].label.enter()
 
         if self.inview(x,y):
             mark = self.image_scene.mark(x,y,group=group)

@@ -1,13 +1,13 @@
 from __future__ import annotations
 from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget,QLineEdit
-from PyQt6.QtGui import QPen, QColor
+from PyQt6.QtGui import QPen, QColor, QFocusEvent
 from PyQt6.QtCore import Qt, QPointF 
 from math import nan, ceil
 from imgmarker.io import GROUP_NAMES
 import typing
 
 if typing.TYPE_CHECKING:
-    from imgmark.image import GImage
+    from imgmarker.image import GImage
     from PyQt6.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
 
 COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
@@ -44,7 +44,7 @@ class MarkLabel(QGraphicsProxyWidget):
         super().__init__()
         self.mark = mark
         self.lineedit = QLineEdit()
-        self.lineedit.setReadOnly(False)
+        self.lineedit.setReadOnly(True)
         self.lineedit.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.lineedit.setText(self.mark.text)
         self.lineedit.setStyleSheet(f"""background-color: rgba(0,0,0,0);
@@ -53,23 +53,27 @@ class MarkLabel(QGraphicsProxyWidget):
         self.lineedit.textChanged.connect(self.autoresize)
         self.setWidget(self.lineedit)
         self.autoresize()
+
+    def enter(self):
+        self.clearFocus()
+        self.mark.text = self.lineedit.text()
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+        self.lineedit.setReadOnly(True)
+
+    def focusInEvent(self, event):
+        self.setCursor(Qt.CursorShape.IBeamCursor)
+        self.lineedit.setReadOnly(False)
+        return super().focusInEvent(event)
         
     def keyPressEvent(self, event):
-        if (event.key() == Qt.Key.Key_Return):
-            self.lineedit.setReadOnly(True)
-            self.lineedit.clearFocus()
-            self.mark.text = self.lineedit.text()
+        if (event.key() == Qt.Key.Key_Return): self.enter()
         else: return super().keyPressEvent(event)
-
-    def focusInEvent(self, a0):
-        self.lineedit.setReadOnly(False)
-        return super().focusInEvent(a0)
-    
+        
     def autoresize(self):
         fm = self.lineedit.fontMetrics()
         w = fm.boundingRect(self.lineedit.text()).width()+fm.boundingRect('AA').width()
-        self.lineedit.setFixedWidth(w)   
-    
+        self.lineedit.setFixedWidth(w)
+
 class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
     @typing.overload
     def __init__(self,x:int,y:int,
