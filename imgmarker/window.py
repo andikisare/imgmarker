@@ -918,11 +918,10 @@ class MainWindow(QMainWindow):
     def del_marks(self,del_all=False):
         if not del_all:
             pix_pos = self.mouse_pix_pos(correction=False).toPointF()
-
             selected_items = [item for item in self.image.marks 
                               if item is self.image_scene.itemAt(pix_pos, item.transform())]
-        else: selected_items = self.image.marks
-        
+        else: selected_items = self.image.marks.copy()
+
         for item in selected_items:
             self.image_scene.rmmark(item)
             self.image.marks.remove(item)
