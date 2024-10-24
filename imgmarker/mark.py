@@ -1,7 +1,7 @@
 from __future__ import annotations
 from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget,QLineEdit
-from PyQt6.QtGui import QPen, QColor, QFocusEvent
-from PyQt6.QtCore import Qt, QPointF 
+from PyQt6.QtGui import QPen, QColor,QFocusEvent
+from PyQt6.QtCore import Qt, QPointF, QEvent
 from math import nan, ceil
 from imgmarker.io import GROUP_NAMES
 import typing
@@ -45,19 +45,25 @@ class MarkLabel(QGraphicsProxyWidget):
         self.mark = mark
         self.lineedit = QLineEdit()
         self.lineedit.setReadOnly(True)
-        self.lineedit.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+
+        # Using TabFocus because PyQt does not allow only focusing with left click
+        self.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+        self.lineedit.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+
         self.lineedit.setText(self.mark.text)
         self.lineedit.setStyleSheet(f"""background-color: rgba(0,0,0,0);
                                      border: none; 
                                      color: rgba{self.mark.c.getRgb()}""")
+        
         self.lineedit.textChanged.connect(self.autoresize)
         self.setWidget(self.lineedit)
         self.autoresize()
+        self.installEventFilter(self)
 
     def enter(self):
+        self.setCursor(Qt.CursorShape.ArrowCursor)
         self.clearFocus()
         self.mark.text = self.lineedit.text()
-        self.setCursor(Qt.CursorShape.ArrowCursor)
         self.lineedit.setReadOnly(True)
 
     def focusInEvent(self, event):
@@ -68,6 +74,14 @@ class MarkLabel(QGraphicsProxyWidget):
     def keyPressEvent(self, event):
         if (event.key() == Qt.Key.Key_Return): self.enter()
         else: return super().keyPressEvent(event)
+
+    def eventFilter(self, source, event):
+        if (event.type() == QEvent.Type.MouseButtonPress) or (event.type() == QEvent.Type.MouseButtonDblClick):
+            if event.button() == Qt.MouseButton.LeftButton:
+                # With TabFocusReason, tricks PyQt into doing proper focus events
+                self.setFocus(Qt.FocusReason.TabFocusReason)
+            return True
+        return super().eventFilter(source,event)
         
     def autoresize(self):
         fm = self.lineedit.fontMetrics()
