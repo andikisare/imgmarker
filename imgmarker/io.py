@@ -12,6 +12,7 @@ import io
 import glob as glob_
 import shutil
 from math import nan, isnan
+import warnings
 
 SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or numbers.')
 
@@ -457,17 +458,30 @@ def load(savename:str) -> list[imgmarker.image.GImage]:
     return images
 
 def load_ext_marks(f:str) -> dict:
+    coord_sys = None
     labels = []
-    ras = []
-    decs = []
+    alphas = []
+    betas = []
+    skip = True
 
     for l in open(f):
         var = l.split(',')
-        labels.append(var[0])
-        ras.append(float(var[1].replace('\n', '')))
-        decs.append(float(var[2].replace('\n', '')))
-    
-    return labels, ras, decs
+        if skip:
+            skip = False
+            if (var[1].strip().lower() == 'ra'):
+                coord_sys = 'galactic'
+            elif (var[1].strip().lower() == 'x'):
+                coord_type = 'cartesian'
+            else:
+                warnings.warn('WARNING: Invalid external marks coordinate system. Valid coordinate systems: Galactic (RA, Dec), '
+                                 'Cartesian (x, y)')
+                return None, None, None, None
+        else:
+            labels.append(var[0])
+            alphas.append(float(var[1].strip().replace('\n', '')))
+            betas.append(float(var[2].strip().replace('\n', '')))
+            
+    return labels, alphas, betas, coord_sys
 
 def glob(edited_images:list[imgmarker.image.GImage]=[]) -> tuple[list[imgmarker.image.GImage],int]:
     """

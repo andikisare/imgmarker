@@ -15,6 +15,8 @@ import datetime as dt
 import textwrap
 from math import floor, inf, nan
 from functools import partial
+from astropy.coordinates import SkyCoord
+import astropy.units as u
 
 class AdjustmentsWindow(QWidget):
     """
@@ -37,7 +39,7 @@ class AdjustmentsWindow(QWidget):
         self.brightness_label = QLabel()
         self.brightness_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.brightness_label.setText(f'Brightness: {self.brightness_slider.value()}')
-
+        
         # Contrast slider
         self.contrast_slider = QSlider()
         self._slider_setup(self.contrast_slider,self.contrast_moved,self.contrast_changed)
@@ -431,6 +433,10 @@ class MainWindow(QMainWindow):
         open_ext_marks_menu.setStatusTip('Open external marks file')
         open_ext_marks_menu.triggered.connect(self.open_ext_marks)
         file_menu.addAction(open_ext_marks_menu)
+        self.ext_mark_coord_sys = None
+        self.ext_mark_labels = []
+        self.ext_mark_alphas = []
+        self.ext_mark_betas = []
 
         ## Edit menu
         edit_menu = menu_bar.addMenu("&Edit")
@@ -673,13 +679,18 @@ class MainWindow(QMainWindow):
 
     def open_ext_marks(self):
         ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', os.getcwd(), '*.txt')[0]
-        labels, ras, decs = imgmarker.io.load_ext_marks(ext_mark_file)
+        labels, alphas, betas, coord_sys = imgmarker.io.load_ext_marks(ext_mark_file)
+        self.ext_mark_labels = labels
+        self.ext_mark_alphas = alphas
+        self.ext_mark_betas = betas
+        self.ext_mark_coord_sys = coord_sys
+
+        if labels == None:
+            return
         
-        for i in range(len(labels)):
-            label = labels[i]
-            ra = ras[i]
-            dec = decs[i]
-            mark = self.image_scene.mark(ra=ra,dec=dec,shape='rect',text=label)
+        else:
+            self.update_ext_marks()
+
         return
 
     def favorite(self,state) -> None:
@@ -756,6 +767,7 @@ class MainWindow(QMainWindow):
 
         self.update_comments()
         self.update_images()
+        self.update_ext_marks()
         self.update_marks()
         self.get_comment()
         self.update_categories()
@@ -816,6 +828,30 @@ class MainWindow(QMainWindow):
         self.zoom_level = 1
 
     # === Update methods ===
+
+    def update_ext_marks(self):
+        labels = self.ext_mark_labels
+        alphas = self.ext_mark_alphas
+        betas = self.ext_mark_betas
+
+        for i in range(len(labels)):
+            label = labels[i]
+            for current_image in self.images:
+                img_w, img_h = current_image.width, current_image.height
+                if self.ext_mark_coord_sys == 'galactic':
+                    img_wcs = self.image.wcs
+                    ra = alphas[i]
+                    dec = betas[i]
+                    
+                    mark_coord_cart = img_wcs.all_world2pix([[ra,dec]], 0)[0]
+                    x, y = mark_coord_cart[0], mark_coord_cart[1]
+                    
+                    if ((x < img_w) and (x > 0) and (y < img_h) and (y > 0)):
+                        mark = self.image_scene.mark(ra=ra, dec=dec, shape='rect', text=label)
+
+                else:
+                    x, y = alphas[i], betas[i]
+                    mark = self.image_scene.mark(x=x, y=y, shape='rect', text=label)
 
     def update_favorites(self):
         """Update favorite boxes based on the contents of favorite_list."""
@@ -914,6 +950,7 @@ class MainWindow(QMainWindow):
     def update_marks(self):
         """Redraws all marks in image"""
         for mark in self.image.marks: self.image_scene.mark(mark)
+        for mark in self.image.ext_marks: self.image_scene.mark(mark)
 
     def del_marks(self,del_all=False):
         if not del_all:

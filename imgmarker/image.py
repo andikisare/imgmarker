@@ -54,6 +54,7 @@ def open(path:str) -> GImage | None:
         gimage.comment = 'None'
         gimage.categories = []
         gimage.marks = []
+        gimage.ext_marks = []
         gimage.seen = False
         gimage.frame = 0
 
