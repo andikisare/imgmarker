@@ -228,6 +228,7 @@ class InstructionsWindow(QWidget):
         self.resize(int(layout_width*1.1),int(layout_height*1.1))
 
     def show(self):
+        """Shows the window and moves it to the front."""
         super().show()
         self.activateWindow()
 
@@ -547,14 +548,40 @@ class MainWindow(QMainWindow):
             self.image.seen = True
             self.N = len(self.images)
 
-    def inview(self,x,y):
-        """Checks if x and y are within the image."""
+    def inview(self,x:int|float,y:int|float):
+        """
+        Checks if x and y are contained within the image.
+
+        Parameters
+        ----------
+        x: int OR float
+            x coordinate
+        y: int OR float
+            y coordinate
+
+        Returns
+        ----------
+        True if the (x,y) is contained within the image, False otherwise.
+        """
         return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
 
     # === Events ===
 
     def eventFilter(self, source, event):
-        # Event filter for zooming without scrolling
+        """
+        Perform operations based on the event source and type.
+
+        Parameters
+        ----------
+        source: `QObject` object
+            Source of the event
+        event: `QEvent` object
+            Event
+
+        Returns
+        ----------
+        True if the event triggered an some operation.
+        """
         if (source == self.image_view.viewport()) and (event.type() == 31):
             x = event.angleDelta().y()
             if x > 0: self.zoom(1/1.2)
@@ -618,10 +645,10 @@ class MainWindow(QMainWindow):
             self.pos_widget.ra_text.setText('')
             self.pos_widget.dec_text.setText('')
 
-    def closeEvent(self, event):
+    def closeEvent(self, a0):
         self.update_comments()
         sys.exit()
-    
+
     # === Actions ===
     def open(self) -> None:
         """Method for the open save directory dialog."""
