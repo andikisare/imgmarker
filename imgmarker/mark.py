@@ -36,7 +36,7 @@ class AbstractMark:
             self.d = args[0]
             self.wcs_center = (kwargs['ra'],kwargs['dec'])
             _x, _y = self.image.wcs.all_world2pix([[kwargs['ra'], kwargs['dec']]], 0)[0]
-            self.center = QPointF(int(_x), self.image.height-int(_y))
+            self.center = QPointF(_x, self.image.height-_y)
             self.view_center = self.center + 4*QPointF(self.image.width,self.image.height) + QPointF(0.5,0.5)
 
 class MarkLabel(QGraphicsProxyWidget):

@@ -679,6 +679,8 @@ class MainWindow(QMainWindow):
 
     def open_ext_marks(self):
         ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', os.getcwd(), '*.txt')[0]
+        if (ext_mark_file == ''): return
+        
         labels, alphas, betas, coord_sys = imgmarker.io.load_ext_marks(ext_mark_file)
         self.ext_mark_labels = labels
         self.ext_mark_alphas = alphas
@@ -767,7 +769,6 @@ class MainWindow(QMainWindow):
 
         self.update_comments()
         self.update_images()
-        self.update_ext_marks()
         self.update_marks()
         self.get_comment()
         self.update_categories()
@@ -839,19 +840,24 @@ class MainWindow(QMainWindow):
             for current_image in self.images:
                 img_w, img_h = current_image.width, current_image.height
                 if self.ext_mark_coord_sys == 'galactic':
-                    img_wcs = self.image.wcs
-                    ra = alphas[i]
-                    dec = betas[i]
+                    img_wcs = current_image.wcs
+                    ra, dec = alphas[i], betas[i]
                     
                     mark_coord_cart = img_wcs.all_world2pix([[ra,dec]], 0)[0]
                     x, y = mark_coord_cart[0], mark_coord_cart[1]
-                    
+                    y = img_h - y
+
                     if ((x < img_w) and (x > 0) and (y < img_h) and (y > 0)):
-                        mark = self.image_scene.mark(ra=ra, dec=dec, shape='rect', text=label)
+                        mark = imgmarker.mark.Mark(x, y, shape='rect', image=current_image, text=label)
+                        current_image.ext_marks.append(mark)
 
                 else:
                     x, y = alphas[i], betas[i]
-                    mark = self.image_scene.mark(x=x, y=y, shape='rect', text=label)
+                    if ((x < img_w) and (x > 0) and (y < img_h) and (y > 0)):
+                        mark = imgmarker.mark.Mark(x, y, shape='rect', image=current_image, text=label)
+                        current_image.ext_marks.append(mark)
+
+        for mark in self.image.ext_marks: self.image_scene.mark(mark)
 
     def update_favorites(self):
         """Update favorite boxes based on the contents of favorite_list."""
