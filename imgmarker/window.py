@@ -811,22 +811,18 @@ class MainWindow(QMainWindow):
         betas = self.ext_mark_betas
 
         for i in range(len(labels)):
-            label = labels[i]
-            for current_image in self.images:
-                img_w, img_h = current_image.width, current_image.height
+            for img in self.images:
                 if self.ext_mark_coord_sys == 'galactic':
-                    img_wcs = current_image.wcs
                     ra, dec = alphas[i], betas[i]
                     
-                    mark_coord_cart = img_wcs.all_world2pix([[ra,dec]], 0)[0]
-                    x, y = mark_coord_cart[0], mark_coord_cart[1]
-                    y = img_h - y
+                    mark_coord_cart = img.wcs.all_world2pix([[ra,dec]], 0)[0]
+                    x, y = mark_coord_cart[0], img.height - mark_coord_cart[1]
 
                 else: x, y = alphas[i], betas[i]
 
                 if self.inview(x,y):
-                    mark = Mark(x, y, shape='rect', image=current_image, text=label)
-                    current_image.ext_marks.append(mark)
+                    mark = Mark(x, y, shape='rect', image=img, text=labels[i])
+                    img.ext_marks.append(mark)
 
         for mark in self.image.ext_marks: self.image_scene.mark(mark)
 
