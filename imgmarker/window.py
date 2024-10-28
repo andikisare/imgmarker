@@ -233,7 +233,7 @@ class InstructionsWindow(QWidget):
         self.activateWindow()
 
 class StartupWindow(QInputDialog):
-    """Class for the startup window"""
+    """Class for the startup window."""
     def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon(ICON))
@@ -252,7 +252,7 @@ class StartupWindow(QInputDialog):
         else: return text
 
 class MainWindow(QMainWindow):
-    """Class for the main window"""
+    """Class for the main window."""
     def __init__(self, username:str):
         super().__init__()
         self.setWindowTitle("Image Marker")
@@ -714,7 +714,7 @@ class MainWindow(QMainWindow):
             imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def categorize(self,i:int) -> None:
-        """Categorize the current image"""
+        """Categorize the current image."""
         if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.image.categories):
             self.image.categories.append(i)
         elif (i in self.image.categories):
@@ -934,7 +934,7 @@ class MainWindow(QMainWindow):
         imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def get_comment(self):
-        """If the image has a comment, sets the text of the comment box to the image's comment"""
+        """If the image has a comment, sets the text of the comment box to the image's comment."""
         if (self.image.comment == 'None'):
             self.comment_box.setText('')
         else:
@@ -942,13 +942,13 @@ class MainWindow(QMainWindow):
             self.comment_box.setText(comment)
 
     def update_categories(self):
-        """Resets all category boxes to unchecked, then checks the boxes based on the current image's categories"""
+        """Resets all category boxes to unchecked, then checks the boxes based on the current image's categories."""
         for box in self.category_boxes: box.setChecked(False)
         for i in self.image.categories:
             self.category_boxes[i-1].setChecked(True)
 
     def update_marks(self):
-        """Redraws all marks in image"""
+        """Redraws all marks in image."""
         for mark in self.image.marks: self.image_scene.mark(mark)
         for mark in self.image.ext_marks: self.image_scene.mark(mark)
 
