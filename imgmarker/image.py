@@ -21,9 +21,17 @@ def open(path:str) -> GImage | None:
     """
     Opens the given image file.
 
-    :param path: Path to the image
-    :returns gimage: An :py:class:`imgmarker.image.GImage` object.
+    Parameters
+    ----------
+    path: str 
+        Path to the image.
+    
+    Returns
+    ----------
+    gimage: `imgmarker.image.GImage`
+        Returns the image as a GImage object.
     """
+
     Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
     ext = path.split('.')[-1]
 
@@ -66,8 +74,11 @@ def open(path:str) -> GImage | None:
         return gimage
     
 class GImage(Image.Image,QGraphicsPixmapItem):
+    """GImage class based on the Python Pillow Image object and merged with the PyQt6 QGraphicsPixmapItem."""
+    
     def __init__(self):
-        # Initialize from parents
+        """Initialize from parents."""
+        
         super().__init__()
 
         self.image_file:ImageFile.ImageFile
@@ -85,6 +96,8 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.frame:int
 
     def _new(self, im) -> GImage:
+        """Creates a new GImage object."""
+
         new = GImage()
         new.im = im
         new._mode = im.mode
@@ -104,6 +117,8 @@ class GImage(Image.Image,QGraphicsPixmapItem):
     def tell(self): return self.image_file.tell()
 
     def seek(self,frame:int=0):
+        """Parses through the frames in a TIFF image."""
+
         frame = floor(frame)
         
         if frame > self.n_frames - 1: frame = 0
@@ -116,6 +131,8 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.setPixmap(self.pixmap())
     
     def pixmap(self) -> QPixmap:
+        """Creates a QPixmap item with a pillows on each side to allow for fully zooming out."""
+
         qimage = self.toqimage()
         pixmap_base = QPixmap.fromImage(qimage)
 
@@ -132,6 +149,8 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         return pixmap
     
     def adjust(self) -> GImage:
+        """Defines each image modification parameter and returns a composite filter."""
+
         def _blur(img:GImage):
             return img.filter(GaussianBlur(self.r))
         def _brighten(img:GImage):
@@ -146,16 +165,22 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         return gimg_filt
     
     def blur(self,value):
+        """Applies the blur value to a filter and displays it."""
+
         self.r = floor(value)/10
         pixmap_blurred = self.adjust().pixmap()
         self.setPixmap(pixmap_blurred)
 
     def brighten(self,value):
+        """Applies the brighten value to a filter and displays it."""
+
         self.a = floor(value)/10 + 1
         pixmap_bright = self.adjust().pixmap()
         self.setPixmap(pixmap_bright)
 
     def contrast(self,value):
+        """Applies the contrast value to a filter and displays it."""
+
         self.b = floor(value)/10 + 1
         pixmap_contrast = self.adjust().pixmap()
         self.setPixmap(pixmap_contrast)
@@ -165,6 +190,8 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         except: return nan, nan
             
 class ImageScene(QGraphicsScene):
+    """A class for storing and manipulating the information/image that is currently displayed."""
+
     def __init__(self,image:GImage):
         super().__init__()
         self.image = image
@@ -173,6 +200,8 @@ class ImageScene(QGraphicsScene):
         self.addItem(self.image)
 
     def update(self,image:GImage):
+        """Updates the current image when a mark is removed."""
+
         # Remove items
         for item in self.items(): self.removeItem(item)
 
@@ -189,6 +218,8 @@ class ImageScene(QGraphicsScene):
     def mark(self,mark:imgmarker.mark.Mark) -> imgmarker.mark.Mark: ... 
 
     def mark(self,*args,**kwargs) -> imgmarker.mark.Mark:
+        """Creates a mark object and adds it to the image scene and image class and returns the mark."""
+
         if len(args) == 1: mark = args[0]
         else: mark = imgmarker.mark.Mark(*args,image=self.image,**kwargs)
         self.addItem(mark.label)
@@ -196,5 +227,7 @@ class ImageScene(QGraphicsScene):
         return mark
     
     def rmmark(self,mark:imgmarker.mark.Mark) -> None:
+        """Removes the specified mark from the image scene and image class."""
+
         self.removeItem(mark)
         self.removeItem(mark.label)
