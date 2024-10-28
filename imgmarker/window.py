@@ -805,6 +805,7 @@ class MainWindow(QMainWindow):
     # === Update methods ===
 
     def update_ext_marks(self):
+        """Loads in each external mark to the appropriate image if RA, Dec, otherwise loads all."""
         labels = self.ext_mark_labels
         alphas = self.ext_mark_alphas
         betas = self.ext_mark_betas
