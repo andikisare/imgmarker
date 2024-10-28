@@ -7,7 +7,7 @@ from imgmarker.io import GROUP_NAMES
 import typing
 
 if typing.TYPE_CHECKING:
-    from imgmarker.image import GImage
+    from imgmarker.image import Image
     from PyQt6.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
 
 COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
@@ -18,11 +18,11 @@ SHAPES = {'ellipse':QGraphicsEllipseItem, 'rect':QGraphicsRectItem}
 
 class AbstractMark:
     @typing.overload
-    def __init__(self,r:int,x:int,y:int,image:GImage=None) -> None: ...
+    def __init__(self,r:int,x:int,y:int,image:Image=None) -> None: ...
     @typing.overload
-    def __init__(self,r:int,ra:float=None,dec:float=None,image:GImage=None) -> None: ...
+    def __init__(self,r:int,ra:float=None,dec:float=None,image:Image=None) -> None: ...
     def __init__(self,*args,**kwargs):
-        self.image:GImage = kwargs['image']
+        self.image:Image = kwargs['image']
         if 'ra' not in kwargs.keys(): 
             self.d, x, y = args
             self.center = QPointF(x,y)
@@ -92,12 +92,12 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
     @typing.overload
     def __init__(self,x:int,y:int,
                  shape:str='ellipse',
-                 image:GImage=None,group:int=0,text:str=None,        
+                 image:Image=None,group:int=0,text:str=None,        
     ) -> None: ...
     @typing.overload
     def __init__(self,ra:float=None,dec:float=None,
                  shape:str='ellipse',
-                 image:GImage=None,group:int=0,text:str=None,
+                 image:Image=None,group:int=0,text:str=None,
     ) -> None: ...
     def __init__(self,*args,**kwargs) -> None:
         abstract_kwargs = kwargs.copy()
@@ -105,7 +105,7 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
 
         # Set up some default values
         if not 'image' in keys: raise ValueError('No image provided')
-        else: image:GImage = kwargs['image']
+        else: image:Image = kwargs['image']
 
         if not 'group' in keys: self.g = 0
         else: self.g:int = kwargs['group']

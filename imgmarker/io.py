@@ -119,13 +119,13 @@ def check_marks(event) -> list[bool]:
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
-def parse_wcs(img:imgmarker.image.GImage) -> WCS:
+def parse_wcs(img:imgmarker.image.Image) -> WCS:
     """
     Reads WCS information from TIFF/TIF metadata and FITS/FIT headers if available.
 
     Parameters
     ----------
-    img: `imgmarker.image.GImage` object
+    img: `imgmarker.image.Image` object
 
     Returns
     ----------
@@ -165,7 +165,7 @@ def check_save(savename:str) -> bool:
     """Checks if savename is empty."""
     return (savename != 'None') and (savename != '')
 
-def savefav(savename:str,date:str,images:list[imgmarker.image.GImage],fav_list:list[str]) -> None:
+def savefav(savename:str,date:str,images:list[imgmarker.image.Image],fav_list:list[str]) -> None:
     """
     Creates a file, \'favorites.txt\', in the save directory containing all images that were favorited.
     This file is in the same format as \'images.txt\' so that a user can open their favorites file to show
@@ -180,8 +180,8 @@ def savefav(savename:str,date:str,images:list[imgmarker.image.GImage],fav_list:l
     date: str
         A string containing the current date in ISO 8601 extended format.
 
-    images: list[`imgmarker.image.GImage`]
-        A list of GImage objects for each image from the specified image directory.
+    images: list[`imgmarker.image.Image`]
+        A list of Image objects for each image from the specified image directory.
 
     fav_list: list[str]
         A list of strings containing the file names of each favorited image.
@@ -260,7 +260,7 @@ def savefav(savename:str,date:str,images:list[imgmarker.image.GImage],fav_list:l
             fav_out.write(outline)
 
 
-def save(savename:str,date,images:list[imgmarker.image.GImage]) -> None:
+def save(savename:str,date,images:list[imgmarker.image.Image]) -> None:
     """
     Saves image data.
 
@@ -272,8 +272,8 @@ def save(savename:str,date,images:list[imgmarker.image.GImage]) -> None:
     date: str
         A string containing the current date in ISO 8601 extended format.
 
-    images: list[`imgmarker.image.GImage`]
-        A list of GImage objects for each image from the specified image directory.
+    images: list[`imgmarker.image.Image`]
+        A list of Image objects for each image from the specified image directory.
 
     Returns
     ----------
@@ -424,9 +424,9 @@ def loadfav(savename:str) -> list[str]:
 
     return list(set(fav_list))
 
-def load(savename:str) -> list[imgmarker.image.GImage]:
+def load(savename:str) -> list[imgmarker.image.Image]:
     """
-    Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.GImage`
+    Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.Image`
     objects.
 
     Parameters
@@ -436,13 +436,13 @@ def load(savename:str) -> list[imgmarker.image.GImage]:
 
     Returns
     ----------
-    images: list[`imgmarker.image.GImage`]
+    images: list[`imgmarker.image.Image`]
     """
 
     save_dir = os.path.join(OUT_DIR, savename)
     mark_out_path = os.path.join(save_dir,'marks.txt')
     images_out_path = os.path.join(save_dir,'images.txt')
-    images:list[imgmarker.image.GImage] = []
+    images:list[imgmarker.image.Image] = []
     
     # Get list of images from images.txt
     if os.path.exists(images_out_path):
@@ -528,20 +528,20 @@ def load_ext_marks(f:str) -> dict:
             
     return labels, alphas, betas, coord_sys
 
-def glob(edited_images:list[imgmarker.image.GImage]=[]) -> tuple[list[imgmarker.image.GImage],int]:
+def glob(edited_images:list[imgmarker.image.Image]=[]) -> tuple[list[imgmarker.image.Image],int]:
     """
     Globs in IMAGE_DIR, using edited_images to sort, with edited_images in order at the beginning of the list
     and the remaining unedited images in randomized order at the end of the list.
 
     Parameters
     ----------
-    edited_images: list['imgmarker.image.GImage']
-        A list of GImage objects containing the loaded-in information for each edited image.
+    edited_images: list['imgmarker.image.Image']
+        A list of Image objects containing the loaded-in information for each edited image.
 
     Returns
     ----------
-    images: list['imgmarker.image.GImage']
-        A list of GImage objects with the ordered edited images first and randomized unedited
+    images: list['imgmarker.image.Image']
+        A list of Image objects with the ordered edited images first and randomized unedited
         images added afterwards.
     
     idx: int

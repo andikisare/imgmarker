@@ -7,17 +7,16 @@ from imgmarker import __dirname__, SUPPORTED_EXTS
 import imgmarker.io
 import os
 from math import floor
-from PIL import Image, ImageFile, ImageOps
+import PIL.Image, PIL.ImageFile
 from PIL.ImageFilter import GaussianBlur
 from PIL.ImageEnhance import Contrast, Brightness
 from astropy.wcs import WCS
 from math import nan
 from astropy.io import fits
 import numpy as np
-import time
 import typing
 
-def open(path:str) -> GImage | None:
+def open(path:str) -> Image | None:
     """
     Opens the given image file.
 
@@ -28,60 +27,60 @@ def open(path:str) -> GImage | None:
     
     Returns
     ----------
-    gimage: `imgmarker.image.GImage`
-        Returns the image as a GImage object.
+    img: `imgmarker.image.Image`
+        Returns the image as a Image object.
     """
 
     Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
     ext = path.split('.')[-1]
 
     if ext in SUPPORTED_EXTS:
-        gimage = GImage()
+        img = Image()
 
         if (ext == 'fits') or (ext == 'fit'):
             file = fits.open(path)
             img_array = np.flipud(file[0].data).byteswap()
-            image = Image.fromarray(img_array, mode='F').convert('RGB')
-            image.format = 'FITS'
-            image.filename = path
+            img_pil = PIL.Image.fromarray(img_array, mode='F').convert('RGB')
+            img_pil.format = 'FITS'
+            img_pil.filename = path
 
-        else: image = Image.open(path)
+        else: img_pil = PIL.Image.open(path)
 
         # Setup  __dict__
-        gimage.__dict__ =  image.__dict__
-        try: gimage.n_frames = image.n_frames
-        except: gimage.n_frames = 1
-        gimage.wcs = imgmarker.io.parse_wcs(image)
-        gimage.image_file = image
-        gimage.name = path.split(os.sep)[-1] 
+        img.__dict__ =  img_pil.__dict__
+        try: img.n_frames = img_pil.n_frames
+        except: img.n_frames = 1
+        img.wcs = imgmarker.io.parse_wcs(img_pil)
+        img.image_file = img_pil
+        img.name = path.split(os.sep)[-1] 
 
-        gimage.r = 0.0
-        gimage.a = 1.0
-        gimage.b = 1.0
+        img.r = 0.0
+        img.a = 1.0
+        img.b = 1.0
 
-        gimage.comment = 'None'
-        gimage.categories = []
-        gimage.marks = []
-        gimage.ext_marks = []
-        gimage.seen = False
-        gimage.frame = 0
+        img.comment = 'None'
+        img.categories = []
+        img.marks = []
+        img.ext_marks = []
+        img.seen = False
+        img.frame = 0
 
         # Get bytes from image (I dont think this does anything)
-        gimage.frombytes(image.tobytes())
+        img.frombytes(img_pil.tobytes())
 
-        super(QGraphicsPixmapItem,gimage).__init__(QPixmap())
+        super(QGraphicsPixmapItem,img).__init__(QPixmap())
 
-        return gimage
+        return img
     
-class GImage(Image.Image,QGraphicsPixmapItem):
-    """GImage class based on the Python Pillow Image object and merged with the PyQt6 QGraphicsPixmapItem."""
+class Image(PIL.Image.Image,QGraphicsPixmapItem):
+    """Image class based on the Python Pillow Image class and merged with the PyQt6 QGraphicsPixmapItem."""
     
     def __init__(self):
         """Initialize from parents."""
         
         super().__init__()
 
-        self.image_file:ImageFile.ImageFile
+        self.image_file:PIL.ImageFile.ImageFile
         self.wcs:WCS
         self.n_frames:int
         self.name:str
@@ -95,10 +94,9 @@ class GImage(Image.Image,QGraphicsPixmapItem):
         self.seen:bool
         self.frame:int
 
-    def _new(self, im) -> GImage:
-        """Creates a new GImage object."""
-
-        new = GImage()
+    def _new(self, im) -> Image:
+        """Internal PIL.Image.Image method for making a copy of the image."""
+        new = Image()
         new.im = im
         new._mode = im.mode
         new._size = im.size
@@ -148,14 +146,13 @@ class GImage(Image.Image,QGraphicsPixmapItem):
 
         return pixmap
     
-    def adjust(self) -> GImage:
+    def adjust(self) -> Image:
         """Defines each image modification parameter and returns a composite filter."""
-
-        def _blur(img:GImage):
+        def _blur(img:Image):
             return img.filter(GaussianBlur(self.r))
-        def _brighten(img:GImage):
+        def _brighten(img:Image):
             return Brightness(img).enhance(self.a)
-        def _contrast(img:GImage):
+        def _contrast(img:Image):
             return Contrast(img).enhance(self.b)
         
         img_filt = _contrast(_brighten(_blur(self)))
@@ -191,17 +188,15 @@ class GImage(Image.Image,QGraphicsPixmapItem):
             
 class ImageScene(QGraphicsScene):
     """A class for storing and manipulating the information/image that is currently displayed."""
-
-    def __init__(self,image:GImage):
+    def __init__(self,image:Image):
         super().__init__()
         self.image = image
 
         self.setBackgroundBrush(Qt.GlobalColor.black)
         self.addItem(self.image)
 
-    def update(self,image:GImage):
-        """Updates the current image when a mark is removed."""
-
+    def update(self,image:Image):
+        """Updates the current image with a new image."""
         # Remove items
         for item in self.items(): self.removeItem(item)
 
@@ -218,7 +213,7 @@ class ImageScene(QGraphicsScene):
     def mark(self,mark:imgmarker.mark.Mark) -> imgmarker.mark.Mark: ... 
 
     def mark(self,*args,**kwargs) -> imgmarker.mark.Mark:
-        """Creates a mark object and adds it to the image scene and image class and returns the mark."""
+        """Creates a mark object and adds it to the image scene and returns the mark."""
 
         if len(args) == 1: mark = args[0]
         else: mark = imgmarker.mark.Mark(*args,image=self.image,**kwargs)
@@ -227,7 +222,7 @@ class ImageScene(QGraphicsScene):
         return mark
     
     def rmmark(self,mark:imgmarker.mark.Mark) -> None:
-        """Removes the specified mark from the image scene and image class."""
+        """Removes the specified mark from the image scene."""
 
         self.removeItem(mark)
         self.removeItem(mark.label)
