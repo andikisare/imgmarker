@@ -2,8 +2,8 @@ from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QLabel, QScrollArea, QGraphicsView,
                               QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
                               QSlider, QLineEdit, QFileDialog )
-from PyQt6.QtGui import QAction, QIcon, QFont, QKeyEvent
-from PyQt6.QtCore import Qt, QPoint, QPointF, QRectF, QEvent
+from PyQt6.QtGui import QAction, QIcon, QFont
+from PyQt6.QtCore import Qt, QPoint, QPointF
 from imgmarker.mark import Mark
 from imgmarker import __dirname__, ICON, HEART_SOLID, HEART_CLEAR
 import imgmarker.io
@@ -15,13 +15,9 @@ import datetime as dt
 import textwrap
 from math import floor, inf, nan
 from functools import partial
-from astropy.coordinates import SkyCoord
-import astropy.units as u
 
 class AdjustmentsWindow(QWidget):
-    """
-    Class for the brightness and contrast window
-    """
+    """Class for the brightness and contrast window."""
     def __init__(self):
         super().__init__()
 
@@ -88,9 +84,7 @@ class AdjustmentsWindow(QWidget):
         self.activateWindow()   
 
 class BlurWindow(QWidget):
-    """
-    Class for the blur adjustment window
-    """
+    """Class for the blur adjustment window."""
     def __init__(self):
         super().__init__()
         
@@ -136,9 +130,7 @@ class BlurWindow(QWidget):
         self.activateWindow()
 
 class FrameWindow(QWidget):
-    """
-    Class for the window for switching between frames in an image
-    """
+    """Class for the window for switching between frames in an image."""
     def __init__(self):
         super().__init__()
         
@@ -184,9 +176,7 @@ class FrameWindow(QWidget):
         self.activateWindow()
 
 class InstructionsWindow(QWidget):
-    """
-    Class for the window that displays the instructions and keymappings
-    """
+    """Class for the window that displays the instructions and keymappings."""
     def __init__(self,groupNames):
         super().__init__()
         self.setWindowIcon(QIcon(ICON))
@@ -242,9 +232,7 @@ class InstructionsWindow(QWidget):
         self.activateWindow()
 
 class StartupWindow(QInputDialog):
-    """
-    Class for the startup window
-    """
+    """Class for the startup window"""
     def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon(ICON))
@@ -263,9 +251,7 @@ class StartupWindow(QInputDialog):
         else: return text
 
 class MainWindow(QMainWindow):
-    """
-    Class for the main window
-    """
+    """Class for the main window"""
     def __init__(self, username:str):
         super().__init__()
         self.setWindowTitle("Image Marker")
@@ -533,9 +519,7 @@ class MainWindow(QMainWindow):
         self.update_categories()
 
     def __init_data__(self):
-        """
-        Initializes images.
-        """
+        """Initializes images."""
         # Initialize output dictionary
         self.images = imgmarker.io.load(self.username)
         
@@ -564,9 +548,7 @@ class MainWindow(QMainWindow):
             self.N = len(self.images)
 
     def inview(self,x,y):
-        """
-        Checks if x and y are within the image.
-        """
+        """Checks if x and y are within the image."""
         return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
 
     # === Events ===
@@ -642,9 +624,7 @@ class MainWindow(QMainWindow):
     
     # === Actions ===
     def open(self) -> None:
-        """
-        Method for the open save directory dialog.
-        """
+        """Method for the open save directory dialog."""
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
         saveDir = dialog.getExistingDirectory(self, 'Open save directory', os.getcwd())
@@ -662,9 +642,7 @@ class MainWindow(QMainWindow):
         self.update_favorites()
 
     def open_ims(self) -> None:
-        """
-        Method for the open image directory dialog.
-        """
+        """Method for the open image directory dialog."""
         image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", imgmarker.io.IMAGE_DIR),'')
         if (image_dir == ''): return
         imgmarker.io.update_config(image_dir=image_dir)
@@ -696,9 +674,7 @@ class MainWindow(QMainWindow):
         return
 
     def favorite(self,state) -> None:
-        """
-        Favorite the current image.
-        """
+        """Favorite the current image."""
         state = Qt.CheckState(state)
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
@@ -711,9 +687,7 @@ class MainWindow(QMainWindow):
             imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def categorize(self,i:int) -> None:
-        """
-        Categorize the current image
-        """
+        """Categorize the current image"""
         if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.image.categories):
             self.image.categories.append(i)
         elif (i in self.image.categories):
@@ -847,15 +821,11 @@ class MainWindow(QMainWindow):
                     x, y = mark_coord_cart[0], mark_coord_cart[1]
                     y = img_h - y
 
-                    if ((x < img_w) and (x > 0) and (y < img_h) and (y > 0)):
-                        mark = imgmarker.mark.Mark(x, y, shape='rect', image=current_image, text=label)
-                        current_image.ext_marks.append(mark)
+                else: x, y = alphas[i], betas[i]
 
-                else:
-                    x, y = alphas[i], betas[i]
-                    if ((x < img_w) and (x > 0) and (y < img_h) and (y > 0)):
-                        mark = imgmarker.mark.Mark(x, y, shape='rect', image=current_image, text=label)
-                        current_image.ext_marks.append(mark)
+                if self.inview(x,y):
+                    mark = Mark(x, y, shape='rect', image=current_image, text=label)
+                    current_image.ext_marks.append(mark)
 
         for mark in self.image.ext_marks: self.image_scene.mark(mark)
 
