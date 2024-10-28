@@ -162,9 +162,7 @@ def parse_wcs(img:imgmarker.image.GImage) -> WCS:
     except: return None
 
 def check_save(savename:str) -> bool:
-    """
-    Checks if savename is empty.
-    """
+    """Checks if savename is empty."""
     return (savename != 'None') and (savename != '')
 
 def savefav(savename:str,date:str,images:list[imgmarker.image.GImage],fav_list:list[str]) -> None:
@@ -404,8 +402,19 @@ def save(savename:str,date,images:list[imgmarker.image.GImage]) -> None:
 
 def loadfav(savename:str) -> list[str]:
     """
-    Loads list of favorited files from favorites.txt
+    Loads 'favorites.txt' from the save directory.
+
+    Parameters
+    ----------
+    savename: str
+        A string containing the savename/username.
+
+    Returns
+    ----------
+    list: str
+        A list of strings containing the names of the files (images) that were saved.
     """
+
     save_dir = os.path.join(OUT_DIR, savename)
     fav_out_path = os.path.join(save_dir, 'favorites.txt')
     
@@ -417,8 +426,19 @@ def loadfav(savename:str) -> list[str]:
 
 def load(savename:str) -> list[imgmarker.image.GImage]:
     """
-    Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.GImage` objects.
+    Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.GImage`
+    objects.
+
+    Parameters
+    ----------
+    savename: str
+        A string containing the savename/username.
+
+    Returns
+    ----------
+    images: list[`imgmarker.image.GImage`]
     """
+
     save_dir = os.path.join(OUT_DIR, savename)
     mark_out_path = os.path.join(save_dir,'marks.txt')
     images_out_path = os.path.join(save_dir,'images.txt')
@@ -458,10 +478,35 @@ def load(savename:str) -> list[imgmarker.image.GImage]:
     return images
 
 def load_ext_marks(f:str) -> dict:
-    coord_sys = None
+    """
+    Loads in an external marks file containing labels and coordinates in either galactic or
+    cartesian coordinates.
+
+    Parameters
+    ----------
+    f: str
+        A string containing the full path of the external marks file.
+
+    Returns
+    ----------
+    labels: list[str]
+        A list of the labels for each external mark.
+
+    alphas: list[float]
+        A list of floats containing either the RA or x coordinates of external marks.
+    
+    betas: list[float]
+        A list of floats containing either the Dec or y coordinates of external marks.
+    
+    coord_sys: str
+        A string containing either 'galactic' or 'cartesian' for designating the input coordinate
+        system.
+    """
+
     labels = []
     alphas = []
     betas = []
+    coord_sys = None
     skip = True
 
     for l in open(f):
@@ -487,7 +532,22 @@ def glob(edited_images:list[imgmarker.image.GImage]=[]) -> tuple[list[imgmarker.
     """
     Globs in IMAGE_DIR, using edited_images to sort, with edited_images in order at the beginning of the list
     and the remaining unedited images in randomized order at the end of the list.
+
+    Parameters
+    ----------
+    edited_images: list['imgmarker.image.GImage']
+        A list of GImage objects containing the loaded-in information for each edited image.
+
+    Returns
+    ----------
+    images: list['imgmarker.image.GImage']
+        A list of GImage objects with the ordered edited images first and randomized unedited
+        images added afterwards.
+    
+    idx: int
+        The index to start at to not show already-edited images from a previous save.
     """
+
      # Find all images in image directory
     all_images = glob_.glob(os.path.join(IMAGE_DIR, '*.*'))
     all_images = [img for img in all_images if img.split('.')[-1] in imgmarker.image.SUPPORTED_EXTS]
@@ -507,9 +567,7 @@ def glob(edited_images:list[imgmarker.image.GImage]=[]) -> tuple[list[imgmarker.
     return images, idx
 
 def inputs() -> str:
-    """
-    Returns the savename from `StartupWindow`.
-    """
+    """Returns the savename from `StartupWindow`."""
     savename = imgmarker.window.StartupWindow().getUser()
     return savename
 
@@ -519,9 +577,7 @@ def update_config(out_dir:str = OUT_DIR,
                   category_names:list[str] = CATEGORY_NAMES, 
                   group_max:list[int] = GROUP_MAX
     ) -> None:
-    """
-    Updates any of the global config variables with the corresponding parameter.
-    """
+    """Updates any of the global config variables with the corresponding parameter."""
     
     global OUT_DIR; OUT_DIR = out_dir
     global IMAGE_DIR; IMAGE_DIR = image_dir
