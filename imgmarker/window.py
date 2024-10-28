@@ -248,6 +248,7 @@ class StartupWindow(QInputDialog):
     def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon(ICON))
+        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
         qt_rectangle = self.frameGeometry()
         center_point = QApplication.primaryScreen().geometry().center()
         qt_rectangle.moveCenter(center_point)
@@ -256,7 +257,6 @@ class StartupWindow(QInputDialog):
     def getUser(self) -> None:
         # Make popup to get name
         text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
-        if not text.isalnum(): raise imgmarker.io.SAVE_ALPHANUM_ERR
 
         if not OK: sys.exit()
         elif not text.isalnum(): raise imgmarker.io.SAVE_ALPHANUM_ERR 
