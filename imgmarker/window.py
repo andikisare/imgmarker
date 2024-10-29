@@ -275,6 +275,7 @@ class MainWindow(QMainWindow):
         # Initialize data
         self.username = username
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
+        self.seen_order = []
         self.__init_data__()
         self.image_scene = imgmarker.image.ImageScene(self.image)
 
@@ -448,7 +449,7 @@ class MainWindow(QMainWindow):
         self.randomize_menu.setShortcuts(['Ctrl+r+o'])
         self.randomize_menu.setStatusTip('Randomize order')
         self.randomize_menu.setCheckable(True)
-        self.randomize_menu.setChecked(bool(imgmarker.io.RANDOMIZE_ORDER))
+        self.randomize_menu.setChecked(imgmarker.io.RANDOMIZE_ORDER == 'True')
         self.randomize_menu.triggered.connect(self.toggle_randomize)
         edit_menu.addAction(self.randomize_menu)
 
@@ -556,10 +557,16 @@ class MainWindow(QMainWindow):
             self.image.seek(self.frame)
             self.image.seen = True
             self.N = len(self.images)
+            if self.image.name not in self.seen_order:
+                self.seen_order.append(self.image.name)
         except:
             # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
             #          f"Please specify a different image directory in imgmarker.cfg and try again.")
             image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", imgmarker.io.IMAGE_DIR),'')
+            
+            while image_dir == '':
+                image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", imgmarker.io.IMAGE_DIR),'')
+
             imgmarker.io.update_config(image_dir=image_dir)
             self.images, self.idx = imgmarker.io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
@@ -924,6 +931,8 @@ class MainWindow(QMainWindow):
         self.image.seek(self.frame)
         self.image.seen = True
         self.image_scene.update(self.image)
+        if self.image.name not in self.seen_order:
+                self.seen_order.append(self.image.name)
 
         # Fit back to view if the image dimensions have changed
         if (self.image.width != _w) or (self.image.height != _h): self.fitview()
@@ -1041,31 +1050,29 @@ class MainWindow(QMainWindow):
                         sorted_images.append(image)
             self.images = sorted_images
             self.idx = sorted_image_names.index(current_image_name)
+
         else:
+            all_image_names = []
             randomized_image_names = []
             randomized_images = []
-            edited_image_names = []
+            edited_image_names = self.seen_order
 
             for image in self.images:
-                randomized_image_names.append(image.name)
-
-            for image in self.images:
-                if image.seen == True:
-                    edited_image_names.append(image.name)
-
-            unedited_image_names = [name for name in randomized_image_names if name not in edited_image_names]
+                all_image_names.append(image.name)
+            
+            unedited_image_names = [name for name in all_image_names if name not in edited_image_names]
 
             rng = imgmarker.io.np.random.default_rng()
             rng.shuffle(unedited_image_names)
 
-            randomized_image_names = edited_image_names
-            randomized_image_names.extend(unedited_image_names)
-
+            randomized_image_names += edited_image_names
+            randomized_image_names += unedited_image_names
+            
             for randomized_image_name in randomized_image_names:
                 for image in self.images:
                     if image.name == randomized_image_name:
                         randomized_images.append(image)
-            
+
             self.images = randomized_images
             self.idx = randomized_image_names.index(current_image_name)
 
