@@ -18,6 +18,7 @@ from functools import partial
 
 class AdjustmentsWindow(QWidget):
     """Class for the brightness and contrast window."""
+
     def __init__(self):
         super().__init__()
 
@@ -85,6 +86,7 @@ class AdjustmentsWindow(QWidget):
 
 class BlurWindow(QWidget):
     """Class for the blur adjustment window."""
+
     def __init__(self):
         super().__init__()
         
@@ -131,6 +133,7 @@ class BlurWindow(QWidget):
 
 class FrameWindow(QWidget):
     """Class for the window for switching between frames in an image."""
+
     def __init__(self):
         super().__init__()
         
@@ -177,6 +180,7 @@ class FrameWindow(QWidget):
 
 class InstructionsWindow(QWidget):
     """Class for the window that displays the instructions and keymappings."""
+
     def __init__(self,groupNames):
         super().__init__()
         self.setWindowIcon(QIcon(ICON))
@@ -229,11 +233,13 @@ class InstructionsWindow(QWidget):
 
     def show(self):
         """Shows the window and moves it to the front."""
+
         super().show()
         self.activateWindow()
 
 class StartupWindow(QInputDialog):
     """Class for the startup window."""
+
     def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon(ICON))
@@ -244,6 +250,8 @@ class StartupWindow(QInputDialog):
         self.move(qt_rectangle.topLeft())
 
     def getUser(self) -> None:
+        """Makes a window for savename input."""
+
         # Make popup to get name
         text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
 
@@ -253,6 +261,7 @@ class StartupWindow(QInputDialog):
 
 class MainWindow(QMainWindow):
     """Class for the main window."""
+
     def __init__(self, username:str):
         super().__init__()
         self.setWindowTitle("Image Marker")
@@ -434,6 +443,15 @@ class MainWindow(QMainWindow):
         del_menu.triggered.connect(partial(self.del_marks,True))
         edit_menu.addAction(del_menu)
 
+        ### Randomize image order menu
+        self.randomize_menu = QAction('&Randomize order', self)
+        self.randomize_menu.setShortcuts(['Ctrl+r+o'])
+        self.randomize_menu.setStatusTip('Randomize order')
+        self.randomize_menu.setCheckable(True)
+        self.randomize_menu.setChecked(bool(imgmarker.io.RANDOMIZE_ORDER))
+        self.randomize_menu.triggered.connect(self.toggle_randomize)
+        edit_menu.addAction(self.randomize_menu)
+
         ## View menu
         view_menu = menu_bar.addMenu("&View")
 
@@ -521,6 +539,7 @@ class MainWindow(QMainWindow):
 
     def __init_data__(self):
         """Initializes images."""
+
         # Initialize output dictionary
         self.images = imgmarker.io.load(self.username)
         
@@ -563,6 +582,7 @@ class MainWindow(QMainWindow):
         ----------
         True if the (x,y) is contained within the image, False otherwise.
         """
+
         return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
 
     # === Events ===
@@ -582,6 +602,7 @@ class MainWindow(QMainWindow):
         ----------
         True if the event triggered an some operation.
         """
+
         if (source == self.image_view.viewport()) and (event.type() == 31):
             x = event.angleDelta().y()
             if x > 0: self.zoom(1/1.2)
@@ -591,6 +612,8 @@ class MainWindow(QMainWindow):
         return super().eventFilter(source, event)
 
     def keyPressEvent(self,event):
+        """Checks which keyboard button was pressed and calls the appropriate function."""
+        
         # Check if key is bound with marking the image
         markButtons = imgmarker.io.check_marks(event)
         for i in range(0,9):
@@ -610,6 +633,8 @@ class MainWindow(QMainWindow):
             self.frame_window.slider.setValue(self.frame)
 
     def mousePressEvent(self,event):
+        """Checks which mouse button was pressed and calls the appropriate function."""
+
         # Check if key is bound with marking the image
         markButtons = imgmarker.io.check_marks(event)
         for i in range(0,9):
@@ -622,6 +647,8 @@ class MainWindow(QMainWindow):
             self.del_marks()
 
     def mouseMoveEvent(self, event):
+        """Parses the mouse coordinates and gets galactic coordinates if available to show in scene."""
+
         # Mark if hovering over image
         pix_pos = self.mouse_pix_pos()
         x, y = pix_pos.x(), pix_pos.y()
@@ -652,6 +679,7 @@ class MainWindow(QMainWindow):
     # === Actions ===
     def open(self) -> None:
         """Method for the open save directory dialog."""
+
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
         saveDir = dialog.getExistingDirectory(self, 'Open save directory', os.getcwd())
@@ -670,6 +698,7 @@ class MainWindow(QMainWindow):
 
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
+
         image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", imgmarker.io.IMAGE_DIR),'')
         if (image_dir == ''): return
         imgmarker.io.update_config(image_dir=image_dir)
@@ -683,6 +712,8 @@ class MainWindow(QMainWindow):
         self.update_comments()
 
     def open_ext_marks(self):
+        """Method for opening an external marks file."""
+
         ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', os.getcwd(), '*.txt')[0]
         if (ext_mark_file == ''): return
         
@@ -702,6 +733,7 @@ class MainWindow(QMainWindow):
 
     def favorite(self,state) -> None:
         """Favorite the current image."""
+
         state = Qt.CheckState(state)
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
@@ -715,6 +747,7 @@ class MainWindow(QMainWindow):
 
     def categorize(self,i:int) -> None:
         """Categorize the current image."""
+
         if (self.category_boxes[i-1].checkState() == Qt.CheckState.Checked) and (i not in self.image.categories):
             self.image.categories.append(i)
         elif (i in self.image.categories):
@@ -761,6 +794,7 @@ class MainWindow(QMainWindow):
 
     def shift(self,delta:int):
         """Move back or forward *delta* number of images."""
+
         # Increment the index
         self.idx += delta
         if self.idx > self.N-1:
@@ -777,6 +811,7 @@ class MainWindow(QMainWindow):
             
     def enter(self):
         """Enter the text in the comment box into the image."""
+
         self.update_comments()
         self.comment_box.clearFocus()
         imgmarker.io.save(self.username,self.date,self.images)
@@ -784,6 +819,7 @@ class MainWindow(QMainWindow):
 
     def center_cursor(self):
         """Center on the cursor."""
+
         center = self.image_view.viewport().rect().center()
         scene_center = self.image_view.mapToScene(center)
         pix_pos = self.mouse_pix_pos(correction=False)
@@ -811,6 +847,7 @@ class MainWindow(QMainWindow):
         ----------
         None
         """
+
         if self.zoom_level*scale > 1/3:
             self.zoom_level *= scale
             if mode == 'viewport': center = self.image_view.viewport().rect().center()
@@ -825,6 +862,7 @@ class MainWindow(QMainWindow):
 
     def fitview(self):
         """Fit the image view in the viewport."""
+
         self.image_view.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
         self.zoom(scale=9,mode='viewport')
         self.zoom_level = 1
@@ -833,6 +871,7 @@ class MainWindow(QMainWindow):
 
     def update_ext_marks(self):
         """Loads in each external mark to the appropriate image if RA, Dec, otherwise loads all."""
+
         labels = self.ext_mark_labels
         alphas = self.ext_mark_alphas
         betas = self.ext_mark_betas
@@ -855,6 +894,7 @@ class MainWindow(QMainWindow):
 
     def update_favorites(self):
         """Update favorite boxes based on the contents of favorite_list."""
+
         if self.image.name in self.favorite_list:
             self.favorite_box.setChecked(True)
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
@@ -864,6 +904,7 @@ class MainWindow(QMainWindow):
 
     def update_images(self):
         """Updates previous image with a new image."""
+
         # Disconnect sliders from previous image
         try:
             self.blur_window.slider.valueChanged.disconnect(self.image.blur)
@@ -926,6 +967,7 @@ class MainWindow(QMainWindow):
     
     def update_comments(self):
         """Updates image comment with the contents of the comment box."""
+
         comment = self.comment_box.text()
         if not comment: comment = 'None'
 
@@ -935,6 +977,7 @@ class MainWindow(QMainWindow):
 
     def get_comment(self):
         """If the image has a comment, sets the text of the comment box to the image's comment."""
+
         if (self.image.comment == 'None'):
             self.comment_box.setText('')
         else:
@@ -943,16 +986,20 @@ class MainWindow(QMainWindow):
 
     def update_categories(self):
         """Resets all category boxes to unchecked, then checks the boxes based on the current image's categories."""
+
         for box in self.category_boxes: box.setChecked(False)
         for i in self.image.categories:
             self.category_boxes[i-1].setChecked(True)
 
     def update_marks(self):
         """Redraws all marks in image."""
+
         for mark in self.image.marks: self.image_scene.mark(mark)
         for mark in self.image.ext_marks: self.image_scene.mark(mark)
 
     def del_marks(self,del_all=False):
+        """Deletes marks, either the selected one or all."""
+        
         if not del_all:
             pix_pos = self.mouse_pix_pos(correction=False).toPointF()
             selected_items = [item for item in self.image.marks 
@@ -970,7 +1017,65 @@ class MainWindow(QMainWindow):
         imgmarker.io.save(self.username,self.date,self.images)
         imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
+    def toggle_randomize(self):
+        """Updates the config file for randomization and reloads unseen images."""
+
+        state = self.randomize_menu.isChecked()
+        imgmarker.io.update_config(randomize_order=state)
+        current_image_name = self.image.name
+
+        if not state:
+            sorted_image_names = []
+            sorted_images = []
+
+            for i in range(len(self.images)):
+                sorted_image_names.append(self.images[i].name)
+
+            sorted_image_names = sorted(sorted_image_names)
+
+            for sorted_image_name in sorted_image_names:
+                for image in self.images:
+                    if image.name == sorted_image_name:
+                        sorted_images.append(image)
+            self.images = sorted_images
+            self.idx = sorted_image_names.index(current_image_name)
+        else:
+            randomized_image_names = []
+            randomized_images = []
+            edited_image_names = []
+
+            for image in self.images:
+                randomized_image_names.append(image.name)
+
+            for image in self.images:
+                if image.seen == True:
+                    edited_image_names.append(image.name)
+
+            unedited_image_names = [name for name in randomized_image_names if name not in edited_image_names]
+
+            rng = imgmarker.io.np.random.default_rng()
+            rng.shuffle(unedited_image_names)
+
+            randomized_image_names = edited_image_names
+            randomized_image_names.extend(unedited_image_names)
+
+            for randomized_image_name in randomized_image_names:
+                for image in self.images:
+                    if image.name == randomized_image_name:
+                        randomized_images.append(image)
+            
+            self.images = randomized_images
+            self.idx = randomized_image_names.index(current_image_name)
+
+        self.update_images()
+        self.update_marks()
+        self.get_comment()
+        self.update_categories()
+        self.update_comments()
+
     def toggle_marks(self):
+        """Toggles whether or not marks are shown."""
+
         state = self.marks_menu.isChecked()
         for item in self.image.marks:
             if state: 
@@ -981,6 +1086,8 @@ class MainWindow(QMainWindow):
                 item.label.hide()
 
     def toggle_mark_labels(self):
+        """Toggles whether or not mark labels are shown."""
+
         state = self.mark_labels_menu.isChecked()
         for item in self.image.marks:
             if state: item.label.show()

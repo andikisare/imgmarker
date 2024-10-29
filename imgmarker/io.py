@@ -54,7 +54,8 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
         config_file.write(f'image_dir = {image_dir}\n')
         config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
         config_file.write('categories = 1,2,3,4,5\n')
-        config_file.write('group_max = None,None,None,None,None,None,None,None,None')
+        config_file.write('group_max = None,None,None,None,None,None,None,None,None\n')
+        config_file.write('randomize_order = True')
 
     else:
         for l in open(CONFIG):
@@ -84,10 +85,13 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
             
             if var == 'group_max':
                 group_max = val.split(',')
-        
-    return out_dir, image_dir, group_names, category_names, group_max
 
-OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX = read_config()
+            if var == 'randomize_order':
+                randomize_order = val
+        
+    return out_dir, image_dir, group_names, category_names, group_max, randomize_order
+
+OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
     
 def check_marks(event) -> list[bool]:
     """
@@ -548,17 +552,26 @@ def glob(edited_images:list[imgmarker.image.Image]=[]) -> tuple[list[imgmarker.i
         The index to start at to not show already-edited images from a previous save.
     """
 
-     # Find all images in image directory
-    all_images = glob_.glob(os.path.join(IMAGE_DIR, '*.*'))
-    all_images = [img for img in all_images if img.split('.')[-1] in imgmarker.image.SUPPORTED_EXTS]
+    if RANDOMIZE_ORDER:
+        # Find all images in image directory
+        all_images = glob_.glob(os.path.join(IMAGE_DIR, '*.*'))
+        all_images = [img for img in all_images if img.split('.')[-1] in imgmarker.image.SUPPORTED_EXTS]
 
-    # Get list of paths to images if they are in the dictionary (have been edited)
-    edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
-    unedited_image_paths = [fp for fp in all_images if fp not in edited_image_paths]
+        # Get list of paths to images if they are in the dictionary (have been edited)
+        edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
+        unedited_image_paths = [fp for fp in all_images if fp not in edited_image_paths]
 
-    # Shuffle the remaining unedited images
-    rng = np.random.default_rng()
-    rng.shuffle(unedited_image_paths)
+        # Shuffle the remaining unedited images
+        rng = np.random.default_rng()
+        rng.shuffle(unedited_image_paths)
+    else:
+        # Find all images in image directory
+        all_images = sorted(glob_.glob(os.path.join(IMAGE_DIR, '*.*')))
+        all_images = [img for img in all_images if img.split('.')[-1] in imgmarker.image.SUPPORTED_EXTS]
+
+        # Get list of paths to images if they are in the dictionary (have been edited)
+        edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
+        unedited_image_paths = [fp for fp in all_images if fp not in edited_image_paths]
 
     # Put edited images at the beginning, unedited images at front
     images = edited_images + [imgmarker.image.open(fp) for fp in unedited_image_paths]
@@ -575,7 +588,8 @@ def update_config(out_dir:str = OUT_DIR,
                   image_dir:str = IMAGE_DIR, 
                   group_names:list[str] = GROUP_NAMES, 
                   category_names:list[str] = CATEGORY_NAMES, 
-                  group_max:list[int] = GROUP_MAX
+                  group_max:list[int] = GROUP_MAX,
+                  randomize_order:str = RANDOMIZE_ORDER
     ) -> None:
     """Updates any of the global config variables with the corresponding parameter."""
     
@@ -584,6 +598,7 @@ def update_config(out_dir:str = OUT_DIR,
     global GROUP_NAMES; GROUP_NAMES = group_names
     global CATEGORY_NAMES; CATEGORY_NAMES = category_names
     global GROUP_MAX; GROUP_MAX = group_max
+    global RANDOMIZE_ORDER; RANDOMIZE_ORDER = randomize_order
     
     config_file = open(CONFIG,'w')
     config_file.write(f'out_dir = {out_dir}\n')
@@ -591,3 +606,4 @@ def update_config(out_dir:str = OUT_DIR,
     config_file.write(f'groups = {','.join(group_names[1:])}\n')
     config_file.write(f'categories = {','.join(category_names[1:])}\n')
     config_file.write(f'group_max = {','.join(group_max)}\n')
+    config_file.write(f'randomize_order = {randomize_order}')
