@@ -673,6 +673,8 @@ class MainWindow(QMainWindow):
             self.pos_widget.dec_text.setText('')
 
     def closeEvent(self, a0):
+        """Overridden Qt default closeEvent function to force saving comments before closing."""
+
         self.update_comments()
         sys.exit()
 
@@ -1104,6 +1106,7 @@ class MainWindow(QMainWindow):
         view_pos: `QPoint`
             position of mouse in the image view.
         """
+
         return self.image_view.mapFromGlobal(self.cursor().pos())
     
     def mouse_pix_pos(self,correction:bool=True):
@@ -1115,6 +1118,7 @@ class MainWindow(QMainWindow):
         pix_pos: `QPoint`
             position of mouse in the image.
         """
+
         view_pos = self.image_view.mapFromGlobal(self.cursor().pos())
         scene_pos = self.image_view.mapToScene(view_pos)
 
