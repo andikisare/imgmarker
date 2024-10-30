@@ -45,6 +45,9 @@ class MarkLabel(QGraphicsProxyWidget):
         self.mark = mark
         self.lineedit = QLineEdit()
         self.lineedit.setReadOnly(True)
+        f = self.lineedit.font()
+        f.setPixelSize(int(self.mark.d))
+        self.lineedit.setFont(f)
 
         # Using TabFocus because PyQt does not allow only focusing with left click
         self.setFocusPolicy(Qt.FocusPolicy.TabFocus)
@@ -59,6 +62,7 @@ class MarkLabel(QGraphicsProxyWidget):
         self.setWidget(self.lineedit)
         self.autoresize()
         self.installEventFilter(self)
+        self.setPos(self.mark.view_center+QPointF(self.mark.d/2,self.mark.d/2))
 
     def enter(self):
         self.setCursor(Qt.CursorShape.ArrowCursor)
@@ -142,4 +146,3 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
         
         # Set up label
         self.label = MarkLabel(self)
-        self.label.setPos(self.view_center+QPointF(3,3))

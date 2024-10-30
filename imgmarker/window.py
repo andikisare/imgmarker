@@ -374,13 +374,21 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(del_menu)
 
         ### Randomize image order menu
-        self.randomize_menu = QAction('&Randomize order', self)
-        self.randomize_menu.setShortcuts(['Ctrl+r+o'])
-        self.randomize_menu.setStatusTip('Randomize order')
-        self.randomize_menu.setCheckable(True)
-        self.randomize_menu.setChecked(imgmarker.io.RANDOMIZE_ORDER == 'True')
-        self.randomize_menu.triggered.connect(self.toggle_randomize)
-        edit_menu.addAction(self.randomize_menu)
+        edit_menu.addSeparator()
+        randomize_menu = QAction('&Randomize order', self)
+        randomize_menu.setShortcuts(['Ctrl+r+o'])
+        randomize_menu.setStatusTip('Randomize order')
+        randomize_menu.setCheckable(True)
+        randomize_menu.setChecked(imgmarker.io.RANDOMIZE_ORDER == 'True')
+        randomize_menu.triggered.connect(self.toggle_randomize)
+        edit_menu.addAction(randomize_menu)
+
+        ### Focus cursor menu
+        cursor_focus_menu = QAction('&Focus cursor', self)
+        cursor_focus_menu.setStatusTip('Focus cursor')
+        cursor_focus_menu.setCheckable(True)
+        cursor_focus_menu.triggered.connect(partial(setattr,self,'cursor_focus'))
+        edit_menu.addAction(cursor_focus_menu)
 
         ## View menu
         view_menu = menu_bar.addMenu("&View")
@@ -393,6 +401,7 @@ class MainWindow(QMainWindow):
         view_menu.addAction(frame_menu)
 
         ### Toggle marks menu
+        view_menu.addSeparator()
         self.marks_menu = QAction('&Marks visible', self)
         self.marks_menu.setShortcuts(['Ctrl+m'])
         self.marks_menu.setStatusTip('Marks visible')
@@ -416,13 +425,6 @@ class MainWindow(QMainWindow):
         else:
             self.marks_menu.setEnabled(True)
             self.mark_labels_menu.setEnabled(True)
-
-        ### Focus cursor menu
-        cursor_focus_menu = QAction('&Focus cursor', self)
-        cursor_focus_menu.setStatusTip('Focus cursor')
-        cursor_focus_menu.setCheckable(True)
-        cursor_focus_menu.triggered.connect(partial(setattr,self,'cursor_focus'))
-        view_menu.addAction(cursor_focus_menu)
 
         ## Filter menu
         filter_menu = menu_bar.addMenu("&Filter")
@@ -1004,10 +1006,9 @@ class MainWindow(QMainWindow):
         imgmarker.io.save(self.username,self.date,self.images)
         imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
 
-    def toggle_randomize(self):
+    def toggle_randomize(self,state):
         """Updates the config file for randomization and reloads unseen images."""
-
-        state = self.randomize_menu.isChecked()
+        
         imgmarker.io.update_config(randomize_order=state)
         current_image_name = self.image.name
 
