@@ -15,74 +15,7 @@ import datetime as dt
 import textwrap
 from math import floor, inf, nan
 from functools import partial
-
-class AdjustmentsWindow(QWidget):
-    """Class for the brightness and contrast window."""
-
-    def __init__(self):
-        super().__init__()
-
-        self.setWindowIcon(QIcon(ICON))
-        layout = QVBoxLayout()
-        self.fullw = self.screen().size().width()
-        self.fullh = self.screen().size().height()
-        self.setWindowTitle('Brightness and Contrast')
-        self.setLayout(layout)
-
-        # Brightness slider
-        self.brightness_slider = QSlider()
-        self._slider_setup(self.brightness_slider,self.brightness_moved,self.brightness_changed)
-
-        self.brightness_label = QLabel()
-        self.brightness_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.brightness_label.setText(f'Brightness: {self.brightness_slider.value()}')
-        
-        # Contrast slider
-        self.contrast_slider = QSlider()
-        self._slider_setup(self.contrast_slider,self.contrast_moved,self.contrast_changed)
-
-        self.contrast_label = QLabel()
-        self.contrast_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.contrast_label.setText(f'Contrast: {self.contrast_slider.value()}')
-
-        layout.addWidget(self.brightness_label)
-        layout.addWidget(self.brightness_slider)
-        layout.addWidget(self.contrast_label)
-        layout.addWidget(self.contrast_slider)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.setFixedWidth(int(self.fullw/6))
-        self.setFixedHeight(layout.sizeHint().height())
-
-        # Set position of window
-        qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
-        self.move(qt_rectangle.topLeft())
-
-    def _slider_setup(self,slider:QSlider,moved_connect,value_connect):
-        slider.setMinimum(-10)
-        slider.setMaximum(10)
-        slider.setValue(0)
-        slider.setOrientation(Qt.Orientation.Horizontal)
-        slider.sliderMoved.connect(moved_connect)
-        slider.valueChanged.connect(value_connect)
-
-    def brightness_moved(self,pos):
-        self.brightness_slider.setValue(floor(pos))
-
-    def contrast_moved(self,pos):
-        self.contrast_slider.setValue(floor(pos))
-
-    def brightness_changed(self,value):
-        self.brightness_label.setText(f'Brightness: {floor(self.brightness_slider.value())/10}')
-
-    def contrast_changed(self,value):
-        self.contrast_label.setText(f'Contrast: {floor(self.contrast_slider.value())/10}')
-
-    def show(self):
-        super().show()
-        self.activateWindow()   
+from astropy.visualization import ZScaleInterval, MinMaxInterval, LogStretch
 
 class BlurWindow(QWidget):
     """Class for the blur adjustment window."""
@@ -103,7 +36,7 @@ class BlurWindow(QWidget):
         self.slider.setSingleStep(1)
         self.slider.setOrientation(Qt.Orientation.Horizontal)
         self.slider.sliderMoved.connect(self.slider_moved) 
-        self.slider.valueChanged.connect(self.value_changed) 
+        self.slider.setPageStep(0)
 
         self.value_label = QLabel()
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -122,10 +55,7 @@ class BlurWindow(QWidget):
         self.move(qt_rectangle.topLeft())
 
     def slider_moved(self, pos):
-        self.slider.setValue(floor(pos))
-
-    def value_changed(self,value):
-        self.value_label.setText(f'Radius: {floor(self.slider.value())/10}')
+        self.value_label.setText(f'Radius: {floor(pos)/10}')
 
     def show(self):
         super().show()
@@ -281,11 +211,7 @@ class MainWindow(QMainWindow):
 
         # Setup child windows
         self.blur_window = BlurWindow()
-        self.blur_window.slider.valueChanged.connect(self.image.blur)
-        
-        self.adjust_window = AdjustmentsWindow()
-        self.adjust_window.contrast_slider.valueChanged.connect(self.image.contrast)
-        self.adjust_window.brightness_slider.valueChanged.connect(self.image.brighten)
+        self.blur_window.slider.sliderReleased.connect(partial(self.image.blur,self.blur_window.slider.sliderPosition))
         
         self.frame_window = FrameWindow()
         self.frame_window.slider.valueChanged.connect(self.image.seek)
@@ -403,12 +329,7 @@ class MainWindow(QMainWindow):
         ## File menu
         file_menu = menu_bar.addMenu("&File")
 
-        ### Exit menu
-        exit_menu = QAction('&Exit', self)
-        exit_menu.setShortcuts(['Esc','q'])
-        exit_menu.setStatusTip('Exit')
-        exit_menu.triggered.connect(self.closeEvent)
-        file_menu.addAction(exit_menu)
+        
 
         ### Open file menu
         open_menu = QAction('&Open save directory', self)
@@ -434,6 +355,14 @@ class MainWindow(QMainWindow):
         self.ext_mark_labels = []
         self.ext_mark_alphas = []
         self.ext_mark_betas = []
+        
+        ### Exit menu
+        file_menu.addSeparator()
+        exit_menu = QAction('&Exit', self)
+        exit_menu.setShortcuts(['Esc','q'])
+        exit_menu.setStatusTip('Exit')
+        exit_menu.triggered.connect(self.closeEvent)
+        file_menu.addAction(exit_menu)
 
         ## Edit menu
         edit_menu = menu_bar.addMenu("&Edit")
@@ -496,7 +425,7 @@ class MainWindow(QMainWindow):
         view_menu.addAction(cursor_focus_menu)
 
         ## Filter menu
-        filter_menu = menu_bar.addMenu("&Filters")
+        filter_menu = menu_bar.addMenu("&Filter")
 
         ### Blur
         blur_menu = QAction('&Gaussian Blur...',self)
@@ -505,12 +434,49 @@ class MainWindow(QMainWindow):
         blur_menu.triggered.connect(self.blur_window.show)
         filter_menu.addAction(blur_menu)
 
-        ### Brightness and Contrast
-        adjust_menu = QAction('&Brightness and Contrast...',self)
-        adjust_menu.setStatusTip("Brightness and Contrast")
-        adjust_menu.setShortcuts(['Ctrl+a'])
-        adjust_menu.triggered.connect(self.adjust_window.show)
-        filter_menu.addAction(adjust_menu)
+        ### Stretch menus
+        filter_menu.addSeparator()
+
+        linear_menu = QAction('&Linear', self)
+        linear_menu.setStatusTip('Linear')
+        linear_menu.setChecked(True)
+        linear_menu.setCheckable(True)
+        filter_menu.addAction(linear_menu)
+
+        log_menu = QAction('&Log', self)
+        log_menu.setStatusTip('Log')
+        log_menu.setCheckable(True)
+        filter_menu.addAction(log_menu)
+
+        linear_menu.triggered.connect(partial(setattr,self,'stretch','linear'))
+        linear_menu.triggered.connect(partial(linear_menu.setChecked,True))
+        linear_menu.triggered.connect(partial(log_menu.setChecked,False))
+
+        log_menu.triggered.connect(partial(setattr,self,'stretch','log'))
+        log_menu.triggered.connect(partial(linear_menu.setChecked,False))
+        log_menu.triggered.connect(partial(log_menu.setChecked,True))
+
+        ### Interval menus
+        filter_menu.addSeparator()
+
+        minmax_menu = QAction('&Min-Max', self)
+        minmax_menu.setStatusTip('Min-Max')
+        minmax_menu.setChecked(True)
+        minmax_menu.setCheckable(True)
+        filter_menu.addAction(minmax_menu)
+
+        zscale_menu = QAction('&ZScale', self)
+        zscale_menu.setStatusTip('ZScale')
+        zscale_menu.setCheckable(True)
+        filter_menu.addAction(zscale_menu)
+
+        minmax_menu.triggered.connect(partial(setattr,self,'interval','min-max'))
+        minmax_menu.triggered.connect(partial(minmax_menu.setChecked,True))
+        minmax_menu.triggered.connect(partial(zscale_menu.setChecked,False))
+
+        zscale_menu.triggered.connect(partial(setattr,self,'interval','zscale'))
+        zscale_menu.triggered.connect(partial(minmax_menu.setChecked,False))
+        zscale_menu.triggered.connect(partial(zscale_menu.setChecked,True))
 
         ## Help menu
         help_menu = menu_bar.addMenu('&Help')
@@ -573,6 +539,22 @@ class MainWindow(QMainWindow):
             self.image.seek(self.frame)
             self.image.seen = True
             self.N = len(self.images)
+
+    @property
+    def interval(self): return self._interval_str
+    @interval.setter
+    def interval(self,value):
+        self._interval_str = value
+        for img in self.images: img.interval = value
+        self.image.rescale()
+        
+    @property
+    def stretch(self): return self._stretch_str
+    @stretch.setter
+    def stretch(self,value):
+        self._stretch_str = value
+        for img in self.images: img.stretch = value
+        self.image.rescale()
 
     def inview(self,x:int|float,y:int|float):
         """
@@ -916,9 +898,7 @@ class MainWindow(QMainWindow):
 
         # Disconnect sliders from previous image
         try:
-            self.blur_window.slider.valueChanged.disconnect(self.image.blur)
-            self.adjust_window.contrast_slider.valueChanged.disconnect(self.image.contrast)
-            self.adjust_window.brightness_slider.valueChanged.disconnect(self.image.brighten)
+            self.blur_window.slider.sliderReleased.disconnect()
             self.frame_window.slider.valueChanged.disconnect(self.image.seek)
         except: pass
 
@@ -949,13 +929,9 @@ class MainWindow(QMainWindow):
              
         # Update sliders
         self.blur_window.slider.setValue(0)
-        self.adjust_window.contrast_slider.setValue(0)
-        self.adjust_window.brightness_slider.setValue(0)
         self.frame_window.slider.setValue(self.frame)
 
-        self.blur_window.slider.valueChanged.connect(self.image.blur)
-        self.adjust_window.contrast_slider.valueChanged.connect(self.image.contrast)
-        self.adjust_window.brightness_slider.valueChanged.connect(self.image.brighten)
+        self.blur_window.slider.sliderReleased.connect(partial(self.image.blur,self.blur_window.slider.sliderPosition))
         self.frame_window.slider.valueChanged.connect(self.image.seek)
 
         self.frame_window.slider.setMaximum(self.image.n_frames-1)

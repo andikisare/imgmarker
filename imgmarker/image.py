@@ -15,6 +15,10 @@ from math import nan
 from astropy.io import fits
 import numpy as np
 import typing
+from astropy.visualization import ZScaleInterval, MinMaxInterval, BaseInterval, BaseStretch, ManualInterval, LinearStretch, LogStretch
+
+INTERVAL:dict[str,BaseInterval] = {'zscale': ZScaleInterval(), 'min-max': MinMaxInterval()}
+STRETCH:dict[str,BaseStretch] = {'linear': LinearStretch(), 'log': LogStretch()}
 
 def open(path:str) -> Image | None:
     """
@@ -57,7 +61,9 @@ def open(path:str) -> Image | None:
         img.r = 0.0
         img.a = 1.0
         img.b = 1.0
-
+        img.stretch = 'linear'
+        img.interval = 'min-max'
+        
         img.comment = 'None'
         img.categories = []
         img.marks = []
@@ -71,7 +77,7 @@ def open(path:str) -> Image | None:
         super(QGraphicsPixmapItem,img).__init__(QPixmap())
 
         return img
-    
+
 class Image(PIL.Image.Image,QGraphicsPixmapItem):
     """Image class based on the Python Pillow Image class and merged with the PyQt6 QGraphicsPixmapItem."""
     
@@ -94,6 +100,30 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
         self.seen:bool
         self.frame:int
 
+    @property
+    def interval(self) -> BaseInterval: 
+        interval = INTERVAL[self._interval_str]
+        h,s,v = self.hsv()
+        vlims = interval.get_limits(v)
+        return ManualInterval(*vlims)
+    @interval.setter
+    def interval(self,value): self._interval_str = value
+
+    @property
+    def stretch(self) -> BaseStretch: return STRETCH[self._stretch_str]
+    @stretch.setter
+    def stretch(self,value): self._stretch_str = value
+
+    @property
+    def scaling(self): return self.stretch + self.interval
+
+    @property
+    def wcs_center(self) -> list:
+        try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
+        except: return nan, nan
+
+    def copy(self) -> Image: return super().copy()
+
     def _new(self, im) -> Image:
         """Internal PIL.Image.Image method for making a copy of the image."""
         new = Image()
@@ -109,13 +139,24 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
                 new.palette = ImagePalette.ImagePalette()
         new.info = self.info.copy()
         return new
+
+    def frompillow(self,pil:PIL.Image.Image) -> Image:
+        image = self.copy()
+        image.__dict__.update(self.__dict__)
+        image.frombytes(pil.tobytes())
+        return image
+    
+    def hsv(self):
+        arr = np.array(self.convert('HSV'))
+        h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+        return h,s,v
     
     def clear(self): self.setPixmap(QPixmap())
     
     def tell(self): return self.image_file.tell()
 
     def seek(self,frame:int=0):
-        """Parses through the frames in a TIFF image."""
+        """Switches to a new frame if it exists"""
 
         frame = floor(frame)
         
@@ -126,10 +167,29 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
 
         self.__dict__ = self.image_file.__dict__
         self.frombytes(self.image_file.tobytes())
-        self.setPixmap(self.pixmap())
-    
-    def pixmap(self) -> QPixmap:
-        """Creates a QPixmap item with a pillows on each side to allow for fully zooming out."""
+
+        # delete the adjustments layer
+        if hasattr(self,'layer0'): del self.layer0
+        
+        # scale colors
+        self.rescale()
+
+    def rescale(self):
+        if hasattr(self,'layer0'): image = self.layer0.copy()
+        else: image = self.copy()
+
+        arr = np.array(image.convert('HSV'))
+        h,s,v = image.hsv()
+
+        v = (self.scaling(v))*255
+
+        arr[:, :, 0], arr[:, :, 1], arr[:, :, 2] = h, s, v
+
+        image_scaled = image.frompillow(PIL.Image.fromarray(arr.astype('uint8'),mode='HSV').convert('RGB'))
+        self.setPixmap(image_scaled.topixmap())
+
+    def topixmap(self) -> QPixmap:
+        """Creates a QPixmap with a pillows on each side to allow for fully zooming out."""
 
         qimage = self.toqimage()
         pixmap_base = QPixmap.fromImage(qimage)
@@ -146,45 +206,16 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
 
         return pixmap
     
-    def adjust(self) -> Image:
-        """Defines each image modification parameter and returns a composite filter."""
-        def _blur(img:Image):
-            return img.filter(GaussianBlur(self.r))
-        def _brighten(img:Image):
-            return Brightness(img).enhance(self.a)
-        def _contrast(img:Image):
-            return Contrast(img).enhance(self.b)
-        
-        img_filt = _contrast(_brighten(_blur(self)))
-        gimg_filt = self.copy()
-        gimg_filt.frombytes(img_filt.tobytes())
-
-        return gimg_filt
-    
     def blur(self,value):
         """Applies the blur value to a filter and displays it."""
+        if callable(value): r = value()
+        else: r = value
+        self.r = floor(r)/10
 
-        self.r = floor(value)/10
-        pixmap_blurred = self.adjust().pixmap()
-        self.setPixmap(pixmap_blurred)
-
-    def brighten(self,value):
-        """Applies the brighten value to a filter and displays it."""
-
-        self.a = floor(value)/10 + 1
-        pixmap_bright = self.adjust().pixmap()
-        self.setPixmap(pixmap_bright)
-
-    def contrast(self,value):
-        """Applies the contrast value to a filter and displays it."""
-
-        self.b = floor(value)/10 + 1
-        pixmap_contrast = self.adjust().pixmap()
-        self.setPixmap(pixmap_contrast)
-
-    def wcs_center(self) -> list:
-        try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
-        except: return nan, nan
+        pil = self.filter(GaussianBlur(self.r))
+        self.layer0 = self.copy()
+        self.layer0.frombytes(pil.tobytes())
+        self.rescale()
             
 class ImageScene(QGraphicsScene):
     """A class for storing and manipulating the information/image that is currently displayed."""

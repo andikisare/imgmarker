@@ -229,7 +229,7 @@ def savefav(savename:str,date:str,images:list[imgmarker.image.Image],fav_list:li
                     categories = ','.join([CATEGORY_NAMES[i] for i in category_list])
                 else: categories = 'None'
 
-                img_ra, img_dec = img.wcs_center()
+                img_ra, img_dec = img.wcs_center
 
                 il = [date,name,img_ra,img_dec,categories,comment]
                 for l in image_lines:
@@ -329,12 +329,12 @@ def save(savename:str,date,images:list[imgmarker.image.Image]) -> None:
                     if mark != None:
                         group_name = GROUP_NAMES[mark.g]
                         ra, dec = mark.wcs_center
-                        img_ra, img_dec = img.wcs_center()
+                        img_ra, img_dec = img.wcs_center
                         x, y = mark.center.x(), mark.center.y()
                     else:
                         group_name = 'None'
                         ra, dec = nan, nan
-                        img_ra, img_dec = img.wcs_center()
+                        img_ra, img_dec = img.wcs_center
                         x, y = nan, nan
                         
                     ml = [date,name,group_name,x,y,ra,dec]
