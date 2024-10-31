@@ -526,9 +526,7 @@ class MainWindow(QMainWindow):
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
         except:
-            # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
-            #          f"Please specify a different image directory in imgmarker.cfg and try again.")
-            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')
+            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", imgmarker.io.IMAGE_DIR),'')
             
             while image_dir == '':
                 image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')

@@ -93,7 +93,7 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
     return out_dir, image_dir, group_names, category_names, group_max, randomize_order
 
 OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
-    
+
 def check_marks(event) -> list[bool]:
     """
     Checks and resets each group's activation key on the keyboard.
