@@ -205,7 +205,7 @@ class MainWindow(QMainWindow):
         # Initialize data
         self.username = username
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
-        self.seen_order = []
+        self.order = []
         self.__init_data__()
         self.image_scene = image.ImageScene(self.image)
 
@@ -377,7 +377,7 @@ class MainWindow(QMainWindow):
         randomize_menu.setShortcuts(['Ctrl+r+o'])
         randomize_menu.setStatusTip('Randomize order')
         randomize_menu.setCheckable(True)
-        randomize_menu.setChecked(io.RANDOMIZE_ORDER == 'True')
+        randomize_menu.setChecked(io.RANDOMIZE_ORDER)
         randomize_menu.triggered.connect(self.toggle_randomize)
         edit_menu.addAction(randomize_menu)
 
@@ -523,8 +523,8 @@ class MainWindow(QMainWindow):
             self.image.seek(self.frame)
             self.image.seen = True
             self.N = len(self.images)
-            if self.image.name not in self.seen_order:
-                self.seen_order.append(self.image.name)
+            if self.image.name not in self.order:
+                self.order.append(self.image.name)
         except:
             # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
             #          f"Please specify a different image directory in imgmarker.cfg and try again.")
@@ -911,8 +911,8 @@ class MainWindow(QMainWindow):
         self.image.seek(self.frame)
         self.image.seen = True
         self.image_scene.update(self.image)
-        if self.image.name not in self.seen_order:
-                self.seen_order.append(self.image.name)
+        if self.image.name not in self.order:
+                self.order.append(self.image.name)
 
         # Fit back to view if the image dimensions have changed
         if (self.image.width != _w) or (self.image.height != _h): self.fitview()
@@ -1009,19 +1009,18 @@ class MainWindow(QMainWindow):
         
         io.update_config(randomize_order=state)
 
-        image_names = [img.name for img in self.images]
+        names = [img.name for img in self.images]
 
-        if not state: self.images = [self.images[i] for i in argsort(image_names)]
+        if not state: self.images = [self.images[i] for i in argsort(names)]
 
         else:
-            edited_image_names = self.seen_order
-            unedited_image_names = [name for name in image_names if name not in edited_image_names]
+            unedited_names = [n for n in names if n not in self.order]
 
             rng = io.np.random.default_rng()
-            rng.shuffle(unedited_image_names)
+            rng.shuffle(unedited_names)
 
-            randomized_image_names = edited_image_names + unedited_image_names
-            indices = [image_names.index(n) for n in randomized_image_names]
+            randomized_names = self.order + unedited_names
+            indices = [names.index(n) for n in randomized_names]
             self.images = [self.images[i] for i in indices]
      
         self.idx = self.images.index(self.image)

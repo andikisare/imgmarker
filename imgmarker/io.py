@@ -9,7 +9,7 @@ from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
 from astropy.io import fits
 import io
-import glob as glob_
+import glob as _glob
 import shutil
 from math import nan, isnan
 import warnings
@@ -88,7 +88,7 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
                 group_max = val.split(',')
 
             if var == 'randomize_order':
-                randomize_order = val
+                randomize_order = val == 'True'
         
     return out_dir, image_dir, group_names, category_names, group_max, randomize_order
 
@@ -553,30 +553,22 @@ def glob(edited_images:list[image.Image]=[]) -> tuple[list[image.Image],int]:
         The index to start at to not show already-edited images from a previous save.
     """
 
+    # Find all images in image directory
+    paths = sorted(_glob.glob(os.path.join(IMAGE_DIR, '*.*')))
+    paths = [fp for fp in paths if fp.split('.')[-1] in image.SUPPORTED_EXTS]
+
+    # Get list of paths to images if they are in the dictionary (have been edited)
+    edited_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
+    unedited_paths = [fp for fp in paths if fp not in edited_paths]
+
     if RANDOMIZE_ORDER:
-        # Find all images in image directory
-        all_images = glob_.glob(os.path.join(IMAGE_DIR, '*.*'))
-        all_images = [img for img in all_images if img.split('.')[-1] in image.SUPPORTED_EXTS]
-
-        # Get list of paths to images if they are in the dictionary (have been edited)
-        edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
-        unedited_image_paths = [fp for fp in all_images if fp not in edited_image_paths]
-
         # Shuffle the remaining unedited images
         rng = np.random.default_rng()
-        rng.shuffle(unedited_image_paths)
-    else:
-        # Find all images in image directory
-        all_images = sorted(glob_.glob(os.path.join(IMAGE_DIR, '*.*')))
-        all_images = [img for img in all_images if img.split('.')[-1] in image.SUPPORTED_EXTS]
-
-        # Get list of paths to images if they are in the dictionary (have been edited)
-        edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
-        unedited_image_paths = [fp for fp in all_images if fp not in edited_image_paths]
+        rng.shuffle(unedited_paths)
 
     # Put edited images at the beginning, unedited images at front
-    images = edited_images + [image.open(fp) for fp in unedited_image_paths]
-    idx = min(len(edited_images),len(all_images)-1)
+    images = edited_images + [image.open(fp) for fp in unedited_paths]
+    idx = min(len(edited_images),len(paths)-1)
 
     return images, idx
 
