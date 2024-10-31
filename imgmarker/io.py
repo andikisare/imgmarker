@@ -49,6 +49,7 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
         group_names = ['None','1','2','3','4','5','6','7','8','9']
         category_names = ['None','1','2','3','4','5']
         group_max = ['None','None','None','None','None','None','None','None','None']
+        randomize_order = True
 
         config_file.write(f'out_dir = {out_dir}\n')
         config_file.write(f'image_dir = {image_dir}\n')
