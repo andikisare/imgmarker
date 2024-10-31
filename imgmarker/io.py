@@ -1,9 +1,9 @@
 import os
 import numpy as np
-import imgmarker.window
-import imgmarker.mark
-import imgmarker.image
-from imgmarker import __dirname__, CONFIG
+from . import window
+from . import mark as _mark
+from . import image
+from . import CONFIG
 from PyQt6.QtCore import Qt
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
@@ -123,7 +123,7 @@ def check_marks(event) -> list[bool]:
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
-def parse_wcs(img:imgmarker.image.Image) -> WCS:
+def parse_wcs(img:image.Image) -> WCS:
     """
     Reads WCS information from TIFF/TIF metadata and FITS/FIT headers if available.
 
@@ -169,7 +169,7 @@ def check_save(savename:str) -> bool:
     """Checks if savename is empty."""
     return (savename != 'None') and (savename != '')
 
-def savefav(savename:str,date:str,images:list[imgmarker.image.Image],fav_list:list[str]) -> None:
+def savefav(savename:str,date:str,images:list[image.Image],fav_list:list[str]) -> None:
     """
     Creates a file, \'favorites.txt\', in the save directory containing all images that were favorited.
     This file is in the same format as \'images.txt\' so that a user can open their favorites file to show
@@ -264,7 +264,7 @@ def savefav(savename:str,date:str,images:list[imgmarker.image.Image],fav_list:li
             fav_out.write(outline)
 
 
-def save(savename:str,date,images:list[imgmarker.image.Image]) -> None:
+def save(savename:str,date,images:list[image.Image]) -> None:
     """
     Saves image data.
 
@@ -428,7 +428,7 @@ def loadfav(savename:str) -> list[str]:
 
     return list(set(fav_list))
 
-def load(savename:str) -> list[imgmarker.image.Image]:
+def load(savename:str) -> list[image.Image]:
     """
     Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.Image`
     objects.
@@ -446,7 +446,7 @@ def load(savename:str) -> list[imgmarker.image.Image]:
     save_dir = os.path.join(OUT_DIR, savename)
     mark_out_path = os.path.join(save_dir,'marks.txt')
     images_out_path = os.path.join(save_dir,'images.txt')
-    images:list[imgmarker.image.Image] = []
+    images:list[image.Image] = []
     
     # Get list of images from images.txt
     if os.path.exists(images_out_path):
@@ -459,7 +459,7 @@ def load(savename:str) -> list[imgmarker.image.Image]:
                 categories = [CATEGORY_NAMES.index(cat) for cat in categories if cat != 'None']
                 categories.sort()
 
-                img = imgmarker.image.open(os.path.join(IMAGE_DIR,name))
+                img = image.open(os.path.join(IMAGE_DIR,name))
                 img.comment = comment
                 img.categories = categories
                 img.seen = True
@@ -477,7 +477,7 @@ def load(savename:str) -> list[imgmarker.image.Image]:
                     group = GROUP_NAMES.index(group)
                     mark_args = (float(x),float(y))
                     mark_kwargs = {'image': img, 'group': group}
-                    mark = imgmarker.mark.Mark(*mark_args, **mark_kwargs)
+                    mark = _mark.Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)
     return images
 
@@ -532,7 +532,7 @@ def load_ext_marks(f:str) -> dict:
             
     return labels, alphas, betas, coord_sys
 
-def glob(edited_images:list[imgmarker.image.Image]=[]) -> tuple[list[imgmarker.image.Image],int]:
+def glob(edited_images:list[image.Image]=[]) -> tuple[list[image.Image],int]:
     """
     Globs in IMAGE_DIR, using edited_images to sort, with edited_images in order at the beginning of the list
     and the remaining unedited images in randomized order at the end of the list.
@@ -555,7 +555,7 @@ def glob(edited_images:list[imgmarker.image.Image]=[]) -> tuple[list[imgmarker.i
     if RANDOMIZE_ORDER:
         # Find all images in image directory
         all_images = glob_.glob(os.path.join(IMAGE_DIR, '*.*'))
-        all_images = [img for img in all_images if img.split('.')[-1] in imgmarker.image.SUPPORTED_EXTS]
+        all_images = [img for img in all_images if img.split('.')[-1] in image.SUPPORTED_EXTS]
 
         # Get list of paths to images if they are in the dictionary (have been edited)
         edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
@@ -567,21 +567,21 @@ def glob(edited_images:list[imgmarker.image.Image]=[]) -> tuple[list[imgmarker.i
     else:
         # Find all images in image directory
         all_images = sorted(glob_.glob(os.path.join(IMAGE_DIR, '*.*')))
-        all_images = [img for img in all_images if img.split('.')[-1] in imgmarker.image.SUPPORTED_EXTS]
+        all_images = [img for img in all_images if img.split('.')[-1] in image.SUPPORTED_EXTS]
 
         # Get list of paths to images if they are in the dictionary (have been edited)
         edited_image_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
         unedited_image_paths = [fp for fp in all_images if fp not in edited_image_paths]
 
     # Put edited images at the beginning, unedited images at front
-    images = edited_images + [imgmarker.image.open(fp) for fp in unedited_image_paths]
+    images = edited_images + [image.open(fp) for fp in unedited_image_paths]
     idx = min(len(edited_images),len(all_images)-1)
 
     return images, idx
 
 def inputs() -> str:
     """Returns the savename from `StartupWindow`."""
-    savename = imgmarker.window.StartupWindow().getUser()
+    savename = window.StartupWindow().getUser()
     return savename
 
 def update_config(out_dir:str = OUT_DIR,

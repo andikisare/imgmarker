@@ -1,6 +1,5 @@
 from PyQt6.QtWidgets import QLabel, QWidget, QHBoxLayout, QLineEdit, QFrame, QLineEdit, QSizePolicy
 from PyQt6.QtCore import Qt
-from imgmarker import __dirname__
 
 class QHLine(QFrame):
     def __init__(self):

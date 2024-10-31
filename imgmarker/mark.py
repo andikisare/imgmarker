@@ -1,9 +1,9 @@
 from __future__ import annotations
 from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget,QLineEdit
-from PyQt6.QtGui import QPen, QColor,QFocusEvent
+from PyQt6.QtGui import QPen, QColor
 from PyQt6.QtCore import Qt, QPointF, QEvent
 from math import nan, ceil
-from imgmarker.io import GROUP_NAMES
+from .io import GROUP_NAMES
 import typing
 
 if typing.TYPE_CHECKING:

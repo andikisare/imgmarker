@@ -4,18 +4,17 @@ from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
                               QSlider, QLineEdit, QFileDialog )
 from PyQt6.QtGui import QAction, QIcon, QFont
 from PyQt6.QtCore import Qt, QPoint, QPointF
-from imgmarker.mark import Mark
-from imgmarker import __dirname__, ICON, HEART_SOLID, HEART_CLEAR
-import imgmarker.io
-import imgmarker.image
-from imgmarker.widget import QHLine, PosWidget
+from .mark import Mark
+from . import ICON, HEART_SOLID, HEART_CLEAR
+from . import io
+from . import image
+from .widget import QHLine, PosWidget
 import sys
 import os
 import datetime as dt
 import textwrap
 from math import floor, inf, nan
 from functools import partial
-from astropy.visualization import ZScaleInterval, MinMaxInterval, LogStretch
 
 class BlurWindow(QWidget):
     """Class for the blur adjustment window."""
@@ -186,7 +185,7 @@ class StartupWindow(QInputDialog):
         text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
 
         if not OK: sys.exit()
-        elif not text.isalnum(): raise imgmarker.io.SAVE_ALPHANUM_ERR 
+        elif not text.isalnum(): raise io.SAVE_ALPHANUM_ERR 
         else: return text
 
 class MainWindow(QMainWindow):
@@ -207,7 +206,7 @@ class MainWindow(QMainWindow):
         self.date = dt.datetime.now(dt.UTC).date().isoformat()
         self.seen_order = []
         self.__init_data__()
-        self.image_scene = imgmarker.image.ImageScene(self.image)
+        self.image_scene = image.ImageScene(self.image)
 
         # Setup child windows
         self.blur_window = BlurWindow()
@@ -292,7 +291,7 @@ class MainWindow(QMainWindow):
         self.categories_layout = QHBoxLayout()
 
         # Category boxes
-        self.category_boxes = [QCheckBox(text=imgmarker.io.CATEGORY_NAMES[i], parent=self) for i in range(1,6)]
+        self.category_boxes = [QCheckBox(text=io.CATEGORY_NAMES[i], parent=self) for i in range(1,6)]
         for i, box in enumerate(self.category_boxes):
             box.setFixedHeight(20)
             box.setStyleSheet("margin-left:30%; margin-right:30%;")
@@ -301,7 +300,7 @@ class MainWindow(QMainWindow):
             self.categories_layout.addWidget(box)
 
         # Favorite box
-        self.favorite_list = imgmarker.io.loadfav(username)
+        self.favorite_list = io.loadfav(username)
         self.favorite_box = QCheckBox(parent=self)
         self.favorite_box.setFixedHeight(20)
         self.favorite_box.setFixedWidth(40)
@@ -379,7 +378,7 @@ class MainWindow(QMainWindow):
         randomize_menu.setShortcuts(['Ctrl+r+o'])
         randomize_menu.setStatusTip('Randomize order')
         randomize_menu.setCheckable(True)
-        randomize_menu.setChecked(imgmarker.io.RANDOMIZE_ORDER == 'True')
+        randomize_menu.setChecked(io.RANDOMIZE_ORDER == 'True')
         randomize_menu.triggered.connect(self.toggle_randomize)
         edit_menu.addAction(randomize_menu)
 
@@ -484,7 +483,7 @@ class MainWindow(QMainWindow):
         help_menu = menu_bar.addMenu('&Help')
 
         ### Instructions and Keymapping window
-        self.instructions_window = InstructionsWindow(imgmarker.io.GROUP_NAMES)
+        self.instructions_window = InstructionsWindow(io.GROUP_NAMES)
         instructions_menu = QAction('&Instructions', self)
         instructions_menu.setShortcuts(['F1'])
         instructions_menu.setStatusTip('Instructions')
@@ -510,9 +509,9 @@ class MainWindow(QMainWindow):
         """Initializes images."""
 
         # Initialize output dictionary
-        self.images = imgmarker.io.load(self.username)
+        self.images = io.load(self.username)
         
-        self.favorite_list = imgmarker.io.loadfav(self.username)
+        self.favorite_list = io.loadfav(self.username)
 
         # Find all images in image directory
 
@@ -520,7 +519,7 @@ class MainWindow(QMainWindow):
         except: pass
         
         try:
-            self.images, self.idx = imgmarker.io.glob(edited_images=self.images)
+            self.images, self.idx = io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seek(self.frame)
             self.image.seen = True
@@ -530,13 +529,13 @@ class MainWindow(QMainWindow):
         except:
             # sys.exit(f"No images of type '{self.imtype}' found in directory: '{self.image_dir}'.\n"
             #          f"Please specify a different image directory in imgmarker.cfg and try again.")
-            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", imgmarker.io.IMAGE_DIR),'')
+            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')
             
             while image_dir == '':
-                image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", imgmarker.io.IMAGE_DIR),'')
+                image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')
 
-            imgmarker.io.update_config(image_dir=image_dir)
-            self.images, self.idx = imgmarker.io.glob(edited_images=self.images)
+            io.update_config(image_dir=image_dir)
+            self.images, self.idx = io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seek(self.frame)
             self.image.seen = True
@@ -606,7 +605,7 @@ class MainWindow(QMainWindow):
         """Checks which keyboard button was pressed and calls the appropriate function."""
         
         # Check if key is bound with marking the image
-        markButtons = imgmarker.io.check_marks(event)
+        markButtons = io.check_marks(event)
         for i in range(0,9):
             if markButtons[i]: self.mark(group=i+1)
 
@@ -627,7 +626,7 @@ class MainWindow(QMainWindow):
         """Checks which mouse button was pressed and calls the appropriate function."""
 
         # Check if key is bound with marking the image
-        markButtons = imgmarker.io.check_marks(event)
+        markButtons = io.check_marks(event)
         for i in range(0,9):
             if markButtons[i]: self.mark(group=i+1)
         
@@ -679,7 +678,7 @@ class MainWindow(QMainWindow):
         if (saveDir == ''): return
         
         self.username = str(os.path.split(saveDir)[-1])
-        if not self.username.isalnum(): raise imgmarker.io.SAVE_ALPHANUM_ERR
+        if not self.username.isalnum(): raise io.SAVE_ALPHANUM_ERR
         
         self.__init_data__()
         self.update_images()
@@ -692,10 +691,10 @@ class MainWindow(QMainWindow):
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
 
-        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", imgmarker.io.IMAGE_DIR),'')
+        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", io.IMAGE_DIR),'')
         if (image_dir == ''): return
-        imgmarker.io.update_config(image_dir=image_dir)
-        self.images, self.idx = imgmarker.io.glob(edited_images=[])
+        io.update_config(image_dir=image_dir)
+        self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
         
         self.update_images()
@@ -710,7 +709,7 @@ class MainWindow(QMainWindow):
         ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', os.getcwd(), '*.txt')[0]
         if (ext_mark_file == ''): return
         
-        labels, alphas, betas, coord_sys = imgmarker.io.load_ext_marks(ext_mark_file)
+        labels, alphas, betas, coord_sys = io.load_ext_marks(ext_mark_file)
         self.ext_mark_labels = labels
         self.ext_mark_alphas = alphas
         self.ext_mark_betas = betas
@@ -731,12 +730,12 @@ class MainWindow(QMainWindow):
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
             self.favorite_list.append(self.image.name)
-            imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
+            io.savefav(self.username,self.date,self.images,self.favorite_list)
         else:
             self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             if self.image.name in self.favorite_list: 
                 self.favorite_list.remove(self.image.name)
-            imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
+            io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def categorize(self,i:int) -> None:
         """Categorize the current image."""
@@ -745,8 +744,8 @@ class MainWindow(QMainWindow):
             self.image.categories.append(i)
         elif (i in self.image.categories):
             self.image.categories.remove(i)
-        imgmarker.io.save(self.username,self.date,self.images)
-        imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
+        io.save(self.username,self.date,self.images)
+        io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def mark(self, group:int=0) -> None:
         """Add a mark to the current image."""
@@ -756,8 +755,8 @@ class MainWindow(QMainWindow):
         x, y = pix_pos.x(), pix_pos.y()
         
         # Mark if hovering over image
-        if imgmarker.io.GROUP_MAX[group - 1] == 'None': limit = inf
-        else: limit = int(imgmarker.io.GROUP_MAX[group - 1])
+        if io.GROUP_MAX[group - 1] == 'None': limit = inf
+        else: limit = int(io.GROUP_MAX[group - 1])
 
         marks_in_group = [m for m in self.image.marks if m.g == group]
 
@@ -775,8 +774,8 @@ class MainWindow(QMainWindow):
             elif len(marks_in_group) < limit:
                 self.image.marks.append(mark)
 
-            imgmarker.io.save(self.username,self.date,self.images)
-            imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
+            io.save(self.username,self.date,self.images)
+            io.savefav(self.username,self.date,self.images,self.favorite_list)
         
         if len(self.image.marks) == 0:
             self.marks_menu.setEnabled(False)
@@ -807,8 +806,8 @@ class MainWindow(QMainWindow):
 
         self.update_comments()
         self.comment_box.clearFocus()
-        imgmarker.io.save(self.username,self.date,self.images)
-        imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
+        io.save(self.username,self.date,self.images)
+        io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def center_cursor(self):
         """Center on the cursor."""
@@ -961,8 +960,8 @@ class MainWindow(QMainWindow):
         if not comment: comment = 'None'
 
         self.image.comment = comment
-        imgmarker.io.save(self.username,self.date,self.images)
-        imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
+        io.save(self.username,self.date,self.images)
+        io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def get_comment(self):
         """If the image has a comment, sets the text of the comment box to the image's comment."""
@@ -1003,13 +1002,13 @@ class MainWindow(QMainWindow):
             self.marks_menu.setEnabled(False)
             self.mark_labels_menu.setEnabled(False)
             
-        imgmarker.io.save(self.username,self.date,self.images)
-        imgmarker.io.savefav(self.username,self.date,self.images,self.favorite_list)
+        io.save(self.username,self.date,self.images)
+        io.savefav(self.username,self.date,self.images,self.favorite_list)
 
     def toggle_randomize(self,state):
         """Updates the config file for randomization and reloads unseen images."""
         
-        imgmarker.io.update_config(randomize_order=state)
+        io.update_config(randomize_order=state)
         current_image_name = self.image.name
 
         if not state:
@@ -1039,7 +1038,7 @@ class MainWindow(QMainWindow):
             
             unedited_image_names = [name for name in all_image_names if name not in edited_image_names]
 
-            rng = imgmarker.io.np.random.default_rng()
+            rng = io.np.random.default_rng()
             rng.shuffle(unedited_image_names)
 
             randomized_image_names += edited_image_names

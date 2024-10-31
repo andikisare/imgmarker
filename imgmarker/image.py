@@ -2,14 +2,13 @@ from __future__ import annotations
 from PyQt6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem 
 from PyQt6.QtGui import QPixmap, QPainter
 from PyQt6.QtCore import Qt
-import imgmarker.mark
-from imgmarker import __dirname__, SUPPORTED_EXTS
-import imgmarker.io
+from . import mark as _mark
+from . import SUPPORTED_EXTS
+from . import io
 import os
 from math import floor
 import PIL.Image, PIL.ImageFile
 from PIL.ImageFilter import GaussianBlur
-from PIL.ImageEnhance import Contrast, Brightness
 from astropy.wcs import WCS
 from math import nan
 from astropy.io import fits
@@ -54,7 +53,7 @@ def open(path:str) -> Image | None:
         img.__dict__ =  img_pil.__dict__
         try: img.n_frames = img_pil.n_frames
         except: img.n_frames = 1
-        img.wcs = imgmarker.io.parse_wcs(img_pil)
+        img.wcs = io.parse_wcs(img_pil)
         img.image_file = img_pil
         img.name = path.split(os.sep)[-1] 
 
@@ -95,8 +94,8 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
         self.b:float
         self.comment:str
         self.categories:list[str]
-        self.marks:list[imgmarker.mark.Mark]
-        self.ext_marks:list[imgmarker.mark.Mark]
+        self.marks:list[_mark.Mark]
+        self.ext_marks:list[_mark.Mark]
         self.seen:bool
         self.frame:int
 
@@ -237,22 +236,22 @@ class ImageScene(QGraphicsScene):
         self.setSceneRect(0,0,9*self.image.width,9*self.image.height)
 
     @typing.overload
-    def mark(self,x:float,y:float,shape='ellipse',text:int|str=0) -> imgmarker.mark.Mark: ...
+    def mark(self,x:float,y:float,shape='ellipse',text:int|str=0) -> _mark.Mark: ...
     @typing.overload
-    def mark(self,ra:float=None,dec:float=None,shape='ellipse',text:int|str=0) -> imgmarker.mark.Mark: ...
+    def mark(self,ra:float=None,dec:float=None,shape='ellipse',text:int|str=0) -> _mark.Mark: ...
     @typing.overload
-    def mark(self,mark:imgmarker.mark.Mark) -> imgmarker.mark.Mark: ... 
+    def mark(self,mark:_mark.Mark) -> _mark.Mark: ... 
 
-    def mark(self,*args,**kwargs) -> imgmarker.mark.Mark:
+    def mark(self,*args,**kwargs) -> _mark.Mark:
         """Creates a mark object and adds it to the image scene and returns the mark."""
 
         if len(args) == 1: mark = args[0]
-        else: mark = imgmarker.mark.Mark(*args,image=self.image,**kwargs)
+        else: mark = _mark.Mark(*args,image=self.image,**kwargs)
         self.addItem(mark.label)
         self.addItem(mark)
         return mark
     
-    def rmmark(self,mark:imgmarker.mark.Mark) -> None:
+    def rmmark(self,mark:_mark.Mark) -> None:
         """Removes the specified mark from the image scene."""
 
         self.removeItem(mark)
