@@ -66,7 +66,7 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
                 if val == './':
                     out_dir = os.getcwd()
                     print('WARNING: Setting output/save directory to current directory. This can be configured in \'imgmarker.cfg\'.')
-                else: out_dir = val
+                else: out_dir = os.path.join(val,'')
                 if not os.path.exists(out_dir):
                     print("WARNING: out_dir does not exist. Creating out_dir directory.")
                     os.mkdir(out_dir)
@@ -77,15 +77,24 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
                 image_dir =  os.path.join(image_dir,'')
 
             if var == 'groups':
-                group_names = val.split(',')
+                group_names = []
+                group_names_temp = val.split(',')
+                for group_name in group_names_temp:
+                    group_names.append(group_name.strip())
                 group_names.insert(0, 'None')
 
             if var == 'categories':
-                category_names = val.split(',')
+                category_names = []
+                category_names_temp = val.split(',')
+                for category_name in category_names_temp:
+                    category_names.append(category_name.strip())
                 category_names.insert(0, 'None')
             
             if var == 'group_max':
-                group_max = val.split(',')
+                group_max = []
+                group_max_temp = val.split(',')
+                for group_max_val in group_max_temp:
+                    group_max.append(group_max_val.strip())
 
             if var == 'randomize_order':
                 randomize_order = val == 'True'

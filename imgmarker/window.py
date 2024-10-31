@@ -528,8 +528,8 @@ class MainWindow(QMainWindow):
         except:
             image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')
             
-            while image_dir == '':
-                image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')
+            if image_dir == '':
+                sys.exit()
 
             io.update_config(image_dir=image_dir)
             self.images, self.idx = io.glob(edited_images=self.images)
