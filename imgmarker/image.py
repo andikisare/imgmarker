@@ -34,7 +34,7 @@ def open(path:str) -> Image | None:
         Returns the image as a Image object.
     """
 
-    Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
+    PIL.Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
     ext = path.split('.')[-1]
 
     if ext in SUPPORTED_EXTS:
