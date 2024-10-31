@@ -14,6 +14,7 @@ import os
 import datetime as dt
 import textwrap
 from math import floor, inf, nan
+from numpy import argsort
 from functools import partial
 
 class BlurWindow(QWidget):
@@ -327,8 +328,6 @@ class MainWindow(QMainWindow):
 
         ## File menu
         file_menu = menu_bar.addMenu("&File")
-
-        
 
         ### Open file menu
         open_menu = QAction('&Open save directory', self)
@@ -1009,48 +1008,23 @@ class MainWindow(QMainWindow):
         """Updates the config file for randomization and reloads unseen images."""
         
         io.update_config(randomize_order=state)
-        current_image_name = self.image.name
 
-        if not state:
-            sorted_image_names = []
-            sorted_images = []
+        image_names = [img.name for img in self.images]
 
-            for i in range(len(self.images)):
-                sorted_image_names.append(self.images[i].name)
-
-            sorted_image_names = sorted(sorted_image_names)
-
-            for sorted_image_name in sorted_image_names:
-                for image in self.images:
-                    if image.name == sorted_image_name:
-                        sorted_images.append(image)
-            self.images = sorted_images
-            self.idx = sorted_image_names.index(current_image_name)
+        if not state: self.images = [self.images[i] for i in argsort(image_names)]
 
         else:
-            all_image_names = []
-            randomized_image_names = []
-            randomized_images = []
             edited_image_names = self.seen_order
-
-            for image in self.images:
-                all_image_names.append(image.name)
-            
-            unedited_image_names = [name for name in all_image_names if name not in edited_image_names]
+            unedited_image_names = [name for name in image_names if name not in edited_image_names]
 
             rng = io.np.random.default_rng()
             rng.shuffle(unedited_image_names)
 
-            randomized_image_names += edited_image_names
-            randomized_image_names += unedited_image_names
-            
-            for randomized_image_name in randomized_image_names:
-                for image in self.images:
-                    if image.name == randomized_image_name:
-                        randomized_images.append(image)
-
-            self.images = randomized_images
-            self.idx = randomized_image_names.index(current_image_name)
+            randomized_image_names = edited_image_names + unedited_image_names
+            indices = [image_names.index(n) for n in randomized_image_names]
+            self.images = [self.images[i] for i in indices]
+     
+        self.idx = self.images.index(self.image)
 
         self.update_images()
         self.update_marks()
