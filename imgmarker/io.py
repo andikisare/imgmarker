@@ -57,7 +57,7 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
         config_file.write('categories = 1,2,3,4,5\n')
         config_file.write('group_max = None,None,None,None,None,None,None,None,None\n')
         config_file.write('randomize_order = True')
-
+    
     else:
         for l in open(CONFIG):
             var, val = [i.strip() for i in l.replace('\n','').split('=')]
@@ -451,9 +451,9 @@ def load(savename:str) -> list[image.Image]:
     
     # Get list of images from images.txt
     if os.path.exists(images_out_path):
-        skip = True
+        line0 = True
         for l in open(images_out_path):
-            if skip: skip = False
+            if line0: line0 = False
             else:
                 date,name,ra,dec,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
                 categories = categories.split(',')
@@ -468,9 +468,9 @@ def load(savename:str) -> list[image.Image]:
     
     # Get list of marks for each image
     for img in images:
-        skip = True
+        line0 = True
         for l in open(mark_out_path):
-            if skip: skip = False
+            if line0: line0 = False
             else:
                 date,name,group,x,y,ra,dec = [i.strip() for i in l.replace('|\n','').split('|')]
 
@@ -511,21 +511,20 @@ def load_ext_marks(f:str) -> dict:
     labels = []
     alphas = []
     betas = []
-    coord_sys = None
-    skip = True
+    line0 = True
 
     for l in open(f):
         var = l.split(',')
-        if skip:
-            skip = False
+        if line0:
             if (var[1].strip().lower() == 'ra'):
                 coord_sys = 'galactic'
             elif (var[1].strip().lower() == 'x'):
-                coord_type = 'cartesian'
+                coord_sys = 'cartesian'
             else:
                 warnings.warn('WARNING: Invalid external marks coordinate system. Valid coordinate systems: Galactic (RA, Dec), '
                                  'Cartesian (x, y)')
                 return None, None, None, None
+            line0 = False
         else:
             labels.append(var[0])
             alphas.append(float(var[1].strip().replace('\n', '')))
