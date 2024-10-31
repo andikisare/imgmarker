@@ -48,7 +48,7 @@ Some settings can be configured within the GUI, but some must be specified withi
 ### *Settings that can only be modified in the configuration file:*
 **groups** (the name of each group)\*\
 **categories** (the name of each category)\*\
-*group_max** (the maximum number of marks that can be placed for a particular group)\**
+**group_max** (the maximum number of marks that can be placed for a particular group)\**
 
 \* Names must not contain commas.\
 \** The position of the value that is replaced in this variable corresponds to which group it limits (see example below).
