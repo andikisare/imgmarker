@@ -62,7 +62,7 @@ Some settings can be configured within the GUI, but some must be specified withi
 This configuration:
 ```txt
 groups = BCG, Candidate BCG,3,4,5,6,7,8, weird
-region_limits = 1,3,None,None,None,None,None,None,2
+group_max = 1,3,None,None,None,None,None,None,2
 ```
 keybinds the '*Left click OR 1*' buttons to group 'BCG' and limits the number of group 'BCG' marks placed to 1, the '*2*' button to group 'Candidate BCG' and limits the number of group 'Candidate BCG' marks placed to 3, and the '*9*' button to group 'weird' and limits the number of group 'weird' marks placed to 2.
 
