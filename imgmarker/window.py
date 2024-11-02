@@ -1,9 +1,8 @@
-from PyQt6.QtWidgets import ( QApplication, QMainWindow, QPushButton,
-                              QLabel, QScrollArea, QGraphicsView,
-                              QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
-                              QSlider, QLineEdit, QFileDialog )
-from PyQt6.QtGui import QAction, QIcon, QFont
-from PyQt6.QtCore import Qt, QPoint, QPointF
+from .pyqt import ( QApplication, QMainWindow, QPushButton,
+                    QLabel, QScrollArea, QGraphicsView,
+                    QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
+                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF)
+
 from .mark import Mark
 from . import ICON, HEART_SOLID, HEART_CLEAR
 from . import io
@@ -16,6 +15,7 @@ import textwrap
 from math import floor, inf, nan
 from numpy import argsort
 from functools import partial
+from typing import Union
 
 class BlurWindow(QWidget):
     """Class for the blur adjustment window."""
@@ -147,12 +147,12 @@ class InstructionsWindow(QWidget):
         text = textwrap.wrap(text, width=fullw_text)
         text = '\n'.join([f'{l:<{fullw_text}}' for l in text]) + '\n'
         text += '-'*(fullw_text) + '\n'
-        text += f'{'Keybindings':^{fullw_text}}\n'
+        text += f"{'Keybindings':^{fullw_text}}\n"
         text += '-'*(fullw_text) + '\n'
         for i in range(0,len(actions_list)):
             text += f'{actions_list[i]:.<{actions_width}}{buttons_list[i]:.>{buttons_width}}\n'
         self.label.setText(text)
-        text.removesuffix('\n')
+        text.rsplit('\n', 1)[0]
 
         # Add scroll area to layout, get size of layout
         layout.addWidget(self.scroll_area)
@@ -204,7 +204,7 @@ class MainWindow(QMainWindow):
     
         # Initialize data
         self.username = username
-        self.date = dt.datetime.now(dt.UTC).date().isoformat()
+        self.date = dt.datetime.now(dt.timezone.utc).date().isoformat()
         self.order = []
         self.__init_data__()
         self.image_scene = image.ImageScene(self.image)
@@ -439,8 +439,8 @@ class MainWindow(QMainWindow):
 
         linear_menu = QAction('&Linear', self)
         linear_menu.setStatusTip('Linear')
-        linear_menu.setChecked(True)
         linear_menu.setCheckable(True)
+        linear_menu.setChecked(True)
         filter_menu.addAction(linear_menu)
 
         log_menu = QAction('&Log', self)
@@ -461,8 +461,8 @@ class MainWindow(QMainWindow):
 
         minmax_menu = QAction('&Min-Max', self)
         minmax_menu.setStatusTip('Min-Max')
-        minmax_menu.setChecked(True)
         minmax_menu.setCheckable(True)
+        minmax_menu.setChecked(True)
         filter_menu.addAction(minmax_menu)
 
         zscale_menu = QAction('&ZScale', self)
@@ -554,7 +554,7 @@ class MainWindow(QMainWindow):
         for img in self.images: img.stretch = value
         self.image.rescale()
 
-    def inview(self,x:int|float,y:int|float):
+    def inview(self,x:Union[int,float],y:Union[int,float]):
         """
         Checks if x and y are contained within the image.
 

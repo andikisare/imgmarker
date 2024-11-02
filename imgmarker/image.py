@@ -1,7 +1,4 @@
-from __future__ import annotations
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem 
-from PyQt6.QtGui import QPixmap, QPainter
-from PyQt6.QtCore import Qt
+from .pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, QPainter, Qt
 from . import mark as _mark
 from . import SUPPORTED_EXTS
 from . import io
@@ -13,13 +10,13 @@ from astropy.wcs import WCS
 from math import nan
 from astropy.io import fits
 import numpy as np
-import typing
+from typing import overload, Union, List, Dict
 from astropy.visualization import ZScaleInterval, MinMaxInterval, BaseInterval, BaseStretch, ManualInterval, LinearStretch, LogStretch
 
-INTERVAL:dict[str,BaseInterval] = {'zscale': ZScaleInterval(), 'min-max': MinMaxInterval()}
-STRETCH:dict[str,BaseStretch] = {'linear': LinearStretch(), 'log': LogStretch()}
+INTERVAL:Dict[str,BaseInterval] = {'zscale': ZScaleInterval(), 'min-max': MinMaxInterval()}
+STRETCH:Dict[str,BaseStretch] = {'linear': LinearStretch(), 'log': LogStretch()}
 
-def open(path:str) -> Image | None:
+def open(path:str) -> Union['Image',None]:
     """
     Opens the given image file.
 
@@ -81,7 +78,7 @@ def open(path:str) -> Image | None:
         return img
 
 class Image(PIL.Image.Image,QGraphicsPixmapItem):
-    """Image class based on the Python Pillow Image class and merged with the PyQt6 QGraphicsPixmapItem."""
+    """Image class based on the Python Pillow Image class and merged with the PyQt5 QGraphicsPixmapItem."""
     
     def __init__(self):
         """Initialize from parents."""
@@ -97,8 +94,8 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
         self.b:float
         self.comment:str
         self.categories:list[str]
-        self.marks:list[_mark.Mark]
-        self.ext_marks:list[_mark.Mark]
+        self.marks:list['_mark.Mark']
+        self.ext_marks:list['_mark.Mark']
         self.seen:bool
         self.frame:int
 
@@ -124,13 +121,15 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
         try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
         except: return nan, nan
 
-    def copy(self) -> Image: return super().copy()
+    def copy(self) -> 'Image': return super().copy()
 
-    def _new(self, im) -> Image:
+    def _new(self, im) -> 'Image':
         """Internal PIL.Image.Image method for making a copy of the image."""
         new = Image()
         new.im = im
         new._mode = im.mode
+        try: new.mode = im.mode
+        except: pass
         new._size = im.size
         if im.mode in ("P", "PA"):
             if self.palette:
@@ -142,7 +141,7 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
         new.info = self.info.copy()
         return new
 
-    def frompillow(self,pil:PIL.Image.Image) -> Image:
+    def frompillow(self,pil:PIL.Image.Image) -> 'Image':
         image = self.copy()
         image.__dict__.update(self.__dict__)
         image.frombytes(pil.tobytes())
@@ -238,14 +237,14 @@ class ImageScene(QGraphicsScene):
         self.addItem(self.image)
         self.setSceneRect(0,0,9*self.image.width,9*self.image.height)
 
-    @typing.overload
-    def mark(self,x:float,y:float,shape='ellipse',text:int|str=0) -> _mark.Mark: ...
-    @typing.overload
-    def mark(self,ra:float=None,dec:float=None,shape='ellipse',text:int|str=0) -> _mark.Mark: ...
-    @typing.overload
-    def mark(self,mark:_mark.Mark) -> _mark.Mark: ... 
+    @overload
+    def mark(self,x:float,y:float,shape='ellipse',text:Union[int,str]=0) -> '_mark.Mark': ...
+    @overload
+    def mark(self,ra:float=None,dec:float=None,shape='ellipse',text:Union[int,str]=0) -> '_mark.Mark': ...
+    @overload
+    def mark(self,mark:'_mark.Mark') -> '_mark.Mark': ... 
 
-    def mark(self,*args,**kwargs) -> _mark.Mark:
+    def mark(self,*args,**kwargs) -> '_mark.Mark':
         """Creates a mark object and adds it to the image scene and returns the mark."""
 
         if len(args) == 1: mark = args[0]
@@ -254,7 +253,7 @@ class ImageScene(QGraphicsScene):
         self.addItem(mark)
         return mark
     
-    def rmmark(self,mark:_mark.Mark) -> None:
+    def rmmark(self,mark:'_mark.Mark') -> None:
         """Removes the specified mark from the image scene."""
 
         self.removeItem(mark)

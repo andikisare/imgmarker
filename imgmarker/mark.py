@@ -1,14 +1,12 @@
-from __future__ import annotations
-from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget,QLineEdit
-from PyQt6.QtGui import QPen, QColor
-from PyQt6.QtCore import Qt, QPointF, QEvent
+from .pyqt import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
 from math import nan, ceil
 from .io import GROUP_NAMES
 import typing
 
 if typing.TYPE_CHECKING:
     from imgmarker.image import Image
-    from PyQt6.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
+    try: from PyQt6.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
+    except: from PyQt5.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
 
 COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
            QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
@@ -18,11 +16,11 @@ SHAPES = {'ellipse':QGraphicsEllipseItem, 'rect':QGraphicsRectItem}
 
 class AbstractMark:
     @typing.overload
-    def __init__(self,r:int,x:int,y:int,image:Image=None) -> None: ...
+    def __init__(self,r:int,x:int,y:int,image:'Image'=None) -> None: ...
     @typing.overload
-    def __init__(self,r:int,ra:float=None,dec:float=None,image:Image=None) -> None: ...
+    def __init__(self,r:int,ra:float=None,dec:float=None,image:'Image'=None) -> None: ...
     def __init__(self,*args,**kwargs):
-        self.image:Image = kwargs['image']
+        self.image:'Image' = kwargs['image']
         if 'ra' not in kwargs.keys(): 
             self.d, x, y = args
             self.center = QPointF(x,y)
@@ -40,7 +38,7 @@ class AbstractMark:
             self.view_center = self.center + 4*QPointF(self.image.width,self.image.height) + QPointF(0.5,0.5)
 
 class MarkLabel(QGraphicsProxyWidget):
-    def __init__(self,mark:Mark):
+    def __init__(self,mark:'Mark'):
         super().__init__()
         self.mark = mark
         self.lineedit = QLineEdit()
@@ -96,12 +94,12 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
     @typing.overload
     def __init__(self,x:int,y:int,
                  shape:str='ellipse',
-                 image:Image=None,group:int=0,text:str=None,        
+                 image:'Image'=None,group:int=0,text:str=None,        
     ) -> None: ...
     @typing.overload
     def __init__(self,ra:float=None,dec:float=None,
                  shape:str='ellipse',
-                 image:Image=None,group:int=0,text:str=None,
+                 image:'Image'=None,group:int=0,text:str=None,
     ) -> None: ...
     def __init__(self,*args,**kwargs) -> None:
         abstract_kwargs = kwargs.copy()
@@ -109,7 +107,7 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
 
         # Set up some default values
         if not 'image' in keys: raise ValueError('No image provided')
-        else: image:Image = kwargs['image']
+        else: image:'Image' = kwargs['image']
 
         if not 'group' in keys: self.g = 0
         else: self.g:int = kwargs['group']

@@ -9,7 +9,7 @@ def _resource_path(rel_path):
     return os.path.join(base_path, rel_path)
 
 if __name__ == '__main__' and __package__ is None:
-    parent, top = MODULE_PATH, MODULE_PATH.removesuffix('imgmarker')
+    parent, top = MODULE_PATH, MODULE_PATH.rsplit('imgmarker', 1)[0]
     sys.path.append(str(top))
     try: sys.path.remove(str(parent))
     except ValueError: pass
@@ -23,7 +23,7 @@ HEART_CLEAR = _resource_path('heart_clear.ico')
 SUPPORTED_EXTS = ['tif','tiff','fits','fit','png','jpeg','jpg']
 CONFIG = os.path.join(os.getcwd(),'imgmarker.cfg')
 
-from PyQt6.QtWidgets import QApplication
+from .pyqt import QApplication
 from .window import MainWindow
 from .io import inputs
 import sys

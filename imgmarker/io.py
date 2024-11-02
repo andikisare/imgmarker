@@ -4,7 +4,7 @@ from . import window
 from . import mark as _mark
 from . import image
 from . import CONFIG
-from PyQt6.QtCore import Qt
+from .pyqt import Qt
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
 from astropy.io import fits
@@ -13,10 +13,11 @@ import glob as _glob
 import shutil
 from math import nan, isnan
 import warnings
+from typing import Tuple, List
 
 SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or numbers.')
 
-def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
+def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
     """
     Reads in each line from imgmarker.cfg. If there is no configuration file,
     a default configuration file will be created using the required text
@@ -103,13 +104,13 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
 
 OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
 
-def check_marks(event) -> list[bool]:
+def check_marks(event) -> List[bool]:
     """
     Checks and resets each group's activation key on the keyboard.
 
     Parameters
     ----------
-    event: PyQt6 event
+    event: PyQt5 event
 
     Returns
     ----------
@@ -181,7 +182,7 @@ def check_save(savename:str) -> bool:
     """Checks if savename is empty."""
     return (savename != 'None') and (savename != '')
 
-def savefav(savename:str,date:str,images:list[image.Image],fav_list:list[str]) -> None:
+def savefav(savename:str,date:str,images:List['image.Image'],fav_list:List[str]) -> None:
     """
     Creates a file, \'favorites.txt\', in the save directory containing all images that were favorited.
     This file is in the same format as \'images.txt\' so that a user can open their favorites file to show
@@ -277,7 +278,7 @@ def savefav(savename:str,date:str,images:list[image.Image],fav_list:list[str]) -
 
     fav_out.close() #adding close statement
 
-def save(savename:str,date,images:list[image.Image]) -> None:
+def save(savename:str,date,images:List['image.Image']) -> None:
     """
     Saves image data.
 
@@ -421,7 +422,7 @@ def save(savename:str,date,images:list[image.Image]) -> None:
     images_out.close() #adding close statement
 
 
-def loadfav(savename:str) -> list[str]:
+def loadfav(savename:str) -> List[str]:
     """
     Loads 'favorites.txt' from the save directory.
 
@@ -445,7 +446,7 @@ def loadfav(savename:str) -> list[str]:
 
     return list(set(fav_list))
 
-def load(savename:str) -> list[image.Image]:
+def load(savename:str) -> List[image.Image]:
     """
     Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.Image`
     objects.
@@ -463,7 +464,7 @@ def load(savename:str) -> list[image.Image]:
     save_dir = os.path.join(OUT_DIR, savename)
     mark_out_path = os.path.join(save_dir,'marks.txt')
     images_out_path = os.path.join(save_dir,'images.txt')
-    images:list[image.Image] = []
+    images:List[image.Image] = []
     
     # Get list of images from images.txt
     if os.path.exists(images_out_path):
@@ -549,7 +550,7 @@ def load_ext_marks(f:str) -> dict:
             
     return labels, alphas, betas, coord_sys
 
-def glob(edited_images:list[image.Image]=[]) -> tuple[list[image.Image],int]:
+def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
     """
     Globs in IMAGE_DIR, using edited_images to sort, with edited_images in order at the beginning of the list
     and the remaining unedited images in randomized order at the end of the list.
@@ -603,9 +604,9 @@ def inputs() -> str:
 
 def update_config(out_dir:str = OUT_DIR,
                   image_dir:str = IMAGE_DIR, 
-                  group_names:list[str] = GROUP_NAMES, 
-                  category_names:list[str] = CATEGORY_NAMES, 
-                  group_max:list[int] = GROUP_MAX,
+                  group_names:List[str] = GROUP_NAMES, 
+                  category_names:List[str] = CATEGORY_NAMES, 
+                  group_max:List[int] = GROUP_MAX,
                   randomize_order:str = RANDOMIZE_ORDER
     ) -> None:
     """Updates any of the global config variables with the corresponding parameter."""
@@ -620,8 +621,8 @@ def update_config(out_dir:str = OUT_DIR,
     config_file = open(CONFIG,'w')
     config_file.write(f'out_dir = {out_dir}\n')
     config_file.write(f'image_dir = {image_dir}\n')
-    config_file.write(f'groups = {','.join(group_names[1:])}\n')
-    config_file.write(f'categories = {','.join(category_names[1:])}\n')
-    config_file.write(f'group_max = {','.join(group_max)}\n')
+    config_file.write(f"groups = {','.join(group_names[1:])}\n")
+    config_file.write(f"categories = {','.join(category_names[1:])}\n")
+    config_file.write(f"group_max = {','.join(group_max)}\n")
     config_file.write(f'randomize_order = {randomize_order}')
     config_file.close()  # manually closing the file

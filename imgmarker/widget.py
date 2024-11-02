@@ -1,5 +1,4 @@
-from PyQt6.QtWidgets import QLabel, QWidget, QHBoxLayout, QLineEdit, QFrame, QLineEdit, QSizePolicy
-from PyQt6.QtCore import Qt
+from .pyqt import Qt, QLabel, QWidget, QHBoxLayout, QLineEdit, QFrame, QLineEdit, QSizePolicy
 
 class QHLine(QFrame):
     def __init__(self):
