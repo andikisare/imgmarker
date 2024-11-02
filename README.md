@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://raw.githubusercontent.com/andikisare/imgmarker/main/imgmarker/icon.png" alt="logo" width="250"> </img>
+<img src="https://raw.githubusercontent.com/andikisare/imgmarker/main/imgmarker/icon.ico" alt="logo" width="250"> </img>
 </div>
 
 [can add link to paper like so: Add link to paper here like so: "{!{arXiv}(://img.shields.io/badge/arXiv-{our link}.svg)}(link to arXiv paper)"]: # 
