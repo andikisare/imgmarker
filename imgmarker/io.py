@@ -57,7 +57,7 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
         config_file.write('categories = 1,2,3,4,5\n')
         config_file.write('group_max = None,None,None,None,None,None,None,None,None\n')
         config_file.write('randomize_order = True')
-    
+        config_file.close()  # manually closing the file
     else:
         for l in open(CONFIG):
             var, val = [i.strip() for i in l.replace('\n','').split('=')]
@@ -98,7 +98,7 @@ def read_config() -> tuple[str,str,list[str],list[str],list[int]]:
 
             if var == 'randomize_order':
                 randomize_order = val == 'True'
-        
+
     return out_dir, image_dir, group_names, category_names, group_max, randomize_order
 
 OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
@@ -148,8 +148,10 @@ def parse_wcs(img:image.Image) -> WCS:
     """
     try:
         if (img.format == 'FITS'):
-            hdulist = fits.open(img.filename)
-            wcs = WCS(hdulist[0].header)
+            with fits.open(img.filename) as hdulist:
+                wcs = WCS(hdulist[0].header)
+#            hdulist = fits.open(img.filename)
+#            wcs = WCS(hdulist[0].header)
             return wcs
         else:
             meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
@@ -273,6 +275,7 @@ def savefav(savename:str,date:str,images:list[image.Image],fav_list:list[str]) -
             outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
             fav_out.write(outline)
 
+    fav_out.close() #adding close statement
 
 def save(savename:str,date,images:list[image.Image]) -> None:
     """
@@ -414,6 +417,10 @@ def save(savename:str,date,images:list[image.Image]) -> None:
             outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
             images_out.write(outline)
 
+    mark_out.close() #adding close statement
+    images_out.close() #adding close statement
+
+
 def loadfav(savename:str) -> list[str]:
     """
     Loads 'favorites.txt' from the save directory.
@@ -474,6 +481,7 @@ def load(savename:str) -> list[image.Image]:
                 img.categories = categories
                 img.seen = True
                 images.append(img)
+                img.close() #do we need to close it?
     
     # Get list of marks for each image
     for img in images:
@@ -575,7 +583,15 @@ def glob(edited_images:list[image.Image]=[]) -> tuple[list[image.Image],int]:
         rng.shuffle(unedited_paths)
 
     # Put edited images at the beginning, unedited images at front
-    images = edited_images + [image.open(fp) for fp in unedited_paths]
+#    images = edited_images + [image.open(fp) for fp in unedited_paths]
+
+    images = edited_images[:]
+
+    # Open unedited images one at a time, process, and append to the list
+    for fp in unedited_paths:
+        with image.open(fp) as imgjk:
+            images = images + [imgjk]
+
     idx = min(len(edited_images),len(paths)-1)
 
     return images, idx
@@ -608,3 +624,4 @@ def update_config(out_dir:str = OUT_DIR,
     config_file.write(f'categories = {','.join(category_names[1:])}\n')
     config_file.write(f'group_max = {','.join(group_max)}\n')
     config_file.write(f'randomize_order = {randomize_order}')
+    config_file.close()  # manually closing the file

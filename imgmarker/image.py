@@ -41,8 +41,10 @@ def open(path:str) -> Image | None:
         img = Image()
 
         if (ext == 'fits') or (ext == 'fit'):
-            file = fits.open(path)
-            img_array = np.flipud(file[0].data).byteswap()
+#            file = fits.open(path)
+#            img_array = np.flipud(file[0].data).byteswap()
+            with fits.open(path) as file:
+                img_array = np.flipud(file[0].data).byteswap()
             img_pil = PIL.Image.fromarray(img_array, mode='F').convert('RGB')
             img_pil.format = 'FITS'
             img_pil.filename = path
@@ -75,6 +77,7 @@ def open(path:str) -> Image | None:
 
         super(QGraphicsPixmapItem,img).__init__(QPixmap())
 
+        #img_pil.close() #trying to close files
         return img
 
 class Image(PIL.Image.Image,QGraphicsPixmapItem):
