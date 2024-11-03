@@ -514,7 +514,7 @@ class MainWindow(QMainWindow):
 
         # Find all images in image directory
 
-        try: self.image.clear()
+        try: self.image.close()
         except: pass
         
         try:
@@ -616,7 +616,7 @@ class MainWindow(QMainWindow):
             else:
                 self.image.seek(self.frame+1)
 
-            self.frame = self.image.tell()
+            self.frame = self.image.frame
             self.frame_window.slider.setValue(self.frame)
 
     def mousePressEvent(self,event):
@@ -902,7 +902,7 @@ class MainWindow(QMainWindow):
 
         # Update scene
         _w, _h = self.image.width, self.image.height
-        try: self.image.clear()
+        try: self.image.close()
         except: pass
 
         self.image = self.images[self.idx]

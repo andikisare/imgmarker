@@ -1,9 +1,9 @@
 from .pyqt import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
 from math import nan, ceil
 from .io import GROUP_NAMES
-import typing
+from typing import TYPE_CHECKING, overload
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from imgmarker.image import Image
     try: from PyQt6.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
     except: from PyQt5.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
@@ -15,9 +15,9 @@ COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255
 SHAPES = {'ellipse':QGraphicsEllipseItem, 'rect':QGraphicsRectItem}
 
 class AbstractMark:
-    @typing.overload
+    @overload
     def __init__(self,r:int,x:int,y:int,image:'Image'=None) -> None: ...
-    @typing.overload
+    @overload
     def __init__(self,r:int,ra:float=None,dec:float=None,image:'Image'=None) -> None: ...
     def __init__(self,*args,**kwargs):
         self.image:'Image' = kwargs['image']
@@ -91,12 +91,12 @@ class MarkLabel(QGraphicsProxyWidget):
         self.lineedit.setFixedWidth(w)
 
 class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
-    @typing.overload
+    @overload
     def __init__(self,x:int,y:int,
                  shape:str='ellipse',
                  image:'Image'=None,group:int=0,text:str=None,        
     ) -> None: ...
-    @typing.overload
+    @overload
     def __init__(self,ra:float=None,dec:float=None,
                  shape:str='ellipse',
                  image:'Image'=None,group:int=0,text:str=None,

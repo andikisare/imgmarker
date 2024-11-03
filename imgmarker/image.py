@@ -6,15 +6,18 @@ import os
 from math import floor
 import PIL.Image, PIL.ImageFile
 from PIL.ImageFilter import GaussianBlur
-from astropy.wcs import WCS
 from math import nan
 from astropy.io import fits
 import numpy as np
-from typing import overload, Union, List, Dict
+from typing import overload, Union, List, Dict, TYPE_CHECKING
 from astropy.visualization import ZScaleInterval, MinMaxInterval, BaseInterval, BaseStretch, ManualInterval, LinearStretch, LogStretch
+
+if TYPE_CHECKING:
+    from astropy.wcs import WCS
 
 INTERVAL:Dict[str,BaseInterval] = {'zscale': ZScaleInterval(), 'min-max': MinMaxInterval()}
 STRETCH:Dict[str,BaseStretch] = {'linear': LinearStretch(), 'log': LogStretch()}
+PIL.Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
 
 def open(path:str) -> Union['Image',None]:
     """
@@ -30,77 +33,50 @@ def open(path:str) -> Union['Image',None]:
     img: `imgmarker.image.Image`
         Returns the image as a Image object.
     """
+    return Image(path)
 
-    PIL.Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
-    ext = path.split('.')[-1]
-
-    if ext in SUPPORTED_EXTS:
-        img = Image()
-
-        if (ext == 'fits') or (ext == 'fit'):
-#            file = fits.open(path)
-#            img_array = np.flipud(file[0].data).byteswap()
-            with fits.open(path) as file:
-                img_array = np.flipud(file[0].data).byteswap()
-            img_pil = PIL.Image.fromarray(img_array, mode='F').convert('RGB')
-            img_pil.format = 'FITS'
-            img_pil.filename = path
-
-        else: img_pil = PIL.Image.open(path)
-
-        # Setup  __dict__
-        img.__dict__ =  img_pil.__dict__
-        try: img.n_frames = img_pil.n_frames
-        except: img.n_frames = 1
-        img.wcs = io.parse_wcs(img_pil)
-        img.image_file = img_pil
-        img.name = path.split(os.sep)[-1] 
-
-        img.r = 0.0
-        img.a = 1.0
-        img.b = 1.0
-        img.stretch = 'linear'
-        img.interval = 'min-max'
-        
-        img.comment = 'None'
-        img.categories = []
-        img.marks = []
-        img.ext_marks = []
-        img.seen = False
-        img.frame = 0
-
-        # Get bytes from image (I dont think this does anything)
-        img.frombytes(img_pil.tobytes())
-
-        super(QGraphicsPixmapItem,img).__init__(QPixmap())
-
-        #img_pil.close() #trying to close files
-        return img
-
-class Image(PIL.Image.Image,QGraphicsPixmapItem):
-    """Image class based on the Python Pillow Image class and merged with the PyQt5 QGraphicsPixmapItem."""
+class Image(QGraphicsPixmapItem):
+    """Image class based on the PyQt QGraphicsPixmapItem."""
     
-    def __init__(self):
+    def __init__(self,path:str):
         """Initialize from parents."""
         
-        super().__init__()
+        super().__init__(QPixmap())
 
-        self.image_file:PIL.ImageFile.ImageFile
-        self.wcs:WCS
-        self.n_frames:int
-        self.name:str
-        self.r:float
-        self.a:float
-        self.b:float
-        self.comment:str
-        self.categories:list[str]
-        self.marks:list['_mark.Mark']
-        self.ext_marks:list['_mark.Mark']
-        self.seen:bool
-        self.frame:int
+        self.path = path
+        self.ext = path.split('.')[-1]
 
+        if self.ext in SUPPORTED_EXTS:
+            
+            self.frame:int = 0
+            self.imagefile = self.load()
+
+            # Setup  __dict__
+            self.width = self.imagefile.width
+            self.height = self.imagefile.width
+
+            try: self.n_frames = self.imagefile.n_frames
+            except: self.n_frames = 1
+
+            self.wcs:WCS = io.parse_wcs(self.imagefile)
+            self.name = path.split(os.sep)[-1]
+
+            self.r:float = 0.0
+            self.a:float = 1.0
+            self.b:float = 1.0
+            self.stretch = 'linear'
+            self.interval = 'min-max'
+            
+            self.comment = 'None'
+            self.categories:List[str] = []
+            self.marks:List['_mark.Mark'] = []
+            self.ext_marks:List['_mark.Mark'] = []
+            self.seen:bool = False
+
+            self.imagefile.close()
+    
     @property
-    def interval(self) -> BaseInterval: 
+    def interval(self) -> ManualInterval: 
         interval = INTERVAL[self._interval_str]
         h,s,v = self.hsv()
         vlims = interval.get_limits(v)
@@ -121,40 +97,24 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
         try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
         except: return nan, nan
 
-    def copy(self) -> 'Image': return super().copy()
+    def load(self) -> PIL.Image.Image:
+        if (self.ext == 'fits') or (self.ext == 'fit'):
+                with fits.open(self.path) as f:
+                    arr = np.flipud(f[0].data).byteswap()
+                file = PIL.Image.fromarray(arr, mode='F').convert('RGB')
+                file.format = 'FITS'
+                file.filename = self.path
 
-    def _new(self, im) -> 'Image':
-        """Internal PIL.Image.Image method for making a copy of the image."""
-        new = Image()
-        new.im = im
-        new._mode = im.mode
-        try: new.mode = im.mode
-        except: pass
-        new._size = im.size
-        if im.mode in ("P", "PA"):
-            if self.palette:
-                new.palette = self.palette.copy()
-            else:
-                from PIL import ImagePalette
+        else: file = PIL.Image.open(self.path)
 
-                new.palette = ImagePalette.ImagePalette()
-        new.info = self.info.copy()
-        return new
-
-    def frompillow(self,pil:PIL.Image.Image) -> 'Image':
-        image = self.copy()
-        image.__dict__.update(self.__dict__)
-        image.frombytes(pil.tobytes())
-        return image
+        file.seek(self.frame)
+        return file
     
-    def hsv(self):
-        arr = np.array(self.convert('HSV'))
-        h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
-        return h,s,v
+    def close(self):
+        self.imagefile.close()
+        self.setPixmap(QPixmap())
     
-    def clear(self): self.setPixmap(QPixmap())
-    
-    def tell(self): return self.image_file.tell()
+    def tell(self): return self.imagefile.tell()
 
     def seek(self,frame:int=0):
         """Switches to a new frame if it exists"""
@@ -164,35 +124,34 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
         if frame > self.n_frames - 1: frame = 0
         elif frame < 0: frame = self.n_frames - 1
 
-        self.image_file.seek(frame)
+        self.frame = frame
+        self.imagefile = self.load()
 
-        self.__dict__ = self.image_file.__dict__
-        self.frombytes(self.image_file.tobytes())
-
-        # delete the adjustments layer
-        if hasattr(self,'layer0'): del self.layer0
+        self.width = self.imagefile.width
+        self.height = self.imagefile.width
         
-        # scale colors
-        self.rescale()
+        # reapply blur
+        self.blur()
 
+    def hsv(self):
+        arr = np.array(self.load().convert('HSV'))
+        h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+        return h,s,v
+    
     def rescale(self):
-        if hasattr(self,'layer0'): image = self.layer0.copy()
-        else: image = self.copy()
-
-        arr = np.array(image.convert('HSV'))
-        h,s,v = image.hsv()
+        arr = np.array(self.imagefile.copy().convert('HSV'))
+        h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
 
         v = (self.scaling(v))*255
+        arr[:, :, 0], arr[:, :, 1], arr[:, :, 2] = h,s,v
 
-        arr[:, :, 0], arr[:, :, 1], arr[:, :, 2] = h, s, v
-
-        image_scaled = image.frompillow(PIL.Image.fromarray(arr.astype('uint8'),mode='HSV').convert('RGB'))
-        self.setPixmap(image_scaled.topixmap())
-
-    def topixmap(self) -> QPixmap:
+        image_scaled = PIL.Image.fromarray(arr.astype('uint8'),mode='HSV').convert('RGB')
+        self.setPixmap(self.topixmap(image_scaled))
+        
+    def topixmap(self,image:PIL.Image.Image) -> QPixmap:
         """Creates a QPixmap with a pillows on each side to allow for fully zooming out."""
 
-        qimage = self.toqimage()
+        qimage = image.toqimage()
         pixmap_base = QPixmap.fromImage(qimage)
 
         w, h = self.width, self.height
@@ -207,15 +166,22 @@ class Image(PIL.Image.Image,QGraphicsPixmapItem):
 
         return pixmap
     
-    def blur(self,value):
-        """Applies the blur value to a filter and displays it."""
-        if callable(value): r = value()
-        else: r = value
-        self.r = floor(r)/10
+    @overload
+    def blur(self) -> None: 
+        """Applies the blur to the image"""
+    @overload
+    def blur(self,value) -> None:
+        """Applies the blur to the image"""
+    def blur(self,*args):
+        if len(args) > 0: 
+            value = args[0]
+            if callable(value): r = value()
+            else: r = value
+            self.r = floor(r)/10
 
-        pil = self.filter(GaussianBlur(self.r))
-        self.layer0 = self.copy()
-        self.layer0.frombytes(pil.tobytes())
+        newfile = self.load()
+        newfile = newfile.filter(GaussianBlur(self.r))
+        self.imagefile = newfile.copy()
         self.rescale()
             
 class ImageScene(QGraphicsScene):

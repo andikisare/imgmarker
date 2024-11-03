@@ -43,7 +43,7 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
 
     # If the config doesn't exist, create one
     if not os.path.exists(CONFIG):
-        config_file = open(CONFIG,'w')
+        
         
         out_dir = os.path.join(os.getcwd(),'')
         image_dir = os.path.join(os.getcwd(),'')
@@ -52,13 +52,14 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
         group_max = ['None','None','None','None','None','None','None','None','None']
         randomize_order = True
 
-        config_file.write(f'out_dir = {out_dir}\n')
-        config_file.write(f'image_dir = {image_dir}\n')
-        config_file.write('groups = 1,2,3,4,5,6,7,8,9\n')
-        config_file.write('categories = 1,2,3,4,5\n')
-        config_file.write('group_max = None,None,None,None,None,None,None,None,None\n')
-        config_file.write('randomize_order = True')
-        config_file.close()  # manually closing the file
+        with open(CONFIG,'w') as config:
+            config.write(f'out_dir = {out_dir}\n')
+            config.write(f'image_dir = {image_dir}\n')
+            config.write('groups = 1,2,3,4,5,6,7,8,9\n')
+            config.write('categories = 1,2,3,4,5\n')
+            config.write('group_max = None,None,None,None,None,None,None,None,None\n')
+            config.write('randomize_order = True')
+
     else:
         for l in open(CONFIG):
             var, val = [i.strip() for i in l.replace('\n','').split('=')]
@@ -222,12 +223,10 @@ def savefav(savename:str,date:str,images:List['image.Image'],fav_list:List[str])
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    # Create the file
+    # Remove the file if it exists
     if os.path.exists(fav_out_path):
         os.remove(fav_out_path)
     
-    fav_out = open(fav_out_path,'a')
-
     fav_images = [img for img in images if img.name in fav_list]
 
     if check_save(savename) and (len(fav_list) != 0):
@@ -270,13 +269,11 @@ def savefav(savename:str,date:str,images:List['image.Image'],fav_list:List[str])
         header = ['date','image','RA', 'DEC','categories','comment']
         header = ''.join(f'{h:{il_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
         
-        fav_out.write(header)
-
-        for l in image_lines:
-            outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
-            fav_out.write(outline)
-
-    fav_out.close() #adding close statement
+        with open(fav_out_path,'a') as fav_out:
+            fav_out.write(header)
+            for l in image_lines:
+                outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
+                fav_out.write(outline)
 
 def save(savename:str,date,images:List['image.Image']) -> None:
     """
@@ -321,8 +318,8 @@ def save(savename:str,date,images:List['image.Image']) -> None:
         shutil.rmtree(save_dir)
     os.makedirs(save_dir)
 
-    mark_out = open(mark_out_path,"a")
-    images_out = open(images_out_path,"a")
+    
+    
 
     if check_save(savename) and images:
         for img in images:
@@ -390,12 +387,12 @@ def save(savename:str,date,images:List['image.Image']) -> None:
         header = ['date','image','group','x','y','RA','DEC']
         header = ''.join(f'{h:{ml_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
         
-        mark_out.write(header)
-
-        for l in mark_lines:
-            try: outline = ''.join(f'{_l:{ml_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
-            except: outline = ''.join(f'{_l:{ml_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
-            mark_out.write(outline)
+        with open(mark_out_path,"a") as mark_out:
+            mark_out.write(header)
+            for l in mark_lines:
+                try: outline = ''.join(f'{_l:{ml_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
+                except: outline = ''.join(f'{_l:{ml_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
+                mark_out.write(outline)
 
     if len(image_lines) != 0:
         # Dynamically adjust column widths
@@ -412,15 +409,11 @@ def save(savename:str,date,images:List['image.Image']) -> None:
         header = ['date','image','RA', 'DEC','categories','comment']
         header = ''.join(f'{h:{il_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
         
-        images_out.write(header)
-
-        for l in image_lines:
-            outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
-            images_out.write(outline)
-
-    mark_out.close() #adding close statement
-    images_out.close() #adding close statement
-
+        with open(images_out_path,"a") as images_out:
+            images_out.write(header)
+            for l in image_lines:
+                outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
+                images_out.write(outline)
 
 def loadfav(savename:str) -> List[str]:
     """
@@ -482,7 +475,6 @@ def load(savename:str) -> List[image.Image]:
                 img.categories = categories
                 img.seen = True
                 images.append(img)
-                img.close() #do we need to close it?
     
     # Get list of marks for each image
     for img in images:
@@ -584,14 +576,7 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
         rng.shuffle(unedited_paths)
 
     # Put edited images at the beginning, unedited images at front
-#    images = edited_images + [image.open(fp) for fp in unedited_paths]
-
-    images = edited_images[:]
-
-    # Open unedited images one at a time, process, and append to the list
-    for fp in unedited_paths:
-        with image.open(fp) as imgjk:
-            images = images + [imgjk]
+    images = edited_images + [image.open(fp) for fp in unedited_paths]
 
     idx = min(len(edited_images),len(paths)-1)
 
@@ -618,11 +603,10 @@ def update_config(out_dir:str = OUT_DIR,
     global GROUP_MAX; GROUP_MAX = group_max
     global RANDOMIZE_ORDER; RANDOMIZE_ORDER = randomize_order
     
-    config_file = open(CONFIG,'w')
-    config_file.write(f'out_dir = {out_dir}\n')
-    config_file.write(f'image_dir = {image_dir}\n')
-    config_file.write(f"groups = {','.join(group_names[1:])}\n")
-    config_file.write(f"categories = {','.join(category_names[1:])}\n")
-    config_file.write(f"group_max = {','.join(group_max)}\n")
-    config_file.write(f'randomize_order = {randomize_order}')
-    config_file.close()  # manually closing the file
+    with open(CONFIG,'w') as config:
+        config.write(f'out_dir = {out_dir}\n')
+        config.write(f'image_dir = {image_dir}\n')
+        config.write(f"groups = {','.join(group_names[1:])}\n")
+        config.write(f"categories = {','.join(category_names[1:])}\n")
+        config.write(f"group_max = {','.join(group_max)}\n")
+        config.write(f'randomize_order = {randomize_order}')
