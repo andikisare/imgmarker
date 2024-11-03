@@ -324,28 +324,28 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         
         # Menu bar
-        menu_bar = self.menuBar()
+        menubar = self.menuBar()
 
         ## File menu
-        file_menu = menu_bar.addMenu("&File")
+        file_menu = menubar.addMenu("&File")
 
         ### Open file menu
-        open_menu = QAction('&Open save...', self)
-        open_menu.setShortcuts(['Ctrl+o'])
-        open_menu.triggered.connect(self.open)
-        file_menu.addAction(open_menu)
+        open_action = QAction('&Open save...', self)
+        open_action.setShortcuts(['Ctrl+o'])
+        open_action.triggered.connect(self.open)
+        file_menu.addAction(open_action)
 
         ### Open image folder menu
-        open_ims_menu = QAction('&Open images...', self)
-        open_ims_menu.setShortcuts(['Ctrl+Shift+o'])
-        open_ims_menu.triggered.connect(self.open_ims)
-        file_menu.addAction(open_ims_menu)
+        open_ims_action = QAction('&Open images...', self)
+        open_ims_action.setShortcuts(['Ctrl+Shift+o'])
+        open_ims_action.triggered.connect(self.open_ims)
+        file_menu.addAction(open_ims_action)
 
         ### Open external marks file
-        open_ext_marks_menu = QAction('&Open marks file...', self)
-        open_ext_marks_menu.setShortcuts(['Ctrl+Shift+m'])
-        open_ext_marks_menu.triggered.connect(self.open_ext_marks)
-        file_menu.addAction(open_ext_marks_menu)
+        open_marks_action = QAction('&Open marks file...', self)
+        open_marks_action.setShortcuts(['Ctrl+Shift+m'])
+        open_marks_action.triggered.connect(self.open_ext_marks)
+        file_menu.addAction(open_marks_action)
         self.ext_mark_coord_sys = None
         self.ext_mark_labels = []
         self.ext_mark_alphas = []
@@ -353,13 +353,13 @@ class MainWindow(QMainWindow):
         
         ### Exit menu
         file_menu.addSeparator()
-        exit_menu = QAction('&Exit', self)
-        exit_menu.setShortcuts(['Ctrl+q'])
-        exit_menu.triggered.connect(self.closeEvent)
-        file_menu.addAction(exit_menu)
+        exit_action = QAction('&Exit', self)
+        exit_action.setShortcuts(['Ctrl+q'])
+        exit_action.triggered.connect(self.closeEvent)
+        file_menu.addAction(exit_action)
 
         ## Edit menu
-        edit_menu = menu_bar.addMenu("&Edit")
+        edit_menu = menubar.addMenu("&Edit")
         edit_menu.setToolTipsVisible(True)
 
         ### Delete marks menu
@@ -369,106 +369,105 @@ class MainWindow(QMainWindow):
 
         ### Randomize image order menu
         edit_menu.addSeparator()
-        randomize_menu = QAction('&Randomize', self)
-        randomize_menu.setShortcuts(['Ctrl+r'])
-        randomize_menu.setToolTip('Randomize the order in which images appear')
-        randomize_menu.setCheckable(True)
-        randomize_menu.setChecked(io.RANDOMIZE_ORDER)
-        randomize_menu.triggered.connect(self.toggle_randomize)
-        edit_menu.addAction(randomize_menu)
-        
+        randomize_action = QAction('&Randomize', self)
+        randomize_action.setShortcuts(['Ctrl+r'])
+        randomize_action.setToolTip('Randomize the order in which images appear')
+        randomize_action.setCheckable(True)
+        randomize_action.setChecked(io.RANDOMIZE_ORDER)
+        randomize_action.triggered.connect(self.toggle_randomize)
+        edit_menu.addAction(randomize_action)
 
         ### Focus cursor menu
-        cursor_focus_menu = QAction('&Focus cursor', self)
-        cursor_focus_menu.setToolTip('Middle-click to focus also centers the cursor')
-        cursor_focus_menu.setCheckable(True)
-        cursor_focus_menu.triggered.connect(partial(setattr,self,'cursor_focus'))
-        edit_menu.addAction(cursor_focus_menu)
+        cursor_focus_action = QAction('&Focus cursor', self)
+        cursor_focus_action.setToolTip('Middle-click to focus also centers the cursor')
+        cursor_focus_action.setCheckable(True)
+        cursor_focus_action.triggered.connect(partial(setattr,self,'cursor_focus'))
+        edit_menu.addAction(cursor_focus_action)
 
         ## View menu
-        view_menu = menu_bar.addMenu("&View")
+        view_menu = menubar.addMenu("&View")
 
         ### Frame menu
-        frame_menu = QAction('&Frames...', self)
-        frame_menu.setShortcuts(['Ctrl+f'])
-        frame_menu.triggered.connect(self.frame_window.show)
-        view_menu.addAction(frame_menu)
+        frame_action = QAction('&Frames...', self)
+        frame_action.setShortcuts(['Ctrl+f'])
+        frame_action.triggered.connect(self.frame_window.show)
+        view_menu.addAction(frame_action)
 
         ### Toggle marks menu
         view_menu.addSeparator()
-        self.marks_menu = QAction('&Marks visible', self)
-        self.marks_menu.setShortcuts(['Ctrl+m'])
-        self.marks_menu.setCheckable(True)
-        self.marks_menu.setChecked(True)
-        self.marks_menu.triggered.connect(self.toggle_marks)
-        view_menu.addAction(self.marks_menu)
+        self.marks_action = QAction('&Marks visible', self)
+        self.marks_action.setShortcuts(['Ctrl+m'])
+        self.marks_action.setCheckable(True)
+        self.marks_action.setChecked(True)
+        self.marks_action.triggered.connect(self.toggle_marks)
+        view_menu.addAction(self.marks_action)
 
         ### Toggle mark labels menu
-        self.mark_labels_menu = QAction('&Mark labels visible', self)
-        self.mark_labels_menu.setShortcuts(['Ctrl+l'])
-        self.mark_labels_menu.setCheckable(True)
-        self.mark_labels_menu.setChecked(True)
-        self.mark_labels_menu.triggered.connect(self.toggle_mark_labels)
-        view_menu.addAction(self.mark_labels_menu)
+        self.labels_action = QAction('&Mark labels visible', self)
+        self.labels_action.setShortcuts(['Ctrl+l'])
+        self.labels_action.setCheckable(True)
+        self.labels_action.setChecked(True)
+        self.labels_action.triggered.connect(self.toggle_mark_labels)
+        view_menu.addAction(self.labels_action)
 
         if len(self.image.marks) == 0:
-            self.marks_menu.setEnabled(False)
-            self.mark_labels_menu.setEnabled(False)
+            self.marks_action.setEnabled(False)
+            self.labels_action.setEnabled(False)
         else:
-            self.marks_menu.setEnabled(True)
-            self.mark_labels_menu.setEnabled(True)
+            self.marks_action.setEnabled(True)
+            self.labels_action.setEnabled(True)
 
         ## Filter menu
-        filter_menu = menu_bar.addMenu("&Filter")
+        filter_menu = menubar.addMenu("&Filter")
 
         ### Blur
-        blur_menu = QAction('&Gaussian Blur...',self)
-        blur_menu.setShortcuts(['Ctrl+b'])
-        blur_menu.triggered.connect(self.blur_window.show)
-        filter_menu.addAction(blur_menu)
+        blur_action = QAction('&Gaussian Blur...',self)
+        blur_action.setShortcuts(['Ctrl+b'])
+        blur_action.triggered.connect(self.blur_window.show)
+        filter_menu.addAction(blur_action)
 
         ### Stretch menus
         filter_menu.addSeparator()
 
-        linear_menu = QAction('&Linear', self)
-        linear_menu.setCheckable(True)
-        linear_menu.setChecked(True)
-        filter_menu.addAction(linear_menu)
+        linear_action = QAction('&Linear', self)
+        linear_action.setCheckable(True)
+        linear_action.setChecked(True)
+        filter_menu.addAction(linear_action)
 
-        log_menu = QAction('&Log', self)
-        log_menu.setCheckable(True)
-        filter_menu.addAction(log_menu)
+        log_action = QAction('&Log', self)
+        log_action.setCheckable(True)
+        filter_menu.addAction(log_action)
 
-        linear_menu.triggered.connect(partial(setattr,self,'stretch','linear'))
-        linear_menu.triggered.connect(partial(linear_menu.setChecked,True))
-        linear_menu.triggered.connect(partial(log_menu.setChecked,False))
+        linear_action.triggered.connect(partial(setattr,self,'stretch','linear'))
+        linear_action.triggered.connect(partial(linear_action.setChecked,True))
+        linear_action.triggered.connect(partial(log_action.setChecked,False))
 
-        log_menu.triggered.connect(partial(setattr,self,'stretch','log'))
-        log_menu.triggered.connect(partial(linear_menu.setChecked,False))
-        log_menu.triggered.connect(partial(log_menu.setChecked,True))
+        log_action.triggered.connect(partial(setattr,self,'stretch','log'))
+        log_action.triggered.connect(partial(linear_action.setChecked,False))
+        log_action.triggered.connect(partial(log_action.setChecked,True))
 
         ### Interval menus
         filter_menu.addSeparator()
 
-        minmax_menu = QAction('&Min-Max', self)
-        minmax_menu.setCheckable(True)
-        minmax_menu.setChecked(True)
-        filter_menu.addAction(minmax_menu)
+        minmax_action = QAction('&Min-Max', self)
+        minmax_action.setCheckable(True)
+        minmax_action.setChecked(True)
+        filter_menu.addAction(minmax_action)
 
-        zscale_menu = QAction('&ZScale', self)
-        zscale_menu.setCheckable(True)
-        filter_menu.addAction(zscale_menu)
+        zscale_action = QAction('&ZScale', self)
+        zscale_action.setCheckable(True)
+        filter_menu.addAction(zscale_action)
 
-        minmax_menu.triggered.connect(partial(setattr,self,'interval','min-max'))
-        minmax_menu.triggered.connect(partial(minmax_menu.setChecked,True))
-        minmax_menu.triggered.connect(partial(zscale_menu.setChecked,False))
+        minmax_action.triggered.connect(partial(setattr,self,'interval','min-max'))
+        minmax_action.triggered.connect(partial(minmax_action.setChecked,True))
+        minmax_action.triggered.connect(partial(zscale_action.setChecked,False))
 
-        zscale_menu.triggered.connect(partial(setattr,self,'interval','zscale'))
-        zscale_menu.triggered.connect(partial(minmax_menu.setChecked,False))
-        zscale_menu.triggered.connect(partial(zscale_menu.setChecked,True))
+        zscale_action.triggered.connect(partial(setattr,self,'interval','zscale'))
+        zscale_action.triggered.connect(partial(minmax_action.setChecked,False))
+        zscale_action.triggered.connect(partial(zscale_action.setChecked,True))
 
         ## Help menu
-        help_menu = menu_bar.addMenu('&Help')
+        help_menu = menubar.addMenu('&Help')
 
         ### Instructions and Keymapping window
         self.instructions_window = InstructionsWindow(io.GROUP_NAMES)
@@ -700,11 +699,9 @@ class MainWindow(QMainWindow):
         self.ext_mark_betas = betas
         self.ext_mark_coord_sys = coord_sys
 
-        if labels == None:
-            return
-        
-        else:
-            self.update_ext_marks()
+        if labels == None: return
+
+        else: self.update_ext_marks()
 
         return
 
@@ -763,11 +760,11 @@ class MainWindow(QMainWindow):
             io.savefav(self.username,self.date,self.images,self.favorite_list)
         
         if len(self.image.marks) == 0:
-            self.marks_menu.setEnabled(False)
-            self.mark_labels_menu.setEnabled(False)
+            self.marks_action.setEnabled(False)
+            self.labels_action.setEnabled(False)
         else:
-            self.marks_menu.setEnabled(True)
-            self.mark_labels_menu.setEnabled(True)
+            self.marks_action.setEnabled(True)
+            self.labels_action.setEnabled(True)
 
     def shift(self,delta:int):
         """Move back or forward *delta* number of images."""
@@ -929,11 +926,11 @@ class MainWindow(QMainWindow):
 
         # Update menus
         if len(self.image.marks) == 0:
-            self.marks_menu.setEnabled(False)
-            self.mark_labels_menu.setEnabled(False)
+            self.marks_action.setEnabled(False)
+            self.labels_action.setEnabled(False)
         else:
-            self.marks_menu.setEnabled(True)
-            self.mark_labels_menu.setEnabled(True)
+            self.marks_action.setEnabled(True)
+            self.labels_action.setEnabled(True)
 
         self.toggle_marks()
         self.toggle_mark_labels()
@@ -984,8 +981,8 @@ class MainWindow(QMainWindow):
             self.image.marks.remove(item)
         
         if len(self.image.marks) == 0:
-            self.marks_menu.setEnabled(False)
-            self.mark_labels_menu.setEnabled(False)
+            self.marks_action.setEnabled(False)
+            self.labels_action.setEnabled(False)
             
         io.save(self.username,self.date,self.images)
         io.savefav(self.username,self.date,self.images,self.favorite_list)
@@ -1020,11 +1017,11 @@ class MainWindow(QMainWindow):
     def toggle_marks(self):
         """Toggles whether or not marks are shown."""
 
-        state = self.marks_menu.isChecked()
+        state = self.marks_action.isChecked()
         for item in self.image.marks:
             if state: 
                 item.show()
-                if self.mark_labels_menu.isChecked(): item.label.show()
+                if self.labels_action.isChecked(): item.label.show()
             else: 
                 item.hide()
                 item.label.hide()
@@ -1032,7 +1029,7 @@ class MainWindow(QMainWindow):
     def toggle_mark_labels(self):
         """Toggles whether or not mark labels are shown."""
 
-        state = self.mark_labels_menu.isChecked()
+        state = self.labels_action.isChecked()
         for item in self.image.marks:
             if state: item.label.show()
             else: item.label.hide()
