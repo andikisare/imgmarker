@@ -135,7 +135,7 @@ class InstructionsWindow(QWidget):
         actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Exit', 'Help']
         group_list = [f'Group \"{group}\"' for group in groupNames[1:]]
         actions_list = group_list + actions_list
-        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'Esc OR Q', 'F1', ]
+        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'Ctrl+Q', 'F1', ]
 
         # Determing widths for keybindings list
         actions_width = max([len(a) for a in actions_list])
@@ -330,23 +330,20 @@ class MainWindow(QMainWindow):
         file_menu = menu_bar.addMenu("&File")
 
         ### Open file menu
-        open_menu = QAction('&Open save directory', self)
+        open_menu = QAction('&Open save...', self)
         open_menu.setShortcuts(['Ctrl+o'])
-        open_menu.setStatusTip('Open save directory')
         open_menu.triggered.connect(self.open)
         file_menu.addAction(open_menu)
 
         ### Open image folder menu
-        open_ims_menu = QAction('&Open image directory', self)
+        open_ims_menu = QAction('&Open images...', self)
         open_ims_menu.setShortcuts(['Ctrl+Shift+o'])
-        open_ims_menu.setStatusTip('Open image directory')
         open_ims_menu.triggered.connect(self.open_ims)
         file_menu.addAction(open_ims_menu)
 
         ### Open external marks file
-        open_ext_marks_menu = QAction('&Open external marks file', self)
+        open_ext_marks_menu = QAction('&Open marks file...', self)
         open_ext_marks_menu.setShortcuts(['Ctrl+Shift+m'])
-        open_ext_marks_menu.setStatusTip('Open external marks file')
         open_ext_marks_menu.triggered.connect(self.open_ext_marks)
         file_menu.addAction(open_ext_marks_menu)
         self.ext_mark_coord_sys = None
@@ -357,33 +354,33 @@ class MainWindow(QMainWindow):
         ### Exit menu
         file_menu.addSeparator()
         exit_menu = QAction('&Exit', self)
-        exit_menu.setShortcuts(['Esc','q'])
-        exit_menu.setStatusTip('Exit')
+        exit_menu.setShortcuts(['Ctrl+q'])
         exit_menu.triggered.connect(self.closeEvent)
         file_menu.addAction(exit_menu)
 
         ## Edit menu
         edit_menu = menu_bar.addMenu("&Edit")
+        edit_menu.setToolTipsVisible(True)
 
         ### Delete marks menu
         del_menu = QAction('&Delete all marks', self)
-        del_menu.setStatusTip('Delete all marks')
         del_menu.triggered.connect(partial(self.del_marks,True))
         edit_menu.addAction(del_menu)
 
         ### Randomize image order menu
         edit_menu.addSeparator()
-        randomize_menu = QAction('&Randomize order', self)
-        randomize_menu.setShortcuts(['Ctrl+r+o'])
-        randomize_menu.setStatusTip('Randomize order')
+        randomize_menu = QAction('&Randomize', self)
+        randomize_menu.setShortcuts(['Ctrl+r'])
+        randomize_menu.setToolTip('Randomize the order in which images appear')
         randomize_menu.setCheckable(True)
         randomize_menu.setChecked(io.RANDOMIZE_ORDER)
         randomize_menu.triggered.connect(self.toggle_randomize)
         edit_menu.addAction(randomize_menu)
+        
 
         ### Focus cursor menu
         cursor_focus_menu = QAction('&Focus cursor', self)
-        cursor_focus_menu.setStatusTip('Focus cursor')
+        cursor_focus_menu.setToolTip('Middle-click to focus also centers the cursor')
         cursor_focus_menu.setCheckable(True)
         cursor_focus_menu.triggered.connect(partial(setattr,self,'cursor_focus'))
         edit_menu.addAction(cursor_focus_menu)
@@ -394,7 +391,6 @@ class MainWindow(QMainWindow):
         ### Frame menu
         frame_menu = QAction('&Frames...', self)
         frame_menu.setShortcuts(['Ctrl+f'])
-        frame_menu.setStatusTip('Frames...')
         frame_menu.triggered.connect(self.frame_window.show)
         view_menu.addAction(frame_menu)
 
@@ -402,7 +398,6 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
         self.marks_menu = QAction('&Marks visible', self)
         self.marks_menu.setShortcuts(['Ctrl+m'])
-        self.marks_menu.setStatusTip('Marks visible')
         self.marks_menu.setCheckable(True)
         self.marks_menu.setChecked(True)
         self.marks_menu.triggered.connect(self.toggle_marks)
@@ -411,7 +406,6 @@ class MainWindow(QMainWindow):
         ### Toggle mark labels menu
         self.mark_labels_menu = QAction('&Mark labels visible', self)
         self.mark_labels_menu.setShortcuts(['Ctrl+l'])
-        self.mark_labels_menu.setStatusTip('Mark labels visible')
         self.mark_labels_menu.setCheckable(True)
         self.mark_labels_menu.setChecked(True)
         self.mark_labels_menu.triggered.connect(self.toggle_mark_labels)
@@ -429,7 +423,6 @@ class MainWindow(QMainWindow):
 
         ### Blur
         blur_menu = QAction('&Gaussian Blur...',self)
-        blur_menu.setStatusTip("Gaussian Blur")
         blur_menu.setShortcuts(['Ctrl+b'])
         blur_menu.triggered.connect(self.blur_window.show)
         filter_menu.addAction(blur_menu)
@@ -438,13 +431,11 @@ class MainWindow(QMainWindow):
         filter_menu.addSeparator()
 
         linear_menu = QAction('&Linear', self)
-        linear_menu.setStatusTip('Linear')
         linear_menu.setCheckable(True)
         linear_menu.setChecked(True)
         filter_menu.addAction(linear_menu)
 
         log_menu = QAction('&Log', self)
-        log_menu.setStatusTip('Log')
         log_menu.setCheckable(True)
         filter_menu.addAction(log_menu)
 
@@ -460,13 +451,11 @@ class MainWindow(QMainWindow):
         filter_menu.addSeparator()
 
         minmax_menu = QAction('&Min-Max', self)
-        minmax_menu.setStatusTip('Min-Max')
         minmax_menu.setCheckable(True)
         minmax_menu.setChecked(True)
         filter_menu.addAction(minmax_menu)
 
         zscale_menu = QAction('&ZScale', self)
-        zscale_menu.setStatusTip('ZScale')
         zscale_menu.setCheckable(True)
         filter_menu.addAction(zscale_menu)
 
@@ -485,7 +474,6 @@ class MainWindow(QMainWindow):
         self.instructions_window = InstructionsWindow(io.GROUP_NAMES)
         instructions_menu = QAction('&Instructions', self)
         instructions_menu.setShortcuts(['F1'])
-        instructions_menu.setStatusTip('Instructions')
         instructions_menu.triggered.connect(self.instructions_window.show)
         help_menu.addAction(instructions_menu)
         
