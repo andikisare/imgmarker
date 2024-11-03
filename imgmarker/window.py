@@ -143,7 +143,7 @@ class InstructionsWindow(QWidget):
         fullw_text = actions_width + buttons_width
 
         # Create text
-        text = 'ALL data is saved when pressing "Next," "Back," or "Enter" in the window, as well as checking a category, exiting, or making a mark.'
+        text = 'All changes are autosaved.'
         text = textwrap.wrap(text, width=fullw_text)
         text = '\n'.join([f'{l:<{fullw_text}}' for l in text]) + '\n'
         text += '-'*(fullw_text) + '\n'
@@ -391,7 +391,7 @@ class MainWindow(QMainWindow):
 
         ### Toggle marks menu
         view_menu.addSeparator()
-        self.marks_action = QAction('&Marks visible', self)
+        self.marks_action = QAction('&Show marks', self)
         self.marks_action.setShortcuts(['Ctrl+m'])
         self.marks_action.setCheckable(True)
         self.marks_action.setChecked(True)
@@ -399,7 +399,7 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self.marks_action)
 
         ### Toggle mark labels menu
-        self.labels_action = QAction('&Mark labels visible', self)
+        self.labels_action = QAction('&Show mark labels', self)
         self.labels_action.setShortcuts(['Ctrl+l'])
         self.labels_action.setCheckable(True)
         self.labels_action.setChecked(True)
@@ -422,17 +422,18 @@ class MainWindow(QMainWindow):
         blur_action.triggered.connect(self.blur_window.show)
         filter_menu.addAction(blur_action)
 
-        ### Stretch menus
+        ### Scale menus
         filter_menu.addSeparator()
+        stretch_menu = filter_menu.addMenu('&Stretch')
 
         linear_action = QAction('&Linear', self)
         linear_action.setCheckable(True)
         linear_action.setChecked(True)
-        filter_menu.addAction(linear_action)
+        stretch_menu.addAction(linear_action)
 
         log_action = QAction('&Log', self)
         log_action.setCheckable(True)
-        filter_menu.addAction(log_action)
+        stretch_menu.addAction(log_action)
 
         linear_action.triggered.connect(partial(setattr,self,'stretch','linear'))
         linear_action.triggered.connect(partial(linear_action.setChecked,True))
@@ -443,16 +444,16 @@ class MainWindow(QMainWindow):
         log_action.triggered.connect(partial(log_action.setChecked,True))
 
         ### Interval menus
-        filter_menu.addSeparator()
+        interval_menu = filter_menu.addMenu('&Interval')
 
         minmax_action = QAction('&Min-Max', self)
         minmax_action.setCheckable(True)
         minmax_action.setChecked(True)
-        filter_menu.addAction(minmax_action)
+        interval_menu.addAction(minmax_action)
 
         zscale_action = QAction('&ZScale', self)
         zscale_action.setCheckable(True)
-        filter_menu.addAction(zscale_action)
+        interval_menu.addAction(zscale_action)
 
         minmax_action.triggered.connect(partial(setattr,self,'interval','min-max'))
         minmax_action.triggered.connect(partial(minmax_action.setChecked,True))
@@ -511,8 +512,7 @@ class MainWindow(QMainWindow):
         except:
             image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')
             
-            if image_dir == '':
-                sys.exit()
+            if image_dir == '': sys.exit()
 
             io.update_config(image_dir=image_dir)
             self.images, self.idx = io.glob(edited_images=self.images)
