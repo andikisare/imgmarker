@@ -1,13 +1,11 @@
 from .pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, QPainter, Qt
 from . import mark as _mark
-from . import SUPPORTED_EXTS
 from . import io
 import os
 from math import floor
-import PIL.Image, PIL.ImageFile
+import PIL.Image
 from PIL.ImageFilter import GaussianBlur
 from math import nan
-from astropy.io import fits
 import numpy as np
 from typing import overload, Union, List, Dict, TYPE_CHECKING
 from astropy.visualization import ZScaleInterval, MinMaxInterval, BaseInterval, BaseStretch, ManualInterval, LinearStretch, LogStretch
@@ -17,6 +15,7 @@ if TYPE_CHECKING:
 
 INTERVAL:Dict[str,BaseInterval] = {'zscale': ZScaleInterval(), 'min-max': MinMaxInterval()}
 STRETCH:Dict[str,BaseStretch] = {'linear': LinearStretch(), 'log': LogStretch()}
+FORMATS = ['TIFF','FITS','PNG','JPEG']
 PIL.Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
 
 def open(path:str) -> Union['Image',None]:
@@ -44,9 +43,9 @@ class Image(QGraphicsPixmapItem):
         super().__init__(QPixmap())
 
         self.path = path
-        self.ext = path.split('.')[-1]
+        self.format = io.pathtoformat(path)
 
-        if self.ext in SUPPORTED_EXTS:
+        if self.format in FORMATS:
             
             self.frame:int = 0
             self.imagefile = self.load()
@@ -98,10 +97,10 @@ class Image(QGraphicsPixmapItem):
         except: return nan, nan
 
     def load(self) -> PIL.Image.Image:
-        if (self.ext == 'fits') or (self.ext == 'fit'):
-                with fits.open(self.path) as f:
-                    arr = np.flipud(f[0].data).byteswap()
-                file = PIL.Image.fromarray(arr, mode='F').convert('RGB')
+        if self.format == 'FITS':
+                with PIL.Image.open(self.path) as f:
+                    arr = np.array(f).byteswap().astype(np.uint16)
+                file = PIL.Image.fromarray(arr).convert('RGB')
                 file.format = 'FITS'
                 file.filename = self.path
 

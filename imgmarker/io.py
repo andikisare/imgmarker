@@ -17,6 +17,13 @@ from typing import Tuple, List
 
 SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or numbers.')
 
+def pathtoformat(path:str):
+    ext = path.split('.')[-1].casefold()
+    if ext == 'png': return 'PNG'
+    if ext in {'jpeg', 'jpg'}: return 'JPEG'
+    if ext in {'tiff', 'tif'}: return 'TIFF'
+    if ext in {'fit', 'fits'}: return 'FITS'
+    
 def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
     """
     Reads in each line from imgmarker.cfg. If there is no configuration file,
@@ -149,11 +156,9 @@ def parse_wcs(img:image.Image) -> WCS:
         Astropy WCS object. Returns None if there is no WCS present.
     """
     try:
-        if (img.format == 'FITS'):
+        if img.format == 'FITS':
             with fits.open(img.filename) as hdulist:
                 wcs = WCS(hdulist[0].header)
-#            hdulist = fits.open(img.filename)
-#            wcs = WCS(hdulist[0].header)
             return wcs
         else:
             meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
@@ -564,7 +569,7 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
 
     # Find all images in image directory
     paths = sorted(_glob.glob(os.path.join(IMAGE_DIR, '*.*')))
-    paths = [fp for fp in paths if fp.split('.')[-1] in image.SUPPORTED_EXTS]
+    paths = [fp for fp in paths if pathtoformat(fp) in image.FORMATS]
 
     # Get list of paths to images if they are in the dictionary (have been edited)
     edited_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
