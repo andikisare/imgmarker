@@ -346,10 +346,6 @@ class MainWindow(QMainWindow):
         open_marks_action.setShortcuts(['Ctrl+Shift+m'])
         open_marks_action.triggered.connect(self.open_ext_marks)
         file_menu.addAction(open_marks_action)
-        self.ext_mark_coord_sys = None
-        self.ext_mark_labels = []
-        self.ext_mark_alphas = []
-        self.ext_mark_betas = []
         
         ### Exit menu
         file_menu.addSeparator()
@@ -694,16 +690,24 @@ class MainWindow(QMainWindow):
         if (ext_mark_file == ''): return
         
         labels, alphas, betas, coord_sys = io.load_ext_marks(ext_mark_file)
-        self.ext_mark_labels = labels
-        self.ext_mark_alphas = alphas
-        self.ext_mark_betas = betas
-        self.ext_mark_coord_sys = coord_sys
 
         if labels == None: return
+        else: 
+            for i in range(len(labels)):
+                for img in self.images:
+                    if coord_sys == 'galactic':
+                        ra, dec = alphas[i], betas[i]
+                        
+                        mark_coord_cart = img.wcs.all_world2pix([[ra,dec]], 0)[0]
+                        x, y = mark_coord_cart[0], img.height - mark_coord_cart[1]
 
-        else: self.update_ext_marks()
+                    else: x, y = alphas[i], betas[i]
 
-        return
+                    if self.inview(x,y):
+                        mark = Mark(x, y, shape='rect', image=img, text=labels[i])
+                        img.ext_marks.append(mark)
+
+            for mark in self.image.ext_marks: self.image_scene.mark(mark)
 
     def favorite(self,state) -> None:
         """Favorite the current image."""
@@ -846,25 +850,7 @@ class MainWindow(QMainWindow):
     def update_ext_marks(self):
         """Loads in each external mark to the appropriate image if RA, Dec, otherwise loads all."""
 
-        labels = self.ext_mark_labels
-        alphas = self.ext_mark_alphas
-        betas = self.ext_mark_betas
-
-        for i in range(len(labels)):
-            for img in self.images:
-                if self.ext_mark_coord_sys == 'galactic':
-                    ra, dec = alphas[i], betas[i]
-                    
-                    mark_coord_cart = img.wcs.all_world2pix([[ra,dec]], 0)[0]
-                    x, y = mark_coord_cart[0], img.height - mark_coord_cart[1]
-
-                else: x, y = alphas[i], betas[i]
-
-                if self.inview(x,y):
-                    mark = Mark(x, y, shape='rect', image=img, text=labels[i])
-                    img.ext_marks.append(mark)
-
-        for mark in self.image.ext_marks: self.image_scene.mark(mark)
+        
 
     def update_favorites(self):
         """Update favorite boxes based on the contents of favorite_list."""
