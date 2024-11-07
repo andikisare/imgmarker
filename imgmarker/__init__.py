@@ -20,7 +20,6 @@ if __name__ == '__main__' and __package__ is None:
 ICON = _resource_path('icon.ico')
 HEART_SOLID = _resource_path('heart_solid.ico')
 HEART_CLEAR = _resource_path('heart_clear.ico')
-CONFIG = os.path.join(os.getcwd(),'imgmarker.cfg')
 
 from .pyqt import QApplication
 from .window import MainWindow

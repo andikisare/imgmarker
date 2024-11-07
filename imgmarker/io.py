@@ -3,7 +3,6 @@ import numpy as np
 from . import window
 from . import mark as _mark
 from . import image
-from . import CONFIG
 from .pyqt import Qt
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
@@ -14,8 +13,37 @@ import shutil
 from math import nan, isnan
 import warnings
 from typing import Tuple, List
+from platform import system
 
 SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or numbers.')
+SYSTEM = system()
+HOME = os.path.expanduser('~')
+
+if SYSTEM == 'Windows':
+    CONFIG_DIR = os.path.join(os.getenv('LOCALAPPDATA'),'Image Marker')
+
+    import ctypes
+    from ctypes.wintypes import MAX_PATH
+
+    dll = ctypes.windll.shell32
+    buf = ctypes.create_unicode_buffer(MAX_PATH + 1)
+    dll.SHGetSpecialFolderPathW(None, buf, 0x0005, False)
+
+    OUT_DIR = os.path.join(buf.value,'Image Marker')
+
+if SYSTEM == 'Linux':
+    CONFIG_DIR = os.path.join(HOME,'.conf')
+    OUT_DIR = os.path.join(HOME,'imgmarker')
+
+if SYSTEM == 'Darwin': # MAC OS
+    CONFIG_DIR = os.path.join(HOME,'Library','Preferences')
+    OUT_DIR = os.path.join(HOME,'Library','Application Support','Image Marker')
+
+if not os.path.exists(CONFIG_DIR): os.makedirs(CONFIG_DIR)
+if not os.path.exists(OUT_DIR): os.makedirs(OUT_DIR)
+
+CONFIG = os.path.join(CONFIG_DIR,'imgmarker.cfg')
+IMAGE_DIR = HOME
 
 def pathtoformat(path:str):
     ext = path.split('.')[-1].casefold()
@@ -32,9 +60,6 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
 
     Returns
     ----------
-    out_dir: str
-        Output directory for all save files.
-
     image_dir: str
         Directory containing desired image files.
 
@@ -50,18 +75,12 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
 
     # If the config doesn't exist, create one
     if not os.path.exists(CONFIG):
-        
-        
-        out_dir = os.path.join(os.getcwd(),'')
-        image_dir = os.path.join(os.getcwd(),'')
         group_names = ['None','1','2','3','4','5','6','7','8','9']
         category_names = ['None','1','2','3','4','5']
         group_max = ['None','None','None','None','None','None','None','None','None']
         randomize_order = True
 
         with open(CONFIG,'w') as config:
-            config.write(f'out_dir = {out_dir}\n')
-            config.write(f'image_dir = {image_dir}\n')
             config.write('groups = 1,2,3,4,5,6,7,8,9\n')
             config.write('categories = 1,2,3,4,5\n')
             config.write('group_max = None,None,None,None,None,None,None,None,None\n')
@@ -70,20 +89,6 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
     else:
         for l in open(CONFIG):
             var, val = [i.strip() for i in l.replace('\n','').split('=')]
-
-            if var == 'out_dir':
-                if val == './':
-                    out_dir = os.getcwd()
-                    print('WARNING: Setting output/save directory to current directory. This can be configured in \'imgmarker.cfg\'.')
-                else: out_dir = os.path.join(val,'')
-                if not os.path.exists(out_dir):
-                    print("WARNING: out_dir does not exist. Creating out_dir directory.")
-                    os.mkdir(out_dir)
-
-            if var == 'image_dir':
-                if val == './': image_dir = os.getcwd()
-                else: image_dir = val
-                image_dir =  os.path.join(image_dir,'')
 
             if var == 'groups':
                 group_names = []
@@ -108,9 +113,9 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
             if var == 'randomize_order':
                 randomize_order = val == 'True'
 
-    return out_dir, image_dir, group_names, category_names, group_max, randomize_order
+    return group_names, category_names, group_max, randomize_order
 
-OUT_DIR, IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
+GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
 
 def check_marks(event) -> List[bool]:
     """
@@ -610,7 +615,6 @@ def update_config(out_dir:str = OUT_DIR,
     
     with open(CONFIG,'w') as config:
         config.write(f'out_dir = {out_dir}\n')
-        config.write(f'image_dir = {image_dir}\n')
         config.write(f"groups = {','.join(group_names[1:])}\n")
         config.write(f"categories = {','.join(category_names[1:])}\n")
         config.write(f"group_max = {','.join(group_max)}\n")

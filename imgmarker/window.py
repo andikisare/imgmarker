@@ -474,7 +474,7 @@ class MainWindow(QMainWindow):
         help_menu.addAction(instructions_menu)
         
         # Resize and center MainWindow; move instructions off to the right
-        self.resize(int(self.fullw/2.5),int(self.fullw/2.5))
+        self.resize(int(self.fullw/2.5),int(self.fullh*0.8))
 
         center = QApplication.primaryScreen().geometry().center()
         center -= QPoint(self.width(),self.height())/2
@@ -846,12 +846,6 @@ class MainWindow(QMainWindow):
         self.zoom_level = 1
 
     # === Update methods ===
-
-    def update_ext_marks(self):
-        """Loads in each external mark to the appropriate image if RA, Dec, otherwise loads all."""
-
-        
-
     def update_favorites(self):
         """Update favorite boxes based on the contents of favorite_list."""
 
