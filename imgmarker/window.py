@@ -4,7 +4,7 @@ from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF)
 
 from .mark import Mark
-from . import ICON, HEART_SOLID, HEART_CLEAR
+from . import ICON, HEART_SOLID, HEART_CLEAR, SCREEN_WIDTH, SCREEN_HEIGHT
 from . import io
 from . import image
 from .widget import QHLine, PosWidget
@@ -12,7 +12,7 @@ import sys
 import os
 import datetime as dt
 import textwrap
-from math import floor, inf, nan
+from math import ceil, floor, inf, nan
 from numpy import argsort
 from functools import partial
 from typing import Union
@@ -25,8 +25,6 @@ class BlurWindow(QWidget):
         
         self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
-        self.fullw = self.screen().size().width()
-        self.fullh = self.screen().size().height()
         self.setWindowTitle('Gaussian Blur')
         self.setLayout(layout)
 
@@ -45,7 +43,7 @@ class BlurWindow(QWidget):
         layout.addWidget(self.value_label)
         layout.addWidget(self.slider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFixedWidth(int(self.fullw/6))
+        self.setFixedWidth(int(SCREEN_WIDTH/6))
         self.setFixedHeight(layout.sizeHint().height())
 
         # Set position of window
@@ -69,8 +67,6 @@ class FrameWindow(QWidget):
         
         self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
-        self.fullw = self.screen().size().width()
-        self.fullh = self.screen().size().height()
         self.setWindowTitle('Frames')
         self.setLayout(layout)
 
@@ -89,7 +85,7 @@ class FrameWindow(QWidget):
         layout.addWidget(self.value_label)
         layout.addWidget(self.slider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFixedWidth(int(self.fullw/6))
+        self.setFixedWidth(int(SCREEN_WIDTH/6))
         self.setFixedHeight(layout.sizeHint().height())
 
         # Set position of window
@@ -115,8 +111,6 @@ class InstructionsWindow(QWidget):
         super().__init__()
         self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
-        self.fullw = self.screen().size().width()
-        self.fullh = self.screen().size().height()
         self.setWindowTitle('Instructions')
         self.setLayout(layout)
         
@@ -196,8 +190,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Image Marker")
         self.setWindowIcon(QIcon(ICON))
-        self.fullw = self.screen().size().width()
-        self.fullh = self.screen().size().height()
+
         self.zoom_level = 1
         self.cursor_focus = False
         self.frame = 0
@@ -239,7 +232,6 @@ class MainWindow(QMainWindow):
 
         # Create image view
         self.image_view = QGraphicsView(self.image_scene)
-        self.fitview()   
         
         ### Disable scrollbar
         self.image_view.verticalScrollBar().blockSignals(True)
@@ -301,7 +293,7 @@ class MainWindow(QMainWindow):
             self.categories_layout.addWidget(box)
 
         # Favorite box
-        self.favorite_list = io.loadfav(username)
+        self.favorite_list = io.loadfav()
         self.favorite_box = QCheckBox(parent=self)
         self.favorite_box.setFixedHeight(20)
         self.favorite_box.setFixedWidth(40)
@@ -329,23 +321,26 @@ class MainWindow(QMainWindow):
         ## File menu
         file_menu = menubar.addMenu("&File")
 
+        ### Open menus
+        open_menu = file_menu.addMenu('&Open')
+
         ### Open file menu
         open_action = QAction('&Open save...', self)
         open_action.setShortcuts(['Ctrl+o'])
         open_action.triggered.connect(self.open)
-        file_menu.addAction(open_action)
+        open_menu.addAction(open_action)
 
         ### Open image folder menu
         open_ims_action = QAction('&Open images...', self)
         open_ims_action.setShortcuts(['Ctrl+Shift+o'])
         open_ims_action.triggered.connect(self.open_ims)
-        file_menu.addAction(open_ims_action)
+        open_menu.addAction(open_ims_action)
 
         ### Open external marks file
         open_marks_action = QAction('&Open marks file...', self)
         open_marks_action.setShortcuts(['Ctrl+Shift+m'])
         open_marks_action.triggered.connect(self.open_ext_marks)
-        file_menu.addAction(open_marks_action)
+        open_menu.addAction(open_marks_action)
         
         ### Exit menu
         file_menu.addSeparator()
@@ -474,8 +469,8 @@ class MainWindow(QMainWindow):
         help_menu.addAction(instructions_menu)
         
         # Resize and center MainWindow; move instructions off to the right
-        self.resize(int(self.fullw/2.5),int(self.fullh*0.8))
-
+        self.resize(int(SCREEN_HEIGHT*0.8),int(SCREEN_HEIGHT*0.8))
+        
         center = QApplication.primaryScreen().geometry().center()
         center -= QPoint(self.width(),self.height())/2
         self.move(center)
@@ -492,9 +487,9 @@ class MainWindow(QMainWindow):
         """Initializes images."""
 
         # Initialize output dictionary
-        self.images = io.load(self.username)
+        self.images = io.load()
         
-        self.favorite_list = io.loadfav(self.username)
+        self.favorite_list = io.loadfav()
 
         # Find all images in image directory
 
@@ -654,11 +649,15 @@ class MainWindow(QMainWindow):
 
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
-        saveDir = dialog.getExistingDirectory(self, 'Open save directory', os.getcwd())
-        if (saveDir == ''): return
+        save_dir = dialog.getExistingDirectory(self, 'Open save directory', os.getcwd())
+        if (save_dir == ''): return
         
-        self.username = str(os.path.split(saveDir)[-1])
+        self.username = str(os.path.split(save_dir)[-1])
         if not self.username.isalnum(): raise io.SAVE_ALPHANUM_ERR
+
+        io.SAVE_DIR = save_dir
+        io.SAVENAME = self.username
+        io.config()
         
         self.__init_data__()
         self.update_images()
@@ -716,12 +715,12 @@ class MainWindow(QMainWindow):
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
             self.favorite_list.append(self.image.name)
-            io.savefav(self.username,self.date,self.images,self.favorite_list)
+            io.savefav(self.date,self.images,self.favorite_list)
         else:
             self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             if self.image.name in self.favorite_list: 
                 self.favorite_list.remove(self.image.name)
-            io.savefav(self.username,self.date,self.images,self.favorite_list)
+            io.savefav(self.date,self.images,self.favorite_list)
 
     def categorize(self,i:int) -> None:
         """Categorize the current image."""
@@ -730,8 +729,8 @@ class MainWindow(QMainWindow):
             self.image.categories.append(i)
         elif (i in self.image.categories):
             self.image.categories.remove(i)
-        io.save(self.username,self.date,self.images)
-        io.savefav(self.username,self.date,self.images,self.favorite_list)
+        io.save(self.date,self.images)
+        io.savefav(self.date,self.images,self.favorite_list)
 
     def mark(self, group:int=0) -> None:
         """Add a mark to the current image."""
@@ -760,8 +759,8 @@ class MainWindow(QMainWindow):
             elif len(marks_in_group) < limit:
                 self.image.marks.append(mark)
 
-            io.save(self.username,self.date,self.images)
-            io.savefav(self.username,self.date,self.images,self.favorite_list)
+            io.save(self.date,self.images)
+            io.savefav(self.date,self.images,self.favorite_list)
         
         if len(self.image.marks) == 0:
             self.marks_action.setEnabled(False)
@@ -792,8 +791,8 @@ class MainWindow(QMainWindow):
 
         self.update_comments()
         self.comment_box.clearFocus()
-        io.save(self.username,self.date,self.images)
-        io.savefav(self.username,self.date,self.images,self.favorite_list)
+        io.save(self.date,self.images)
+        io.savefav(self.date,self.images,self.favorite_list)
 
     def center_cursor(self):
         """Center on the cursor."""
@@ -922,8 +921,8 @@ class MainWindow(QMainWindow):
         if not comment: comment = 'None'
 
         self.image.comment = comment
-        io.save(self.username,self.date,self.images)
-        io.savefav(self.username,self.date,self.images,self.favorite_list)
+        io.save(self.date,self.images)
+        io.savefav(self.date,self.images,self.favorite_list)
 
     def get_comment(self):
         """If the image has a comment, sets the text of the comment box to the image's comment."""
@@ -964,8 +963,8 @@ class MainWindow(QMainWindow):
             self.marks_action.setEnabled(False)
             self.labels_action.setEnabled(False)
             
-        io.save(self.username,self.date,self.images)
-        io.savefav(self.username,self.date,self.images,self.favorite_list)
+        io.save(self.date,self.images)
+        io.savefav(self.date,self.images,self.favorite_list)
 
     def toggle_randomize(self,state):
         """Updates the config file for randomization and reloads unseen images."""

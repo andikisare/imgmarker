@@ -9,7 +9,6 @@ from astropy.wcs import WCS
 from astropy.io import fits
 import io
 import glob as _glob
-import shutil
 from math import nan, isnan
 import warnings
 from typing import Tuple, List
@@ -20,8 +19,6 @@ SYSTEM = system()
 HOME = os.path.expanduser('~')
 
 if SYSTEM == 'Windows':
-    CONFIG_DIR = os.path.join(os.getenv('LOCALAPPDATA'),'Image Marker')
-
     import ctypes
     from ctypes.wintypes import MAX_PATH
 
@@ -32,18 +29,27 @@ if SYSTEM == 'Windows':
     OUT_DIR = os.path.join(buf.value,'Image Marker')
 
 if SYSTEM == 'Linux':
-    CONFIG_DIR = os.path.join(HOME,'.conf')
     OUT_DIR = os.path.join(HOME,'imgmarker')
 
 if SYSTEM == 'Darwin': # MAC OS
-    CONFIG_DIR = os.path.join(HOME,'Library','Preferences')
-    OUT_DIR = os.path.join(HOME,'Library','Application Support','Image Marker')
+    OUT_DIR = os.path.join(HOME,'Image Marker')
 
-if not os.path.exists(CONFIG_DIR): os.makedirs(CONFIG_DIR)
-if not os.path.exists(OUT_DIR): os.makedirs(OUT_DIR)
+def getsave() -> str:
+    global SAVENAME; SAVENAME = window.StartupWindow().getUser()
+    return SAVENAME
 
-CONFIG = os.path.join(CONFIG_DIR,'imgmarker.cfg')
+def config() -> None:
+    """Returns the savename from `StartupWindow`."""
+    global SAVE_DIR; SAVE_DIR = os.path.join(OUT_DIR,SAVENAME)
+    if not os.path.exists(SAVE_DIR): os.makedirs(SAVE_DIR)
+    global CONFIG; CONFIG = os.path.join(SAVE_DIR,'config.txt')
+    read_config()
+    
 IMAGE_DIR = HOME
+GROUP_NAMES = ['None','1','2','3','4','5','6','7','8','9']
+CATEGORY_NAMES = ['None','1','2','3','4','5']
+GROUP_MAX = ['None','None','None','None','None','None','None','None','None']
+RANDOMIZE_ORDER = True
 
 def pathtoformat(path:str):
     ext = path.split('.')[-1].casefold()
@@ -72,23 +78,29 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
     group_max: list[int]
         A list containing the maximum allowed number of marks for each group.
     """
+    global IMAGE_DIR
+    global GROUP_NAMES
+    global CATEGORY_NAMES
+    global GROUP_MAX
+    global RANDOMIZE_ORDER
 
     # If the config doesn't exist, create one
     if not os.path.exists(CONFIG):
-        group_names = ['None','1','2','3','4','5','6','7','8','9']
-        category_names = ['None','1','2','3','4','5']
-        group_max = ['None','None','None','None','None','None','None','None','None']
-        randomize_order = True
-
         with open(CONFIG,'w') as config:
-            config.write('groups = 1,2,3,4,5,6,7,8,9\n')
-            config.write('categories = 1,2,3,4,5\n')
-            config.write('group_max = None,None,None,None,None,None,None,None,None\n')
-            config.write('randomize_order = True')
+            config.write(f'image_dir = {IMAGE_DIR}\n')
+            config.write(f'groups = {','.join(GROUP_NAMES)}\n')
+            config.write(f'categories = {','.join(CATEGORY_NAMES)}\n')
+            config.write(f'group_max = {','.join(GROUP_MAX)}\n')
+            config.write(f'randomize_order = {RANDOMIZE_ORDER}')  
 
     else:
         for l in open(CONFIG):
             var, val = [i.strip() for i in l.replace('\n','').split('=')]
+
+            if var == 'image_dir':
+                if val == './': image_dir = os.getcwd()
+                else: image_dir = val
+                image_dir =  os.path.join(image_dir,'')
 
             if var == 'groups':
                 group_names = []
@@ -113,9 +125,11 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
             if var == 'randomize_order':
                 randomize_order = val == 'True'
 
-    return group_names, category_names, group_max, randomize_order
-
-GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
+        IMAGE_DIR = image_dir
+        GROUP_NAMES = group_names
+        CATEGORY_NAMES = category_names
+        GROUP_MAX = group_max
+        RANDOMIZE_ORDER = randomize_order
 
 def check_marks(event) -> List[bool]:
     """
@@ -189,11 +203,11 @@ def parse_wcs(img:image.Image) -> WCS:
         return wcs
     except: return None
 
-def check_save(savename:str) -> bool:
+def check_save() -> bool:
     """Checks if savename is empty."""
-    return (savename != 'None') and (savename != '')
+    return (SAVENAME != 'None') and (SAVENAME != '')
 
-def savefav(savename:str,date:str,images:List['image.Image'],fav_list:List[str]) -> None:
+def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
     """
     Creates a file, \'favorites.txt\', in the save directory containing all images that were favorited.
     This file is in the same format as \'images.txt\' so that a user can open their favorites file to show
@@ -202,9 +216,6 @@ def savefav(savename:str,date:str,images:List['image.Image'],fav_list:List[str])
 
     Parameters
     ----------
-    savename: str
-        A string containing the savename/username.
-
     date: str
         A string containing the current date in ISO 8601 extended format.
 
@@ -227,19 +238,14 @@ def savefav(savename:str,date:str,images:List['image.Image'],fav_list:List[str])
     category_lengths = []
     comment_lengths = []
 
-    save_dir = os.path.join(OUT_DIR, savename)
-    fav_out_path = os.path.join(save_dir, 'favorites.txt')
-
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    fav_out_path = os.path.join(SAVE_DIR, 'favorites.txt')
 
     # Remove the file if it exists
-    if os.path.exists(fav_out_path):
-        os.remove(fav_out_path)
+    if os.path.exists(fav_out_path): os.remove(fav_out_path)
     
     fav_images = [img for img in images if img.name in fav_list]
 
-    if check_save(savename) and (len(fav_list) != 0):
+    if check_save() and (len(fav_list) != 0):
         for img in fav_images:
             if img.seen:
                 name = img.name
@@ -285,15 +291,12 @@ def savefav(savename:str,date:str,images:List['image.Image'],fav_list:List[str])
                 outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
                 fav_out.write(outline)
 
-def save(savename:str,date,images:List['image.Image']) -> None:
+def save(date,images:List['image.Image']) -> None:
     """
     Saves image data.
 
     Parameters
     ----------
-    savename: str
-        A string containing the savename/username.
-
     date: str
         A string containing the current date in ISO 8601 extended format.
 
@@ -319,19 +322,14 @@ def save(savename:str,date,images:List['image.Image']) -> None:
     category_lengths = []
     comment_lengths = []
 
-    save_dir = os.path.join(OUT_DIR, savename)
-    mark_out_path = os.path.join(save_dir,'marks.txt')
-    images_out_path = os.path.join(save_dir,'images.txt')
+    mark_out_path = os.path.join(SAVE_DIR,'marks.txt')
+    images_out_path = os.path.join(SAVE_DIR,'images.txt')
 
     # Create the file
-    if os.path.exists(save_dir): 
-        shutil.rmtree(save_dir)
-    os.makedirs(save_dir)
+    if os.path.exists(mark_out_path): os.remove(mark_out_path)
+    if os.path.exists(images_out_path): os.remove(images_out_path)
 
-    
-    
-
-    if check_save(savename) and images:
+    if check_save() and images:
         for img in images:
             if img.seen:
                 name = img.name
@@ -425,14 +423,9 @@ def save(savename:str,date,images:List['image.Image']) -> None:
                 outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
                 images_out.write(outline)
 
-def loadfav(savename:str) -> List[str]:
+def loadfav() -> List[str]:
     """
     Loads 'favorites.txt' from the save directory.
-
-    Parameters
-    ----------
-    savename: str
-        A string containing the savename/username.
 
     Returns
     ----------
@@ -440,8 +433,7 @@ def loadfav(savename:str) -> List[str]:
         A list of strings containing the names of the files (images) that were saved.
     """
 
-    save_dir = os.path.join(OUT_DIR, savename)
-    fav_out_path = os.path.join(save_dir, 'favorites.txt')
+    fav_out_path = os.path.join(SAVE_DIR, 'favorites.txt')
     
     if os.path.exists(fav_out_path):
         fav_list = [ l.split('|')[1].strip() for l in open(fav_out_path) ][1:]
@@ -449,7 +441,7 @@ def loadfav(savename:str) -> List[str]:
 
     return list(set(fav_list))
 
-def load(savename:str) -> List[image.Image]:
+def load() -> List[image.Image]:
     """
     Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.Image`
     objects.
@@ -464,9 +456,8 @@ def load(savename:str) -> List[image.Image]:
     images: list[`imgmarker.image.Image`]
     """
 
-    save_dir = os.path.join(OUT_DIR, savename)
-    mark_out_path = os.path.join(save_dir,'marks.txt')
-    images_out_path = os.path.join(save_dir,'images.txt')
+    mark_out_path = os.path.join(SAVE_DIR,'marks.txt')
+    images_out_path = os.path.join(SAVE_DIR,'images.txt')
     images:List[image.Image] = []
     
     # Get list of images from images.txt
@@ -592,10 +583,7 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
 
     return images, idx
 
-def inputs() -> str:
-    """Returns the savename from `StartupWindow`."""
-    savename = window.StartupWindow().getUser()
-    return savename
+
 
 def update_config(out_dir:str = OUT_DIR,
                   image_dir:str = IMAGE_DIR, 
@@ -614,7 +602,7 @@ def update_config(out_dir:str = OUT_DIR,
     global RANDOMIZE_ORDER; RANDOMIZE_ORDER = randomize_order
     
     with open(CONFIG,'w') as config:
-        config.write(f'out_dir = {out_dir}\n')
+        config.write(f'image_dir = {image_dir}\n')
         config.write(f"groups = {','.join(group_names[1:])}\n")
         config.write(f"categories = {','.join(category_names[1:])}\n")
         config.write(f"group_max = {','.join(group_max)}\n")

@@ -22,14 +22,21 @@ HEART_SOLID = _resource_path('heart_solid.ico')
 HEART_CLEAR = _resource_path('heart_clear.ico')
 
 from .pyqt import QApplication
+
+app = QApplication(sys.argv)
+SCREEN_WIDTH = app.primaryScreen().size().width()
+SCREEN_HEIGHT = app.primaryScreen().size().height()
+
 from .window import MainWindow
-from .io import inputs
-import sys
+from .io import getsave, config
 
 def main():
-    app = QApplication(sys.argv)
-    window = MainWindow(inputs())
+    savename = getsave()
+    config()
+    window = MainWindow(savename)
     window.show()
+    window.fitview()
     app.exec()
 
-if __name__ == '__main__': main()
+if __name__ == '__main__': 
+    main()
