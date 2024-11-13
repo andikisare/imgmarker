@@ -28,11 +28,10 @@ SCREEN_WIDTH = app.primaryScreen().size().width()
 SCREEN_HEIGHT = app.primaryScreen().size().height()
 
 from .window import MainWindow
-from .io import getsave, config
+from .io import getsave
 
 def main():
     savename = getsave()
-    config()
     window = MainWindow(savename)
     window.show()
     window.fitview()

@@ -1,18 +1,20 @@
 import os
 import numpy as np
-from . import window
+from . import ICON
 from . import mark as _mark
 from . import image
-from .pyqt import Qt
+from .pyqt import Qt, QIcon, QApplication, QInputDialog
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
 from astropy.io import fits
 import io
+import sys
 import glob as _glob
 from math import nan, isnan
 import warnings
 from typing import Tuple, List
 from platform import system
+from functools import lru_cache
 
 SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or numbers.')
 SYSTEM = system()
@@ -34,22 +36,37 @@ if SYSTEM == 'Linux':
 if SYSTEM == 'Darwin': # MAC OS
     OUT_DIR = os.path.join(HOME,'Image Marker')
 
-def getsave() -> str:
-    global SAVENAME; SAVENAME = window.StartupWindow().getUser()
-    return SAVENAME
+class StartupWindow(QInputDialog):
+    """Class for the startup window."""
 
-def config() -> None:
+    def __init__(self):
+        super().__init__()
+        self.setWindowIcon(QIcon(ICON))
+        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
+
+    def getUser(self) -> None:
+        """Makes a window for savename input."""
+
+        # Make popup to get name
+        text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
+
+        if not OK: sys.exit()
+        elif not text.isalnum(): raise SAVE_ALPHANUM_ERR 
+        else: return text
+        
+@lru_cache(maxsize=1)
+def getsave() -> str:
     """Returns the savename from `StartupWindow`."""
-    global SAVE_DIR; SAVE_DIR = os.path.join(OUT_DIR,SAVENAME)
-    if not os.path.exists(SAVE_DIR): os.makedirs(SAVE_DIR)
-    global CONFIG; CONFIG = os.path.join(SAVE_DIR,'config.txt')
-    read_config()
-    
-IMAGE_DIR = HOME
-GROUP_NAMES = ['None','1','2','3','4','5','6','7','8','9']
-CATEGORY_NAMES = ['None','1','2','3','4','5']
-GROUP_MAX = ['None','None','None','None','None','None','None','None','None']
-RANDOMIZE_ORDER = True
+    return StartupWindow().getUser()
+
+SAVENAME = getsave()
+SAVE_DIR = os.path.join(OUT_DIR,SAVENAME)
+if not os.path.exists(SAVE_DIR): os.makedirs(SAVE_DIR)
+CONFIG = os.path.join(SAVE_DIR,'config.txt')
 
 def pathtoformat(path:str):
     ext = path.split('.')[-1].casefold()
@@ -78,20 +95,22 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
     group_max: list[int]
         A list containing the maximum allowed number of marks for each group.
     """
-    global IMAGE_DIR
-    global GROUP_NAMES
-    global CATEGORY_NAMES
-    global GROUP_MAX
-    global RANDOMIZE_ORDER
+    
 
     # If the config doesn't exist, create one
     if not os.path.exists(CONFIG):
         with open(CONFIG,'w') as config:
-            config.write(f'image_dir = {IMAGE_DIR}\n')
-            config.write(f'groups = {','.join(GROUP_NAMES)}\n')
-            config.write(f'categories = {','.join(CATEGORY_NAMES)}\n')
-            config.write(f'group_max = {','.join(GROUP_MAX)}\n')
-            config.write(f'randomize_order = {RANDOMIZE_ORDER}')  
+            image_dir = HOME
+            group_names = ['None','1','2','3','4','5','6','7','8','9']
+            category_names = ['None','1','2','3','4','5']
+            group_max = ['None','None','None','None','None','None','None','None','None']
+            randomize_order = True
+
+            config.write(f'image_dir = {image_dir}\n')
+            config.write(f'groups = {','.join(group_names)}\n')
+            config.write(f'categories = {','.join(category_names)}\n')
+            config.write(f'group_max = {','.join(group_max)}\n')
+            config.write(f'randomize_order = {randomize_order}')  
 
     else:
         for l in open(CONFIG):
@@ -125,11 +144,9 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
             if var == 'randomize_order':
                 randomize_order = val == 'True'
 
-        IMAGE_DIR = image_dir
-        GROUP_NAMES = group_names
-        CATEGORY_NAMES = category_names
-        GROUP_MAX = group_max
-        RANDOMIZE_ORDER = randomize_order
+    return image_dir, group_names, category_names, group_max, randomize_order
+
+IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
 
 def check_marks(event) -> List[bool]:
     """
@@ -231,7 +248,6 @@ def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
     """
 
     image_lines = []
-
     name_lengths = []
     img_ra_lengths = []
     img_dec_lengths = []
@@ -585,25 +601,12 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
 
 
 
-def update_config(out_dir:str = OUT_DIR,
-                  image_dir:str = IMAGE_DIR, 
-                  group_names:List[str] = GROUP_NAMES, 
-                  category_names:List[str] = CATEGORY_NAMES, 
-                  group_max:List[int] = GROUP_MAX,
-                  randomize_order:str = RANDOMIZE_ORDER
-    ) -> None:
+def update_config() -> None:
     """Updates any of the global config variables with the corresponding parameter."""
     
-    global OUT_DIR; OUT_DIR = out_dir
-    global IMAGE_DIR; IMAGE_DIR = image_dir
-    global GROUP_NAMES; GROUP_NAMES = group_names
-    global CATEGORY_NAMES; CATEGORY_NAMES = category_names
-    global GROUP_MAX; GROUP_MAX = group_max
-    global RANDOMIZE_ORDER; RANDOMIZE_ORDER = randomize_order
-    
     with open(CONFIG,'w') as config:
-        config.write(f'image_dir = {image_dir}\n')
-        config.write(f"groups = {','.join(group_names[1:])}\n")
-        config.write(f"categories = {','.join(category_names[1:])}\n")
-        config.write(f"group_max = {','.join(group_max)}\n")
-        config.write(f'randomize_order = {randomize_order}')
+        config.write(f'image_dir = {IMAGE_DIR}\n')
+        config.write(f"groups = {','.join(GROUP_NAMES[1:])}\n")
+        config.write(f"categories = {','.join(CATEGORY_NAMES[1:])}\n")
+        config.write(f"group_max = {','.join(GROUP_MAX)}\n")
+        config.write(f'randomize_order = {RANDOMIZE_ORDER}')

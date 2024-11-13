@@ -1,7 +1,7 @@
 from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QLabel, QScrollArea, QGraphicsView,
                     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
-                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF)
+                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox)
 
 from .mark import Mark
 from . import ICON, HEART_SOLID, HEART_CLEAR, SCREEN_WIDTH, SCREEN_HEIGHT
@@ -16,6 +16,131 @@ from math import ceil, floor, inf, nan
 from numpy import argsort
 from functools import partial
 from typing import Union
+
+class SettingsWindow(QWidget):
+    """Class for the window for settings."""
+
+    def __init__(self,mainwindow:'MainWindow'):
+        super().__init__()
+        
+        self.setWindowIcon(QIcon(ICON))
+        layout = QVBoxLayout()
+        self.setWindowTitle('Settings')
+        self.setLayout(layout)
+        self.mainwindow = mainwindow
+
+        # Groups
+        self.group_label = QLabel()
+        self.group_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.group_label.setText('Groups')
+
+        self.group_boxes = []
+        for i in range(1,10):
+            lineedit = QLineEdit()
+            lineedit.setFixedHeight(30)
+            lineedit.setText(io.GROUP_NAMES[i])
+            self.group_boxes.append(lineedit)
+
+        self.group_layout = QHBoxLayout()
+        for box in self.group_boxes: self.group_layout.addWidget(box)
+
+        # Max marks per group
+        self.max_label = QLabel()
+        self.max_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.max_label.setText('Max marks per group')
+
+        self.max_boxes = []
+        for i in range(0,9):
+            spinbox = QSpinBox()
+            spinbox.setSpecialValueText('-')
+            spinbox.setFixedHeight(30)
+            spinbox.setMaximum(9)
+            value:str = io.GROUP_MAX[i]
+            if value.isnumeric(): spinbox.setValue(int(value))
+            spinbox.valueChanged.connect(self.update_config)
+            self.max_boxes.append(spinbox)
+
+        self.max_layout = QHBoxLayout()
+        for box in self.max_boxes: self.max_layout.addWidget(box)
+
+        # Categories
+        self.category_label = QLabel()
+        self.category_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.category_label.setText('Categories')
+
+        self.category_boxes = []
+        for i in range(1,6):
+            lineedit = QLineEdit()
+            lineedit.setFixedHeight(30)
+            lineedit.setText(io.CATEGORY_NAMES[i])
+            self.category_boxes.append(lineedit)
+
+        self.category_layout = QHBoxLayout()
+        for box in self.category_boxes: self.category_layout.addWidget(box)
+
+        # Options
+        self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
+        self.randomize_box = QCheckBox(text='Randomize order of images', parent=self)
+
+        # Main layout
+        layout.addWidget(self.group_label)
+        layout.addLayout(self.group_layout)
+        layout.addWidget(self.max_label)
+        layout.addLayout(self.max_layout)
+        layout.addWidget(QHLine())
+        layout.addWidget(self.category_label)
+        layout.addLayout(self.category_layout)
+        layout.addWidget(QHLine())
+        layout.addWidget(self.focus_box)
+        layout.addWidget(self.randomize_box)
+        layout.addWidget(QHLine())
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setFixedWidth(int(SCREEN_WIDTH/3))
+        self.setFixedHeight(layout.sizeHint().height())
+
+        # Set position of window
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft())
+
+    def show(self):
+        super().show()
+        self.activateWindow()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Return:
+            self.update_config()
+            for box in self.group_boxes: box.clearFocus()
+            for box in self.max_boxes: box.clearFocus()
+            for box in self.category_boxes: box.clearFocus()
+
+        return super().keyPressEvent(event)
+    
+    def closeEvent(self, a0):
+        self.update_config()
+        return super().closeEvent(a0)
+    
+    def update_config(self):
+        group_names_old = io.GROUP_NAMES.copy()
+
+        # Get the new settings from the boxes
+        io.GROUP_NAMES = ['None'] + [box.text() if box.text() != '' else i for i,box in enumerate(self.group_boxes)]
+        io.GROUP_MAX = [str(box.value()) if box.value() != 0 else 'None' for box in self.max_boxes]
+        io.CATEGORY_NAMES = ['None'] + [box.text() if box.text() != '' else i for i,box in enumerate(self.category_boxes)]
+
+        for i, box in enumerate(self.mainwindow.category_boxes): box.setText(io.CATEGORY_NAMES[i+1])
+
+        # Update mark labels that haven't been changed
+        for mark in self.mainwindow.image.marks:
+            if mark.label.lineedit.text() in group_names_old:
+                mark.label.lineedit.setText(io.GROUP_NAMES[mark.g])
+
+        # Update text in the instructions window 
+        self.mainwindow.instructions_window.update_text()
+
+        # Save the new settings into the config file
+        io.update_config()
 
 class BlurWindow(QWidget):
     """Class for the blur adjustment window."""
@@ -107,7 +232,7 @@ class FrameWindow(QWidget):
 class InstructionsWindow(QWidget):
     """Class for the window that displays the instructions and keymappings."""
 
-    def __init__(self,groupNames):
+    def __init__(self):
         super().__init__()
         self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
@@ -124,10 +249,20 @@ class InstructionsWindow(QWidget):
         self.label.setFont(font)
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        
+
+        self.update_text()
+
+        # Add scroll area to layout, get size of layout
+        layout.addWidget(self.scroll_area)
+        layout_width, layout_height = layout.sizeHint().width(), layout.sizeHint().height()
+
+        # Resize window according to size of layout
+        self.resize(int(layout_width*1.1),int(layout_height*1.1))
+
+    def update_text(self):
         # Lists for keybindings
         actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Exit', 'Help']
-        group_list = [f'Group \"{group}\"' for group in groupNames[1:]]
+        group_list = [f'Group \"{group}\"' for group in io.GROUP_NAMES[1:]]
         actions_list = group_list + actions_list
         buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'Ctrl+Q', 'F1', ]
 
@@ -146,42 +281,12 @@ class InstructionsWindow(QWidget):
         for i in range(0,len(actions_list)):
             text += f'{actions_list[i]:.<{actions_width}}{buttons_list[i]:.>{buttons_width}}\n'
         self.label.setText(text)
-        text.rsplit('\n', 1)[0]
-
-        # Add scroll area to layout, get size of layout
-        layout.addWidget(self.scroll_area)
-        layout_width, layout_height = layout.sizeHint().width(), layout.sizeHint().height()
-
-        # Resize window according to size of layout
-        self.resize(int(layout_width*1.1),int(layout_height*1.1))
 
     def show(self):
         """Shows the window and moves it to the front."""
 
         super().show()
         self.activateWindow()
-
-class StartupWindow(QInputDialog):
-    """Class for the startup window."""
-
-    def __init__(self):
-        super().__init__()
-        self.setWindowIcon(QIcon(ICON))
-        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
-        qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
-        self.move(qt_rectangle.topLeft())
-
-    def getUser(self) -> None:
-        """Makes a window for savename input."""
-
-        # Make popup to get name
-        text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
-
-        if not OK: sys.exit()
-        elif not text.isalnum(): raise io.SAVE_ALPHANUM_ERR 
-        else: return text
 
 class MainWindow(QMainWindow):
     """Class for the main window."""
@@ -209,6 +314,10 @@ class MainWindow(QMainWindow):
         self.frame_window = FrameWindow()
         self.frame_window.slider.valueChanged.connect(self.image.seek)
         self.frame_window.slider.setMaximum(self.image.n_frames-1)
+
+        self.settings_window = SettingsWindow(self)
+        self.settings_window.focus_box.stateChanged.connect(partial(setattr,self,'cursor_focus'))
+        self.settings_window.randomize_box.stateChanged.connect(self.toggle_randomize)
 
         # Set max blur based on size of image
         self.blur_max = int((self.image.height+self.image.width)/20)
@@ -360,20 +469,11 @@ class MainWindow(QMainWindow):
 
         ### Randomize image order menu
         edit_menu.addSeparator()
-        randomize_action = QAction('&Randomize', self)
-        randomize_action.setShortcuts(['Ctrl+r'])
-        randomize_action.setToolTip('Randomize the order in which images appear')
-        randomize_action.setCheckable(True)
-        randomize_action.setChecked(io.RANDOMIZE_ORDER)
-        randomize_action.triggered.connect(self.toggle_randomize)
-        edit_menu.addAction(randomize_action)
-
-        ### Focus cursor menu
-        cursor_focus_action = QAction('&Focus cursor', self)
-        cursor_focus_action.setToolTip('Middle-click to focus also centers the cursor')
-        cursor_focus_action.setCheckable(True)
-        cursor_focus_action.triggered.connect(partial(setattr,self,'cursor_focus'))
-        edit_menu.addAction(cursor_focus_action)
+        settings_action = QAction('&Settings...', self)
+        settings_action.setShortcuts(['Ctrl+,'])
+        settings_action.setToolTip('Randomize the order in which images appear')
+        settings_action.triggered.connect(self.settings_window.show)
+        edit_menu.addAction(settings_action)
 
         ## View menu
         view_menu = menubar.addMenu("&View")
@@ -462,7 +562,7 @@ class MainWindow(QMainWindow):
         help_menu = menubar.addMenu('&Help')
 
         ### Instructions and Keymapping window
-        self.instructions_window = InstructionsWindow(io.GROUP_NAMES)
+        self.instructions_window = InstructionsWindow()
         instructions_menu = QAction('&Instructions', self)
         instructions_menu.setShortcuts(['F1'])
         instructions_menu.triggered.connect(self.instructions_window.show)
@@ -505,11 +605,11 @@ class MainWindow(QMainWindow):
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
         except:
-            image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')
+            io.IMAGE_DIR = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')
             
-            if image_dir == '': sys.exit()
+            if io.IMAGE_DIR == '': sys.exit()
 
-            io.update_config(image_dir=image_dir)
+            io.update_config()
             self.images, self.idx = io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seek(self.frame)
@@ -670,9 +770,9 @@ class MainWindow(QMainWindow):
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
 
-        image_dir = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", io.IMAGE_DIR),'')
-        if (image_dir == ''): return
-        io.update_config(image_dir=image_dir)
+        io.IMAGE_DIR = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", io.IMAGE_DIR),'')
+        if (io.IMAGE_DIR == ''): return
+        io.update_config()
         self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
         
@@ -747,7 +847,7 @@ class MainWindow(QMainWindow):
 
         if len(self.image.marks) >= 1: self.image.marks[-1].label.enter()
 
-        if self.inview(x,y):
+        if self.inview(x,y) and len(marks_in_group) < limit:            
             mark = self.image_scene.mark(x,y,group=group)
             
             if (limit == 1) and (len(marks_in_group) == 1):
@@ -756,8 +856,7 @@ class MainWindow(QMainWindow):
                 self.image.marks.remove(prev_mark)
                 self.image.marks.append(mark)
 
-            elif len(marks_in_group) < limit:
-                self.image.marks.append(mark)
+            else: self.image.marks.append(mark)
 
             io.save(self.date,self.images)
             io.savefav(self.date,self.images,self.favorite_list)
@@ -803,7 +902,7 @@ class MainWindow(QMainWindow):
 
         delta = scene_center.toPoint() - pix_pos
         self.image_view.translate(delta.x(),delta.y())
-
+        
         if self.cursor_focus:
             global_center = self.image_view.mapToGlobal(center)
             self.cursor().setPos(global_center)
@@ -969,7 +1068,8 @@ class MainWindow(QMainWindow):
     def toggle_randomize(self,state):
         """Updates the config file for randomization and reloads unseen images."""
         
-        io.update_config(randomize_order=state)
+        io.RANDOMIZE_ORDER = bool(state)
+        io.update_config()
 
         names = [img.name for img in self.images]
 
