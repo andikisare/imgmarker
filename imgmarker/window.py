@@ -81,6 +81,7 @@ class SettingsWindow(QWidget):
         # Options
         self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
         self.randomize_box = QCheckBox(text='Randomize order of images', parent=self)
+        self.randomize_box.setChecked(io.RANDOMIZE_ORDER)
 
         # Main layout
         layout.addWidget(self.group_label)
@@ -119,6 +120,7 @@ class SettingsWindow(QWidget):
     
     def closeEvent(self, a0):
         self.update_config()
+        self.mainwindow.save()
         return super().closeEvent(a0)
     
     def update_config(self):
@@ -128,6 +130,7 @@ class SettingsWindow(QWidget):
         io.GROUP_NAMES = ['None'] + [box.text() if box.text() != '' else i for i,box in enumerate(self.group_boxes)]
         io.GROUP_MAX = [str(box.value()) if box.value() != 0 else 'None' for box in self.max_boxes]
         io.CATEGORY_NAMES = ['None'] + [box.text() if box.text() != '' else i for i,box in enumerate(self.category_boxes)]
+        io.RANDOMIZE_ORDER = self.randomize_box.isChecked()
 
         for i, box in enumerate(self.mainwindow.category_boxes): box.setText(io.CATEGORY_NAMES[i+1])
 
@@ -605,7 +608,7 @@ class MainWindow(QMainWindow):
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
         except:
-            io.IMAGE_DIR = os.path.join(QFileDialog.getExistingDirectory(self, "Open correct image directory", io.IMAGE_DIR),'')
+            io.IMAGE_DIR = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", io.IMAGE_DIR),'')
             
             if io.IMAGE_DIR == '': sys.exit()
 
@@ -744,12 +747,17 @@ class MainWindow(QMainWindow):
         sys.exit()
 
     # === Actions ===
+    def save(self) -> None:
+        """Method for saving image data"""
+        io.save(self.date,self.images)
+        io.savefav(self.date,self.images,self.favorite_list)
+
     def open(self) -> None:
         """Method for the open save directory dialog."""
 
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
-        save_dir = dialog.getExistingDirectory(self, 'Open save directory', os.getcwd())
+        save_dir = dialog.getExistingDirectory(self, 'Open save directory', io.HOME)
         if (save_dir == ''): return
         
         self.username = str(os.path.split(save_dir)[-1])
@@ -757,7 +765,7 @@ class MainWindow(QMainWindow):
 
         io.SAVE_DIR = save_dir
         io.SAVENAME = self.username
-        io.config()
+        io.read_config()
         
         self.__init_data__()
         self.update_images()
@@ -785,7 +793,7 @@ class MainWindow(QMainWindow):
     def open_ext_marks(self):
         """Method for opening an external marks file."""
 
-        ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', os.getcwd(), '*.txt')[0]
+        ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', io.HOME, '*.txt')[0]
         if (ext_mark_file == ''): return
         
         labels, alphas, betas, coord_sys = io.load_ext_marks(ext_mark_file)
@@ -829,8 +837,7 @@ class MainWindow(QMainWindow):
             self.image.categories.append(i)
         elif (i in self.image.categories):
             self.image.categories.remove(i)
-        io.save(self.date,self.images)
-        io.savefav(self.date,self.images,self.favorite_list)
+        self.save()
 
     def mark(self, group:int=0) -> None:
         """Add a mark to the current image."""
@@ -858,8 +865,7 @@ class MainWindow(QMainWindow):
 
             else: self.image.marks.append(mark)
 
-            io.save(self.date,self.images)
-            io.savefav(self.date,self.images,self.favorite_list)
+            self.save()
         
         if len(self.image.marks) == 0:
             self.marks_action.setEnabled(False)
@@ -890,8 +896,7 @@ class MainWindow(QMainWindow):
 
         self.update_comments()
         self.comment_box.clearFocus()
-        io.save(self.date,self.images)
-        io.savefav(self.date,self.images,self.favorite_list)
+        self.save()
 
     def center_cursor(self):
         """Center on the cursor."""
@@ -1020,8 +1025,7 @@ class MainWindow(QMainWindow):
         if not comment: comment = 'None'
 
         self.image.comment = comment
-        io.save(self.date,self.images)
-        io.savefav(self.date,self.images,self.favorite_list)
+        self.save()
 
     def get_comment(self):
         """If the image has a comment, sets the text of the comment box to the image's comment."""
@@ -1062,8 +1066,7 @@ class MainWindow(QMainWindow):
             self.marks_action.setEnabled(False)
             self.labels_action.setEnabled(False)
             
-        io.save(self.date,self.images)
-        io.savefav(self.date,self.images,self.favorite_list)
+        self.save()
 
     def toggle_randomize(self,state):
         """Updates the config file for randomization and reloads unseen images."""

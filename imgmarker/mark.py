@@ -1,12 +1,11 @@
 from .pyqt import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
 from math import nan, ceil
-from .io import GROUP_NAMES
+from . import io
 from typing import TYPE_CHECKING, overload
 
 if TYPE_CHECKING:
     from imgmarker.image import Image
-    try: from PyQt6.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
-    except: from PyQt5.QtWidgets import QAbstractGraphicsShapeItem as QAbstractItem
+    from pyqt import QAbstractGraphicsShapeItem as QAbstractItem
 
 COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
            QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
@@ -112,7 +111,7 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
         if not 'group' in keys: self.g = 0
         else: self.g:int = kwargs['group']
 
-        if not 'text' in keys: self.text = GROUP_NAMES[self.g]
+        if not 'text' in keys: self.text = io.GROUP_NAMES[self.g]
         else: self.text:str = kwargs['text']
 
         if not 'shape' in keys: shape = QGraphicsEllipseItem
