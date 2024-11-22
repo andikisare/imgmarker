@@ -1,9 +1,8 @@
 import os
 import numpy as np
-from . import ICON
 from . import mark as _mark
 from . import image
-from .pyqt import Qt, QIcon, QApplication, QInputDialog
+from .pyqt import Qt, QFileDialog
 from PIL.TiffTags import TAGS
 from astropy.wcs import WCS
 from astropy.io import fits
@@ -13,60 +12,21 @@ import glob as _glob
 from math import nan, isnan
 import warnings
 from typing import Tuple, List
-from platform import system
 from functools import lru_cache
+from getpass import getuser
 
-SAVE_ALPHANUM_ERR = ValueError('Name of save folder must contain only letters or numbers.')
-SYSTEM = system()
 HOME = os.path.expanduser('~')
-
-if SYSTEM == 'Windows':
-    import ctypes
-    from ctypes.wintypes import MAX_PATH
-
-    dll = ctypes.windll.shell32
-    buf = ctypes.create_unicode_buffer(MAX_PATH + 1)
-    dll.SHGetSpecialFolderPathW(None, buf, 0x0005, False)
-
-    OUT_DIR = os.path.join(buf.value,'Image Marker')
-
-if SYSTEM == 'Linux':
-    OUT_DIR = os.path.join(HOME,'imgmarker')
-
-if SYSTEM == 'Darwin': # MAC OS
-    OUT_DIR = os.path.join(HOME,'Image Marker')
-
-class StartupWindow(QInputDialog):
-    """Class for the startup window."""
-
-    def __init__(self):
-        super().__init__()
-        self.setWindowIcon(QIcon(ICON))
-        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
-        qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
-        self.move(qt_rectangle.topLeft())
-
-    def getUser(self) -> None:
-        """Makes a window for savename input."""
-
-        # Make popup to get name
-        text, OK = self.getText(self,"Startup", "Enter a username (no caps, no space, e.g. ryanwalker)")
-
-        if not OK: sys.exit()
-        elif not text.isalnum(): raise SAVE_ALPHANUM_ERR 
-        else: return text
         
 @lru_cache(maxsize=1)
 def getsave() -> str:
-    """Returns the savename from `StartupWindow`."""
-    return StartupWindow().getUser()
+    """Returns selected save directory."""
+    save_dir = QFileDialog.getExistingDirectory(caption = "Select save directory", directory = HOME)
+    if save_dir == '': sys.exit()
+    return save_dir
 
-SAVENAME = getsave()
-SAVE_DIR = os.path.join(OUT_DIR,SAVENAME)
-if not os.path.exists(SAVE_DIR): os.makedirs(SAVE_DIR)
-CONFIG = os.path.join(SAVE_DIR,'config.txt')
+USER = getuser()
+SAVE_DIR = getsave()
+CONFIG = os.path.join(SAVE_DIR,f'{USER}_config.txt')
 
 def pathtoformat(path:str):
     ext = path.split('.')[-1].casefold()
@@ -95,7 +55,6 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
     group_max: list[int]
         A list containing the maximum allowed number of marks for each group.
     """
-    
 
     # If the config doesn't exist, create one
     if not os.path.exists(CONFIG):
@@ -220,10 +179,6 @@ def parse_wcs(img:image.Image) -> WCS:
         return wcs
     except: return None
 
-def check_save() -> bool:
-    """Checks if savename is empty."""
-    return (SAVENAME != 'None') and (SAVENAME != '')
-
 def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
     """
     Creates a file, \'favorites.txt\', in the save directory containing all images that were favorited.
@@ -254,14 +209,14 @@ def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
     category_lengths = []
     comment_lengths = []
 
-    fav_out_path = os.path.join(SAVE_DIR, 'favorites.txt')
+    fav_out_path = os.path.join(SAVE_DIR, f'{USER}_favorites.txt')
 
     # Remove the file if it exists
     if os.path.exists(fav_out_path): os.remove(fav_out_path)
     
     fav_images = [img for img in images if img.name in fav_list]
 
-    if check_save() and (len(fav_list) != 0):
+    if len(fav_list) != 0:
         for img in fav_images:
             if img.seen:
                 name = img.name
@@ -338,14 +293,14 @@ def save(date,images:List['image.Image']) -> None:
     category_lengths = []
     comment_lengths = []
 
-    mark_out_path = os.path.join(SAVE_DIR,'marks.txt')
-    images_out_path = os.path.join(SAVE_DIR,'images.txt')
+    mark_out_path = os.path.join(SAVE_DIR,f'{USER}_marks.txt')
+    images_out_path = os.path.join(SAVE_DIR,f'{USER}_images.txt')
 
     # Create the file
     if os.path.exists(mark_out_path): os.remove(mark_out_path)
     if os.path.exists(images_out_path): os.remove(images_out_path)
 
-    if check_save() and images:
+    if images:
         for img in images:
             if img.seen:
                 name = img.name
@@ -441,7 +396,7 @@ def save(date,images:List['image.Image']) -> None:
 
 def loadfav() -> List[str]:
     """
-    Loads 'favorites.txt' from the save directory.
+    Loads f'{USER}_favorites.txt' from the save directory.
 
     Returns
     ----------
@@ -449,7 +404,7 @@ def loadfav() -> List[str]:
         A list of strings containing the names of the files (images) that were saved.
     """
 
-    fav_out_path = os.path.join(SAVE_DIR, 'favorites.txt')
+    fav_out_path = os.path.join(SAVE_DIR, f'{USER}_favorites.txt')
     
     if os.path.exists(fav_out_path):
         fav_list = [ l.split('|')[1].strip() for l in open(fav_out_path) ][1:]
@@ -462,18 +417,13 @@ def load() -> List[image.Image]:
     Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.Image`
     objects.
 
-    Parameters
-    ----------
-    savename: str
-        A string containing the savename/username.
-
     Returns
     ----------
     images: list[`imgmarker.image.Image`]
     """
 
-    mark_out_path = os.path.join(SAVE_DIR,'marks.txt')
-    images_out_path = os.path.join(SAVE_DIR,'images.txt')
+    mark_out_path = os.path.join(SAVE_DIR,f'{USER}_marks.txt')
+    images_out_path = os.path.join(SAVE_DIR,f'{USER}_images.txt')
     images:List[image.Image] = []
     
     # Get list of images from images.txt

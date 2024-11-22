@@ -294,7 +294,7 @@ class InstructionsWindow(QWidget):
 class MainWindow(QMainWindow):
     """Class for the main window."""
 
-    def __init__(self, username:str):
+    def __init__(self):
         super().__init__()
         self.setWindowTitle("Image Marker")
         self.setWindowIcon(QIcon(ICON))
@@ -304,7 +304,6 @@ class MainWindow(QMainWindow):
         self.frame = 0
     
         # Initialize data
-        self.username = username
         self.date = dt.datetime.now(dt.timezone.utc).date().isoformat()
         self.order = []
         self.__init_data__()
@@ -608,7 +607,7 @@ class MainWindow(QMainWindow):
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
         except:
-            io.IMAGE_DIR = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", io.IMAGE_DIR),'')
+            io.IMAGE_DIR = QFileDialog.getExistingDirectory(self, "Open image directory", io.IMAGE_DIR)
             
             if io.IMAGE_DIR == '': sys.exit()
 
@@ -758,13 +757,9 @@ class MainWindow(QMainWindow):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)
         save_dir = dialog.getExistingDirectory(self, 'Open save directory', io.HOME)
-        if (save_dir == ''): return
+        if save_dir == '': return
         
-        self.username = str(os.path.split(save_dir)[-1])
-        if not self.username.isalnum(): raise io.SAVE_ALPHANUM_ERR
-
         io.SAVE_DIR = save_dir
-        io.SAVENAME = self.username
         io.read_config()
         
         self.__init_data__()
