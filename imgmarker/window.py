@@ -860,6 +860,19 @@ class MainWindow(QMainWindow):
 
             else: self.image.marks.append(mark)
 
+            marks_enabled = self.marks_action.isChecked()
+            labels_enabled = self.labels_action.isChecked()
+
+            if labels_enabled: mark.label.show()
+            else: mark.label.hide()
+
+            if marks_enabled: 
+                mark.show()
+                if labels_enabled: mark.label.show()
+            else: 
+                mark.hide()
+                mark.label.hide()
+
             self.save()
         
         if len(self.image.marks) == 0:
@@ -1094,22 +1107,26 @@ class MainWindow(QMainWindow):
     def toggle_marks(self):
         """Toggles whether or not marks are shown."""
 
-        state = self.marks_action.isChecked()
-        for item in self.image.marks:
-            if state: 
-                item.show()
-                if self.labels_action.isChecked(): item.label.show()
+        marks_enabled = self.marks_action.isChecked()
+        labels_enabled = self.labels_action.isChecked()
+
+        for mark in self.image.marks:
+            if marks_enabled: 
+                mark.show()
+                if labels_enabled: mark.label.show()
             else: 
-                item.hide()
-                item.label.hide()
+                mark.hide()
+                mark.label.hide()     
 
     def toggle_mark_labels(self):
         """Toggles whether or not mark labels are shown."""
 
-        state = self.labels_action.isChecked()
-        for item in self.image.marks:
-            if state: item.label.show()
-            else: item.label.hide()
+        marks_enabled = self.marks_action.isChecked()
+        labels_enabled = self.labels_action.isChecked()
+
+        for mark in self.image.marks:
+            if marks_enabled and labels_enabled: mark.label.show()
+            else: mark.label.hide()
 
     # === Utils ===
 

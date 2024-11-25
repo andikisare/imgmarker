@@ -66,9 +66,9 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
             randomize_order = True
 
             config.write(f'image_dir = {image_dir}\n')
-            config.write(f'groups = {','.join(group_names)}\n')
-            config.write(f'categories = {','.join(category_names)}\n')
-            config.write(f'group_max = {','.join(group_max)}\n')
+            config.write(f"groups = {','.join(group_names)}\n")
+            config.write(f"categories = {','.join(category_names)}\n")
+            config.write(f"group_max = {','.join(group_max)}\n")
             config.write(f'randomize_order = {randomize_order}')  
 
     else:

@@ -4,15 +4,14 @@ import os
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 def _resource_path(rel_path):
-    if hasattr(sys,'_MEIPASS'): base_path = sys._MEIPASS
+    if hasattr(sys,'_MEIPASS'): 
+        base_path = sys._MEIPASS
     else: base_path = MODULE_PATH
     return os.path.join(base_path, rel_path)
 
 if __name__ == '__main__' and __package__ is None:
-    parent, top = MODULE_PATH, MODULE_PATH.rsplit('imgmarker', 1)[0]
+    top = os.path.abspath(os.path.join(MODULE_PATH, '..'))
     sys.path.append(str(top))
-    try: sys.path.remove(str(parent))
-    except ValueError: pass
         
     import imgmarker
     __package__ = 'imgmarker'
