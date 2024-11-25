@@ -1,10 +1,10 @@
 from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QLabel, QScrollArea, QGraphicsView,
                     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
-                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox)
+                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox, PYQT_VERSION_STR)
 
 from .mark import Mark
-from . import ICON, HEART_SOLID, HEART_CLEAR, SCREEN_WIDTH, SCREEN_HEIGHT
+from . import ICON, HEART_SOLID, HEART_CLEAR, SCREEN_WIDTH, SCREEN_HEIGHT, __version__, __license__
 from . import io
 from . import image
 from .widget import QHLine, PosWidget
@@ -291,6 +291,60 @@ class InstructionsWindow(QWidget):
         super().show()
         self.activateWindow()
 
+class AboutWindow(QWidget):
+    """Class for the window that displays information about Image Marker."""
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowIcon(QIcon(ICON))
+        layout = QVBoxLayout()
+        self.setWindowTitle('About')
+        self.setLayout(layout)
+
+        # Create text
+        font = QFont('Courier')
+        self.layouts = [QHBoxLayout(),QHBoxLayout(),QHBoxLayout(),QHBoxLayout()]
+        params = ['Version','PyQt Version','License','Authors']
+        labels = [QLabel(f'<div>{__version__}</div>'),
+                  QLabel(f'<div>{PYQT_VERSION_STR}</div>'),
+                  QLabel(f'<div><a href="https://opensource.org/license/mit">{__license__}</a></div>'),
+                  QLabel(f'<div>Andi Kisare and Ryan Walker</div>')]
+
+        for label, param in zip(labels, params):
+            param_layout = QHBoxLayout()
+
+            param_label = QLabel(f'{param}:')
+            param_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            param_label.setFont(font)
+
+            label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            label.setFont(font)
+            if param != 'License': label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            else: label.setOpenExternalLinks(True)
+
+            param_layout.addWidget(param_label)
+            param_layout.addWidget(label)
+            param_layout.addStretch(1)
+            layout.addLayout(param_layout)
+
+        # Add scroll area to layout, get size of layout
+        layout_width, layout_height = layout.sizeHint().width(), layout.sizeHint().height()
+
+        # Resize window according to size of layout
+        self.setFixedSize(int(layout_width*1.1),int(layout_height*1.1))       
+
+        # Set position of window
+        qt_rectangle = self.frameGeometry()
+        center_point = QApplication.primaryScreen().geometry().center()
+        qt_rectangle.moveCenter(center_point)
+        self.move(qt_rectangle.topLeft()) 
+
+    def show(self):
+        """Shows the window and moves it to the front."""
+
+        super().show()
+        self.activateWindow()
+
 class MainWindow(QMainWindow):
     """Class for the main window."""
 
@@ -320,6 +374,9 @@ class MainWindow(QMainWindow):
         self.settings_window = SettingsWindow(self)
         self.settings_window.focus_box.stateChanged.connect(partial(setattr,self,'cursor_focus'))
         self.settings_window.randomize_box.stateChanged.connect(self.toggle_randomize)
+
+        self.instructions_window = InstructionsWindow()
+        self.about_window = AboutWindow()
 
         # Set max blur based on size of image
         self.blur_max = int((self.image.height+self.image.width)/20)
@@ -563,12 +620,16 @@ class MainWindow(QMainWindow):
         ## Help menu
         help_menu = menubar.addMenu('&Help')
 
-        ### Instructions and Keymapping window
-        self.instructions_window = InstructionsWindow()
+        ### Instructions window
         instructions_menu = QAction('&Instructions', self)
         instructions_menu.setShortcuts(['F1'])
         instructions_menu.triggered.connect(self.instructions_window.show)
         help_menu.addAction(instructions_menu)
+
+        ### About window
+        about_menu = QAction('&About', self)
+        about_menu.triggered.connect(self.about_window.show)
+        help_menu.addAction(about_menu)
         
         # Resize and center MainWindow; move instructions off to the right
         self.resize(int(SCREEN_HEIGHT*0.8),int(SCREEN_HEIGHT*0.8))
