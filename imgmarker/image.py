@@ -9,6 +9,7 @@ from math import nan
 import numpy as np
 from typing import overload, Union, List, Dict, TYPE_CHECKING
 from astropy.visualization import ZScaleInterval, MinMaxInterval, BaseInterval, BaseStretch, ManualInterval, LinearStretch, LogStretch
+from astropy.io import fits
 
 if TYPE_CHECKING:
     from astropy.wcs import WCS
@@ -98,11 +99,11 @@ class Image(QGraphicsPixmapItem):
 
     def load(self) -> PIL.Image.Image:
         if self.format == 'FITS':
-                with PIL.Image.open(self.path) as f:
-                    arr = np.array(f).byteswap().astype(np.uint16)
-                file = PIL.Image.fromarray(arr).convert('RGB')
-                file.format = 'FITS'
-                file.filename = self.path
+            with fits.open(self.path) as f:
+                arr = np.flipud(f[0].data).byteswap()
+            file = PIL.Image.fromarray(arr, mode='F').convert('RGB')
+            file.format = 'FITS'
+            file.filename = self.path
 
         else: file = PIL.Image.open(self.path)
 
