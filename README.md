@@ -19,7 +19,7 @@ It is designed to be configurable for multiple purposes using the configuration 
 
 ## Installation instructions
 
-### Using pip on Linux:
+### Using pip:
 #### *It is recommended that you create a python environment for `imgmarker`. Installing `imgmarker` automatically installs Python dependencies in the environment.*
 
 In the Python environment of your choice, run:
