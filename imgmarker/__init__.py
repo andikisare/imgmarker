@@ -34,7 +34,7 @@ def main():
     window = MainWindow()
     window.show()
     window.fitview()
-    app.exec()
+    sys.exit(app.exec())
 
 if __name__ == '__main__': 
     main()

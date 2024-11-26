@@ -801,10 +801,13 @@ class MainWindow(QMainWindow):
             self.pos_widget.dec_text.setText('')
 
     def closeEvent(self, a0):
-        """Overridden Qt default closeEvent function to force saving comments before closing."""
-
         self.update_comments()
-        sys.exit()
+        self.about_window.close()
+        self.blur_window.close()
+        self.frame_window.close()
+        self.instructions_window.close()
+        self.settings_window.close()
+        return super().closeEvent(a0)
 
     # === Actions ===
     def save(self) -> None:
