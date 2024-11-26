@@ -913,7 +913,7 @@ class MainWindow(QMainWindow):
 
         if len(self.image.marks) >= 1: self.image.marks[-1].label.enter()
 
-        if self.inview(x,y) and len(marks_in_group) < limit:            
+        if self.inview(x,y) and ((len(marks_in_group) < limit) or limit == 1):            
             mark = self.image_scene.mark(x,y,group=group)
             
             if (limit == 1) and (len(marks_in_group) == 1):
