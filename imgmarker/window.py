@@ -161,7 +161,7 @@ class BlurWindow(QWidget):
         self.slider.setTickInterval(1)
         self.slider.setSingleStep(1)
         self.slider.setOrientation(Qt.Orientation.Horizontal)
-        self.slider.sliderMoved.connect(self.slider_moved) 
+        self.slider.valueChanged.connect(self.slider_moved) 
         self.slider.setPageStep(0)
 
         self.value_label = QLabel()
@@ -1066,7 +1066,7 @@ class MainWindow(QMainWindow):
             self.pos_widget.dec_text.show()
              
         # Update sliders
-        self.blur_window.slider.setValue(0)
+        self.blur_window.slider.setValue(int(self.image.r*10))
         self.frame_window.slider.setValue(self.frame)
 
         self.blur_window.slider.sliderReleased.connect(partial(self.image.blur,self.blur_window.slider.sliderPosition))
