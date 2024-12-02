@@ -59,7 +59,7 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
     # If the config doesn't exist, create one
     if not os.path.exists(CONFIG):
         with open(CONFIG,'w') as config:
-            image_dir = HOME
+            image_dir = None
             group_names = ['None','1','2','3','4','5','6','7','8','9']
             category_names = ['None','1','2','3','4','5']
             group_max = ['None','None','None','None','None','None','None','None','None']

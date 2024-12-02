@@ -668,7 +668,7 @@ class MainWindow(QMainWindow):
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
         except:
-            io.IMAGE_DIR = QFileDialog.getExistingDirectory(self, "Open image directory", io.IMAGE_DIR)
+            io.IMAGE_DIR = QFileDialog.getExistingDirectory(self, "Open image directory", io.HOME)
             
             if io.IMAGE_DIR == '': sys.exit()
 
@@ -837,8 +837,8 @@ class MainWindow(QMainWindow):
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
 
-        io.IMAGE_DIR = os.path.join(QFileDialog.getExistingDirectory(self, "Open image directory", io.IMAGE_DIR),'')
-        if (io.IMAGE_DIR == ''): return
+        io.IMAGE_DIR = QFileDialog.getExistingDirectory(self, "Open image directory", io.HOME)
+        if io.IMAGE_DIR == '': return
         io.update_config()
         self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
