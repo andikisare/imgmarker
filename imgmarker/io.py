@@ -326,6 +326,7 @@ def save(date,images:List['image.Image']) -> None:
     img_dec_lengths = []
     category_lengths = []
     comment_lengths = []
+    label_lengths = []
 
     mark_out_path = os.path.join(SAVE_DIR,f'{USER}_marks.txt')
     images_out_path = os.path.join(SAVE_DIR,f'{USER}_images.txt')
@@ -352,16 +353,19 @@ def save(date,images:List['image.Image']) -> None:
                 for mark in mark_list:
                     if mark != None:
                         group_name = GROUP_NAMES[mark.g]
+                        if mark.text == group_name: label = 'None'
+                        else: label = mark.text
                         ra, dec = mark.wcs_center
                         img_ra, img_dec = img.wcs_center
                         x, y = mark.center.x(), mark.center.y()
                     else:
                         group_name = 'None'
+                        label = 'None'
                         ra, dec = nan, nan
                         img_ra, img_dec = img.wcs_center
                         x, y = nan, nan
                         
-                    ml = [date,name,group_name,x,y,ra,dec]
+                    ml = [date,name,group_name,label,x,y,ra,dec]
                     mark_lines.append(ml)
 
                     il = [date,name,img_ra,img_dec,categories,comment]
@@ -379,25 +383,27 @@ def save(date,images:List['image.Image']) -> None:
                     img_dec_lengths.append(len(f'{img_dec:.8f}'))
                     category_lengths.append(len(categories))
                     comment_lengths.append(len(comment))
+                    label_lengths.append(len(label))
 
     # Print out lines if there are lines to print
     if len(mark_lines) != 0:
         # Dynamically adjust column widths
         nameln = np.max(name_lengths) + 2
         groupln = max(np.max(group_lengths), 5) + 2
+        labelln = max(np.max(label_lengths), 5) + 2
         xln = max(np.max(x_lengths), 1) + 2
         yln = max(np.max(y_lengths), 1) + 2
         raln = max(np.max(ra_lengths), 2) + 2
         decln = max(np.max(dec_lengths), 3) + 2
         dateln = 12
 
-        ml_fmt = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
+        ml_fmt = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',f'^{labelln}',
                   f'^{xln}', f'^{yln}', f'^{raln}.8f', f'^{decln}.8f' ]
         
-        ml_fmt_nofloat = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',
+        ml_fmt_nofloat = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',f'^{labelln}',
                           f'^{xln}', f'^{yln}', f'^{raln}', f'^{decln}' ]
         
-        header = ['date','image','group','x','y','RA','DEC']
+        header = ['date','image','group','label','x','y','RA','DEC']
         header = ''.join(f'{h:{ml_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
         
         with open(mark_out_path,"a") as mark_out:
@@ -483,12 +489,13 @@ def load() -> List[image.Image]:
         for l in open(mark_out_path):
             if line0: line0 = False
             else:
-                date,name,group,x,y,ra,dec = [i.strip() for i in l.replace('|\n','').split('|')]
+                date,name,group,label,x,y,ra,dec = [i.strip() for i in l.replace('|\n','').split('|')]
 
                 if (name == img.name) and (not isnan(float(x))) and (not isnan(float(y))):
                     group = GROUP_NAMES.index(group)
                     mark_args = (float(x),float(y))
                     mark_kwargs = {'image': img, 'group': group}
+                    if label != 'None': mark_kwargs['text'] = label
                     mark = _mark.Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)
     return images
