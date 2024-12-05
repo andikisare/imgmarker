@@ -560,6 +560,24 @@ class MainWindow(QMainWindow):
         self.labels_action.triggered.connect(self.toggle_mark_labels)
         view_menu.addAction(self.labels_action)
 
+        ### Toggle external marks menu
+        self.ext_marks_action = QAction('&Show external marks', self)
+        self.ext_marks_action.setShortcuts(['Ctrl+Shift+m'])
+        self.ext_marks_action.setCheckable(True)
+        self.ext_marks_action.setChecked(True)
+        self.ext_marks_action.triggered.connect(self.toggle_ext_marks)
+        view_menu.addAction(self.ext_marks_action)
+        self.ext_marks_action.setEnabled(False)
+
+        ### Toggle external mark labels menu
+        self.ext_labels_action = QAction('&Show external mark labels', self)
+        self.ext_labels_action.setShortcuts(['Ctrl+Shift+l'])
+        self.ext_labels_action.setCheckable(True)
+        self.ext_labels_action.setChecked(True)
+        self.ext_labels_action.triggered.connect(self.toggle_ext_mark_labels)
+        view_menu.addAction(self.ext_labels_action)
+        self.ext_labels_action.setEnabled(False)
+
         if len(self.image.marks) == 0:
             self.marks_action.setEnabled(False)
             self.labels_action.setEnabled(False)
@@ -874,6 +892,9 @@ class MainWindow(QMainWindow):
                         img.ext_marks.append(mark)
 
             for mark in self.image.ext_marks: self.image_scene.mark(mark)
+        
+        self.ext_marks_action.setEnabled(True)
+        self.ext_labels_action.setEnabled(True)
 
     def favorite(self,state) -> None:
         """Favorite the current image."""
@@ -1089,6 +1110,8 @@ class MainWindow(QMainWindow):
 
         self.toggle_marks()
         self.toggle_mark_labels()
+        self.toggle_ext_marks()
+        self.toggle_ext_mark_labels()
     
     def update_comments(self):
         """Updates image comment with the contents of the comment box."""
@@ -1191,6 +1214,33 @@ class MainWindow(QMainWindow):
         for mark in self.image.marks:
             if marks_enabled and labels_enabled: mark.label.show()
             else: mark.label.hide()
+
+    def toggle_ext_marks(self):
+        """Toggles whether or not external marks are shown."""
+
+        ext_marks_enabled = self.ext_marks_action.isChecked()
+        ext_labels_enabled = self.ext_labels_action.isChecked()
+
+        for ext_mark in self.image.ext_marks:
+            if ext_marks_enabled:
+                ext_mark.show()
+                if ext_labels_enabled:
+                    ext_mark.label.show()
+            else:
+                ext_mark.hide()
+                ext_mark.label.hide()
+
+    def toggle_ext_mark_labels(self):
+        """Toggles whether or not external mark labels are shown."""
+
+        ext_marks_enabled = self.ext_marks_action.isChecked()
+        ext_labels_enabled = self.ext_labels_action.isChecked()
+
+        for ext_mark in self.image.ext_marks:
+            if ext_marks_enabled and ext_labels_enabled:
+                ext_mark.label.show()
+            else:
+                ext_mark.label.hide()
 
     # === Utils ===
 
