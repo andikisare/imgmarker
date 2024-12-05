@@ -135,9 +135,10 @@ class SettingsWindow(QWidget):
         for i, box in enumerate(self.mainwindow.category_boxes): box.setText(io.CATEGORY_NAMES[i+1])
 
         # Update mark labels that haven't been changed
-        for mark in self.mainwindow.image.marks:
-            if mark.label.lineedit.text() in group_names_old:
-                mark.label.lineedit.setText(io.GROUP_NAMES[mark.g])
+        for image in self.mainwindow.images:
+            for mark in image.marks:
+                if mark.label.lineedit.text() in group_names_old:
+                    mark.label.lineedit.setText(io.GROUP_NAMES[mark.g])
 
         # Update text in the instructions window 
         self.mainwindow.instructions_window.update_text()
