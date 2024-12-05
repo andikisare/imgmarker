@@ -41,6 +41,24 @@ def getsave_old() -> str:
     if save_dir == '': sys.exit()
     return save_dir
 
+def get_image_dir() -> str:
+    #make this work with file dialog names on MacOS
+    #default to user's home directory if a path isn't given. 
+    # Create a QFileDialog instance
+
+    dialog = QFileDialog()
+    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)  # Force widget-based dialog
+    dialog.setWindowTitle("Open Image directory")
+    dialog.setDirectory(HOME)
+    dialog.setFileMode(QFileDialog.FileMode.Directory)
+    try: 
+        dialog.exec() #if this is qt5 should be .exec_()
+    except:
+        dialog.exec_()
+
+    save_dir = dialog.selectedFiles()[0]
+    return save_dir
+
 USER = getuser()
 SAVE_DIR = getsave()
 CONFIG = os.path.join(SAVE_DIR,f'{USER}_config.txt')

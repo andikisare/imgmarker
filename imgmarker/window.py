@@ -669,8 +669,7 @@ class MainWindow(QMainWindow):
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
         except:
-            #io.IMAGE_DIR = QFileDialog.getExistingDirectory(self, "Open image directory", io.HOME) #old way that works without dialog name on MacOS
-            io.IMAGE_DIR = get_image_dir()
+            io.IMAGE_DIR = io.get_image_dir()
             if io.IMAGE_DIR == '': sys.exit()
 
             io.update_config()
@@ -838,7 +837,7 @@ class MainWindow(QMainWindow):
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
 
-        io.IMAGE_DIR = get_image_dir()#QFileDialog.getExistingDirectory(self, "Open image directory", io.HOME)
+        io.IMAGE_DIR = io.get_image_dir()
         if io.IMAGE_DIR == '': return
         io.update_config()
         self.images, self.idx = io.glob(edited_images=[])
@@ -1227,21 +1226,3 @@ class MainWindow(QMainWindow):
         if correction: pix_pos -= 4*QPointF(self.image.width,self.image.height) + QPointF(0.5,0.5)
         
         return pix_pos.toPoint()
-
-def get_image_dir(HOME=os.path.expanduser('~')) -> str:
-    #make this work with file dialog names on MacOS
-    #default to user's home directory if a path isn't given. 
-    # Create a QFileDialog instance
-
-    dialog = QFileDialog()
-    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)  # Force widget-based dialog
-    dialog.setWindowTitle("Open Image directory")
-    dialog.setDirectory(HOME)
-    dialog.setFileMode(QFileDialog.FileMode.Directory)
-    try: 
-        dialog.exec() #if this is qt5 should be .exec_()
-    except:
-        dialog.exec_()
-
-    save_dir = dialog.selectedFiles()[0]
-    return save_dir
