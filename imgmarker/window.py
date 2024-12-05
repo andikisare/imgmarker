@@ -515,7 +515,7 @@ class MainWindow(QMainWindow):
         file_menu.addSeparator()
         exit_action = QAction('&Exit', self)
         exit_action.setShortcuts(['Ctrl+q'])
-        exit_action.triggered.connect(self.closeEvent)
+        exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
         ## Edit menu
