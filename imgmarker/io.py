@@ -16,45 +16,44 @@ from functools import lru_cache
 from getpass import getuser
 
 HOME = os.path.expanduser('~')
-        
-@lru_cache(maxsize=1)
-def getsave() -> str:
-    #make this work with file dialog names on MacOS
-    # Create a QFileDialog instance
-    dialog = QFileDialog()
 
-    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)  # Force widget-based dialog
-    dialog.setWindowTitle("Open save directory")
-    dialog.setFileMode(QFileDialog.FileMode.Directory)
-    dialog.setDirectory(HOME)
-    try: 
-        dialog.exec() #if this is qt5 should be .exec_()
-    except:
-        dialog.exec_()
-    save_dir = dialog.selectedFiles()[0]
-    if save_dir == '': sys.exit()
-    return save_dir
+class DefaultDialog(QFileDialog):
+    def __init__(self):
+        #make this work with file dialog names on MacOS
+        #default to user's home directory if a path isn't given. 
+        # Create a QFileDialog instance
+        super().__init__()
+        self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+        self.setFileMode(QFileDialog.FileMode.Directory)
+        self.setDirectory(HOME)
+        self.closed = False
 
-def getsave_old() -> str:
-    """Returns selected save directory."""
-    save_dir = QFileDialog.getExistingDirectory(caption = "Select save directory", directory = HOME)
-    if save_dir == '': sys.exit()
-    return save_dir
+    def closeEvent(self, a0):
+        self.closed = True
+        return super().closeEvent(a0)
+    
+    def keyPressEvent(self, a0):
+        if a0.key() == Qt.Key.Key_Escape: self.close()
+        else: return super().keyPressEvent(a0)
+
+    def selectedFiles(self):
+        if self.closed: return None
+        else: return super().selectedFiles()
 
 def get_image_dir() -> str:
-    #make this work with file dialog names on MacOS
-    #default to user's home directory if a path isn't given. 
-    # Create a QFileDialog instance
-
-    dialog = QFileDialog()
-    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)  # Force widget-based dialog
+    dialog = DefaultDialog()
     dialog.setWindowTitle("Open Image directory")
-    dialog.setDirectory(HOME)
-    dialog.setFileMode(QFileDialog.FileMode.Directory)
-    try: 
-        dialog.exec() #if this is qt5 should be .exec_()
-    except:
-        dialog.exec_()
+    dialog.exec()
+
+    image_dir = dialog.selectedFiles()[0]
+    return image_dir 
+
+@lru_cache(maxsize=1)
+def getsave() -> str:
+    dialog = DefaultDialog()
+    dialog.setWindowTitle("Open save directory")
+    dialog.exec()
+    if dialog.closed: sys.exit()
 
     save_dir = dialog.selectedFiles()[0]
     return save_dir

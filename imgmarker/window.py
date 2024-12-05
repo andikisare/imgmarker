@@ -688,9 +688,9 @@ class MainWindow(QMainWindow):
                 self.order.append(self.image.name)
         except:
             io.IMAGE_DIR = io.get_image_dir()
-            if io.IMAGE_DIR == '': sys.exit()
-
+            if io.IMAGE_DIR == None: sys.exit()
             io.update_config()
+            
             self.images, self.idx = io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seek(self.frame)
@@ -855,9 +855,12 @@ class MainWindow(QMainWindow):
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
 
-        io.IMAGE_DIR = io.get_image_dir()
-        if io.IMAGE_DIR == '': return
+        image_dir = io.get_image_dir()
+        if image_dir == None: return
+
+        io.IMAGE_DIR = image_dir
         io.update_config()
+
         self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
         
