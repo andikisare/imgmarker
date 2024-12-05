@@ -58,3 +58,12 @@ class PosWidget(QWidget):
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         label.setFixedHeight(30)
+
+class RestrictedLineEdit(QLineEdit):
+    def __init__(self,forbidden_keys:list):
+        super().__init__()
+        self.forbidden_keys = forbidden_keys
+
+    def keyPressEvent(self, a0):
+        if not a0.key() in self.forbidden_keys: 
+            return super().keyPressEvent(a0)

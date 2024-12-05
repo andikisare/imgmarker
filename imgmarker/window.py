@@ -7,7 +7,7 @@ from .mark import Mark
 from . import ICON, HEART_SOLID, HEART_CLEAR, SCREEN_WIDTH, SCREEN_HEIGHT, __version__, __license__
 from . import io
 from . import image
-from .widget import QHLine, PosWidget
+from .widget import QHLine, PosWidget, RestrictedLineEdit
 import sys
 import os
 import datetime as dt
@@ -36,7 +36,7 @@ class SettingsWindow(QWidget):
 
         self.group_boxes = []
         for i in range(1,10):
-            lineedit = QLineEdit()
+            lineedit = RestrictedLineEdit([Qt.Key.Key_Comma])
             lineedit.setFixedHeight(30)
             lineedit.setText(io.GROUP_NAMES[i])
             self.group_boxes.append(lineedit)
@@ -70,7 +70,7 @@ class SettingsWindow(QWidget):
 
         self.category_boxes = []
         for i in range(1,6):
-            lineedit = QLineEdit()
+            lineedit = RestrictedLineEdit([Qt.Key.Key_Comma])
             lineedit.setFixedHeight(30)
             lineedit.setText(io.CATEGORY_NAMES[i])
             self.category_boxes.append(lineedit)
