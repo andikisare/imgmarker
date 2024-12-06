@@ -37,6 +37,7 @@ class SettingsWindow(QWidget):
         self.group_boxes = []
         for i in range(1,10):
             lineedit = RestrictedLineEdit([Qt.Key.Key_Comma])
+            lineedit.setPlaceholderText(io.GROUP_NAMES[i])
             lineedit.setFixedHeight(30)
             lineedit.setText(io.GROUP_NAMES[i])
             self.group_boxes.append(lineedit)
@@ -71,6 +72,7 @@ class SettingsWindow(QWidget):
         self.category_boxes = []
         for i in range(1,6):
             lineedit = RestrictedLineEdit([Qt.Key.Key_Comma])
+            lineedit.setPlaceholderText(io.CATEGORY_NAMES[i])
             lineedit.setFixedHeight(30)
             lineedit.setText(io.CATEGORY_NAMES[i])
             self.category_boxes.append(lineedit)
@@ -111,14 +113,19 @@ class SettingsWindow(QWidget):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return:
-            self.update_config()
-            for box in self.group_boxes: box.clearFocus()
+            for i, box in enumerate(self.group_boxes): box.clearFocus()
+            for i, box in enumerate(self.category_boxes): box.clearFocus()
             for box in self.max_boxes: box.clearFocus()
-            for box in self.category_boxes: box.clearFocus()
+
+            self.update_config()
 
         return super().keyPressEvent(event)
     
     def closeEvent(self, a0):
+        for box in self.group_boxes: box.clearFocus()
+        for box in self.category_boxes: box.clearFocus()
+        for box in self.max_boxes: box.clearFocus()
+
         self.update_config()
         self.mainwindow.save()
         return super().closeEvent(a0)
@@ -127,9 +134,9 @@ class SettingsWindow(QWidget):
         group_names_old = io.GROUP_NAMES.copy()
 
         # Get the new settings from the boxes
-        io.GROUP_NAMES = ['None'] + [box.text() if box.text() != '' else i for i,box in enumerate(self.group_boxes)]
+        io.GROUP_NAMES = ['None'] + [box.text() for box in self.group_boxes]
         io.GROUP_MAX = [str(box.value()) if box.value() != 0 else 'None' for box in self.max_boxes]
-        io.CATEGORY_NAMES = ['None'] + [box.text() if box.text() != '' else i for i,box in enumerate(self.category_boxes)]
+        io.CATEGORY_NAMES = ['None'] + [box.text() for box in self.category_boxes]
         io.RANDOMIZE_ORDER = self.randomize_box.isChecked()
 
         for i, box in enumerate(self.mainwindow.category_boxes): box.setText(io.CATEGORY_NAMES[i+1])
