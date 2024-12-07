@@ -8,6 +8,7 @@ from . import ICON, HEART_SOLID, HEART_CLEAR, SCREEN_WIDTH, SCREEN_HEIGHT, __ver
 from . import io
 from . import image
 from .widget import QHLine, PosWidget, RestrictedLineEdit
+from .catalog import Catalog
 import sys
 import os
 import datetime as dt
@@ -15,7 +16,7 @@ import textwrap
 from math import ceil, floor, inf, nan
 from numpy import argsort
 from functools import partial
-from typing import Union
+from typing import Union, List
 
 class SettingsWindow(QWidget):
     """Class for the window for settings."""
@@ -368,6 +369,7 @@ class MainWindow(QMainWindow):
         # Initialize data
         self.date = dt.datetime.now(dt.timezone.utc).date().isoformat()
         self.order = []
+        self.catalogs:List['Catalog'] = []
         self.__init_data__()
         self.image_scene = image.ImageScene(self.image)
 
@@ -512,10 +514,10 @@ class MainWindow(QMainWindow):
         open_ims_action.triggered.connect(self.open_ims)
         open_menu.addAction(open_ims_action)
 
-        ### Open external marks file
-        open_marks_action = QAction('&Open marks file...', self)
+        ### Open catalog file
+        open_marks_action = QAction('&Open catalog...', self)
         open_marks_action.setShortcuts(['Ctrl+Shift+m'])
-        open_marks_action.triggered.connect(self.open_ext_marks)
+        open_marks_action.triggered.connect(self.open_catalog)
         open_menu.addAction(open_marks_action)
         
         ### Exit menu
@@ -568,23 +570,23 @@ class MainWindow(QMainWindow):
         self.labels_action.triggered.connect(self.toggle_mark_labels)
         view_menu.addAction(self.labels_action)
 
-        ### Toggle external marks menu
-        self.ext_marks_action = QAction('&Show external marks', self)
-        self.ext_marks_action.setShortcuts(['Ctrl+Shift+m'])
-        self.ext_marks_action.setCheckable(True)
-        self.ext_marks_action.setChecked(True)
-        self.ext_marks_action.triggered.connect(self.toggle_ext_marks)
-        view_menu.addAction(self.ext_marks_action)
-        self.ext_marks_action.setEnabled(False)
+        ### Toggle catalogs menu
+        self.catalogs_action = QAction('&Show catalog', self)
+        self.catalogs_action.setShortcuts(['Ctrl+Shift+m'])
+        self.catalogs_action.setCheckable(True)
+        self.catalogs_action.setChecked(True)
+        self.catalogs_action.triggered.connect(self.toggle_catalogs)
+        view_menu.addAction(self.catalogs_action)
+        self.catalogs_action.setEnabled(False)
 
-        ### Toggle external mark labels menu
-        self.ext_labels_action = QAction('&Show external mark labels', self)
-        self.ext_labels_action.setShortcuts(['Ctrl+Shift+l'])
-        self.ext_labels_action.setCheckable(True)
-        self.ext_labels_action.setChecked(True)
-        self.ext_labels_action.triggered.connect(self.toggle_ext_mark_labels)
-        view_menu.addAction(self.ext_labels_action)
-        self.ext_labels_action.setEnabled(False)
+        ### Toggle catalog labels menu
+        self.catalog_labels_action = QAction('&Show catalog labels', self)
+        self.catalog_labels_action.setShortcuts(['Ctrl+Shift+l'])
+        self.catalog_labels_action.setCheckable(True)
+        self.catalog_labels_action.setChecked(True)
+        self.catalog_labels_action.triggered.connect(self.toggle_catalog_labels)
+        view_menu.addAction(self.catalog_labels_action)
+        self.catalog_labels_action.setEnabled(False)
 
         if len(self.image.marks) == 0:
             self.marks_action.setEnabled(False)
@@ -878,34 +880,41 @@ class MainWindow(QMainWindow):
         self.update_categories()
         self.update_comments()
 
-    def open_ext_marks(self):
-        """Method for opening an external marks file."""
+    def open_catalog(self):
+        """Method for opening a catalog file."""
 
-        ext_mark_file = QFileDialog.getOpenFileName(self, 'Select external marks file', io.HOME, '*.txt')[0]
-        if (ext_mark_file == ''): return
+        path = QFileDialog.getOpenFileName(self, 'Open catalog', io.HOME, '*.txt')[0]
+        if (path == ''): return
         
-        labels, alphas, betas, coord_sys = io.load_ext_marks(ext_mark_file)
+        catalog = Catalog(path)
+        if catalog: self.catalogs.append(catalog)
+        self.update_catalogs()
 
-        if labels == None: return
-        else: 
-            for i in range(len(labels)):
-                for img in self.images:
-                    if coord_sys == 'galactic':
-                        ra, dec = alphas[i], betas[i]
-                        
-                        mark_coord_cart = img.wcs.all_world2pix([[ra,dec]], 0)[0]
-                        x, y = mark_coord_cart[0], img.height - mark_coord_cart[1]
-
-                    else: x, y = alphas[i], betas[i]
+    def update_catalogs(self):
+        for mark in self.image.cat_marks: 
+            if mark not in self.image_scene.items(): self.image_scene.mark(mark)
+        
+        for catalog in self.catalogs:
+            if catalog.path not in self.image.catalogs:
+                for label, a, b in zip(catalog.labels,catalog.alphas,catalog.betas):
+                    if catalog.coord_sys == 'galactic':
+                        ra, dec = a, b   
+                        mark_coord_cart = self.image.wcs.all_world2pix([[ra,dec]], 0)[0]
+                        x, y = mark_coord_cart[0], self.image.height - mark_coord_cart[1]
+                    else: x, y = a, b
 
                     if self.inview(x,y):
-                        mark = Mark(x, y, shape='rect', image=img, text=labels[i])
-                        img.ext_marks.append(mark)
+                        mark = self.image_scene.mark(x, y, shape='rect', text=label)
+                        self.image.cat_marks.append(mark)
 
-            for mark in self.image.ext_marks: self.image_scene.mark(mark)
-        
-        self.ext_marks_action.setEnabled(True)
-        self.ext_labels_action.setEnabled(True)
+                self.image.catalogs.append(catalog.path)
+
+        if len(self.image.cat_marks) > 0:
+            self.catalogs_action.setEnabled(True)
+            self.catalog_labels_action.setEnabled(True)
+        else:
+            self.catalogs_action.setEnabled(False)
+            self.catalog_labels_action.setEnabled(False)
 
     def favorite(self,state) -> None:
         """Favorite the current image."""
@@ -987,10 +996,11 @@ class MainWindow(QMainWindow):
             self.idx = 0
         elif self.idx < 0:
             self.idx = self.N-1
-
+        
         self.update_comments()
         self.update_images()
         self.update_marks()
+        self.update_catalogs()
         self.get_comment()
         self.update_categories()
         self.update_favorites()
@@ -1079,7 +1089,6 @@ class MainWindow(QMainWindow):
 
         self.image = self.images[self.idx]
         self.image.seek(self.frame)
-        self.image.seen = True
         self.image_scene.update(self.image)
         if self.image.name not in self.order:
                 self.order.append(self.image.name)
@@ -1121,8 +1130,8 @@ class MainWindow(QMainWindow):
 
         self.toggle_marks()
         self.toggle_mark_labels()
-        self.toggle_ext_marks()
-        self.toggle_ext_mark_labels()
+        self.toggle_catalogs()
+        self.toggle_catalog_labels()
     
     def update_comments(self):
         """Updates image comment with the contents of the comment box."""
@@ -1151,9 +1160,8 @@ class MainWindow(QMainWindow):
 
     def update_marks(self):
         """Redraws all marks in image."""
-
+        
         for mark in self.image.marks: self.image_scene.mark(mark)
-        for mark in self.image.ext_marks: self.image_scene.mark(mark)
 
     def del_marks(self,del_all=False):
         """Deletes marks, either the selected one or all."""
@@ -1226,32 +1234,32 @@ class MainWindow(QMainWindow):
             if marks_enabled and labels_enabled: mark.label.show()
             else: mark.label.hide()
 
-    def toggle_ext_marks(self):
-        """Toggles whether or not external marks are shown."""
+    def toggle_catalogs(self):
+        """Toggles whether or not catalogs are shown."""
 
-        ext_marks_enabled = self.ext_marks_action.isChecked()
-        ext_labels_enabled = self.ext_labels_action.isChecked()
+        catalogs_enabled = self.catalogs_action.isChecked()
+        catalog_labels_enabled = self.catalog_labels_action.isChecked()
 
-        for ext_mark in self.image.ext_marks:
-            if ext_marks_enabled:
-                ext_mark.show()
-                if ext_labels_enabled:
-                    ext_mark.label.show()
+        for mark in self.image.cat_marks:
+            if catalogs_enabled:
+                mark.show()
+                if catalog_labels_enabled:
+                    mark.label.show()
             else:
-                ext_mark.hide()
-                ext_mark.label.hide()
+                mark.hide()
+                mark.label.hide()
 
-    def toggle_ext_mark_labels(self):
-        """Toggles whether or not external mark labels are shown."""
+    def toggle_catalog_labels(self):
+        """Toggles whether or not catalog labels are shown."""
 
-        ext_marks_enabled = self.ext_marks_action.isChecked()
-        ext_labels_enabled = self.ext_labels_action.isChecked()
+        catalogs_enabled = self.catalogs_action.isChecked()
+        catalog_labels_enabled = self.catalog_labels_action.isChecked()
 
-        for ext_mark in self.image.ext_marks:
-            if ext_marks_enabled and ext_labels_enabled:
-                ext_mark.label.show()
+        for mark in self.image.cat_marks:
+            if catalogs_enabled and catalog_labels_enabled:
+                mark.label.show()
             else:
-                ext_mark.label.hide()
+                mark.label.hide()
 
     # === Utils ===
 

@@ -10,7 +10,6 @@ import io
 import sys
 import glob as _glob
 from math import nan, isnan
-import warnings
 from typing import Tuple, List
 from functools import lru_cache
 from getpass import getuser
@@ -499,56 +498,6 @@ def load() -> List[image.Image]:
                     mark = _mark.Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)
     return images
-
-def load_ext_marks(f:str) -> dict:
-    """
-    Loads in an external marks file containing labels and coordinates in either galactic or
-    cartesian coordinates.
-
-    Parameters
-    ----------
-    f: str
-        A string containing the full path of the external marks file.
-
-    Returns
-    ----------
-    labels: list[str]
-        A list of the labels for each external mark.
-
-    alphas: list[float]
-        A list of floats containing either the RA or x coordinates of external marks.
-    
-    betas: list[float]
-        A list of floats containing either the Dec or y coordinates of external marks.
-    
-    coord_sys: str
-        A string containing either 'galactic' or 'cartesian' for designating the input coordinate
-        system.
-    """
-
-    labels = []
-    alphas = []
-    betas = []
-    line0 = True
-
-    for l in open(f):
-        var = l.split(',')
-        if line0:
-            if (var[1].strip().lower() == 'ra'):
-                coord_sys = 'galactic'
-            elif (var[1].strip().lower() == 'x'):
-                coord_sys = 'cartesian'
-            else:
-                warnings.warn('WARNING: Invalid external marks coordinate system. Valid coordinate systems: Galactic (RA, Dec), '
-                                 'Cartesian (x, y)')
-                return None, None, None, None
-            line0 = False
-        else:
-            labels.append(var[0])
-            alphas.append(float(var[1].strip().replace('\n', '')))
-            betas.append(float(var[2].strip().replace('\n', '')))
-            
-    return labels, alphas, betas, coord_sys
 
 def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
     """

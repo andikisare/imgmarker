@@ -70,8 +70,9 @@ class Image(QGraphicsPixmapItem):
             self.comment = 'None'
             self.categories:List[str] = []
             self.marks:List['_mark.Mark'] = []
-            self.ext_marks:List['_mark.Mark'] = []
+            self.cat_marks:List['_mark.Mark'] = []
             self.seen:bool = False
+            self.catalogs:List[str] = []
 
             self.imagefile.close()
     
