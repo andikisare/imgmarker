@@ -844,9 +844,7 @@ class MainWindow(QMainWindow):
     def open(self) -> None:
         """Method for the open save directory dialog."""
 
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.FileMode.AnyFile)
-        save_dir = dialog.getExistingDirectory(self, 'Open save directory', io.HOME)
+        save_dir = QFileDialog.getExistingDirectory(self, 'Open save directory', io.SAVE_DIR)
         if save_dir == '': return
         
         io.SAVE_DIR = save_dir
@@ -863,8 +861,8 @@ class MainWindow(QMainWindow):
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
 
-        image_dir = io.get_image_dir()
-        if image_dir == None: return
+        image_dir = QFileDialog.getExistingDirectory(self, 'Open image directory', io.SAVE_DIR)
+        if image_dir == '': return
 
         io.IMAGE_DIR = image_dir
         io.update_config()
@@ -881,7 +879,7 @@ class MainWindow(QMainWindow):
     def open_catalog(self):
         """Method for opening a catalog file."""
 
-        path = QFileDialog.getOpenFileName(self, 'Open catalog', io.HOME, '*.txt')[0]
+        path = QFileDialog.getOpenFileName(self, 'Open catalog', io.SAVE_DIR, '*.txt')[0]
         if (path == ''): return
         
         catalog = Catalog(path)

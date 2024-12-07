@@ -13,14 +13,14 @@ from getpass import getuser
 HOME = os.path.expanduser('~')
 
 class DefaultDialog(QFileDialog):
-    def __init__(self):
+    def __init__(self,directory=HOME):
         #make this work with file dialog names on MacOS
         #default to user's home directory if a path isn't given. 
         # Create a QFileDialog instance
         super().__init__()
         self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
         self.setFileMode(QFileDialog.FileMode.Directory)
-        self.setDirectory(HOME)
+        self.setDirectory(directory)
         self.closed = False
 
     def closeEvent(self, a0):
@@ -36,7 +36,7 @@ class DefaultDialog(QFileDialog):
         else: return super().selectedFiles()
 
 def get_image_dir() -> str:
-    dialog = DefaultDialog()
+    dialog = DefaultDialog(SAVE_DIR)
     dialog.setWindowTitle("Open image directory")
     dialog.exec()
 
