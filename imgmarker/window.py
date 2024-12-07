@@ -879,8 +879,8 @@ class MainWindow(QMainWindow):
     def open_catalog(self):
         """Method for opening a catalog file."""
 
-        path = QFileDialog.getOpenFileName(self, 'Open catalog', io.SAVE_DIR, '*.txt')[0]
-        if (path == ''): return
+        path = QFileDialog.getOpenFileName(self, 'Open catalog', io.SAVE_DIR, 'Text files (*.txt *.csv)')[0]
+        if path == '': return
         
         catalog = Catalog(path)
         if catalog: self.catalogs.append(catalog)
