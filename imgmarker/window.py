@@ -1,19 +1,17 @@
 from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QLabel, QScrollArea, QGraphicsView,
-                    QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
+                    QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QCheckBox, 
                     QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox, PYQT_VERSION_STR)
 
-from .mark import Mark
 from . import ICON, HEART_SOLID, HEART_CLEAR, SCREEN_WIDTH, SCREEN_HEIGHT, __version__, __license__
 from . import io
 from . import image
 from .widget import QHLine, PosWidget, RestrictedLineEdit
 from .catalog import Catalog
 import sys
-import os
 import datetime as dt
 import textwrap
-from math import ceil, floor, inf, nan
+from math import floor, inf, nan
 from numpy import argsort
 from functools import partial
 from typing import Union, List
@@ -890,32 +888,6 @@ class MainWindow(QMainWindow):
         if catalog: self.catalogs.append(catalog)
         self.update_catalogs()
 
-    def update_catalogs(self):
-        for mark in self.image.cat_marks: 
-            if mark not in self.image_scene.items(): self.image_scene.mark(mark)
-        
-        for catalog in self.catalogs:
-            if catalog.path not in self.image.catalogs:
-                for label, a, b in zip(catalog.labels,catalog.alphas,catalog.betas):
-                    if catalog.coord_sys == 'galactic':
-                        ra, dec = a, b   
-                        mark_coord_cart = self.image.wcs.all_world2pix([[ra,dec]], 0)[0]
-                        x, y = mark_coord_cart[0], self.image.height - mark_coord_cart[1]
-                    else: x, y = a, b
-
-                    if self.inview(x,y):
-                        mark = self.image_scene.mark(x, y, shape='rect', text=label)
-                        self.image.cat_marks.append(mark)
-
-                self.image.catalogs.append(catalog.path)
-
-        if len(self.image.cat_marks) > 0:
-            self.catalogs_action.setEnabled(True)
-            self.catalog_labels_action.setEnabled(True)
-        else:
-            self.catalogs_action.setEnabled(False)
-            self.catalog_labels_action.setEnabled(False)
-
     def favorite(self,state) -> None:
         """Favorite the current image."""
 
@@ -1157,6 +1129,32 @@ class MainWindow(QMainWindow):
         for box in self.category_boxes: box.setChecked(False)
         for i in self.image.categories:
             self.category_boxes[i-1].setChecked(True)
+
+    def update_catalogs(self):
+        for mark in self.image.cat_marks: 
+            if mark not in self.image_scene.items(): self.image_scene.mark(mark)
+        
+        for catalog in self.catalogs:
+            if catalog.path not in self.image.catalogs:
+                for label, a, b in zip(catalog.labels,catalog.alphas,catalog.betas):
+                    if catalog.coord_sys == 'galactic':
+                        ra, dec = a, b   
+                        mark_coord_cart = self.image.wcs.all_world2pix([[ra,dec]], 0)[0]
+                        x, y = mark_coord_cart[0], self.image.height - mark_coord_cart[1]
+                    else: x, y = a, b
+
+                    if self.inview(x,y):
+                        mark = self.image_scene.mark(x, y, shape='rect', text=label)
+                        self.image.cat_marks.append(mark)
+
+                self.image.catalogs.append(catalog.path)
+
+        if len(self.image.cat_marks) > 0:
+            self.catalogs_action.setEnabled(True)
+            self.catalog_labels_action.setEnabled(True)
+        else:
+            self.catalogs_action.setEnabled(False)
+            self.catalog_labels_action.setEnabled(False)
 
     def update_marks(self):
         """Redraws all marks in image."""

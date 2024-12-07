@@ -3,10 +3,6 @@ import numpy as np
 from . import mark as _mark
 from . import image
 from .pyqt import Qt, QFileDialog
-from PIL.TiffTags import TAGS
-from astropy.wcs import WCS
-from astropy.io import fits
-import io
 import sys
 import glob as _glob
 from math import nan, isnan
@@ -41,7 +37,7 @@ class DefaultDialog(QFileDialog):
 
 def get_image_dir() -> str:
     dialog = DefaultDialog()
-    dialog.setWindowTitle("Open Image directory")
+    dialog.setWindowTitle("Open image directory")
     dialog.exec()
 
     image_dir = dialog.selectedFiles()[0]
@@ -60,13 +56,6 @@ def getsave() -> str:
 USER = getuser()
 SAVE_DIR = getsave()
 CONFIG = os.path.join(SAVE_DIR,f'{USER}_config.txt')
-
-def pathtoformat(path:str):
-    ext = path.split('.')[-1].casefold()
-    if ext == 'png': return 'PNG'
-    if ext in {'jpeg', 'jpg'}: return 'JPEG'
-    if ext in {'tiff', 'tif'}: return 'TIFF'
-    if ext in {'fit', 'fits'}: return 'FITS'
     
 def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
     """
@@ -170,47 +159,7 @@ def check_marks(event) -> List[bool]:
 
     return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
     
-def parse_wcs(img:image.Image) -> WCS:
-    """
-    Reads WCS information from TIFF/TIF metadata and FITS/FIT headers if available.
 
-    Parameters
-    ----------
-    img: `imgmarker.image.Image` object
-
-    Returns
-    ----------
-    wcs: `astropy.wcs.WCS` or None
-        Astropy WCS object. Returns None if there is no WCS present.
-    """
-    try:
-        if img.format == 'FITS':
-            with fits.open(img.filename) as hdulist:
-                wcs = WCS(hdulist[0].header)
-            return wcs
-        else:
-            meta_dict = {TAGS[key] : img.tag[key] for key in img.tag_v2}
-            
-            long_header_str = meta_dict['ImageDescription'][0]
-
-            line_length = 80
-
-            # Splitting the string into lines of 80 characters
-            lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
-            
-            # Join the lines with newline characters to form a properly formatted header string
-            corrected_header_str = "\n".join(lines)
-
-            # Use an IO stream to mimic a file
-            header_stream = io.StringIO(corrected_header_str)
-
-            # Read the header using astropy.io.fits
-            header = fits.Header.fromtextfile(header_stream)
-
-            # Create a WCS object from the header
-            wcs = WCS(header)
-        return wcs
-    except: return None
 
 def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
     """
@@ -476,7 +425,7 @@ def load() -> List[image.Image]:
                 categories = [CATEGORY_NAMES.index(cat) for cat in categories if cat != 'None']
                 categories.sort()
 
-                img = image.open(os.path.join(IMAGE_DIR,name))
+                img = image.Image(os.path.join(IMAGE_DIR,name))
                 img.comment = comment
                 img.categories = categories
                 img.seen = True
@@ -521,7 +470,7 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
 
     # Find all images in image directory
     paths = sorted(_glob.glob(os.path.join(IMAGE_DIR, '*.*')))
-    paths = [fp for fp in paths if pathtoformat(fp) in image.FORMATS]
+    paths = [fp for fp in paths if image.pathtoformat(fp) in image.FORMATS]
 
     # Get list of paths to images if they are in the dictionary (have been edited)
     edited_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
@@ -533,7 +482,7 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
         rng.shuffle(unedited_paths)
 
     # Put edited images at the beginning, unedited images at front
-    images = edited_images + [image.open(fp) for fp in unedited_paths]
+    images = edited_images + [image.Image(fp) for fp in unedited_paths]
 
     idx = min(len(edited_images),len(paths)-1)
 

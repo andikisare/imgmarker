@@ -25,7 +25,7 @@ class Catalog:
         """
         Parameters
         ----------
-        f: str
+        path: str
             A string containing the full path of the catalog file.
         """
         self.path:str = path

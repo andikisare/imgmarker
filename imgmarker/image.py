@@ -1,74 +1,126 @@
 from .pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, QPainter, Qt
 from . import mark as _mark
-from . import io
+from io import StringIO
 import os
 from math import floor
 import PIL.Image
 from PIL.ImageFilter import GaussianBlur
+from PIL.TiffTags import TAGS
 from math import nan
 import numpy as np
-from typing import overload, Union, List, Dict, TYPE_CHECKING
+from typing import overload, Union, List, Dict
+from functools import lru_cache
 from astropy.visualization import ZScaleInterval, MinMaxInterval, BaseInterval, BaseStretch, ManualInterval, LinearStretch, LogStretch
 from astropy.io import fits
-
-if TYPE_CHECKING:
-    from astropy.wcs import WCS
+from astropy.wcs import WCS
 
 INTERVAL:Dict[str,BaseInterval] = {'zscale': ZScaleInterval(), 'min-max': MinMaxInterval()}
 STRETCH:Dict[str,BaseStretch] = {'linear': LinearStretch(), 'log': LogStretch()}
 FORMATS = ['TIFF','FITS','PNG','JPEG']
 PIL.Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
 
-def open(path:str) -> Union['Image',None]:
-    """
-    Opens the given image file.
-
-    Parameters
-    ----------
-    path: str 
-        Path to the image.
-    
-    Returns
-    ----------
-    img: `imgmarker.image.Image`
-        Returns the image as a Image object.
-    """
-    return Image(path)
+def pathtoformat(path:str):
+    ext = path.split('.')[-1].casefold()
+    if ext == 'png': return 'PNG'
+    if ext in {'jpeg', 'jpg'}: return 'JPEG'
+    if ext in {'tiff', 'tif'}: return 'TIFF'
+    if ext in {'fit', 'fits'}: return 'FITS'
 
 class Image(QGraphicsPixmapItem):
-    """Image class based on the PyQt QGraphicsPixmapItem."""
+    """
+    Image class based on the PyQt QGraphicsPixmapItem.
+
+    Attributes
+    ----------
+    path: str
+        Path to the image.
+
+    name: str
+        File name.
+
+    format: str
+        Image format. Can be TIFF, FITS, PNG, or JPEG.
+
+    frame: int
+        Current frame of the image.
+
+    n_frame: int
+        Number of frames in the image.
+
+    imagefile: `PIL.Image.ImageFile`
+        Pillow imagefile object that allows loading of image data and image manipulation.
+
+    width: int
+        Image width.
+
+    height: int
+        Image height.
+
+    wcs: `astropy.wcs.WCS` or None
+        WCS solution.
+
+    wcs_center: list[float]
+        Center of the image in WCS coordinates.
+
+    r: float
+        Blur radius applied to the image.
+
+    stretch: `BaseStretch`, default=`LinearStretch()`
+        Stretch of the image brightness. Can be set with `Image.stretch = 'linear'` or `Image.stretch = 'log'`
+
+    interval: `BaseInterval`, default=`ZScaleInterval()`
+        Interval of the image brightness. Can be set with `Image.interval = 'zscale'` or `Image.stretch = 'min-max'`
+
+    comment: str
+        Image comment.
+
+    categories: list[int]
+        List containing the categories for this image.
+
+    marks: list[imgmarker.mark.Mark]
+        List of the marks in this image.
+
+    cat_marks: list[imgmarker.mark.Mark]
+        List of catalog marks in this image.
+
+    seen: bool
+        Whether this image has been seen by the user or not.
+
+    catalogs: list[str]
+        List of paths to the catalogs that have been imported for this image
+    """
     
     def __init__(self,path:str):
-        """Initialize from parents."""
+        """
+        Parameters
+        ----------
+        path: str 
+            Path to the image.
+        """
         
         super().__init__(QPixmap())
 
         self.path = path
-        self.format = io.pathtoformat(path)
+        self.name = path.split(os.sep)[-1]
+        self.format = pathtoformat(path)
 
         if self.format in FORMATS:
             
             self.frame:int = 0
             self.imagefile = self.load()
 
-            # Setup  __dict__
             self.width = self.imagefile.width
             self.height = self.imagefile.width
 
             try: self.n_frames = self.imagefile.n_frames
             except: self.n_frames = 1
-
-            self.wcs:WCS = io.parse_wcs(self.imagefile)
-            self.name = path.split(os.sep)[-1]
-
+            
             self.r:float = 0.0
-            self.a:float = 1.0
-            self.b:float = 1.0
             self.stretch = 'linear'
             self.interval = 'min-max'
             
             self.comment = 'None'
-            self.categories:List[str] = []
+            self.categories:List[int] = []
             self.marks:List['_mark.Mark'] = []
             self.cat_marks:List['_mark.Mark'] = []
             self.seen:bool = False
@@ -78,6 +130,11 @@ class Image(QGraphicsPixmapItem):
     
     @property
     def interval(self) -> ManualInterval: 
+        """ 
+        Interval of the image brightness.\n
+        Set with `Image.interval = 'zscale'` or `Image.interval = 'min-max'`. 
+        """
+
         interval = INTERVAL[self._interval_str]
         h,s,v = self.hsv()
         vlims = interval.get_limits(v)
@@ -86,14 +143,55 @@ class Image(QGraphicsPixmapItem):
     def interval(self,value): self._interval_str = value
 
     @property
-    def stretch(self) -> BaseStretch: return STRETCH[self._stretch_str]
+    def stretch(self) -> BaseStretch:
+        """
+        Stretch of the image brightness.\n
+        Set with `Image.stretch = 'linear'` or `Image.stretch = 'log'`.
+        """
+
+        return STRETCH[self._stretch_str]
+    
     @stretch.setter
     def stretch(self,value): self._stretch_str = value
 
     @property
     def scaling(self): return self.stretch + self.interval
 
+    @property 
+    @lru_cache(maxsize=1)
+    def wcs(self) -> WCS: 
+        """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
+        try:
+            if self.format == 'FITS':
+                with fits.open(self.path) as hdulist:
+                    wcs = WCS(hdulist[0].header)
+                return wcs
+            else:
+                meta_dict = {TAGS[key] : self.load().tag[key] for key in self.load().tag_v2}
+                
+                long_header_str = meta_dict['ImageDescription'][0]
+
+                line_length = 80
+
+                # Splitting the string into lines of 80 characters
+                lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
+                
+                # Join the lines with newline characters to form a properly formatted header string
+                corrected_header_str = "\n".join(lines)
+
+                # Use an IO stream to mimic a file
+                header_stream = StringIO(corrected_header_str)
+
+                # Read the header using astropy.io.fits
+                header = fits.Header.fromtextfile(header_stream)
+
+                # Create a WCS object from the header
+                wcs = WCS(header)
+            return wcs
+        except: return None
+
     @property
+    @lru_cache(maxsize=1)
     def wcs_center(self) -> list:
         try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
         except: return nan, nan
@@ -184,7 +282,7 @@ class Image(QGraphicsPixmapItem):
         newfile = newfile.filter(GaussianBlur(self.r))
         self.imagefile = newfile.copy()
         self.rescale()
-            
+
 class ImageScene(QGraphicsScene):
     """A class for storing and manipulating the information/image that is currently displayed."""
     def __init__(self,image:Image):
