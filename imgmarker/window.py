@@ -769,9 +769,8 @@ class MainWindow(QMainWindow):
         """Checks which keyboard button was pressed and calls the appropriate function."""
         
         # Check if key is bound with marking the image
-        markButtons = io.check_marks(event)
-        for i in range(0,9):
-            if markButtons[i]: self.mark(group=i+1)
+        for group, binds in io.MARK_KEYBINDS.items():
+            if event.key() in binds: self.mark(group=group)
 
         if (event.key() == Qt.Key.Key_Backspace) or (event.key() == Qt.Key.Key_Delete):
             self.del_marks()
@@ -789,16 +788,20 @@ class MainWindow(QMainWindow):
     def mousePressEvent(self,event):
         """Checks which mouse button was pressed and calls the appropriate function."""
 
-        # Check if key is bound with marking the image
-        markButtons = io.check_marks(event)
-        for i in range(0,9):
-            if markButtons[i]: self.mark(group=i+1)
-        
-        if (event.button() == Qt.MouseButton.MiddleButton):
-            self.center_cursor()
+        modifiers = QApplication.keyboardModifiers()
+        leftbutton = event.button() == Qt.MouseButton.LeftButton
+        rightbutton = event.button() == Qt.MouseButton.RightButton
+        middlebutton = event.button() == Qt.MouseButton.MiddleButton
+        ctrl = modifiers == Qt.KeyboardModifier.ControlModifier
+        nomod = modifiers == Qt.KeyboardModifier.NoModifier
 
-        if (event.button() == Qt.MouseButton.RightButton):
-            self.del_marks()
+        # Check if key is bound with marking the image
+        for group, binds in io.MARK_KEYBINDS.items():
+            if (event.button() in binds) and nomod: self.mark(group=group)
+
+        if middlebutton or (ctrl and leftbutton): self.center_cursor()
+
+        if rightbutton: self.del_marks()
 
     def mouseMoveEvent(self, event):
         """Parses the mouse coordinates and gets galactic coordinates if available to show in scene."""

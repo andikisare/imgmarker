@@ -129,37 +129,15 @@ def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
 
 IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
 
-def check_marks(event) -> List[bool]:
-    """
-    Checks and resets each group's activation key on the keyboard.
-
-    Parameters
-    ----------
-    event: PyQt5 event
-
-    Returns
-    ----------
-    A list of bools corresponding to if the respective button was pressed or not. 
-    """
-    button1 = button2 = button3 = button4 = button5 = button6 = button7 = button8 = button9 = False
-
-    try: button1 = event.button() == Qt.MouseButton.LeftButton
-    except: button1 = event.key() == Qt.Key.Key_1
-
-    try:
-        button2 = event.key() == Qt.Key.Key_2
-        button3 = event.key() == Qt.Key.Key_3
-        button4 = event.key() == Qt.Key.Key_4
-        button5 = event.key() == Qt.Key.Key_5
-        button6 = event.key() == Qt.Key.Key_6
-        button7 = event.key() == Qt.Key.Key_7
-        button8 = event.key() == Qt.Key.Key_8
-        button9 = event.key() == Qt.Key.Key_9
-    except: pass
-
-    return [button1, button2, button3, button4, button5, button6, button7, button8, button9]
-    
-
+MARK_KEYBINDS = {1: {Qt.MouseButton.LeftButton,Qt.Key.Key_1}, 
+                 2: {Qt.Key.Key_2}, 
+                 3: {Qt.Key.Key_3}, 
+                 4: {Qt.Key.Key_4}, 
+                 5: {Qt.Key.Key_5}, 
+                 6: {Qt.Key.Key_6}, 
+                 7: {Qt.Key.Key_7}, 
+                 8: {Qt.Key.Key_8}, 
+                 9: {Qt.Key.Key_9}}
 
 def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
     """
