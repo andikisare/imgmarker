@@ -12,7 +12,8 @@ import numpy as np
 from typing import overload, Union, List, Dict
 from functools import lru_cache
 from astropy.visualization import ZScaleInterval, MinMaxInterval, BaseInterval, BaseStretch, ManualInterval, LinearStretch, LogStretch
-from astropy.convolution import Gaussian2DKernel, convolve,convolve_fft
+from astropy.convolution import Gaussian2DKernel
+from scipy.signal import convolve
 from astropy.io import fits
 from astropy.wcs import WCS
 
@@ -246,8 +247,6 @@ class Image(QGraphicsPixmapItem):
         self.blur()
 
     def rescale(self):
-        import time
-        t0 = time.time()
         if self.n_channels == 3:
             arr = np.array(self.imagefile.copy().convert('HSV'))
             h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
@@ -264,12 +263,10 @@ class Image(QGraphicsPixmapItem):
         
         self.setPixmap(self.topixmap(image_scaled))
 
-        #print(time.time()-t0)
-
     def toqimage(self,image:pillow.Image):
         if self.format == 'FITS':
             data = align8to32(image.tobytes(),image.width,image.mode)
-            qim = QImage(data,image.size[0],image.size[0],QImage.Format.Format_Grayscale16)
+            qim = QImage(data,image.width,image.height,QImage.Format.Format_Grayscale16)
         else: qim = image.toqimage()
         return qim
 
@@ -283,7 +280,6 @@ class Image(QGraphicsPixmapItem):
         _x, _y = int(w*4), int(h*4)
 
         pixmap = QPixmap(w*9,h*9)
-        pixmap.fill(Qt.GlobalColor.black)
 
         painter = QPainter(pixmap)
         painter.drawPixmap(_x, _y, pixmap_base)
@@ -311,17 +307,17 @@ class Image(QGraphicsPixmapItem):
                 newfile = newfile.filter(GaussianBlur(self.r))
             else:
                 _arr = np.array(newfile)
-                kernel = Gaussian2DKernel(self.r)
+                kernel = Gaussian2DKernel(self.r).array
 
                 # Compute padding (based on astropy)
-                ph, pw = np.array(kernel.array.shape) // 2
+                ph, pw = np.array(kernel.shape) // 2
                 pad_width = ((ph,), (pw,))
       
                 # Add padding
                 _arr = np.pad(_arr, pad_width=pad_width, mode='edge')
 
                 # Convolve padded image
-                _arr = convolve_fft(_arr,kernel)
+                _arr = convolve(_arr,kernel,mode='same')
                 
                 # Remove padding
                 arr = _arr[ph:-ph, pw:-pw]
