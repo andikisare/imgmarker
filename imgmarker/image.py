@@ -12,11 +12,13 @@ import numpy as np
 from typing import overload, Union, List, Dict
 from functools import lru_cache
 from astropy.visualization import ZScaleInterval, MinMaxInterval, BaseInterval, BaseStretch, ManualInterval, LinearStretch, LogStretch
+from astropy.convolution import Gaussian2DKernel, convolve,convolve_fft
 from astropy.io import fits
 from astropy.wcs import WCS
 
 INTERVAL:Dict[str,BaseInterval] = {'zscale': ZScaleInterval(), 'min-max': MinMaxInterval()}
 STRETCH:Dict[str,BaseStretch] = {'linear': LinearStretch(), 'log': LogStretch()}
+IINFO:Dict[str,np.iinfo] = {'RGB': np.iinfo(np.uint8), 'I;16': np.iinfo(np.uint16)}
 FORMATS = ['TIFF','FITS','PNG','JPEG']
 pillow.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
 
@@ -116,6 +118,8 @@ class Image(QGraphicsPixmapItem):
             try: self.n_frames = self.imagefile.n_frames
             except: self.n_frames = 1
             self.n_channels = len(self.imagefile.getbands())
+            self.mode = self.imagefile.mode
+            self.iinfo = IINFO[self.mode]
             
             self.r:float = 0.0
             self.stretch = 'linear'
@@ -138,8 +142,7 @@ class Image(QGraphicsPixmapItem):
         """
 
         interval = INTERVAL[self._interval_str]
-        h,s,v = self.hsv()
-        vlims = interval.get_limits(v)
+        vlims = interval.get_limits(self.vibrance)
         return ManualInterval(*vlims)
     @interval.setter
     def interval(self,value): self._interval_str = value
@@ -158,6 +161,14 @@ class Image(QGraphicsPixmapItem):
 
     @property
     def scaling(self): return self.stretch + self.interval
+
+    @property
+    def vibrance(self):
+        if self.n_channels == 3:
+            arr = np.array(self.load().convert('HSV'))
+            v = arr[:, :, 2]
+        else: v = np.array(self.load())
+        return v
 
     @property 
     @lru_cache(maxsize=1)
@@ -205,8 +216,6 @@ class Image(QGraphicsPixmapItem):
                 arr = 65535 * (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
 
             file = pillow.fromarray(arr.astype(np.uint16),mode='I;16')
-            file.format = 'FITS'
-            file.filename = self.path
 
         else: file = pillow.open(self.path)
 
@@ -236,31 +245,26 @@ class Image(QGraphicsPixmapItem):
         # reapply blur
         self.blur()
 
-    def hsv(self):
-        if self.n_channels == 3:
-            arr = np.array(self.load().convert('HSV'))
-            h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
-        else:
-            v = np.array(self.load())
-            h,s = np.zeros(v.shape),np.zeros(v.shape)
-        return h,s,v
-    
     def rescale(self):
+        import time
+        t0 = time.time()
         if self.n_channels == 3:
             arr = np.array(self.imagefile.copy().convert('HSV'))
             h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
 
-            v = (self.scaling(v))*255
+            v = (self.scaling(v))*self.iinfo.max
             arr[:, :, 0], arr[:, :, 1], arr[:, :, 2] = h,s,v
 
-            image_scaled = pillow.fromarray(arr.astype('uint8'),mode='HSV').convert('RGB')
+            image_scaled = pillow.fromarray(arr.astype(self.iinfo.dtype),mode='HSV').convert('RGB')
 
         else:
             arr = np.array(self.imagefile.copy())
-            arr = self.scaling(arr)*65535
-            image_scaled = pillow.fromarray(arr.astype(np.uint16),mode='I;16')
+            arr = self.scaling(arr)*self.iinfo.max
+            image_scaled = pillow.fromarray(arr.astype(self.iinfo.dtype),mode=self.mode)
         
         self.setPixmap(self.topixmap(image_scaled))
+
+        #print(time.time()-t0)
 
     def toqimage(self,image:pillow.Image):
         if self.format == 'FITS':
@@ -301,7 +305,28 @@ class Image(QGraphicsPixmapItem):
             self.r = floor(r)/10
 
         newfile = self.load()
-        newfile = newfile.filter(GaussianBlur(self.r))
+
+        if self.r != 0:
+            if self.iinfo.bits <= 8:
+                newfile = newfile.filter(GaussianBlur(self.r))
+            else:
+                _arr = np.array(newfile)
+                kernel = Gaussian2DKernel(self.r)
+
+                # Compute padding (based on astropy)
+                ph, pw = np.array(kernel.array.shape) // 2
+                pad_width = ((ph,), (pw,))
+      
+                # Add padding
+                _arr = np.pad(_arr, pad_width=pad_width, mode='edge')
+
+                # Convolve padded image
+                _arr = convolve_fft(_arr,kernel)
+                
+                # Remove padding
+                arr = _arr[ph:-ph, pw:-pw]
+                newfile = pillow.fromarray(arr.astype(self.iinfo.dtype),self.mode)
+
         self.imagefile = newfile.copy()
         self.rescale()
 
