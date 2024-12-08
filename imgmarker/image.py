@@ -1,9 +1,10 @@
-from .pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, QPainter, Qt
+from .pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, QPainter, Qt, QImage
 from . import mark as _mark
 from io import StringIO
 import os
 from math import floor
-import PIL.Image
+import PIL.Image as pillow
+from PIL.ImageQt import align8to32
 from PIL.ImageFilter import GaussianBlur
 from PIL.TiffTags import TAGS
 from math import nan
@@ -17,7 +18,7 @@ from astropy.wcs import WCS
 INTERVAL:Dict[str,BaseInterval] = {'zscale': ZScaleInterval(), 'min-max': MinMaxInterval()}
 STRETCH:Dict[str,BaseStretch] = {'linear': LinearStretch(), 'log': LogStretch()}
 FORMATS = ['TIFF','FITS','PNG','JPEG']
-PIL.Image.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
+pillow.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
 
 def pathtoformat(path:str):
     ext = path.split('.')[-1].casefold()
@@ -111,9 +112,10 @@ class Image(QGraphicsPixmapItem):
 
             self.width = self.imagefile.width
             self.height = self.imagefile.width
-
+            
             try: self.n_frames = self.imagefile.n_frames
             except: self.n_frames = 1
+            self.n_channels = len(self.imagefile.getbands())
             
             self.r:float = 0.0
             self.stretch = 'linear'
@@ -196,15 +198,17 @@ class Image(QGraphicsPixmapItem):
         try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
         except: return nan, nan
 
-    def load(self) -> PIL.Image.Image:
+    def load(self) -> pillow.Image:
         if self.format == 'FITS':
             with fits.open(self.path) as f:
-                arr = np.flipud(f[0].data).byteswap()
-            file = PIL.Image.fromarray(arr, mode='F').convert('RGB')
+                arr = np.flipud(f[0].data)
+                arr = 65535 * (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
+
+            file = pillow.fromarray(arr.astype(np.uint16),mode='I;16')
             file.format = 'FITS'
             file.filename = self.path
 
-        else: file = PIL.Image.open(self.path)
+        else: file = pillow.open(self.path)
 
         file.seek(self.frame)
         return file
@@ -233,24 +237,42 @@ class Image(QGraphicsPixmapItem):
         self.blur()
 
     def hsv(self):
-        arr = np.array(self.load().convert('HSV'))
-        h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+        if self.n_channels == 3:
+            arr = np.array(self.load().convert('HSV'))
+            h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+        else:
+            v = np.array(self.load())
+            h,s = np.zeros(v.shape),np.zeros(v.shape)
         return h,s,v
     
     def rescale(self):
-        arr = np.array(self.imagefile.copy().convert('HSV'))
-        h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+        if self.n_channels == 3:
+            arr = np.array(self.imagefile.copy().convert('HSV'))
+            h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
 
-        v = (self.scaling(v))*255
-        arr[:, :, 0], arr[:, :, 1], arr[:, :, 2] = h,s,v
+            v = (self.scaling(v))*255
+            arr[:, :, 0], arr[:, :, 1], arr[:, :, 2] = h,s,v
 
-        image_scaled = PIL.Image.fromarray(arr.astype('uint8'),mode='HSV').convert('RGB')
-        self.setPixmap(self.topixmap(image_scaled))
+            image_scaled = pillow.fromarray(arr.astype('uint8'),mode='HSV').convert('RGB')
+
+        else:
+            arr = np.array(self.imagefile.copy())
+            arr = self.scaling(arr)*65535
+            image_scaled = pillow.fromarray(arr.astype(np.uint16),mode='I;16')
         
-    def topixmap(self,image:PIL.Image.Image) -> QPixmap:
+        self.setPixmap(self.topixmap(image_scaled))
+
+    def toqimage(self,image:pillow.Image):
+        if self.format == 'FITS':
+            data = align8to32(image.tobytes(),image.width,image.mode)
+            qim = QImage(data,image.size[0],image.size[0],QImage.Format.Format_Grayscale16)
+        else: qim = image.toqimage()
+        return qim
+
+    def topixmap(self,image:pillow.Image) -> QPixmap:
         """Creates a QPixmap with a pillows on each side to allow for fully zooming out."""
 
-        qimage = image.toqimage()
+        qimage = self.toqimage(image)
         pixmap_base = QPixmap.fromImage(qimage)
 
         w, h = self.width, self.height
