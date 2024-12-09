@@ -121,6 +121,8 @@ class Image(QGraphicsPixmapItem):
             self.n_channels = len(self.imagefile.getbands())
             self.mode = self.imagefile.mode
             self.iinfo = IINFO[self.mode]
+
+            self.wcs = self.read_wcs()
             
             self.r:float = 0.0
             self.stretch = 'linear'
@@ -171,9 +173,13 @@ class Image(QGraphicsPixmapItem):
         else: v = np.array(self.load())
         return v
 
-    @property 
+    @property
     @lru_cache(maxsize=1)
-    def wcs(self) -> WCS: 
+    def wcs_center(self) -> list:
+        try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
+        except: return nan, nan
+
+    def read_wcs(self):
         """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
         try:
             if self.format == 'FITS':
@@ -203,12 +209,6 @@ class Image(QGraphicsPixmapItem):
                 wcs = WCS(header)
             return wcs
         except: return None
-
-    @property
-    @lru_cache(maxsize=1)
-    def wcs_center(self) -> list:
-        try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
-        except: return nan, nan
 
     def load(self) -> pillow.Image:
         if self.format == 'FITS':
@@ -366,3 +366,5 @@ class ImageScene(QGraphicsScene):
 
         self.removeItem(mark)
         self.removeItem(mark.label)
+
+
