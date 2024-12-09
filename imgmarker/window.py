@@ -112,8 +112,8 @@ class SettingsWindow(QWidget):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Return:
-            for i, box in enumerate(self.group_boxes): box.clearFocus()
-            for i, box in enumerate(self.category_boxes): box.clearFocus()
+            for box in self.group_boxes: box.clearFocus()
+            for box in self.category_boxes: box.clearFocus()
             for box in self.max_boxes: box.clearFocus()
 
             self.update_config()

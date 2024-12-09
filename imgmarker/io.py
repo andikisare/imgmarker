@@ -57,7 +57,7 @@ USER = getuser()
 SAVE_DIR = getsave()
 CONFIG = os.path.join(SAVE_DIR,f'{USER}_config.txt')
     
-def read_config() -> Tuple[str,str,List[str],List[str],List[int]]:
+def read_config() -> Tuple[str,List[str],List[str],List[str],List[int]]:
     """
     Reads in each line from imgmarker.cfg. If there is no configuration file,
     a default configuration file will be created using the required text
