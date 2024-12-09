@@ -69,5 +69,5 @@ class RestrictedLineEdit(QLineEdit):
             return super().keyPressEvent(a0)
         
     def focusOutEvent(self, a0):
-        self.setText(self.placeholderText())
+        if self.text() == '': self.setText(self.placeholderText())
         return super().focusOutEvent(a0)
