@@ -273,8 +273,9 @@ class InstructionsWindow(QWidget):
         # Lists for keybindings
         actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Favorite', 'Exit', 'Help']
         group_list = [f'Group \"{group}\"' for group in io.GROUP_NAMES[1:]]
-        actions_list = group_list + actions_list
-        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'F', 'Ctrl+Q', 'F1', ]
+        category_list = [f'Category \"{category}\"' for category in io.CATEGORY_NAMES[1:]]
+        actions_list = group_list + category_list + actions_list
+        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'F', 'Ctrl+Q', 'F1', ]
 
         # Determing widths for keybindings list
         actions_width = max([len(a) for a in actions_list])
@@ -460,12 +461,14 @@ class MainWindow(QMainWindow):
         self.categories_layout = QHBoxLayout()
 
         # Category boxes
+        self.category_shortcuts = ['Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5']
         self.category_boxes = [QCheckBox(text=io.CATEGORY_NAMES[i], parent=self) for i in range(1,6)]
         for i, box in enumerate(self.category_boxes):
             box.setFixedHeight(20)
             box.setStyleSheet("margin-left:30%; margin-right:30%;")
             box.clicked.connect(partial(self.categorize,i+1))
             box.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            box.setShortcut(self.category_shortcuts[i])
             self.categories_layout.addWidget(box)
 
         # Favorite box
