@@ -1065,6 +1065,7 @@ class MainWindow(QMainWindow):
 
         self.image = self.images[self.idx]
         self.image.seek(self.frame)
+        self.image.seen = True
         self.image_scene.update(self.image)
         if self.image.name not in self.order:
                 self.order.append(self.image.name)
