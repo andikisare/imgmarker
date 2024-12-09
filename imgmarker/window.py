@@ -271,10 +271,10 @@ class InstructionsWindow(QWidget):
 
     def update_text(self):
         # Lists for keybindings
-        actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Exit', 'Help']
+        actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Favorite', 'Exit', 'Help']
         group_list = [f'Group \"{group}\"' for group in io.GROUP_NAMES[1:]]
         actions_list = group_list + actions_list
-        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'Ctrl+Q', 'F1', ]
+        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'F', 'Ctrl+Q', 'F1', ]
 
         # Determing widths for keybindings list
         actions_width = max([len(a) for a in actions_list])
