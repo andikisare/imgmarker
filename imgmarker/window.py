@@ -1070,6 +1070,7 @@ class MainWindow(QMainWindow):
         try: self.image.close()
         except: pass
 
+        self.frame = self.image.frame
         self.image = self.images[self.idx]
         self.image.seek(self.frame)
         self.image.seen = True
