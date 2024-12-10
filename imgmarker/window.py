@@ -618,11 +618,11 @@ class MainWindow(QMainWindow):
         log_action.setCheckable(True)
         stretch_menu.addAction(log_action)
 
-        linear_action.triggered.connect(partial(setattr,self,'stretch','linear'))
+        linear_action.triggered.connect(partial(setattr,self,'stretch',image.Stretch.LINEAR))
         linear_action.triggered.connect(partial(linear_action.setChecked,True))
         linear_action.triggered.connect(partial(log_action.setChecked,False))
 
-        log_action.triggered.connect(partial(setattr,self,'stretch','log'))
+        log_action.triggered.connect(partial(setattr,self,'stretch',image.Stretch.LOG))
         log_action.triggered.connect(partial(linear_action.setChecked,False))
         log_action.triggered.connect(partial(log_action.setChecked,True))
 
@@ -638,11 +638,11 @@ class MainWindow(QMainWindow):
         zscale_action.setCheckable(True)
         interval_menu.addAction(zscale_action)
 
-        minmax_action.triggered.connect(partial(setattr,self,'interval','min-max'))
+        minmax_action.triggered.connect(partial(setattr,self,'interval',image.Interval.MINMAX))
         minmax_action.triggered.connect(partial(minmax_action.setChecked,True))
         minmax_action.triggered.connect(partial(zscale_action.setChecked,False))
 
-        zscale_action.triggered.connect(partial(setattr,self,'interval','zscale'))
+        zscale_action.triggered.connect(partial(setattr,self,'interval',image.Interval.ZSCALE))
         zscale_action.triggered.connect(partial(minmax_action.setChecked,False))
         zscale_action.triggered.connect(partial(zscale_action.setChecked,True))
 

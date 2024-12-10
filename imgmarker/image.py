@@ -4,23 +4,36 @@ from io import StringIO
 import os
 from math import floor
 import PIL.Image as pillow
-from PIL.ImageQt import align8to32
-from PIL.ImageFilter import GaussianBlur
 from PIL.TiffTags import TAGS
 from math import nan
 import numpy as np
-from typing import overload, Union, List, Dict
-from functools import lru_cache
-from astropy.visualization import ZScaleInterval, MinMaxInterval, BaseInterval, BaseStretch, ManualInterval, LinearStretch, LogStretch
+from typing import overload, Union, List
+from astropy.visualization import ZScaleInterval, MinMaxInterval, ManualInterval, LinearStretch, LogStretch
 from astropy.convolution import Gaussian2DKernel
 from scipy.signal import convolve
 from astropy.io import fits
 from astropy.wcs import WCS
+from enum import Enum
 
-INTERVAL:Dict[str,BaseInterval] = {'zscale': ZScaleInterval(), 'min-max': MinMaxInterval()}
-STRETCH:Dict[str,BaseStretch] = {'linear': LinearStretch(), 'log': LogStretch()}
-IINFO:Dict[str,np.iinfo] = {'RGB': np.iinfo(np.uint8), 'I;16': np.iinfo(np.uint16)}
+class Interval(Enum):
+    ZSCALE = ZScaleInterval()
+    MINMAX = MinMaxInterval()
+    
+class Stretch(Enum):
+    LINEAR = LinearStretch()
+    LOG = LogStretch()
+
+class Mode(Enum):
+    RGB = 0
+    I16 = 1
+    def __init__(self,value):
+        self.format = {0: QImage.Format.Format_RGB888, 
+                       1: QImage.Format.Format_Grayscale16}[value]
+        self.iinfo:np.iinfo = {0: np.iinfo(np.uint8), 
+                               1: np.iinfo(np.uint16)}[value]
+
 FORMATS = ['TIFF','FITS','PNG','JPEG']
+
 pillow.MAX_IMAGE_PIXELS = None # change this if we want to limit the image size
 
 def pathtoformat(path:str):
@@ -29,6 +42,108 @@ def pathtoformat(path:str):
     if ext in {'jpeg', 'jpg'}: return 'JPEG'
     if ext in {'tiff', 'tif'}: return 'TIFF'
     if ext in {'fit', 'fits'}: return 'FITS'
+
+def align8to32(bytes: bytes, width: int, bits_per_pixel: str) -> bytes:
+    """
+    converts each scanline of data from 8 bit to 32 bit aligned. slightly modified from astropy
+    """
+
+    # calculate bytes per line and the extra padding if needed
+    bits_per_line = bits_per_pixel * width
+    full_bytes_per_line, remaining_bits_per_line = divmod(bits_per_line, 8)
+    bytes_per_line = full_bytes_per_line + (1 if remaining_bits_per_line else 0)
+
+    extra_padding = -bytes_per_line % 4
+
+    # already 32 bit aligned by luck
+    if not extra_padding:
+        return bytes
+
+    new_data = [
+        bytes[i * bytes_per_line : (i + 1) * bytes_per_line] + b"\x00" * extra_padding
+        for i in range(len(bytes) // bytes_per_line)
+    ]
+
+    return b"".join(new_data)
+
+def rgb_to_hsv(r, g, b):
+    r = np.array(r)
+    g = np.array(g)
+    b = np.array(b)
+
+    maxc = np.max((r, g, b),axis=0)
+    minc = np.min((r, g, b),axis=0)
+    v = maxc
+    
+    np.seterr(divide='ignore', invalid='ignore')
+    s = (maxc-minc) / maxc
+
+    rc = (maxc-r) / (maxc-minc)
+    gc = (maxc-g) / (maxc-minc)
+    bc = (maxc-b) / (maxc-minc)
+    np.seterr()
+
+    h = 4.0+gc-rc
+    h = np.where(r==maxc,bc-gc,h)
+    h = np.where(g==maxc,2.0+rc-bc,h)
+    h = np.where(minc == maxc,0,h)
+
+    h = (h/6.0) % 1.0
+    
+    return h, s, v
+
+def hsv_to_rgb(h, s, v):
+    h = np.array(h)
+    s = np.array(s)
+    v = np.array(v)
+
+    r = np.where(s==0,v,np.nan)
+    g = np.where(s==0,v,np.nan)
+    b = np.where(s==0,v,np.nan)
+
+    i = (h*6.0).astype(int) # XXX assume int() truncates!
+    f = (h*6.0) - i
+    p = v*(1.0 - s)
+    q = v*(1.0 - s*f)
+    t = v*(1.0 - s*(1.0-f))
+    i = i%6
+
+    conv = [[v,t,p], [q,v,p], [p,v,t], [p,q,v], [t,p,v], [v,p,q]]
+    
+    for j in range(0,6):
+        r = np.where(i==j,conv[j][0],r)
+        g = np.where(i==j,conv[j][1],g)
+        b = np.where(i==j,conv[j][2],b)
+    
+    return r, g, b
+
+def read_wcs(f):
+    """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
+    try:
+        if isinstance(f,fits.HDUList):
+            return WCS(f[0].header)
+        else:
+            meta_dict = {TAGS[key] : f.tag[key] for key in f.tag_v2}
+            
+            long_header_str = meta_dict['ImageDescription'][0]
+
+            line_length = 80
+
+            # Splitting the string into lines of 80 characters
+            lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
+            
+            # Join the lines with newline characters to form a properly formatted header string
+            corrected_header_str = "\n".join(lines)
+
+            # Use an IO stream to mimic a file
+            header_stream = StringIO(corrected_header_str)
+
+            # Read the header using astropy.io.fits
+            header = fits.Header.fromtextfile(header_stream)
+
+            # Create a WCS object from the header
+            return WCS(header)
+    except: return None
 
 class Image(QGraphicsPixmapItem):
     """
@@ -111,22 +226,15 @@ class Image(QGraphicsPixmapItem):
         if self.format in FORMATS:
             
             self.frame:int = 0
-            self.imagefile = self.load()
+            metadata = self.read_metadata()
+            self.mode:str = metadata['mode']
+            self.n_channels = metadata['n_channels'] 
+            self.n_frames = metadata['n_frames']
+            self.wcs = metadata['wcs']
 
-            self.width = self.imagefile.width
-            self.height = self.imagefile.width
-            
-            try: self.n_frames = self.imagefile.n_frames
-            except: self.n_frames = 1
-            self.n_channels = len(self.imagefile.getbands())
-            self.mode = self.imagefile.mode
-            self.iinfo = IINFO[self.mode]
-
-            self.wcs = self.read_wcs()
-            
             self.r:float = 0.0
-            self.stretch = 'linear'
-            self.interval = 'min-max'
+            self.stretch = Stretch.LINEAR
+            self.interval = Interval.MINMAX
             
             self.comment = 'None'
             self.categories:List[int] = []
@@ -135,32 +243,22 @@ class Image(QGraphicsPixmapItem):
             self.seen:bool = False
             self.catalogs:List[str] = []
 
-            self.imagefile.close()
-    
     @property
-    def interval(self) -> ManualInterval: 
-        """ 
-        Interval of the image brightness.\n
-        Set with `Image.interval = 'zscale'` or `Image.interval = 'min-max'`. 
-        """
+    def interval(self): 
+        """ Interval of the image brightness."""
 
-        interval = INTERVAL[self._interval_str]
+        interval = self._interval
         vlims = interval.get_limits(self.vibrance)
         return ManualInterval(*vlims)
     @interval.setter
-    def interval(self,value): self._interval_str = value
+    def interval(self,enum:Interval): self._interval = enum.value
 
     @property
-    def stretch(self) -> BaseStretch:
-        """
-        Stretch of the image brightness.\n
-        Set with `Image.stretch = 'linear'` or `Image.stretch = 'log'`.
-        """
-
-        return STRETCH[self._stretch_str]
-    
+    def stretch(self):
+        """Stretch of the image brightness."""
+        return self._stretch
     @stretch.setter
-    def stretch(self,value): self._stretch_str = value
+    def stretch(self,enum:Stretch): self._stretch = enum.value
 
     @property
     def scaling(self): return self.stretch + self.interval
@@ -168,67 +266,58 @@ class Image(QGraphicsPixmapItem):
     @property
     def vibrance(self):
         if self.n_channels == 3:
-            arr = np.array(self.load().convert('HSV'))
-            v = arr[:, :, 2]
-        else: v = np.array(self.load())
+            array = self.read()
+            r,g,b = array[:, :, 0], array[:, :, 1], array[:, :, 2]
+            v = np.max((r, g, b),axis=0)
+        else: v = self.read()
         return v
+    
+    @property
+    def width(self):
+        return self.array.shape[1]
+    
+    @property
+    def height(self):
+        return self.array.shape[0]
 
     @property
-    @lru_cache(maxsize=1)
     def wcs_center(self) -> list:
         try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
         except: return nan, nan
 
-    def read_wcs(self):
-        """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
-        try:
-            if self.format == 'FITS':
-                with fits.open(self.path) as hdulist:
-                    wcs = WCS(hdulist[0].header)
-                return wcs
-            else:
-                meta_dict = {TAGS[key] : self.load().tag[key] for key in self.load().tag_v2}
-                
-                long_header_str = meta_dict['ImageDescription'][0]
-
-                line_length = 80
-
-                # Splitting the string into lines of 80 characters
-                lines = [long_header_str[i:i+line_length] for i in range(0, len(long_header_str), line_length)]
-                
-                # Join the lines with newline characters to form a properly formatted header string
-                corrected_header_str = "\n".join(lines)
-
-                # Use an IO stream to mimic a file
-                header_stream = StringIO(corrected_header_str)
-
-                # Read the header using astropy.io.fits
-                header = fits.Header.fromtextfile(header_stream)
-
-                # Create a WCS object from the header
-                wcs = WCS(header)
-            return wcs
-        except: return None
-
-    def load(self) -> pillow.Image:
+    def read(self) -> np.ndarray:
         if self.format == 'FITS':
             with fits.open(self.path) as f:
-                arr = np.flipud(f[0].data)
-                arr = 65535 * (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
-
-            file = pillow.fromarray(arr.astype(np.uint16),mode='I;16')
-
-        else: file = pillow.open(self.path)
-
-        file.seek(self.frame)
-        return file
+                data = np.flipud(f[self.frame].data)
+                data = 65535 * (data - np.min(data)) / (np.max(data) - np.min(data))
+        else:
+            with pillow.open(self.path) as f:
+                f.seek(self.frame)
+                data = np.array(f)
+        return data
+    
+    def read_metadata(self) -> dict:
+        metadata = {}
+        if self.format == 'FITS':
+            metadata['mode'] = Mode.I16
+            metadata['n_channels'] = 1
+            with fits.open(self.path) as f:
+                metadata['n_frames'] = len(f)
+                metadata['wcs'] = read_wcs(f)
+        else:
+            with pillow.open(self.path) as f: 
+                metadata['mode'] = Mode[f.mode.replace(';','')]
+                metadata['n_channels'] = len(f.getbands())
+                try: metadata['n_frames'] = f.n_frames
+                except: metadata['n_frames'] = 1
+                metadata['wcs'] = read_wcs(f)
+        
+        return metadata
     
     def close(self):
-        self.imagefile.close()
+        self.array = None
         self.setPixmap(QPixmap())
     
-    def tell(self): return self.imagefile.tell()
-
     def seek(self,frame:int=0):
         """Switches to a new frame if it exists"""
 
@@ -238,42 +327,43 @@ class Image(QGraphicsPixmapItem):
         elif frame < 0: frame = self.n_frames - 1
 
         self.frame = frame
-        self.imagefile = self.load()
-
-        self.width = self.imagefile.width
-        self.height = self.imagefile.width
+        self.array = self.read()
         
         # reapply blur
         self.blur()
 
     def rescale(self):
         if self.n_channels == 3:
-            arr = np.array(self.imagefile.copy().convert('HSV'))
-            h,s,v = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+            array = self.array.copy()
+            _r,_g,_b = array[:, :, 0], array[:, :, 1], array[:, :, 2]
+            h,s,v = rgb_to_hsv(_r,_g,_b)
 
-            v = (self.scaling(v))*self.iinfo.max
-            arr[:, :, 0], arr[:, :, 1], arr[:, :, 2] = h,s,v
+            v = (self.scaling(v))*self.mode.iinfo.max
+            r,g,b = hsv_to_rgb(h,s,v)
 
-            image_scaled = pillow.fromarray(arr.astype(self.iinfo.dtype),mode='HSV').convert('RGB')
-
-        else:
-            arr = np.array(self.imagefile.copy())
-            arr = self.scaling(arr)*self.iinfo.max
-            image_scaled = pillow.fromarray(arr.astype(self.iinfo.dtype),mode=self.mode)
+            array_scaled = np.stack([r,g,b],-1)
         
-        self.setPixmap(self.topixmap(image_scaled))
+        else:
+            array_scaled = self.scaling(self.array.copy())*self.mode.iinfo.max
+        
+        self.setPixmap(self.topixmap(array_scaled.astype(self.mode.iinfo.dtype)))
 
-    def toqimage(self,image:pillow.Image):
-        if self.format == 'FITS':
-            data = align8to32(image.tobytes(),image.width,image.mode)
-            qim = QImage(data,image.width,image.height,QImage.Format.Format_Grayscale16)
-        else: qim = image.toqimage()
+    def toqimage(self,array:np.ndarray) -> QImage:
+        width, height  = array.shape[1], array.shape[0]
+        data = align8to32(array.tobytes(),width,self.mode.iinfo.bits)
+
+        if len(array.shape) == 3:
+            n = array.shape[2]
+            qim = QImage(data,width,height,n*width,self.mode.format)
+        else:
+            qim = QImage(data,width,height,self.mode.format)
+
         return qim
 
-    def topixmap(self,image:pillow.Image) -> QPixmap:
+    def topixmap(self,array:np.ndarray) -> QPixmap:
         """Creates a QPixmap with a pillows on each side to allow for fully zooming out."""
 
-        qimage = self.toqimage(image)
+        qimage = self.toqimage(array)
         pixmap_base = QPixmap.fromImage(qimage)
 
         w, h = self.width, self.height
@@ -300,30 +390,29 @@ class Image(QGraphicsPixmapItem):
             else: r = value
             self.r = floor(r)/10
 
-        newfile = self.load()
+        _out = self.read()
 
         if self.r != 0:
-            if self.iinfo.bits <= 8:
-                newfile = newfile.filter(GaussianBlur(self.r))
-            else:
-                _arr = np.array(newfile)
-                kernel = Gaussian2DKernel(self.r).array
+            # Create kernel and compute padding
+            kernel = Gaussian2DKernel(self.r).array
+            ph, pw = np.array(kernel.shape) // 2
+            pad_width = ((ph,), (pw,))
 
-                # Compute padding (based on astropy)
-                ph, pw = np.array(kernel.shape) // 2
-                pad_width = ((ph,), (pw,))
-      
-                # Add padding
-                _arr = np.pad(_arr, pad_width=pad_width, mode='edge')
+            def _blur(c):
+                # Add padding, convolve, then remove padding
+                c = np.pad(c, pad_width=pad_width, mode='edge')
+                c = convolve(c,kernel,mode='same')
+                c = c[ph:c.shape[0]-ph, pw:c.shape[1]-pw]                
+                return c
+            
+            if self.n_channels > 1:
+                out = [_blur(_out[:, :, i]) for i in range(self.n_channels)]
+                out = np.stack(out,-1)
+            else: out = _blur(_out)
 
-                # Convolve padded image
-                _arr = convolve(_arr,kernel,mode='same')
-                
-                # Remove padding
-                arr = _arr[ph:-ph, pw:-pw]
-                newfile = pillow.fromarray(arr.astype(self.iinfo.dtype),self.mode)
+        else: out = _out
 
-        self.imagefile = newfile.copy()
+        self.array = out.copy().astype(self.mode.iinfo.dtype)
         self.rescale()
 
 class ImageScene(QGraphicsScene):
