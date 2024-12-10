@@ -15,6 +15,7 @@ from math import floor, inf, nan
 from numpy import argsort
 from functools import partial
 from typing import Union, List
+import os
 
 class SettingsWindow(QWidget):
     """Class for the window for settings."""
@@ -852,6 +853,7 @@ class MainWindow(QMainWindow):
 
         save_dir = QFileDialog.getExistingDirectory(self, 'Open save directory', io.SAVE_DIR)
         if save_dir == '': return
+        if not os.path.exists(os.path.join(save_dir,f'{io.USER}_config.txt')): return
         
         io.SAVE_DIR = save_dir
         io.read_config()
@@ -870,12 +872,17 @@ class MainWindow(QMainWindow):
         image_dir = QFileDialog.getExistingDirectory(self, 'Open image directory', io.SAVE_DIR)
         if image_dir == '': return
 
+        _image_dir = io.IMAGE_DIR
         io.IMAGE_DIR = image_dir
-        io.update_config()
-
+        
         self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
-        
+
+        if self.N == 0:
+            io.IMAGE_DIR = _image_dir
+            return
+
+        io.update_config()
         self.update_images()
         self.update_marks()
         self.get_comment()
