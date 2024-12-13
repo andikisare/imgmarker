@@ -120,8 +120,8 @@ def hsv_to_rgb(h, s, v):
 def read_wcs(f):
     """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
     try:
-        if isinstance(f,fits.HDUList):
-            return WCS(f[0].header)
+        if isinstance(f,fits.PrimaryHDU):
+            return WCS(f.header)
         else:
             meta_dict = {TAGS[key] : f.tag[key] for key in f.tag_v2}
             
@@ -227,6 +227,8 @@ class Image(QGraphicsPixmapItem):
             
             self.frame:int = 0
             metadata = self.read_metadata()
+            self.width = metadata['width']
+            self.height = metadata['height']
             self.mode:str = metadata['mode']
             self.n_channels = metadata['n_channels'] 
             self.n_frames = metadata['n_frames']
@@ -273,14 +275,6 @@ class Image(QGraphicsPixmapItem):
         return v
     
     @property
-    def width(self):
-        return self.array.shape[1]
-    
-    @property
-    def height(self):
-        return self.array.shape[0]
-
-    @property
     def wcs_center(self) -> list:
         try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
         except: return nan, nan
@@ -302,10 +296,15 @@ class Image(QGraphicsPixmapItem):
             metadata['mode'] = Mode.I16
             metadata['n_channels'] = 1
             with fits.open(self.path) as f:
+                metadata['width'] = f[self.frame].header['NAXIS2']
+                metadata['height'] = f[self.frame].header['NAXIS1']
                 metadata['n_frames'] = len(f)
-                metadata['wcs'] = read_wcs(f)
+                metadata['wcs'] = read_wcs(f[self.frame])
         else:
             with pillow.open(self.path) as f: 
+                f.seek(self.frame)
+                metadata['width'] = f.width
+                metadata['height'] = f.height
                 metadata['mode'] = Mode[f.mode.replace(';','')]
                 metadata['n_channels'] = len(f.getbands())
                 try: metadata['n_frames'] = f.n_frames
@@ -328,6 +327,8 @@ class Image(QGraphicsPixmapItem):
 
         self.frame = frame
         self.array = self.read()
+        self.width = self.array.shape[1]
+        self.height = self.array.shape[0]
         
         # reapply blur
         self.blur()

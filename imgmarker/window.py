@@ -856,10 +856,15 @@ class MainWindow(QMainWindow):
         if not os.path.exists(os.path.join(save_dir,f'{io.USER}_config.txt')): return
         
         io.SAVE_DIR = save_dir
-        io.read_config()
+        io.CONFIG = os.path.join(save_dir,f'{io.USER}_config.txt')
+        io.IMAGE_DIR, io.GROUP_NAMES, io.CATEGORY_NAMES, io.GROUP_MAX, io.RANDOMIZE_ORDER = io.read_config()
+
+        self.images, self.idx = io.glob(edited_images=[])
+        self.N = len(self.images)
         
         self.__init_data__()
         self.update_images()
+        self.fitview()
         self.update_marks()
         self.get_comment()
         self.update_categories()
