@@ -53,7 +53,7 @@ class MarkLabel(QGraphicsProxyWidget):
         self.lineedit.setText(self.mark.text)
         self.lineedit.setStyleSheet(f"""background-color: rgba(0,0,0,0);
                                      border: none; 
-                                     color: rgba{self.mark.c.getRgb()}""")
+                                     color: rgba{self.mark.color.getRgb()}""")
         
         self.lineedit.textChanged.connect(self.autoresize)
         self.setWidget(self.lineedit)
@@ -93,12 +93,12 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
     @overload
     def __init__(self,x:int,y:int,
                  shape:str='ellipse',
-                 image:'Image'=None,group:int=0,text:str=None,        
+                 image:'Image'=None,group:int=0,text:str=None,picked_color:QColor=None,
     ) -> None: ...
     @overload
     def __init__(self,ra:float=None,dec:float=None,
                  shape:str='ellipse',
-                 image:'Image'=None,group:int=0,text:str=None,
+                 image:'Image'=None,group:int=0,text:str=None,picked_color:QColor=None,
     ) -> None: ...
     def __init__(self,*args,**kwargs) -> None:
         abstract_kwargs = kwargs.copy()
@@ -108,8 +108,10 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
         if not 'image' in keys: raise ValueError('No image provided')
         else: image:'Image' = kwargs['image']
 
-        if not 'group' in keys: self.g = 0
-        else: self.g:int = kwargs['group']
+        if not 'group' in keys: self.color = kwargs["picked_color"]
+        else:
+            self.g:int = kwargs['group']
+            self.color = COLORS[self.g]
 
         if not 'text' in keys: self.text = io.GROUP_NAMES[self.g]
         else: self.text:str = kwargs['text']
@@ -117,7 +119,6 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
         if not 'shape' in keys: shape = QGraphicsEllipseItem
         else: shape:str = SHAPES[kwargs['shape']]
 
-        self.c = COLORS[self.g]
         d = ceil((image.width+image.height)/200)*2
 
         # Set up AbstractMark args
@@ -138,7 +139,7 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
         item_args = self.view_center.x()-self.d/2, self.view_center.y()-self.d/2, self.d, self.d
         super(shape,self).__init__(*item_args)
         shapeitem: QAbstractItem = shape(*item_args)
-        shapeitem.setPen(QPen(self.c, int(self.d/10), Qt.PenStyle.SolidLine))
+        shapeitem.setPen(QPen(self.color, int(self.d/10), Qt.PenStyle.SolidLine))
         self.paint = shapeitem.paint
         
         # Set up label

@@ -9,6 +9,15 @@ class QHLine(QFrame):
         self.setMidLineWidth(1)
         self.setMinimumHeight(1)
 
+class QVLine(QFrame):
+    def __init__(self):
+        super(QVLine, self).__init__()
+        self.setFrameShape(QFrame.Shape.VLine)
+        self.setFrameShadow(QFrame.Shadow.Raised)
+        self.setLineWidth(0)
+        self.setMidLineWidth(1)
+        self.setMinimumHeight(1)
+
 class PosWidget(QWidget):
     """
     Shows coordinates

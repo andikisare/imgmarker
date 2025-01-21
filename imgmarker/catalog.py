@@ -34,6 +34,8 @@ class Catalog:
         self.betas:List[float] = []
         line0 = True
 
+        self.color = None # default color is just None, can be changed if we want to import QColor
+
         for l in open(self.path):
             var = l.split(',')
             if line0:
