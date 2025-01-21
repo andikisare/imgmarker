@@ -957,13 +957,23 @@ class MainWindow(QMainWindow):
         open_action = QAction('&Open save...', self)
         open_action.setShortcuts(['Ctrl+o'])
         open_action.triggered.connect(self.open)
-        open_menu.addAction(open_action)
+        ### Must fix functionality to work properly first, currently
+        ### it will not attach to the new save folder and will not write anything
+        ### in the new folder.
+        # open_menu.addAction(open_action)
 
         ### Open image folder menu
         open_ims_action = QAction('&Open images...', self)
         open_ims_action.setShortcuts(['Ctrl+Shift+o'])
         open_ims_action.triggered.connect(self.open_ims)
-        open_menu.addAction(open_ims_action)
+        ### Must fix functionality to work properly first, currently
+        ### it will simply overwrite the old save entirely, which is a
+        ### concerning liability. Probably want to fix both the open file/save menu
+        ### and this image menu in conjunction, or perhaps we could
+        ### force a new save folder if you try to open new images that
+        ### don't align with the previous images so that it doesn't
+        ### overwrite data.
+        # open_menu.addAction(open_ims_action)
 
         ### Open catalog file
         open_marks_action = QAction('&Open catalog...', self)
