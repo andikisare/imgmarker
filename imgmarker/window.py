@@ -987,6 +987,10 @@ class MainWindow(QMainWindow):
         del_menu.triggered.connect(partial(self.del_marks,True))
         edit_menu.addAction(del_menu)
 
+        ### Delete catalogs menu
+        del_catalog_menu = QAction('&Delete all catalogs', self)
+        del_catalog_menu.triggered.connect(self.del_catalog_marks)
+        edit_menu.addAction(del_catalog_menu)
 
         ### Randomize image order menu
         edit_menu.addSeparator()
@@ -1667,6 +1671,25 @@ class MainWindow(QMainWindow):
             
         self.save()
 
+    def del_catalog_marks(self):
+        self.catalogs.clear()
+        
+        # For current image scene
+        catalog_marks_current = self.image.cat_marks.copy()
+        for cat_mark in catalog_marks_current:
+            self.image_scene.rmmark(cat_mark)
+
+        for image in self.images:
+            catalog_marks_global = image.cat_marks.copy()
+            
+            for cat_mark in catalog_marks_global:
+                try:
+                    image.cat_marks.remove(cat_mark)
+                except: pass
+
+        self.catalogs_action.setEnabled(False)
+        self.catalog_labels_action.setEnabled(False)
+
     def toggle_randomize(self,state):
         """Updates the config file for randomization and reloads unseen images."""
         
@@ -1704,10 +1727,12 @@ class MainWindow(QMainWindow):
         for mark in self.image.marks:
             if marks_enabled: 
                 mark.show()
+                self.labels_action.setEnabled(True)
                 if labels_enabled: mark.label.show()
             else: 
                 mark.hide()
-                mark.label.hide()     
+                mark.label.hide()
+                self.labels_action.setEnabled(False)
 
     def toggle_mark_labels(self):
         """Toggles whether or not mark labels are shown."""
@@ -1728,11 +1753,13 @@ class MainWindow(QMainWindow):
         for mark in self.image.cat_marks:
             if catalogs_enabled:
                 mark.show()
+                self.catalog_labels_action.setEnabled(True)
                 if catalog_labels_enabled:
                     mark.label.show()
             else:
                 mark.hide()
                 mark.label.hide()
+                self.catalog_labels_action.setEnabled(False)
 
     def toggle_catalog_labels(self):
         """Toggles whether or not catalog labels are shown."""
