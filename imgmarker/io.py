@@ -2,142 +2,10 @@ import os
 import numpy as np
 from . import mark as _mark
 from . import image
-from .pyqt import Qt, QFileDialog
-import sys
+from . import config
 import glob as _glob
 from math import nan, isnan
 from typing import Tuple, List
-from functools import lru_cache
-from getpass import getuser
-
-HOME = os.path.expanduser('~')
-
-class DefaultDialog(QFileDialog):
-    def __init__(self,directory=HOME):
-        #make this work with file dialog names on MacOS
-        #default to user's home directory if a path isn't given. 
-        # Create a QFileDialog instance
-        super().__init__()
-        self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
-        self.setFileMode(QFileDialog.FileMode.Directory)
-        self.setDirectory(directory)
-        self.closed = False
-
-    def closeEvent(self, a0):
-        self.closed = True
-        return super().closeEvent(a0)
-    
-    def keyPressEvent(self, a0):
-        if a0.key() == Qt.Key.Key_Escape: self.close()
-        else: return super().keyPressEvent(a0)
-
-    def selectedFiles(self):
-        if self.closed: return None
-        else: return super().selectedFiles()
-
-def get_image_dir() -> str:
-    dialog = DefaultDialog(SAVE_DIR)
-    dialog.setWindowTitle("Open image directory")
-    dialog.exec()
-
-    image_dir = dialog.selectedFiles()[0]
-    return image_dir 
-
-@lru_cache(maxsize=1)
-def getsave() -> str:
-    dialog = DefaultDialog()
-    dialog.setWindowTitle("Open save directory")
-    dialog.exec()
-    if dialog.closed: sys.exit()
-
-    save_dir = dialog.selectedFiles()[0]
-    return save_dir
-
-USER = getuser()
-SAVE_DIR = getsave()
-CONFIG = os.path.join(SAVE_DIR,f'{USER}_config.txt')
-    
-def read_config() -> Tuple[str,List[str],List[str],List[str],List[int]]:
-    """
-    Reads in each line from imgmarker.cfg. If there is no configuration file,
-    a default configuration file will be created using the required text
-    format.
-
-    Returns
-    ----------
-    image_dir: str
-        Directory containing desired image files.
-
-    group_names: list[str]
-        A list of containing labels for each mark button.
-
-    category_names: list[str]
-        A list containing labels for each image category.
-
-    group_max: list[int]
-        A list containing the maximum allowed number of marks for each group.
-    """
-
-    # If the config doesn't exist, create one
-    if not os.path.exists(CONFIG):
-        with open(CONFIG,'w') as config:
-            image_dir = None
-            group_names = ['None','1','2','3','4','5','6','7','8','9']
-            category_names = ['None','1','2','3','4','5']
-            group_max = ['None','None','None','None','None','None','None','None','None']
-            randomize_order = True
-
-            config.write(f'image_dir = {image_dir}\n')
-            config.write(f"groups = {','.join(group_names)}\n")
-            config.write(f"categories = {','.join(category_names)}\n")
-            config.write(f"group_max = {','.join(group_max)}\n")
-            config.write(f'randomize_order = {randomize_order}')  
-
-    else:
-        for l in open(CONFIG):
-            var, val = [i.strip() for i in l.replace('\n','').split('=')]
-
-            if var == 'image_dir':
-                if val == './': image_dir = os.getcwd()
-                else: image_dir = val
-                image_dir =  os.path.join(image_dir,'')
-
-            if var == 'groups':
-                group_names = []
-                group_names_temp = val.split(',')
-                for group_name in group_names_temp:
-                    group_names.append(group_name.strip())
-                group_names.insert(0, 'None')
-
-            if var == 'categories':
-                category_names = []
-                category_names_temp = val.split(',')
-                for category_name in category_names_temp:
-                    category_names.append(category_name.strip())
-                category_names.insert(0, 'None')
-            
-            if var == 'group_max':
-                group_max = []
-                group_max_temp = val.split(',')
-                for group_max_val in group_max_temp:
-                    group_max.append(group_max_val.strip())
-
-            if var == 'randomize_order':
-                randomize_order = val == 'True'
-
-    return image_dir, group_names, category_names, group_max, randomize_order
-
-IMAGE_DIR, GROUP_NAMES, CATEGORY_NAMES, GROUP_MAX, RANDOMIZE_ORDER = read_config()
-
-MARK_KEYBINDS = {1: {Qt.MouseButton.LeftButton,Qt.Key.Key_1}, 
-                 2: {Qt.Key.Key_2}, 
-                 3: {Qt.Key.Key_3}, 
-                 4: {Qt.Key.Key_4}, 
-                 5: {Qt.Key.Key_5}, 
-                 6: {Qt.Key.Key_6}, 
-                 7: {Qt.Key.Key_7}, 
-                 8: {Qt.Key.Key_8}, 
-                 9: {Qt.Key.Key_9}}
 
 def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
     """
@@ -169,7 +37,7 @@ def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
     category_lengths = []
     comment_lengths = []
 
-    fav_out_path = os.path.join(SAVE_DIR, f'{USER}_favorites.txt')
+    fav_out_path = os.path.join(config.SAVE_DIR, f'{config.USER}_favorites.txt')
 
     # Remove the file if it exists
     if os.path.exists(fav_out_path): os.remove(fav_out_path)
@@ -185,7 +53,7 @@ def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
                 category_list = img.categories
                 category_list.sort()
                 if (len(category_list) != 0):
-                    categories = ','.join([CATEGORY_NAMES[i] for i in category_list])
+                    categories = ','.join([config.CATEGORY_NAMES[i] for i in category_list])
                 else: categories = 'None'
 
                 img_ra, img_dec = img.wcs_center
@@ -254,8 +122,8 @@ def save(date,images:List['image.Image']) -> None:
     comment_lengths = []
     label_lengths = []
 
-    mark_out_path = os.path.join(SAVE_DIR,f'{USER}_marks.txt')
-    images_out_path = os.path.join(SAVE_DIR,f'{USER}_images.txt')
+    mark_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.txt')
+    images_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_images.txt')
 
     # Create the file
     if os.path.exists(mark_out_path): os.remove(mark_out_path)
@@ -270,7 +138,7 @@ def save(date,images:List['image.Image']) -> None:
                 category_list = img.categories
                 category_list.sort()
                 if (len(category_list) != 0):
-                    categories = ','.join([CATEGORY_NAMES[i] for i in category_list])
+                    categories = ','.join([config.CATEGORY_NAMES[i] for i in category_list])
                 else: categories = 'None'
 
                 if not img.marks: mark_list = [None]
@@ -278,7 +146,7 @@ def save(date,images:List['image.Image']) -> None:
                 
                 for mark in mark_list:
                     if mark != None:
-                        group_name = GROUP_NAMES[mark.g]
+                        group_name = config.GROUP_NAMES[mark.g]
                         if mark.text == group_name: label = 'None'
                         else: label = mark.text
                         ra, dec = mark.wcs_center
@@ -370,7 +238,7 @@ def loadfav() -> List[str]:
         A list of strings containing the names of the files (images) that were saved.
     """
 
-    fav_out_path = os.path.join(SAVE_DIR, f'{USER}_favorites.txt')
+    fav_out_path = os.path.join(config.SAVE_DIR, f'{config.USER}_favorites.txt')
     
     if os.path.exists(fav_out_path):
         fav_list = [ l.split('|')[1].strip() for l in open(fav_out_path) ][1:]
@@ -388,8 +256,8 @@ def load() -> List[image.Image]:
     images: list[`imgmarker.image.Image`]
     """
 
-    mark_out_path = os.path.join(SAVE_DIR,f'{USER}_marks.txt')
-    images_out_path = os.path.join(SAVE_DIR,f'{USER}_images.txt')
+    mark_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.txt')
+    images_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_images.txt')
     images:List[image.Image] = []
     
     # Get list of images from images.txt
@@ -400,10 +268,10 @@ def load() -> List[image.Image]:
             else:
                 date,name,ra,dec,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
                 categories = categories.split(',')
-                categories = [CATEGORY_NAMES.index(cat) for cat in categories if cat != 'None']
+                categories = [config.CATEGORY_NAMES.index(cat) for cat in categories if cat != 'None']
                 categories.sort()
 
-                img = image.Image(os.path.join(IMAGE_DIR,name))
+                img = image.Image(os.path.join(config.IMAGE_DIR,name))
                 img.comment = comment
                 img.categories = categories
                 img.seen = True
@@ -418,7 +286,7 @@ def load() -> List[image.Image]:
                 date,name,group,label,x,y,ra,dec = [i.strip() for i in l.replace('|\n','').split('|')]
 
                 if (name == img.name) and (not isnan(float(x))) and (not isnan(float(y))):
-                    group = GROUP_NAMES.index(group)
+                    group = config.GROUP_NAMES.index(group)
                     mark_args = (float(x),float(y))
                     mark_kwargs = {'image': img, 'group': group}
                     if label != 'None': mark_kwargs['text'] = label
@@ -447,14 +315,14 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
     """
 
     # Find all images in image directory
-    paths = sorted(_glob.glob(os.path.join(IMAGE_DIR, '*.*')))
+    paths = sorted(_glob.glob(os.path.join(config.IMAGE_DIR, '*.*')))
     paths = [fp for fp in paths if image.pathtoformat(fp) in image.FORMATS]
 
     # Get list of paths to images if they are in the dictionary (have been edited)
-    edited_paths = [os.path.join(IMAGE_DIR,img.name) for img in edited_images]
+    edited_paths = [os.path.join(config.IMAGE_DIR,img.name) for img in edited_images]
     unedited_paths = [fp for fp in paths if fp not in edited_paths]
 
-    if RANDOMIZE_ORDER:
+    if config.RANDOMIZE_ORDER:
         # Shuffle the remaining unedited images
         rng = np.random.default_rng()
         rng.shuffle(unedited_paths)
@@ -468,12 +336,3 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
 
 
 
-def update_config() -> None:
-    """Updates any of the global config variables with the corresponding parameter."""
-    
-    with open(CONFIG,'w') as config:
-        config.write(f'image_dir = {IMAGE_DIR}\n')
-        config.write(f"groups = {','.join(GROUP_NAMES[1:])}\n")
-        config.write(f"categories = {','.join(CATEGORY_NAMES[1:])}\n")
-        config.write(f"group_max = {','.join(GROUP_MAX)}\n")
-        config.write(f'randomize_order = {RANDOMIZE_ORDER}')

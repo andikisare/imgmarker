@@ -1,6 +1,6 @@
 from .pyqt import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
 from math import nan, ceil
-from . import io
+from . import config
 from typing import TYPE_CHECKING, overload
 
 if TYPE_CHECKING:
@@ -111,7 +111,7 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
         if not 'group' in keys: self.g = 0
         else: self.g:int = kwargs['group']
 
-        if not 'text' in keys: self.text = io.GROUP_NAMES[self.g]
+        if not 'text' in keys: self.text = config.GROUP_NAMES[self.g]
         else: self.text:str = kwargs['text']
 
         if not 'shape' in keys: shape = QGraphicsEllipseItem

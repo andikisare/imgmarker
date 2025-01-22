@@ -6,6 +6,7 @@ from .pyqt import ( QApplication, QMainWindow, QPushButton,
 from . import ICON, HEART_SOLID, HEART_CLEAR, SCREEN_WIDTH, SCREEN_HEIGHT, __version__, __license__
 from . import io
 from . import image
+from . import config
 from .widget import QHLine, PosWidget, RestrictedLineEdit
 from .catalog import Catalog
 import sys
@@ -37,9 +38,9 @@ class SettingsWindow(QWidget):
         self.group_boxes = []
         for i in range(1,10):
             lineedit = RestrictedLineEdit([Qt.Key.Key_Comma])
-            lineedit.setPlaceholderText(io.GROUP_NAMES[i])
+            lineedit.setPlaceholderText(config.GROUP_NAMES[i])
             lineedit.setFixedHeight(30)
-            lineedit.setText(io.GROUP_NAMES[i])
+            lineedit.setText(config.GROUP_NAMES[i])
             self.group_boxes.append(lineedit)
 
         self.group_layout = QHBoxLayout()
@@ -56,7 +57,7 @@ class SettingsWindow(QWidget):
             spinbox.setSpecialValueText('-')
             spinbox.setFixedHeight(30)
             spinbox.setMaximum(9)
-            value:str = io.GROUP_MAX[i]
+            value:str = config.GROUP_MAX[i]
             if value.isnumeric(): spinbox.setValue(int(value))
             spinbox.valueChanged.connect(self.update_config)
             self.max_boxes.append(spinbox)
@@ -72,9 +73,9 @@ class SettingsWindow(QWidget):
         self.category_boxes = []
         for i in range(1,6):
             lineedit = RestrictedLineEdit([Qt.Key.Key_Comma])
-            lineedit.setPlaceholderText(io.CATEGORY_NAMES[i])
+            lineedit.setPlaceholderText(config.CATEGORY_NAMES[i])
             lineedit.setFixedHeight(30)
-            lineedit.setText(io.CATEGORY_NAMES[i])
+            lineedit.setText(config.CATEGORY_NAMES[i])
             self.category_boxes.append(lineedit)
 
         self.category_layout = QHBoxLayout()
@@ -83,7 +84,7 @@ class SettingsWindow(QWidget):
         # Options
         self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
         self.randomize_box = QCheckBox(text='Randomize order of images', parent=self)
-        self.randomize_box.setChecked(io.RANDOMIZE_ORDER)
+        self.randomize_box.setChecked(config.RANDOMIZE_ORDER)
 
         # Main layout
         layout.addWidget(self.group_label)
@@ -131,27 +132,27 @@ class SettingsWindow(QWidget):
         return super().closeEvent(a0)
     
     def update_config(self):
-        group_names_old = io.GROUP_NAMES.copy()
+        group_names_old = config.GROUP_NAMES.copy()
 
         # Get the new settings from the boxes
-        io.GROUP_NAMES = ['None'] + [box.text() for box in self.group_boxes]
-        io.GROUP_MAX = [str(box.value()) if box.value() != 0 else 'None' for box in self.max_boxes]
-        io.CATEGORY_NAMES = ['None'] + [box.text() for box in self.category_boxes]
-        io.RANDOMIZE_ORDER = self.randomize_box.isChecked()
+        config.GROUP_NAMES = ['None'] + [box.text() for box in self.group_boxes]
+        config.GROUP_MAX = [str(box.value()) if box.value() != 0 else 'None' for box in self.max_boxes]
+        config.CATEGORY_NAMES = ['None'] + [box.text() for box in self.category_boxes]
+        config.RANDOMIZE_ORDER = self.randomize_box.isChecked()
 
-        for i, box in enumerate(self.mainwindow.category_boxes): box.setText(io.CATEGORY_NAMES[i+1])
+        for i, box in enumerate(self.mainwindow.category_boxes): box.setText(config.CATEGORY_NAMES[i+1])
 
         # Update mark labels that haven't been changed
         for image in self.mainwindow.images:
             for mark in image.marks:
                 if mark.label.lineedit.text() in group_names_old:
-                    mark.label.lineedit.setText(io.GROUP_NAMES[mark.g])
+                    mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
 
         # Update text in the instructions window 
         self.mainwindow.instructions_window.update_text()
 
         # Save the new settings into the config file
-        io.update_config()
+        config.update()
 
 class BlurWindow(QWidget):
     """Class for the blur adjustment window."""
@@ -273,8 +274,8 @@ class InstructionsWindow(QWidget):
     def update_text(self):
         # Lists for keybindings
         actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Favorite', 'Exit', 'Help']
-        group_list = [f'Group \"{group}\"' for group in io.GROUP_NAMES[1:]]
-        category_list = [f'Category \"{category}\"' for category in io.CATEGORY_NAMES[1:]]
+        group_list = [f'Group \"{group}\"' for group in config.GROUP_NAMES[1:]]
+        category_list = [f'Category \"{category}\"' for category in config.CATEGORY_NAMES[1:]]
         actions_list = group_list + category_list + actions_list
         buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'F', 'Ctrl+Q', 'F1', ]
 
@@ -463,7 +464,7 @@ class MainWindow(QMainWindow):
 
         # Category boxes
         self.category_shortcuts = ['Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5']
-        self.category_boxes = [QCheckBox(text=io.CATEGORY_NAMES[i], parent=self) for i in range(1,6)]
+        self.category_boxes = [QCheckBox(text=config.CATEGORY_NAMES[i], parent=self) for i in range(1,6)]
         for i, box in enumerate(self.category_boxes):
             box.setFixedHeight(20)
             box.setStyleSheet("margin-left:30%; margin-right:30%;")
@@ -699,9 +700,9 @@ class MainWindow(QMainWindow):
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
         except:
-            io.IMAGE_DIR = io.get_image_dir()
-            if io.IMAGE_DIR == None: sys.exit()
-            io.update_config()
+            config.IMAGE_DIR = config.open_ims()
+            if config.IMAGE_DIR == None: sys.exit()
+            config.update()
             
             self.images, self.idx = io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
@@ -773,7 +774,7 @@ class MainWindow(QMainWindow):
         """Checks which keyboard button was pressed and calls the appropriate function."""
         
         # Check if key is bound with marking the image
-        for group, binds in io.MARK_KEYBINDS.items():
+        for group, binds in config.MARK_KEYBINDS.items():
             if event.key() in binds: self.mark(group=group)
 
         if (event.key() == Qt.Key.Key_Backspace) or (event.key() == Qt.Key.Key_Delete):
@@ -800,7 +801,7 @@ class MainWindow(QMainWindow):
         nomod = modifiers == Qt.KeyboardModifier.NoModifier
 
         # Check if key is bound with marking the image
-        for group, binds in io.MARK_KEYBINDS.items():
+        for group, binds in config.MARK_KEYBINDS.items():
             if (event.button() in binds) and nomod: self.mark(group=group)
 
         if middlebutton or (ctrl and leftbutton): self.center_cursor()
@@ -851,13 +852,12 @@ class MainWindow(QMainWindow):
     def open(self) -> None:
         """Method for the open save directory dialog."""
 
-        save_dir = QFileDialog.getExistingDirectory(self, 'Open save directory', io.SAVE_DIR)
+        save_dir = QFileDialog.getExistingDirectory(self, 'Open save directory', config.SAVE_DIR)
         if save_dir == '': return
-        if not os.path.exists(os.path.join(save_dir,f'{io.USER}_config.txt')): return
+        if not os.path.exists(os.path.join(save_dir,f'{config.USER}_config.txt')): return
         
-        io.SAVE_DIR = save_dir
-        io.CONFIG = os.path.join(save_dir,f'{io.USER}_config.txt')
-        io.IMAGE_DIR, io.GROUP_NAMES, io.CATEGORY_NAMES, io.GROUP_MAX, io.RANDOMIZE_ORDER = io.read_config()
+        config.SAVE_DIR = save_dir
+        config.read()
 
         self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
@@ -874,20 +874,20 @@ class MainWindow(QMainWindow):
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
 
-        image_dir = QFileDialog.getExistingDirectory(self, 'Open image directory', io.SAVE_DIR)
+        image_dir = QFileDialog.getExistingDirectory(self, 'Open image directory', config.SAVE_DIR)
         if image_dir == '': return
 
-        _image_dir = io.IMAGE_DIR
-        io.IMAGE_DIR = image_dir
+        _image_dir = config.IMAGE_DIR
+        config.IMAGE_DIR = image_dir
         
         self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
 
         if self.N == 0:
-            io.IMAGE_DIR = _image_dir
+            config.IMAGE_DIR = _image_dir
             return
 
-        io.update_config()
+        config.update()
         self.update_images()
         self.update_marks()
         self.get_comment()
@@ -897,7 +897,7 @@ class MainWindow(QMainWindow):
     def open_catalog(self):
         """Method for opening a catalog file."""
 
-        path = QFileDialog.getOpenFileName(self, 'Open catalog', io.SAVE_DIR, 'Text files (*.txt *.csv)')[0]
+        path = QFileDialog.getOpenFileName(self, 'Open catalog', config.SAVE_DIR, 'Text files (*.txt *.csv)')[0]
         if path == '': return
         
         catalog = Catalog(path)
@@ -935,8 +935,8 @@ class MainWindow(QMainWindow):
         x, y = pix_pos.x(), pix_pos.y()
         
         # Mark if hovering over image
-        if io.GROUP_MAX[group - 1] == 'None': limit = inf
-        else: limit = int(io.GROUP_MAX[group - 1])
+        if config.GROUP_MAX[group - 1] == 'None': limit = inf
+        else: limit = int(config.GROUP_MAX[group - 1])
 
         marks_in_group = [m for m in self.image.marks if m.g == group]
 
@@ -1201,8 +1201,8 @@ class MainWindow(QMainWindow):
     def toggle_randomize(self,state):
         """Updates the config file for randomization and reloads unseen images."""
         
-        io.RANDOMIZE_ORDER = bool(state)
-        io.update_config()
+        config.RANDOMIZE_ORDER = bool(state)
+        config.update()
 
         names = [img.name for img in self.images]
 
