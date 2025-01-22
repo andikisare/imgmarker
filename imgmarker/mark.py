@@ -1,3 +1,5 @@
+"""This module contains the `Mark` class and related classes."""
+
 from .pyqt import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
 from math import nan, ceil
 from . import config

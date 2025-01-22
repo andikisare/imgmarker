@@ -1,3 +1,5 @@
+"""Image Marker's I/O module containing functions for loading and saving data."""
+
 import os
 import numpy as np
 from . import mark as _mark

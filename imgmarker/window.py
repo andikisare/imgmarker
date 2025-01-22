@@ -1,3 +1,5 @@
+"""This contains the classes for the various windows displayed by Image Marker."""
+
 from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QLabel, QScrollArea, QGraphicsView,
                     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QCheckBox, 

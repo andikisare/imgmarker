@@ -1,3 +1,4 @@
+"""This module contains custom PyQt widgets for Image Marker."""
 from .pyqt import Qt, QLabel, QWidget, QHBoxLayout, QLineEdit, QFrame, QLineEdit, QSizePolicy, QFileDialog
 import os
 

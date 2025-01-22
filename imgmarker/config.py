@@ -1,3 +1,5 @@
+"""Configuration options and functions for interacting with the configuration file are contained within this module."""
+
 import sys
 import os
 from getpass import getuser

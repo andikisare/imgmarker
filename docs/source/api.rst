@@ -31,7 +31,11 @@ imgmarker.mark module
 imgmarker.pyqt module
 ---------------------
 
-This module simply imports PyQt5 or PyQt6 depending on which one the user has installed.
+.. automodule:: imgmarker.pyqt
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :inherited-members:
 
 imgmarker.widget module
 -----------------------
