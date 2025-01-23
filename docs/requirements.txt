@@ -1,4 +1,4 @@
-sphinx>=1.7.5
+sphinx>=2.1
 sphinx-rtd-theme
 numpydoc
 astropy==6.1.3
