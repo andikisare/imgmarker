@@ -22,7 +22,6 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'numpydoc',
-    'myst_parser',
 ]
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
