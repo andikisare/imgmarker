@@ -16,6 +16,7 @@ from numpy import argsort
 from functools import partial
 from typing import Union, List
 import os
+import warnings
 
 class SettingsWindow(QWidget):
     """Class for the window for settings."""
@@ -1632,22 +1633,25 @@ class MainWindow(QMainWindow):
 
     def update_catalogs(self):
         for mark in self.image.cat_marks: 
-            if mark not in self.image_scene.items(): self.image_scene.mark(mark)
+            if mark not in self.image_scene.items():
+                self.image_scene.mark(mark)
 
         for catalog in self.catalogs:
             color = catalog.color
+            size_unit = catalog.size_unit
+            size = catalog.size
             if catalog.path not in self.image.catalogs:
                 for label, a, b in zip(catalog.labels,catalog.alphas,catalog.betas):
                     if catalog.coord_sys == 'galactic':
                         ra, dec = a, b
-                        mark_coord_cart = self.image.wcs.all_world2pix([[ra,dec]], 0)[0]
-                        x, y = mark_coord_cart[0], self.image.height - mark_coord_cart[1]
+                        try:
+                            mark_coord_cart = self.image.wcs.all_world2pix([[ra,dec]], 0)[0]
+                            x, y = mark_coord_cart[0], self.image.height - mark_coord_cart[1]
+                            if self.inview(x,y):
+                                mark = self.image_scene.mark(x, y, shape='rect', text=label, picked_color=color, size_unit=size_unit, size=size)
+                                self.image.cat_marks.append(mark)
+                        except: pass
                     else: x, y = a, b
-
-                    if self.inview(x,y):
-                        mark = self.image_scene.mark(x, y, shape='rect', text=label, picked_color=color)
-                        self.image.cat_marks.append(mark)
-
                 self.image.catalogs.append(catalog.path)
 
         if len(self.image.cat_marks) > 0:
@@ -1691,7 +1695,7 @@ class MainWindow(QMainWindow):
 
         for image in self.images:
             catalog_marks_global = image.cat_marks.copy()
-            
+            image.catalogs.clear()
             for cat_mark in catalog_marks_global:
                 try:
                     image.cat_marks.remove(cat_mark)
