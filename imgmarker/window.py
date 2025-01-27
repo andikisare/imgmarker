@@ -12,6 +12,7 @@ import sys
 import datetime as dt
 import textwrap
 from math import floor, inf, nan
+import numpy as np
 from numpy import argsort
 from functools import partial
 from typing import Union, List
@@ -85,6 +86,8 @@ class SettingsWindow(QWidget):
         self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
         self.randomize_box = QCheckBox(text='Randomize order of images', parent=self)
         self.randomize_box.setChecked(io.RANDOMIZE_ORDER)
+        self.duplicate_box = QCheckBox(text='Insert duplicate images for testing user consistency', parent=self)
+        self.duplicate_box.setChecked(True)
 
         # Main layout
         layout.addWidget(self.group_label)
@@ -97,6 +100,7 @@ class SettingsWindow(QWidget):
         layout.addWidget(QHLine())
         layout.addWidget(self.focus_box)
         layout.addWidget(self.randomize_box)
+        layout.addWidget(self.duplicate_box)
         layout.addWidget(QHLine())
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFixedWidth(int(SCREEN_WIDTH/3))
@@ -822,6 +826,12 @@ class MainWindow(QMainWindow):
         self.catalogs:List['Catalog'] = []
         self.__init_data__()
         self.image_scene = image.ImageScene(self.image)
+
+        #Initialize inserting duplicates at random
+        self.images_seen_since_duplicate_count = 0 #keeps track of how many images have been seen since last duplicate
+        self.duplicate_image_interval = 1 #this will vary every time a duplicate image is seen
+        self.duplicates_seen = []
+        self.rng = np.random.default_rng()
 
         # Setup child windows
         self.blur_window = BlurWindow()
@@ -1551,6 +1561,21 @@ class MainWindow(QMainWindow):
         try: self.image.close()
         except: pass
 
+        # Randomizing duplicate images to show for consistency of user marks
+        if self.settings_window.duplicate_box.isChecked():
+            self.images_seen_since_duplicate_count += 1
+            if (self.images_seen_since_duplicate_count == self.duplicate_image_interval):
+                self.duplicate_image_interval = self.rng.integers(15,30) #self.rng.integers(len(self.images)/15, len(self.images)/10)
+                self.images_seen_since_duplicate_count = 0
+                seen_images = [image for image in self.images if (image.seen == True) and (len(image.marks) != 0) and (image.name not in self.duplicates_seen)]
+                duplicate_image_to_show = self.rng.choice(seen_images)
+                duplicate_image_to_show.duplicate = True
+                duplicate_image_to_show.marks.clear()
+                self.images.insert(self.idx,duplicate_image_to_show)
+                self.N = len(self.images)
+                self.duplicates_seen.append(duplicate_image_to_show.name)
+        
+        # Continue update_images
         self.frame = self.image.frame
         self.image = self.images[self.idx]
         self.image.seek(self.frame)

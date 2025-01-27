@@ -229,6 +229,7 @@ class Image(QGraphicsPixmapItem):
             metadata = self.read_metadata()
             if metadata != None:
                 self.incompatible = False
+                self.duplicate = False
                 self.width = metadata['width']
                 self.height = metadata['height']
                 self.mode:str = metadata['mode']
