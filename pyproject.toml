@@ -18,6 +18,15 @@ authors = [
   {name = "Ryan Walker", email = "astrorya@umich.edu"}
 ]
 
+description = "A package for marking objects in a series of images"
+
+license = "MIT"
+license-files = ["LICENSE*"]
+
+[project.urls]
+Homepage = "https://github.com/andikisare/imgmarker"
+Issues = "https://github.com/andikisare/imgmarker/issues"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["imgmarker"]
