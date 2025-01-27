@@ -1,0 +1,7 @@
+Loading
+#####################
+
+When Image Marker is first opened, the user is prompted to select the directory in which all of their output data will be automatically saved. The user is then prompted to select the directory from which to load images. The currently supported image formats areFlexible Image Transport System (FITS), Tag Image File Format (TIFF), Portable Network Graphics (PNG), and Joint Photographics Expert Group (JPEG). FITS files support up to a 16 bit depth, which is a limitation of PyQt. For TIFFs, PNGs and JPEGs, Image Marker currently only officially supports RGB color channels with 8 bits per channel, but this may be expanded in the future. 
+Pillow is used to open TIFF, PNG and JPEG files. Though Pillow can currently handle FITS files, this is a relatively recent feature. As such we use astropy to open FITS files, so as to maintain compatibility with older versions of Python. 
+
+Image Marker can handle multi-frame FITS and TIFF files. If a file has multiple frames, these frames can be cycled through using spacebar, or by using the **View > Frames** dialog. WCS information stored in FITS and TIFF files is also accessed by Image Marker. If an image contains a WCS solution in its header, Image Marker will display the WCS coordinates of the cursor in addition to the pixel coordinates.
