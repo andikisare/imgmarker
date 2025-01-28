@@ -1562,18 +1562,21 @@ class MainWindow(QMainWindow):
         except: pass
 
         # Randomizing duplicate images to show for consistency of user marks
+        seen_images = [image for image in self.images if (image.seen == True) and (len(image.marks) != 0) and (image.name not in self.duplicates_seen)]
         if self.settings_window.duplicate_box.isChecked():
-            self.images_seen_since_duplicate_count += 1
-            if (self.images_seen_since_duplicate_count == self.duplicate_image_interval):
-                self.duplicate_image_interval = self.rng.integers(15,30) #self.rng.integers(len(self.images)/15, len(self.images)/10)
-                self.images_seen_since_duplicate_count = 0
-                seen_images = [image for image in self.images if (image.seen == True) and (len(image.marks) != 0) and (image.name not in self.duplicates_seen)]
-                duplicate_image_to_show = self.rng.choice(seen_images)
-                duplicate_image_to_show.duplicate = True
-                duplicate_image_to_show.marks.clear()
-                self.images.insert(self.idx,duplicate_image_to_show)
-                self.N = len(self.images)
-                self.duplicates_seen.append(duplicate_image_to_show.name)
+            if (len(seen_images) > 15):
+                self.images_seen_since_duplicate_count += 1
+                print(self.images_seen_since_duplicate_count)
+                print(self.duplicate_image_interval)
+                if (self.images_seen_since_duplicate_count == self.duplicate_image_interval):
+                    self.duplicate_image_interval = self.rng.integers(15,30) #self.rng.integers(len(self.images)/15, len(self.images)/10)
+                    self.images_seen_since_duplicate_count = 0
+                    duplicate_image_to_show = self.rng.choice(seen_images)
+                    duplicate_image_to_show.duplicate = True
+                    duplicate_image_to_show.marks.clear()
+                    self.images.insert(self.idx,duplicate_image_to_show)
+                    self.N = len(self.images)
+                    self.duplicates_seen.append(duplicate_image_to_show.name)
         
         # Continue update_images
         self.frame = self.image.frame
