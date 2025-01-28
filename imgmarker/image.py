@@ -224,28 +224,33 @@ class Image(QGraphicsPixmapItem):
         self.path = path
         self.name = path.split(os.sep)[-1]
         self.format = pathtoformat(path)
-
+        self.incompatible = False
         if self.format in FORMATS:
             
             self.frame:int = 0
             metadata = self.read_metadata()
-            self.width = metadata['width']
-            self.height = metadata['height']
-            self.mode:str = metadata['mode']
-            self.n_channels = metadata['n_channels'] 
-            self.n_frames = metadata['n_frames']
-            self.wcs = metadata['wcs']
+            if metadata != None:
+                self.incompatible = False
+                self.duplicate = False
+                self.width = metadata['width']
+                self.height = metadata['height']
+                self.mode:str = metadata['mode']
+                self.n_channels = metadata['n_channels'] 
+                self.n_frames = metadata['n_frames']
+                self.wcs = metadata['wcs']
 
-            self.r:float = 0.0
-            self.stretch = Stretch.LINEAR
-            self.interval = Interval.MINMAX
-            
-            self.comment = 'None'
-            self.categories:List[int] = []
-            self.marks:List['_mark.Mark'] = []
-            self.cat_marks:List['_mark.Mark'] = []
-            self.seen:bool = False
-            self.catalogs:List[str] = []
+                self.r:float = 0.0
+                self.stretch = Stretch.LINEAR
+                self.interval = Interval.MINMAX
+                
+                self.comment = 'None'
+                self.categories:List[int] = []
+                self.marks:List['_mark.Mark'] = []
+                self.cat_marks:List['_mark.Mark'] = []
+                self.seen:bool = False
+                self.catalogs:List[str] = []
+            else:
+                self.incompatible = True
 
     @property
     def interval(self): 
@@ -298,10 +303,16 @@ class Image(QGraphicsPixmapItem):
             metadata['mode'] = Mode.I16
             metadata['n_channels'] = 1
             with fits.open(self.path) as f:
-                metadata['width'] = f[self.frame].header['NAXIS2']
-                metadata['height'] = f[self.frame].header['NAXIS1']
-                metadata['n_frames'] = len(f)
-                metadata['wcs'] = read_wcs(f[self.frame])
+                try:
+                    metadata['width'] = f[self.frame].header['NAXIS2']
+                    metadata['height'] = f[self.frame].header['NAXIS1']
+                    metadata['n_frames'] = len(f)
+                    metadata['wcs'] = read_wcs(f[self.frame])
+                except:
+                    print(f"File \"{self.name}\" is not compatible and will not be loaded. Skipping \"{self.name}\".")
+                    self.incompatible = True
+                    return None
+
         else:
             with pillow.open(self.path) as f: 
                 f.seek(self.frame)

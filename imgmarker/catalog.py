@@ -2,6 +2,7 @@
 
 import warnings
 from typing import List
+from math import ceil
 
 class Catalog:
     """
@@ -21,6 +22,15 @@ class Catalog:
     coord_sys: str
         A string containing either 'galactic' or 'cartesian' for designating the input coordinate
         system.
+
+    color: QColor
+        A QColor object picked using the color picker window.
+    
+    size_unit: str
+        A string containing the unit of size for catalog marks to use.
+
+    size: float
+        The size for catalog marks to use.
     """
 
     def __init__(self,path:str):
@@ -35,6 +45,9 @@ class Catalog:
         self.alphas:List[float] = []
         self.betas:List[float] = []
         line0 = True
+        self.size_unit = None
+        self.size = None
+        self.color = None # default color is just None, can be changed if we want to import QColor
 
         for l in open(self.path):
             var = l.split(',')
@@ -46,6 +59,14 @@ class Catalog:
                 else:
                     warnings.warn('WARNING: Invalid catalog coordinate system. Valid coordinate systems: "galactic", "cartesian"')
                     break
+                try:
+                    size_input = var[3].split(":")
+                    self.size_unit = size_input[0].strip().lower()
+                    self.size = float(size_input[1].strip())
+                except:
+                    warnings.warn('WARNING: Invalid size input format or no size indicated, using default size. Valid format: "[arcseconds, pixels]: [size]"')
+                    self.size_unit = None
+                    self.size = None
                 line0 = False
             else:
                 self.labels.append(var[0])

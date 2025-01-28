@@ -331,6 +331,9 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
 
     # Put edited images at the beginning, unedited images at front
     images = edited_images + [image.Image(fp) for fp in unedited_paths]
+    for img in images:
+        if img.incompatible == True:
+            images.remove(img)
 
     idx = min(len(edited_images),len(paths)-1)
 
