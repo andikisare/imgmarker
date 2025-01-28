@@ -20,8 +20,7 @@ authors = [
 
 description = "A package for marking objects in a series of images"
 
-license = "MIT"
-license-files = ["LICENSE*"]
+license = {file = "LICENSE"}
 
 [project.urls]
 Homepage = "https://github.com/andikisare/imgmarker"
