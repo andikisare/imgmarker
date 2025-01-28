@@ -1,7 +1,9 @@
+"""This module contains the `Mark` class and related classes."""
+
 from .pyqt import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
 from math import nan, ceil
-from . import io
 from astropy.wcs.utils import proj_plane_pixel_scales
+from . import config
 from typing import TYPE_CHECKING, overload
 import warnings
 
@@ -121,7 +123,7 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
             self.g:int = kwargs['group']
             self.color = COLORS[self.g]
 
-        if not 'text' in keys: self.text = io.GROUP_NAMES[self.g]
+        if not 'text' in keys: self.text = config.GROUP_NAMES[self.g]
         else: self.text:str = kwargs['text']
 
         if not 'shape' in keys: shape = QGraphicsEllipseItem

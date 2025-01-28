@@ -1,3 +1,5 @@
+"""This module simply imports PyQt5 or PyQt6 depending on which one the user has installed."""
+
 try:
     from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, 
                                  QScrollArea, QGraphicsView, QVBoxLayout, QWidget, 

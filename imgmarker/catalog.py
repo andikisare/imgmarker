@@ -1,3 +1,5 @@
+"""This module contains the `Catalog` class for imported catalogs."""
+
 import warnings
 from typing import List
 from math import ceil

@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "imgmarker"
-version = "0.1.0"
-readme = "README.md"
+version = "0.1.2"
+readme = "README.rst"
 
 dependencies = [
-  "astropy==6.1.3",
-  "pillow==10.4.0",
-  "PyQt6==6.7.1",
+  "astropy>=5.2.2",
+  "pillow>=10.4.0",
+  "PyQt6>=6.7.1",
+  "scipy>=1.10.1",
 ]
 
 authors = [
@@ -18,12 +19,20 @@ authors = [
   {name = "Ryan Walker", email = "astrorya@umich.edu"}
 ]
 
+description = "A package for marking objects in a series of images"
+
+license = {file = "LICENSE"}
+
+[project.urls]
+Homepage = "https://github.com/andikisare/imgmarker"
+Issues = "https://github.com/andikisare/imgmarker/issues"
+
 [tool.setuptools.packages.find]
-where = [".."]
+where = ["."]
 include = ["imgmarker"]
 
 [tool.setuptools.package-data]
-imgmarker = ["*.png"]
+imgmarker = ["*.ico"]
 
 [project.scripts]
 imgmarker = "imgmarker.__init__:main"

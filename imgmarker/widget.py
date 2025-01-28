@@ -1,4 +1,6 @@
-from .pyqt import Qt, QLabel, QWidget, QHBoxLayout, QLineEdit, QFrame, QLineEdit, QSizePolicy
+"""This module contains custom PyQt widgets for Image Marker."""
+from .pyqt import Qt, QLabel, QWidget, QHBoxLayout, QLineEdit, QFrame, QLineEdit, QSizePolicy, QFileDialog
+import os
 
 class QHLine(QFrame):
     def __init__(self):
@@ -80,3 +82,26 @@ class RestrictedLineEdit(QLineEdit):
     def focusOutEvent(self, a0):
         if self.text() == '': self.setText(self.placeholderText())
         return super().focusOutEvent(a0)
+    
+class DefaultDialog(QFileDialog):
+    def __init__(self,directory=os.path.expanduser('~')):
+        #make this work with file dialog names on MacOS
+        #default to user's home directory if a path isn't given. 
+        # Create a QFileDialog instance
+        super().__init__()
+        self.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+        self.setFileMode(QFileDialog.FileMode.Directory)
+        self.setDirectory(directory)
+        self.closed = False
+
+    def closeEvent(self, a0):
+        self.closed = True
+        return super().closeEvent(a0)
+    
+    def keyPressEvent(self, a0):
+        if a0.key() == Qt.Key.Key_Escape: self.close()
+        else: return super().keyPressEvent(a0)
+
+    def selectedFiles(self):
+        if self.closed: return None
+        else: return super().selectedFiles()

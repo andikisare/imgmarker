@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '0.1.2'
 __license__ = 'MIT License'
 import sys
 import os
@@ -29,8 +29,12 @@ SCREEN_WIDTH = app.primaryScreen().size().width()
 SCREEN_HEIGHT = app.primaryScreen().size().height()
 
 from .window import MainWindow
+from . import config
 
 def main():
+    config.SAVE_DIR = config.open_save()
+    config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER = config.read()
+
     window = MainWindow()
     window.show()
     window.fitview()

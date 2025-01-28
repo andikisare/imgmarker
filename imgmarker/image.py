@@ -1,3 +1,5 @@
+"""This module contains code for the `Image` class and image manipulation."""
+
 from .pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, QPainter, Qt, QImage
 from . import mark as _mark
 from io import StringIO

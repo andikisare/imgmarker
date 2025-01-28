@@ -1,0 +1,19 @@
+Function,Keybind
+"Group ""1""",Left click OR 1
+"Group ""2""",2
+"Group ""3""",3
+"Group ""4""",4
+"Group ""5""",5
+"Group ""6""",6
+"Group ""7""",7
+"Group ""8""",8
+"Group ""9""",9
+Next,Tab
+Back,Shift+Tab
+Change frame,Spacebar
+Delete,Right click OR Delete
+Enter comment,Enter
+Focus,Middle click
+Zoom in/out,Scroll wheel
+Exit,Ctrl+Q
+Help,F1
