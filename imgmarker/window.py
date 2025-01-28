@@ -1566,8 +1566,6 @@ class MainWindow(QMainWindow):
         if self.settings_window.duplicate_box.isChecked():
             if (len(seen_images) > 15):
                 self.images_seen_since_duplicate_count += 1
-                print(self.images_seen_since_duplicate_count)
-                print(self.duplicate_image_interval)
                 if (self.images_seen_since_duplicate_count == self.duplicate_image_interval):
                     self.duplicate_image_interval = self.rng.integers(15,30) #self.rng.integers(len(self.images)/15, len(self.images)/10)
                     self.images_seen_since_duplicate_count = 0
