@@ -39,6 +39,7 @@ def get_image_dir() -> str:
     dialog = DefaultDialog(SAVE_DIR)
     dialog.setWindowTitle("Open image directory")
     dialog.exec()
+    if dialog.closed: sys.exit()
 
     image_dir = dialog.selectedFiles()[0]
     return image_dir 
