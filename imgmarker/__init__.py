@@ -23,15 +23,12 @@ HEART_SOLID = _resource_path('heart_solid.ico')
 HEART_CLEAR = _resource_path('heart_clear.ico')
 
 from .pyqt import QApplication
-
-app = QApplication(sys.argv)
-SCREEN_WIDTH = app.primaryScreen().size().width()
-SCREEN_HEIGHT = app.primaryScreen().size().height()
-
 from .window import MainWindow
 from . import config
 
 def main():
+    app = QApplication(sys.argv)
+    
     config.SAVE_DIR = config.open_save()
     config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER = config.read()
 

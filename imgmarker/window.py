@@ -5,7 +5,7 @@ from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QCheckBox, QGraphicsScene, QColor,
                     QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox, PYQT_VERSION_STR)
 
-from . import ICON, HEART_SOLID, HEART_CLEAR, SCREEN_WIDTH, SCREEN_HEIGHT, __version__, __license__
+from . import ICON, HEART_SOLID, HEART_CLEAR, __version__, __license__
 from . import io
 from . import image
 from . import config
@@ -20,7 +20,19 @@ from numpy import argsort
 from functools import partial
 from typing import Union, List
 import os
-import warnings
+
+class Screen:
+    @staticmethod
+    def width():
+        return QApplication.primaryScreen().size().width()
+    
+    @staticmethod
+    def height():
+        return QApplication.primaryScreen().size().height()
+    
+    @staticmethod
+    def center():
+        return QApplication.primaryScreen().geometry().center()
 
 class SettingsWindow(QWidget):
     """Class for the window for settings."""
@@ -107,13 +119,12 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.duplicate_box)
         layout.addWidget(QHLine())
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFixedWidth(int(SCREEN_WIDTH/3))
+        self.setFixedWidth(int(Screen.width()/3))
         self.setFixedHeight(layout.sizeHint().height())
 
         # Set position of window
         qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
+        qt_rectangle.moveCenter(Screen.center())
         self.move(qt_rectangle.topLeft())
 
     def show(self):
@@ -177,7 +188,7 @@ class ColorPickerWindow(QDialog):
         self.mainwindow = mainwindow
 
         # Use this for dynamic scaling of preview box based on screen resolution
-        window_width = int(SCREEN_WIDTH/3)
+        window_width = int(Screen.width()/3)
 
         # Default color options
         # These buttons are just the whole top row in the main layout
@@ -375,13 +386,12 @@ class ColorPickerWindow(QDialog):
         layout.addLayout(main_horizontal_layout)
 
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFixedWidth(int(SCREEN_WIDTH/3))
+        self.setFixedWidth(int(Screen.width()/3))
         self.setFixedHeight(layout.sizeHint().height())
 
         # Set position of window
         qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
+        qt_rectangle.moveCenter(Screen.center())
         self.move(qt_rectangle.topLeft())
 
     # Default color setters
@@ -637,13 +647,12 @@ class BlurWindow(QWidget):
         layout.addWidget(self.value_label)
         layout.addWidget(self.slider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFixedWidth(int(SCREEN_WIDTH/6))
+        self.setFixedWidth(int(Screen.width()/6))
         self.setFixedHeight(layout.sizeHint().height())
 
         # Set position of window
         qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
+        qt_rectangle.moveCenter(Screen.center())
         self.move(qt_rectangle.topLeft())
 
     def slider_moved(self, pos):
@@ -679,13 +688,12 @@ class FrameWindow(QWidget):
         layout.addWidget(self.value_label)
         layout.addWidget(self.slider)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFixedWidth(int(SCREEN_WIDTH/6))
+        self.setFixedWidth(int(Screen.width()/6))
         self.setFixedHeight(layout.sizeHint().height())
 
         # Set position of window
         qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
+        qt_rectangle.moveCenter(Screen.center())
         self.move(qt_rectangle.topLeft())
 
     def slider_moved(self, pos):
@@ -802,8 +810,7 @@ class AboutWindow(QWidget):
 
         # Set position of window
         qt_rectangle = self.frameGeometry()
-        center_point = QApplication.primaryScreen().geometry().center()
-        qt_rectangle.moveCenter(center_point)
+        qt_rectangle.moveCenter(Screen.center())
         self.move(qt_rectangle.topLeft()) 
 
     def show(self):
@@ -1141,9 +1148,9 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_menu)
         
         # Resize and center MainWindow; move instructions off to the right
-        self.resize(int(SCREEN_HEIGHT*0.8),int(SCREEN_HEIGHT*0.8))
+        self.resize(int(Screen.height()*0.8),int(Screen.height()*0.8))
         
-        center = QApplication.primaryScreen().geometry().center()
+        center = Screen.center()
         center -= QPoint(self.width(),self.height())/2
         self.move(center)
 
