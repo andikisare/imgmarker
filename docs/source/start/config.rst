@@ -1,19 +1,29 @@
 Configuration
-#####################
+======================
 
 Settings can be configured within the GUI or directly edited in the configuration file (``$USERNAME_config.txt``).
 
 Settings
-*********************
+---------------------
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
 
-* ``image_dir``: The image directory, where ``imgmarker`` looks for images of all supported formats.
-* ``groups``: The name of each group. Names must not contain commas.
-* ``categories``: The name of each category. Names must not contain commas.
-* ``group_max``: The maximum number of marks that can be placed for a particular group. The position of the value that is replaced in this variable corresponds to which group it limits.
-* ``randomize_order``: True or False, whether or not the displayed images are shuffled randomly or displayed in alphabetical order.
+   * - Setting
+     - Description
+   * - ``image_dir``
+     - The image directory, where Image Marker looks for images of all supported formats.
+   * - ``groups`` 
+     - The name of each group. Names must not contain commas.
+   * - ``categories``
+     - The name of each category. Names must not contain commas.
+   * - ``group_max``
+     - The maximum number of marks that can be placed for a particular group. The position of the value that is replaced in this variable corresponds to which group it limits.
+   * - ``randomize_order``
+     - True or False, whether or not the displayed images are shuffled randomly or displayed in alphabetical order.
 
 Example
-*********************
+---------------------
 
 This configuration::
 
@@ -23,17 +33,6 @@ This configuration::
    group_max = 1,3,None,None,None,None,None,None,2
    randomize_order = True
 
-keybinds the '*Left click OR 1*' buttons to group 'BCG' and limits the number of group 'BCG' marks placed to 1, the '*2*' button to group 'Candidate BCG' and limits the number of group 'Candidate BCG' marks placed to 3, and the '*9*' button to group 'weird' and limits the number of group 'weird' marks placed to 2.
-
-Currently, there is no functionality for changing the keybindings. This means that each custom group still keeps the original keybinding. Keybindings can be found in the instructions window while ``imgmarker`` is running or in the keybinds section below.
-
-Keybinds
-*********************
-
-.. csv-table::
-   :file: keybind_table.csv
-   :widths: 50, 50
-   :header-rows: 1
-
+renames 'Group 1' to 'BCG' and limits the number of marks in 'BCG' to 1, renames 'Group 2' to 'Candidate BCG' and limits the number of marks in 'Candidate BCG' to 3, and renames 'Group 9' button to 'weird' and limits the number of marks in 'weird' to 2.
 
 

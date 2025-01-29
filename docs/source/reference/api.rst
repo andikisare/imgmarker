@@ -1,8 +1,8 @@
 API
-#####################
+======================
 
 imgmarker.catalog module
-*********************
+---------------------
 
 .. automodule:: imgmarker.catalog
    :members:
@@ -11,7 +11,7 @@ imgmarker.catalog module
    :inherited-members:
 
 imgmarker.image module
-*********************
+---------------------
 
 .. automodule:: imgmarker.image
    :members:
@@ -20,7 +20,7 @@ imgmarker.image module
    :inherited-members:
 
 imgmarker.mark module
-*********************
+---------------------
 
 .. automodule:: imgmarker.mark
    :members:
@@ -29,7 +29,7 @@ imgmarker.mark module
    :inherited-members:
 
 imgmarker.pyqt module
-*********************
+---------------------
 
 .. automodule:: imgmarker.pyqt
    :members:
@@ -38,7 +38,7 @@ imgmarker.pyqt module
    :inherited-members:
 
 imgmarker.widget module
-*********************
+---------------------
 
 .. automodule:: imgmarker.widget
    :members:
@@ -47,7 +47,7 @@ imgmarker.widget module
    :inherited-members:
 
 imgmarker.window module
-*********************
+---------------------
 
 .. automodule:: imgmarker.window
    :members:
@@ -56,7 +56,7 @@ imgmarker.window module
    :inherited-members:
    
 imgmarker.config module
-*********************
+---------------------
 
 .. automodule:: imgmarker.config
    :members:

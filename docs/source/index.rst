@@ -7,6 +7,7 @@
 
    Installation <start/installation>
    Configuration <start/config>
+   Controls <start/controls>
 
 .. toctree::
    :caption: Functionality

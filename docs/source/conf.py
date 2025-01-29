@@ -2,6 +2,7 @@
 
 import os
 import sys
+import imgmarker
 sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information
@@ -10,8 +11,8 @@ project = 'Image Marker'
 copyright = '2025'
 author = 'Andi Kisare, Ryan Walker, Lindsey Bleem'
 
-release = '0.1'
-version = '0.1.2'
+release = imgmarker.__version__
+version = imgmarker.__version__
 
 # -- General configuration
 
@@ -37,7 +38,7 @@ templates_path = ['_templates']
 
 # -- Options for HTML output
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'

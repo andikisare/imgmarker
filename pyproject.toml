@@ -4,8 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "imgmarker"
-version = "0.1.2"
 readme = "README.rst"
+dynamic = [
+  "version",
+]
 
 dependencies = [
   "astropy>=5.2.2",
@@ -22,6 +24,9 @@ authors = [
 description = "A package for marking objects in a series of images"
 
 license = {file = "LICENSE"}
+
+[tool.setuptools.dynamic]
+version = { attr = "imgmarker.__version__" }
 
 [project.urls]
 Homepage = "https://github.com/andikisare/imgmarker"
