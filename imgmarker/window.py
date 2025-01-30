@@ -3,7 +3,7 @@
 from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QLabel, QScrollArea, QGraphicsView, QDialog,
                     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QCheckBox, QGraphicsScene, QColor,
-                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox, PYQT_VERSION_STR)
+                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox, QMessageBox, PYQT_VERSION_STR)
 
 from . import ICON, HEART_SOLID, HEART_CLEAR, __version__, __license__
 from . import io
@@ -979,23 +979,17 @@ class MainWindow(QMainWindow):
         open_action = QAction('&Open save...', self)
         open_action.setShortcuts(['Ctrl+o'])
         open_action.triggered.connect(self.open)
-        ### Must fix functionality to work properly first, currently
-        ### it will not attach to the new save folder and will not write anything
-        ### in the new folder.
-        # open_menu.addAction(open_action)
+        open_menu.addAction(open_action)
 
         ### Open image folder menu
         open_ims_action = QAction('&Open images...', self)
         open_ims_action.setShortcuts(['Ctrl+Shift+o'])
         open_ims_action.triggered.connect(self.open_ims)
-        ### Must fix functionality to work properly first, currently
-        ### it will simply overwrite the old save entirely, which is a
-        ### concerning liability. Probably want to fix both the open file/save menu
-        ### and this image menu in conjunction, or perhaps we could
-        ### force a new save folder if you try to open new images that
-        ### don't align with the previous images so that it doesn't
-        ### overwrite data.
-        # open_menu.addAction(open_ims_action)
+
+        '''Must fix functionality to work properly first, currently
+        it will simply overwrite the old save entirely, which is a
+        concerning liability. This should be revisited in the future.'''
+        open_menu.addAction(open_ims_action)
 
         ### Open catalog file
         open_marks_action = QAction('&Open catalog...', self)
@@ -1342,7 +1336,7 @@ class MainWindow(QMainWindow):
         if not os.path.exists(os.path.join(save_dir,f'{config.USER}_config.txt')): return
         
         config.SAVE_DIR = save_dir
-        config.read()
+        config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER = config.read()
 
         self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
@@ -1358,6 +1352,12 @@ class MainWindow(QMainWindow):
 
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
+
+        open_msg = 'This will overwrite all data associated with your current images, including all marks.\n\nAre you sure you want to continue?'
+        reply = QMessageBox.question(self, 'WARNING', 
+                        open_msg, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+
+        if reply == QMessageBox.StandardButton.No: return
 
         image_dir = QFileDialog.getExistingDirectory(self, 'Open image directory', config.SAVE_DIR)
         if image_dir == '': return
