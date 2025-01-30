@@ -8,7 +8,7 @@ from .pyqt import Qt
 from .widget import DefaultDialog
 
 SAVE_DIR = os.path.expanduser('~')
-USER = getuser() 
+USER = getuser()
 IMAGE_DIR = None
 GROUP_NAMES = ['None','1','2','3','4','5','6','7','8','9']
 CATEGORY_NAMES = ['None','1','2','3','4','5']

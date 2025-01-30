@@ -1372,15 +1372,15 @@ class MainWindow(QMainWindow):
         self.update_categories()
         self.update_comments()
 
-    def open_catalog(self):
+    def open_catalog(self, test=False):
         """Method for opening a catalog file."""
-
-        path = QFileDialog.getOpenFileName(self, 'Open catalog', config.SAVE_DIR, 'Text files (*.txt *.csv)')[0]
-        if path == '': return
+        if not test:
+            self.catalog_path = QFileDialog.getOpenFileName(self, 'Open catalog', config.SAVE_DIR, 'Text files (*.txt *.csv)')[0]
+            if self.catalog_path == '': return
         
-        catalog = Catalog(path)
+        catalog = Catalog(self.catalog_path)
 
-        if catalog:
+        if catalog and not test:
             self.color_picker_window = ColorPickerWindow(self)
             self.color_picker_window.show()
             self.color_picker_window.exec()
@@ -1391,6 +1391,11 @@ class MainWindow(QMainWindow):
                 catalog.color = self.picked_color
                 self.catalogs.append(catalog)
                 self.update_catalogs()
+        else:
+            self.picked_color = QColor("Yellow")
+            catalog.color = self.picked_color
+            self.catalogs.append(catalog)
+            self.update_catalogs()
 
 
     def favorite(self,state) -> None:
@@ -1416,13 +1421,17 @@ class MainWindow(QMainWindow):
             self.image.categories.remove(i)
         self.save()
 
-    def mark(self, group:int=0) -> None:
+    def mark(self, group:int=0, test=False) -> None:
         """Add a mark to the current image."""
 
         # get event position and position on image
-        pix_pos = self.mouse_pix_pos()
-        x, y = pix_pos.x(), pix_pos.y()
-        
+        if not test:
+            pix_pos = self.mouse_pix_pos()
+            x, y = pix_pos.x(), pix_pos.y()
+        else: 
+            x = self.image.width/2
+            y = self.image.height/2
+            
         # Mark if hovering over image
         if config.GROUP_MAX[group - 1] == 'None': limit = inf
         else: limit = int(config.GROUP_MAX[group - 1])
