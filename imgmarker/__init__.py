@@ -1,4 +1,4 @@
-__version__ = '0.3.0'
+__version__ = '0.3.2'
 __license__ = 'MIT License'
 import sys
 import os
