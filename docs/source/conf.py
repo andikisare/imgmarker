@@ -2,7 +2,7 @@
 
 import os
 import sys
-import imgmarker
+from importlib import metadata
 sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information
@@ -11,8 +11,8 @@ project = 'Image Marker'
 copyright = '2025'
 author = 'Andi Kisare, Ryan Walker, Lindsey Bleem'
 
-release = imgmarker.__version__
-version = imgmarker.__version__
+release = metadata.version("imgmarker")
+version = metadata.version("imgmarker")
 
 # -- General configuration
 

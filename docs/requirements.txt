@@ -4,4 +4,4 @@ numpydoc
 astropy==6.1.3
 pillow==10.4.0
 scipy
-imgmarker
+-e .
