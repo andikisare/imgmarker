@@ -10,6 +10,7 @@
     :target: https://www.riverbankcomputing.com/static/Docs/PyQt6/
 
 .. |icon| image:: https://raw.githubusercontent.com/andikisare/imgmarker/main/imgmarker/icon.ico
+    :width: 40
 
 .. |license| image:: https://img.shields.io/github/license/andikisare/imgmarker
     :target: https://github.com/andikisare/imgmarker/blob/main/LICENSE
