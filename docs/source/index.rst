@@ -17,6 +17,7 @@
    Loading <functionality/loading>
    Marking images <functionality/marking>
    Categorizing and commenting <functionality/categories>
+   Filters <functionality/filters>
 
 .. toctree::
    :caption: Reference

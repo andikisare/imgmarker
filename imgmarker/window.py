@@ -40,7 +40,6 @@ class SettingsWindow(QWidget):
     def __init__(self,mainwindow:'MainWindow'):
         super().__init__()
         
-        self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
         self.setWindowTitle('Settings')
         self.setLayout(layout)
@@ -179,7 +178,6 @@ class ColorPickerWindow(QDialog):
     def __init__(self,mainwindow:'MainWindow'):
         super().__init__()
         
-        self.setWindowIcon(QIcon(ICON))
         self.setWindowTitle("Color picker")
 
         # This is the main vertical layout, and is the main layout overall, for the window that everything will be added to
@@ -627,7 +625,6 @@ class BlurWindow(QWidget):
     def __init__(self):
         super().__init__()
         
-        self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
         self.setWindowTitle('Gaussian Blur')
         self.setLayout(layout)
@@ -668,7 +665,6 @@ class FrameWindow(QWidget):
     def __init__(self):
         super().__init__()
         
-        self.setWindowIcon(QIcon(ICON))
         layout = QVBoxLayout()
         self.setWindowTitle('Frames')
         self.setLayout(layout)
@@ -711,7 +707,7 @@ class InstructionsWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QIcon(ICON))
+
         layout = QVBoxLayout()
         self.setWindowTitle('Instructions')
         self.setLayout(layout)
@@ -771,7 +767,7 @@ class AboutWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QIcon(ICON))
+
         layout = QVBoxLayout()
         self.setWindowTitle('About')
         self.setLayout(layout)
@@ -825,7 +821,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Image Marker")
-        self.setWindowIcon(QIcon(ICON))
 
         self.zoom_level = 1
         self.cursor_focus = False

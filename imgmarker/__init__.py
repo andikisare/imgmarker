@@ -1,4 +1,4 @@
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 __license__ = 'MIT License'
 import sys
 import os
@@ -22,12 +22,13 @@ ICON = _resource_path('icon.ico')
 HEART_SOLID = _resource_path('heart_solid.ico')
 HEART_CLEAR = _resource_path('heart_clear.ico')
 
-from .pyqt import QApplication
+from .pyqt import QApplication, QIcon
 from .window import MainWindow
 from . import config
 
 def main():
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(ICON))
     
     config.SAVE_DIR = config.open_save()
     config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER = config.read()
