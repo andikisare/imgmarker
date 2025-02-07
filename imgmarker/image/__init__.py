@@ -1,6 +1,6 @@
 """This module contains code for the `Image` class and image manipulation."""
 
-from ..pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, QPainter, Qt, QImage
+from ..pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, Qt, QImage
 from .. import mark as _mark
 from io import StringIO
 import os
@@ -11,8 +11,8 @@ from math import nan
 import numpy as np
 from typing import overload, Union, List
 from astropy.visualization import ZScaleInterval, MinMaxInterval, ManualInterval, LinearStretch, LogStretch
-from astropy.convolution import Gaussian2DKernel
-from scipy.signal import convolve
+import astropy.convolution
+import scipy.signal
 from . import fits
 from astropy.wcs import WCS
 from enum import Enum
@@ -433,7 +433,7 @@ class Image(QGraphicsPixmapItem):
 
         if self.r != 0:
             # Create kernel and compute padding
-            kernel = Gaussian2DKernel(self.r).array
+            kernel = astropy.convolution.Gaussian2DKernel(self.r).array
             ph, pw = np.array(kernel.shape) // 2
             pad_width = ((ph,), (pw,))
 
@@ -441,7 +441,7 @@ class Image(QGraphicsPixmapItem):
                 # Add padding, convolve, then remove padding
                 c = np.pad(c, pad_width=pad_width, mode='edge')
                 c = convolve(c,kernel,mode='same')
-                c = c[ph:c.shape[0]-ph, pw:c.shape[1]-pw]
+                c = c[ph:c.shape[0]-ph, pw:c.shape[1]-pw]          
                 return c
             
             if self.n_channels > 1:
@@ -495,5 +495,22 @@ class ImageScene(QGraphicsScene):
 
         self.removeItem(mark)
         self.removeItem(mark.label)
+
+def convolve(c,kernel,mode):
+    nans =  np.isnan(c)
+    ## Use astropy if there are nans
+    if True in nans: 
+        method = scipy.signal.choose_conv_method(c,kernel,mode=mode)
+        if method == 'direct': 
+            c = astropy.convolution.convolve(c,kernel,boundary='fill',preserve_nan=True)
+        else:
+            c = astropy.convolution.convolve_fft(c,kernel,boundary='fill',preserve_nan=True)
+    
+    ## Use scipy otherwise
+    else: 
+        c = scipy.signal.convolve(c,kernel,mode=mode)
+        c[nans] = np.nan
+
+    return c
 
 
