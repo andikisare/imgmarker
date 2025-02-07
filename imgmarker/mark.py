@@ -29,7 +29,7 @@ class AbstractMark:
         if 'ra' not in kwargs.keys(): 
             self.size, x, y = args
             self.center = QPointF(x,y)
-            self.view_center = self.center + 4*QPointF(self.image.width,self.image.height) + QPointF(0.5,0.5)
+            self.view_center = self.center + QPointF(0.5,0.5)
 
             if (self.image.wcs != None):
                 _x, _y = self.center.x(), self.image.height - self.center.y()
@@ -40,7 +40,7 @@ class AbstractMark:
             self.wcs_center = (kwargs['ra'],kwargs['dec'])
             _x, _y = self.image.wcs.all_world2pix([[kwargs['ra'], kwargs['dec']]], 0)[0]
             self.center = QPointF(_x, self.image.height-_y)
-            self.view_center = self.center + 4*QPointF(self.image.width,self.image.height) + QPointF(0.5,0.5)
+            self.view_center = self.center + QPointF(0.5,0.5)
 
 class MarkLabel(QGraphicsProxyWidget):
     """Mark label and its attributes associated with a particular mark"""

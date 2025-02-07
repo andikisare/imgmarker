@@ -1,7 +1,7 @@
 """This module contains code for the `Image` class and image manipulation."""
 
-from .pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, QPainter, Qt, QImage
-from . import mark as _mark
+from ..pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, QPainter, Qt, QImage
+from .. import mark as _mark
 from io import StringIO
 import os
 from math import floor
@@ -13,7 +13,7 @@ from typing import overload, Union, List
 from astropy.visualization import ZScaleInterval, MinMaxInterval, ManualInterval, LinearStretch, LogStretch
 from astropy.convolution import Gaussian2DKernel
 from scipy.signal import convolve
-from astropy.io import fits
+from . import fits
 from astropy.wcs import WCS
 from enum import Enum
 
@@ -27,12 +27,19 @@ class Stretch(Enum):
 
 class Mode(Enum):
     RGB = 0
-    I16 = 1
+    RGBA = 1
+    I8 = 2
+    I16 = 3
+    
     def __init__(self,value):
         self.format = {0: QImage.Format.Format_RGB888, 
-                       1: QImage.Format.Format_Grayscale16}[value]
+                       1: QImage.Format.Format_RGBA8888,
+                       2: QImage.Format.Format_Grayscale8,
+                       3: QImage.Format.Format_Grayscale16}[value]
         self.iinfo:np.iinfo = {0: np.iinfo(np.uint8), 
-                               1: np.iinfo(np.uint16)}[value]
+                               1: np.iinfo(np.uint8),
+                               2: np.iinfo(np.uint8),
+                               3: np.iinfo(np.uint16)}[value]
 
 FORMATS = ['TIFF','FITS','PNG','JPEG']
 
@@ -47,7 +54,7 @@ def pathtoformat(path:str):
 
 def align8to32(bytes: bytes, width: int, bits_per_pixel: str) -> bytes:
     """
-    converts each scanline of data from 8 bit to 32 bit aligned. slightly modified from astropy
+    converts each scanline of data from 8 bit to 32 bit aligned. slightly modified from Pillow
     """
 
     # calculate bytes per line and the extra padding if needed
@@ -122,8 +129,13 @@ def hsv_to_rgb(h, s, v):
 def read_wcs(f):
     """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
     try:
-        if isinstance(f,fits.PrimaryHDU):
-            return WCS(f.header)
+        if isinstance(f,fits.PrimaryHDU) or isinstance(f,fits.ImageHDU):
+            
+            if not 'CRPIX1' in f.header.keys(): return None
+            else: 
+                _header = f.header.copy()
+                _header['NAXIS'] = 2
+                return WCS(_header)
         else:
             meta_dict = {TAGS[key] : f.tag[key] for key in f.tag_v2}
             
@@ -234,10 +246,10 @@ class Image(QGraphicsPixmapItem):
                 self.duplicate = False
                 self.width = metadata['width']
                 self.height = metadata['height']
-                self.mode:str = metadata['mode']
+                self.mode:Mode = metadata['mode']
                 self.n_channels = metadata['n_channels'] 
                 self.n_frames = metadata['n_frames']
-                self.wcs = metadata['wcs']
+                self.wcs:WCS = metadata['wcs']
 
                 self.r:float = 0.0
                 self.stretch = Stretch.LINEAR
@@ -258,6 +270,7 @@ class Image(QGraphicsPixmapItem):
 
         interval = self._interval
         vlims = interval.get_limits(self.vibrance)
+
         return ManualInterval(*vlims)
     @interval.setter
     def interval(self,enum:Interval): self._interval = enum.value
@@ -279,6 +292,7 @@ class Image(QGraphicsPixmapItem):
             r,g,b = array[:, :, 0], array[:, :, 1], array[:, :, 2]
             v = np.max((r, g, b),axis=0)
         else: v = self.read()
+
         return v
     
     @property
@@ -289,25 +303,42 @@ class Image(QGraphicsPixmapItem):
     def read(self) -> np.ndarray:
         if self.format == 'FITS':
             with fits.open(self.path) as f:
-                data = np.flipud(f[self.frame].data)
-                data = 65535 * (data - np.min(data)) / (np.max(data) - np.min(data))
+                data = f[self.frame].data
+                if self.n_channels > 1:
+                    data = np.dstack((data[0], data[1], data[2]))
+                data = np.flipud(data)
+                data = (2**self.mode.iinfo.bits - 1) * ((data - np.nanmin(data)) / (np.nanmax(data) - np.nanmin(data)))
+        
         else:
             with pillow.open(self.path) as f:
                 f.seek(self.frame)
                 data = np.array(f)
+
         return data
     
     def read_metadata(self) -> dict:
         metadata = {}
         if self.format == 'FITS':
-            metadata['mode'] = Mode.I16
-            metadata['n_channels'] = 1
             with fits.open(self.path) as f:
                 try:
                     metadata['width'] = f[self.frame].header['NAXIS2']
                     metadata['height'] = f[self.frame].header['NAXIS1']
+
+                    # If more than 1 channel, set number of channels and force 8 bits per channel
+                    
+                    if 'NAXIS3' in f[self.frame].header.keys():
+                        metadata['n_channels'] = abs(f[self.frame].header['NAXIS3'])
+                        metadata['mode'] = Mode.RGB
+
+                    # Otherwise set number of channels to 1, get the bit depth from header
+                    else: 
+                        metadata['n_channels'] = 1
+                        if abs(f[self.frame].header['BITPIX']) == 8: metadata['mode'] = Mode.I8
+                        else: metadata['mode'] = Mode.I16
+
                     metadata['n_frames'] = len(f)
                     metadata['wcs'] = read_wcs(f[self.frame])
+                    
                 except:
                     print(f"File \"{self.name}\" is not compatible and will not be loaded. Skipping \"{self.name}\".")
                     self.incompatible = True
@@ -359,12 +390,14 @@ class Image(QGraphicsPixmapItem):
         
         else:
             array_scaled = self.scaling(self.array.copy())*self.mode.iinfo.max
-        
+
         self.setPixmap(self.topixmap(array_scaled.astype(self.mode.iinfo.dtype)))
 
     def toqimage(self,array:np.ndarray) -> QImage:
         width, height  = array.shape[1], array.shape[0]
-        data = align8to32(array.tobytes(),width,self.mode.iinfo.bits)
+        data = array.tobytes()
+
+        if self.mode.iinfo.bits > 8: data = align8to32(data,width,self.mode.iinfo.bits)
 
         if len(array.shape) == 3:
             n = array.shape[2]
@@ -375,19 +408,11 @@ class Image(QGraphicsPixmapItem):
         return qim
 
     def topixmap(self,array:np.ndarray) -> QPixmap:
-        """Creates a QPixmap with a pillows on each side to allow for fully zooming out."""
+        """Creates a QPixmap with a padding on each side to allow for fully zooming out."""
 
+        self.setPixmap(QPixmap())
         qimage = self.toqimage(array)
-        pixmap_base = QPixmap.fromImage(qimage)
-
-        w, h = self.width, self.height
-        _x, _y = int(w*4), int(h*4)
-
-        pixmap = QPixmap(w*9,h*9)
-
-        painter = QPainter(pixmap)
-        painter.drawPixmap(_x, _y, pixmap_base)
-        painter.end()
+        pixmap = QPixmap.fromImage(qimage)
 
         return pixmap
     
@@ -416,7 +441,7 @@ class Image(QGraphicsPixmapItem):
                 # Add padding, convolve, then remove padding
                 c = np.pad(c, pad_width=pad_width, mode='edge')
                 c = convolve(c,kernel,mode='same')
-                c = c[ph:c.shape[0]-ph, pw:c.shape[1]-pw]                
+                c = c[ph:c.shape[0]-ph, pw:c.shape[1]-pw]
                 return c
             
             if self.n_channels > 1:
@@ -437,8 +462,9 @@ class ImageScene(QGraphicsScene):
 
         self.setBackgroundBrush(Qt.GlobalColor.black)
         self.addItem(self.image)
+        self.setSceneRect(-4*self.image.width,-4*self.image.height,9*self.image.width,9*self.image.height)
 
-    def update(self,image:Image):
+    def update_image(self,image:Image):
         """Updates the current image with a new image."""
         # Remove items
         for item in self.items(): self.removeItem(item)
@@ -446,7 +472,7 @@ class ImageScene(QGraphicsScene):
         # Update the pixmap
         self.image = image
         self.addItem(self.image)
-        self.setSceneRect(0,0,9*self.image.width,9*self.image.height)
+        self.setSceneRect(-4*self.image.width,-4*self.image.height,9*self.image.width,9*self.image.height)
 
     @overload
     def mark(self,x:float,y:float,shape='ellipse',text:Union[int,str]=0) -> '_mark.Mark': ...

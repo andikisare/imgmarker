@@ -5,7 +5,7 @@ from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QCheckBox, QGraphicsScene, QColor,
                     QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox, QMessageBox, PYQT_VERSION_STR)
 
-from . import ICON, HEART_SOLID, HEART_CLEAR, __version__, __license__
+from . import HEART_SOLID, HEART_CLEAR, __version__, __license__
 from . import io
 from . import image
 from . import config
@@ -1546,7 +1546,7 @@ class MainWindow(QMainWindow):
     def fitview(self):
         """Fit the image view in the viewport."""
 
-        self.image_view.fitInView(self.image, Qt.AspectRatioMode.KeepAspectRatio)
+        self.image_view.fitInView(self.image_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
         self.zoom(scale=9,mode='viewport')
         self.zoom_level = 1
 
@@ -1595,7 +1595,7 @@ class MainWindow(QMainWindow):
         self.image = self.images[self.idx]
         self.image.seek(self.frame)
         self.image.seen = True
-        self.image_scene.update(self.image)
+        self.image_scene.update_image(self.image)
         if self.image.name not in self.order:
                 self.order.append(self.image.name)
 
@@ -1857,7 +1857,7 @@ class MainWindow(QMainWindow):
         # Get the pixel coordinates (including padding; half-pixel offset required)
         pix_pos = self.image.mapFromScene(scene_pos)
 
-        # Get the true pixel coordinates (ignoring padding)
-        if correction: pix_pos -= 4*QPointF(self.image.width,self.image.height) + QPointF(0.5,0.5)
+        # Correct half-pixel error
+        if correction: pix_pos -= QPointF(0.5,0.5)
         
         return pix_pos.toPoint()
