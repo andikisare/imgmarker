@@ -20,6 +20,7 @@ from numpy import argsort
 from functools import partial
 from typing import Union, List
 import os
+from astropy.coordinates import Angle
 
 class Screen:
     @staticmethod
@@ -1283,30 +1284,9 @@ class MainWindow(QMainWindow):
         if rightbutton: self.del_marks()
 
     def mouseMoveEvent(self, event):
-        """Parses the mouse coordinates and gets galactic coordinates if available to show in scene."""
-
-        # Mark if hovering over image
-        pix_pos = self.mouse_pix_pos()
-        x, y = pix_pos.x(), pix_pos.y()
-
-        if self.inview(x,y):
-            _x, _y = x, self.image.height - y
-
-            try: ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
-            except: ra, dec = nan, nan
-
-            self.pos_widget.x_text.setText(f'{x}')
-            self.pos_widget.y_text.setText(f'{y}')
-
-            self.pos_widget.ra_text.setText(f'{ra:.4f}°')
-            self.pos_widget.dec_text.setText(f'{dec:.4f}°')
-
-        else:
-            self.pos_widget.x_text.setText('')
-            self.pos_widget.y_text.setText('')
-
-            self.pos_widget.ra_text.setText('')
-            self.pos_widget.dec_text.setText('')
+        """Operations executed when the mouse cursor is moved."""
+        
+        self.update_pos()
 
     def closeEvent(self, a0):
         self.update_comments()
@@ -1551,6 +1531,34 @@ class MainWindow(QMainWindow):
         self.zoom_level = 1
 
     # === Update methods ===
+    def update_pos(self):
+        # Mark if hovering over image
+        pix_pos = self.mouse_pix_pos()
+        x, y = pix_pos.x(), pix_pos.y()
+
+        if self.inview(x,y):
+            _x, _y = x, self.image.height - y
+
+            try: ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
+            except: ra, dec = nan, nan
+
+            ra = Angle(ra, unit='deg')
+            dec = Angle(ra, unit='deg')
+
+            ra_str = '{0:0.0f}:{1:0.0f}:{2:.2f}'.format(*ra.hms)
+            dec_str = '{0:0.0f}:{1:0.0f}:{2:.2f}'.format(*dec.dms).replace('-', '')
+            if dec > 0: dec_str = '+' + dec_str
+            else: dec_str = '-' + dec_str
+
+            self.pos_widget.x_text.setText(f'{x}')
+            self.pos_widget.y_text.setText(f'{y}')
+
+            self.pos_widget.ra_text.setText(ra_str)
+            self.pos_widget.dec_text.setText(dec_str)
+
+        else:
+            self.pos_widget.cleartext()
+
     def update_favorites(self):
         """Update favorite boxes based on the contents of favorite_list."""
 
@@ -1603,6 +1611,7 @@ class MainWindow(QMainWindow):
         if (self.image.width != _w) or (self.image.height != _h): self.fitview()
 
         # Update position widget
+        self.update_pos()
         if self.image.wcs == None: 
             self.pos_widget.wcs_label.hide()
             self.pos_widget.ra_text.hide()

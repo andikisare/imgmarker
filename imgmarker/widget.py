@@ -70,6 +70,12 @@ class PosWidget(QWidget):
         label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         label.setFixedHeight(30)
 
+    def cleartext(self):
+        self.x_text.setText('')
+        self.y_text.setText('')
+        self.ra_text.setText('')
+        self.dec_text.setText('')
+
 class RestrictedLineEdit(QLineEdit):
     def __init__(self,forbidden_keys:list=[]):
         super().__init__()
