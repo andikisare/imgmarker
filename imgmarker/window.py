@@ -3,7 +3,7 @@
 from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QLabel, QScrollArea, QGraphicsView, QDialog,
                     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QCheckBox, QGraphicsScene, QColor,
-                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox, QMessageBox, QShortcut, PYQT_VERSION_STR)
+                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QSpinBox, QMessageBox, QShortcut, PYQT_VERSION_STR)
 
 from . import HEART_SOLID, HEART_CLEAR, __version__, __license__
 from . import io
@@ -822,9 +822,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Image Marker")
-
-        self.zoom_level = 1
-        self.cursor_focus = False
         self.frame = 0
 
         # Shortcuts
@@ -843,6 +840,8 @@ class MainWindow(QMainWindow):
         self.catalogs:List['Catalog'] = []
         self.__init_data__()
         self.image_scene = image.ImageScene(self.image)
+        self.image_view = image.ImageView(self.image_scene)
+        self.image_view.mouseMoveEvent = self.mouseMoveEvent
 
         #Initialize inserting duplicates at random
         self.images_seen_since_duplicate_count = 0 #keeps track of how many images have been seen since last duplicate
@@ -859,7 +858,7 @@ class MainWindow(QMainWindow):
         self.frame_window.slider.setMaximum(self.image.n_frames-1)
 
         self.settings_window = SettingsWindow(self)
-        self.settings_window.focus_box.stateChanged.connect(partial(setattr,self,'cursor_focus'))
+        self.settings_window.focus_box.stateChanged.connect(partial(setattr,self.image_view,'cursor_focus'))
         self.settings_window.randomize_box.stateChanged.connect(self.toggle_randomize)
 
         self.instructions_window = InstructionsWindow()
@@ -884,24 +883,6 @@ class MainWindow(QMainWindow):
             self.pos_widget.wcs_label.show()
             self.pos_widget.ra_text.show()
             self.pos_widget.dec_text.show()
-
-        # Create image view
-        self.image_view = QGraphicsView(self.image_scene)
-        
-        ### Disable scrollbar
-        self.image_view.verticalScrollBar().blockSignals(True)
-        self.image_view.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.image_view.horizontalScrollBar().blockSignals(True)
-        self.image_view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-
-        ### Image view position setup and mouse tracking
-        self.image_view.move(0, 0)
-        self.image_view.setTransformationAnchor(self.image_view.ViewportAnchor(1))
-        self.image_view.setMouseTracking(True)
-        self.image_view.mouseMoveEvent = self.mouseMoveEvent
-
-        ### Install event filters
-        self.image_view.viewport().installEventFilter(self)
 
         # Back widget
         self.back_button = QPushButton(text='Back',parent=self)
@@ -991,10 +972,6 @@ class MainWindow(QMainWindow):
         open_ims_action = QAction('&Open Images...', self)
         open_ims_action.setShortcuts(['Ctrl+Shift+o'])
         open_ims_action.triggered.connect(self.open_ims)
-
-        '''Must fix functionality to work properly first, currently
-        it will simply overwrite the old save entirely, which is a
-        concerning liability. This should be revisited in the future.'''
         open_menu.addAction(open_ims_action)
 
         #### Open catalog file
@@ -1041,19 +1018,19 @@ class MainWindow(QMainWindow):
         #### Zoom in
         zoomin_action = QAction('&Zoom In', self)
         zoomin_action.setShortcuts(['Ctrl+='])
-        zoomin_action.triggered.connect(partial(self.zoom,1.2,'viewport'))
+        zoomin_action.triggered.connect(partial(self.image_view.zoom,1.2,'viewport'))
         zoom_menu.addAction(zoomin_action)
 
         ### Zoom out
         zoomout_action = QAction('&Zoom Out', self)
         zoomout_action.setShortcuts(['Ctrl+-'])
-        zoomout_action.triggered.connect(partial(self.zoom,1/1.2,'viewport'))
+        zoomout_action.triggered.connect(partial(self.image_view.zoom,1/1.2,'viewport'))
         zoom_menu.addAction(zoomout_action)
 
         ### Zoom to Fit
         zoomfit_action = QAction('&Zoom to Fit', self)
         zoomfit_action.setShortcuts(['Ctrl+0'])
-        zoomfit_action.triggered.connect(self.zoomfit)
+        zoomfit_action.triggered.connect(self.image_view.zoomfit)
         zoom_menu.addAction(zoomfit_action)
 
         ### Frame menu
@@ -1258,30 +1235,6 @@ class MainWindow(QMainWindow):
 
     # === Events ===
 
-    def eventFilter(self, source, event):
-        """
-        Perform operations based on the event source and type.
-
-        Parameters
-        ----------
-        source: `QObject` object
-            Source of the event
-        event: `QEvent` object
-            Event
-
-        Returns
-        ----------
-        True if the event triggered an some operation.
-        """
-
-        if (source == self.image_view.viewport()) and (event.type() == 31):
-            x = event.angleDelta().y()
-            if x > 0: self.zoom(1/1.2)
-            elif x < 0: self.zoom(1.2)
-            return True
-
-        return super().eventFilter(source, event)
-
     def keyPressEvent(self,event):
         """Checks which keyboard button was pressed and calls the appropriate function."""
         
@@ -1303,13 +1256,13 @@ class MainWindow(QMainWindow):
         for group, binds in config.MARK_KEYBINDS.items():
             if (event.button() in binds) and nomod: self.mark(group=group)
 
-        if middlebutton or (ctrl and leftbutton): self.center_cursor()
+        if middlebutton or (ctrl and leftbutton): self.image_view.center_cursor()
 
         if rightbutton: self.del_marks()
 
     def mouseMoveEvent(self, event):
         """Operations executed when the mouse cursor is moved."""
-        
+
         self.update_pos()
 
     def closeEvent(self, a0):
@@ -1327,8 +1280,6 @@ class MainWindow(QMainWindow):
         io.save(self.date,self.images)
         io.savefav(self.date,self.images,self.favorite_list)
 
-    
-
     def open(self) -> None:
         """Method for the open save directory dialog."""
 
@@ -1344,7 +1295,7 @@ class MainWindow(QMainWindow):
         
         self.__init_data__()
         self.update_images()
-        self.zoomfit()
+        self.image_view.zoomfit()
         self.update_marks()
         self.get_comment()
         self.update_categories()
@@ -1405,7 +1356,6 @@ class MainWindow(QMainWindow):
             self.catalogs.append(catalog)
             self.update_catalogs()
 
-
     def favorite(self,state) -> None:
         """Favorite the current image."""
 
@@ -1434,7 +1384,7 @@ class MainWindow(QMainWindow):
 
         # get event position and position on image
         if not test:
-            pix_pos = self.mouse_pix_pos()
+            pix_pos = self.image_view.mouse_pix_pos()
             x, y = pix_pos.x(), pix_pos.y()
         else: 
             x = self.image.width/2
@@ -1512,60 +1462,10 @@ class MainWindow(QMainWindow):
         self.comment_box.clearFocus()
         self.save()
 
-    def center_cursor(self):
-        """Center on the cursor."""
-
-        center = self.image_view.viewport().rect().center()
-        scene_center = self.image_view.mapToScene(center)
-        pix_pos = self.mouse_pix_pos(correction=False)
-
-        delta = scene_center.toPoint() - pix_pos
-        self.image_view.translate(delta.x(),delta.y())
-        
-        if self.cursor_focus:
-            global_center = self.image_view.mapToGlobal(center)
-            self.cursor().setPos(global_center)
-
-    def zoom(self,scale:float,mode:str='mouse'):
-        """
-        Zoom in on the image.
-
-        Parameters
-        ----------
-        scale: str
-            Scale of the zoom. Greater than 1 means zooming in, less than 1 means zooming out
-        mode: str, optional
-            Zoom mode. To zoom from the center of the viewport, use mode='viewport'. To zoom from the mouse
-            cursor location, use mode='mouse'. Defaults to 'mouse'.
-        
-        Returns
-        ----------
-        None
-        """
-
-        if self.zoom_level*scale > 1/3:
-            self.zoom_level *= scale
-            if mode == 'viewport': center = self.image_view.viewport().rect().center()
-            if mode == 'mouse': center = self.mouse_view_pos()
-
-            transform = self.image_view.transform()
-            center = self.image_view.mapToScene(center)
-            transform.translate(center.x(), center.y())
-            transform.scale(scale, scale)
-            transform.translate(-center.x(), -center.y())
-            self.image_view.setTransform(transform)
-
-    def zoomfit(self):
-        """Fit the image view in the viewport."""
-
-        self.image_view.fitInView(self.image_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
-        self.zoom(scale=9,mode='viewport')
-        self.zoom_level = 1
-
     # === Update methods ===
     def update_pos(self):
         # Mark if hovering over image
-        pix_pos = self.mouse_pix_pos()
+        pix_pos = self.image_view.mouse_pix_pos()
         x, y = pix_pos.x(), pix_pos.y()
 
         if self.inview(x,y):
@@ -1640,7 +1540,7 @@ class MainWindow(QMainWindow):
                 self.order.append(self.image.name)
 
         # Fit back to view if the image dimensions have changed
-        if (self.image.width != _w) or (self.image.height != _h): self.zoomfit()
+        if (self.image.width != _w) or (self.image.height != _h): self.image_view.zoomfit()
 
         # Update position widget
         self.update_pos()
@@ -1756,7 +1656,7 @@ class MainWindow(QMainWindow):
         """Deletes marks, either the selected one or all."""
         
         if not del_all:
-            pix_pos = self.mouse_pix_pos(correction=False).toPointF()
+            pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
             selected_items = [item for item in self.image.marks 
                               if item is self.image_scene.itemAt(pix_pos, item.transform())]
         else: selected_items = self.image.marks.copy()
@@ -1875,35 +1775,5 @@ class MainWindow(QMainWindow):
 
     # === Utils ===
 
-    def mouse_view_pos(self):
-        """
-        Gets mouse position.
-
-        Returns
-        ----------
-        view_pos: `QPoint`
-            position of mouse in the image view.
-        """
-
-        return self.image_view.mapFromGlobal(self.cursor().pos())
     
-    def mouse_pix_pos(self,correction:bool=True):
-        """
-        Gets mouse position.
-
-        Returns
-        ----------
-        pix_pos: `QPoint`
-            position of mouse in the image.
-        """
-
-        view_pos = self.image_view.mapFromGlobal(self.cursor().pos())
-        scene_pos = self.image_view.mapToScene(view_pos)
-
-        # Get the pixel coordinates (including padding; half-pixel offset required)
-        pix_pos = self.image.mapFromScene(scene_pos)
-
-        # Correct half-pixel error
-        if correction: pix_pos -= QPointF(0.5,0.5)
-        
-        return pix_pos.toPoint()
+    

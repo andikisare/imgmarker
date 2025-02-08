@@ -1,6 +1,6 @@
 """This module contains code for the `Image` class and image manipulation."""
 
-from ..pyqt import QGraphicsScene, QGraphicsPixmapItem, QPixmap, Qt, QImage
+from ..pyqt import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QPixmap, Qt, QImage, QPointF
 from .. import mark as _mark
 from io import StringIO
 import os
@@ -125,6 +125,23 @@ def hsv_to_rgb(h, s, v):
         b = np.where(i==j,conv[j][2],b)
     
     return r, g, b
+
+def convolve(c,kernel,mode):
+    nans =  np.isnan(c)
+    ## Use astropy if there are nans
+    if True in nans: 
+        method = scipy.signal.choose_conv_method(c,kernel,mode=mode)
+        if method == 'direct': 
+            c = astropy.convolution.convolve(c,kernel,boundary='fill',preserve_nan=True)
+        else:
+            c = astropy.convolution.convolve_fft(c,kernel,boundary='fill',preserve_nan=True)
+    
+    ## Use scipy otherwise
+    else: 
+        c = scipy.signal.convolve(c,kernel,mode=mode)
+        c[nans] = np.nan
+
+    return c
 
 def read_wcs(f):
     """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
@@ -455,7 +472,7 @@ class Image(QGraphicsPixmapItem):
         self.rescale()
 
 class ImageScene(QGraphicsScene):
-    """A class for storing and manipulating the information/image that is currently displayed."""
+    """A class in which images and marks are stored."""
     def __init__(self,image:Image):
         super().__init__()
         self.image = image
@@ -496,21 +513,139 @@ class ImageScene(QGraphicsScene):
         self.removeItem(mark)
         self.removeItem(mark.label)
 
-def convolve(c,kernel,mode):
-    nans =  np.isnan(c)
-    ## Use astropy if there are nans
-    if True in nans: 
-        method = scipy.signal.choose_conv_method(c,kernel,mode=mode)
-        if method == 'direct': 
-            c = astropy.convolution.convolve(c,kernel,boundary='fill',preserve_nan=True)
-        else:
-            c = astropy.convolution.convolve_fft(c,kernel,boundary='fill',preserve_nan=True)
-    
-    ## Use scipy otherwise
-    else: 
-        c = scipy.signal.convolve(c,kernel,mode=mode)
-        c[nans] = np.nan
+class ImageView(QGraphicsView):
+    """A class in which the image scene is stored."""
+    def __init__(self,scene:ImageScene):
+        super().__init__(scene)
 
-    return c
+        self.zoom_level = 1
+        self.cursor_focus = False
+
+        self.move(0, 0)
+        self.setTransformationAnchor(self.ViewportAnchor(1))
+
+        # Mouse tracking
+        self.setMouseTracking(True)
+
+        # Disable scrollbars
+        self.verticalScrollBar().blockSignals(True)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.horizontalScrollBar().blockSignals(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        #Install event filter for zooming
+        self.viewport().installEventFilter(self)
+
+    def eventFilter(self, source, event):
+        """
+        Performs operations based on the event source and type.
+
+        Parameters
+        ----------
+        source: `QObject` object
+            Source of the event
+        event: `QEvent` object
+            Event
+
+        Returns
+        ----------
+        True if the event triggered an some operation.
+        """
+
+        if (source == self.viewport()) and (event.type() == 31):
+            x = event.angleDelta().y()
+            if x > 0: self.zoom(1/1.2)
+            elif x < 0: self.zoom(1.2)
+            return True
+
+        return super().eventFilter(source, event)
+    
+    def scene(self) -> ImageScene:
+        """Returns the associated image scene."""
+        return super().scene()
+    
+    def mouse_pix_pos(self,correction:bool=True):
+        """
+        Gets mouse image coordinates.
+
+        Returns
+        ----------
+        pix_pos: `QPoint`
+            position of mouse in the image.
+        """
+
+        view_pos = self.mapFromGlobal(self.cursor().pos())
+        scene_pos = self.mapToScene(view_pos)
+
+        # Get the pixel coordinates (including padding; half-pixel offset required)
+        pix_pos = self.scene().image.mapFromScene(scene_pos)
+
+        # Correct half-pixel error
+        if correction: pix_pos -= QPointF(0.5,0.5)
+        
+        return pix_pos.toPoint()
+    
+    def mouse_pos(self):
+        """
+        Gets mouse position.
+
+        Returns
+        ----------
+        view_pos: `QPoint`
+            position of mouse in the image view.
+        """
+
+        return self.mapFromGlobal(self.cursor().pos())
+    
+    def zoom(self,scale:float,mode:str='mouse'):
+        """
+        Zoom in on the image.
+
+        Parameters
+        ----------
+        scale: str
+            Scale of the zoom. Greater than 1 means zooming in, less than 1 means zooming out
+        mode: str, optional
+            Zoom mode. To zoom from the center of the viewport, use mode='viewport'. To zoom from the mouse
+            cursor location, use mode='mouse'. Defaults to 'mouse'.
+        
+        Returns
+        ----------
+        None
+        """
+
+        if self.zoom_level*scale > 1/3:
+            self.zoom_level *= scale
+            if mode == 'viewport': center = self.viewport().rect().center()
+            if mode == 'mouse': center = self.mouse_pos()
+
+            transform = self.transform()
+            center = self.mapToScene(center)
+            transform.translate(center.x(), center.y())
+            transform.scale(scale, scale)
+            transform.translate(-center.x(), -center.y())
+            self.setTransform(transform)
+
+    def zoomfit(self):
+        """Fit the image view in the viewport."""
+
+        self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+        self.zoom(scale=9,mode='viewport')
+        self.zoom_level = 1
+
+    def center_cursor(self):
+        """Center on the cursor."""
+
+        center = self.viewport().rect().center()
+        scene_center = self.mapToScene(center)
+        pix_pos = self.mouse_pix_pos(correction=False)
+
+        delta = scene_center.toPoint() - pix_pos
+        self.translate(delta.x(),delta.y())
+        
+        if self.cursor_focus:
+            global_center = self.mapToGlobal(center)
+            self.cursor().setPos(global_center)
+    
 
 

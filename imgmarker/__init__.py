@@ -1,4 +1,4 @@
-__version__ = '0.3.8'
+__version__ = '0.3.9'
 __license__ = 'MIT License'
 import sys
 import os
@@ -35,7 +35,7 @@ def main():
 
     window = MainWindow()
     window.show()
-    window.zoomfit()
+    window.image_view.zoomfit()
     sys.exit(app.exec())
 
 if __name__ == '__main__': 
