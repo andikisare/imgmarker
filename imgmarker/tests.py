@@ -22,8 +22,8 @@ if __name__ == '__main__' and __package__ is None:
 ICON = _resource_path('icon.ico')
 HEART_SOLID = _resource_path('heart_solid.ico')
 HEART_CLEAR = _resource_path('heart_clear.ico')
-from .window import MainWindow
-from . import window, mark, config, io, catalog, widget, image
+from .gui.window import MainWindow
+from . import gui, config, io, catalog, image
 
 test_save_dir = "./tests/test_save/"
 test_images_dir = "./tests/test_images/"
@@ -52,35 +52,35 @@ def app(qtbot):
     qtbot.addWidget(test_app)
     return test_app
 
-def test_load_images(app, qtbot):
+def test_load_images(app:MainWindow, qtbot):
 
     assert len(app.images) == 3
 
-def test_image_shown(app, qtbot):
+def test_image_shown(app:MainWindow, qtbot):
     test_load_images(app, qtbot)
     image = app.image_scene.image
     assert image in app.image_scene.items()
 
-def test_open_catalog(app, qtbot):
+def test_open_catalog(app:MainWindow, qtbot):
     app.catalog_path = test_catalog_dir_csv
     app.open_catalog(test=True)
 
     assert len(app.catalogs) == 1
 
-def test_update_catalogs(app, qtbot):
+def test_update_catalogs(app:MainWindow, qtbot):
     test_open_catalog(app, qtbot)
 
     assert len(app.image_scene.items()) == 3
     assert len(app.image.cat_marks) == 1
 
-def test_place_mark(app, qtbot):
+def test_place_mark(app:MainWindow, qtbot):
     app.mark(group=1, test=True)
     print(app.image_scene.items())
 
     assert len(app.image_scene.items()) == 3
     assert len(app.image.marks) == 1
 
-def test_mark_limit(app, qtbot):
+def test_mark_limit(app:MainWindow, qtbot):
     config.GROUP_MAX[0] = 1
     config.GROUP_MAX[1] = 2
 
@@ -93,7 +93,7 @@ def test_mark_limit(app, qtbot):
     assert len(app.image_scene.items()) == 7
     assert len(app.image.marks) == 3
 
-def test_mark_delete(app, qtbot):
+def test_mark_delete(app:MainWindow, qtbot):
     app.mark(group=1, test=True)
     app.mark(group=2, test=True)
     app.mark(group=3, test=True)
@@ -102,7 +102,7 @@ def test_mark_delete(app, qtbot):
     assert len(app.image_scene.items()) == 1
     assert len(app.image.marks) == 0
 
-def test_catalog_delete(app, qtbot):
+def test_catalog_delete(app:MainWindow, qtbot):
     app.catalog_path = test_catalog_dir_txt
     app.open_catalog(test=True)
     
@@ -136,14 +136,14 @@ def test_catalog_delete(app, qtbot):
     assert len(app.image_scene.items()) == 1
     assert len(app.image.cat_marks) == 0
 
-def test_frame_seek(app, qtbot):
+def test_frame_seek(app:MainWindow, qtbot):
     first_frame_array = app.image.array
     app.image.seek(1)
     second_frame_array = app.image.array
 
     assert not np.all(first_frame_array == second_frame_array)
 
-def test_save_mark(app, qtbot):
+def test_save_mark(app:MainWindow, qtbot):
     app.mark(group=1, test=True)
     date = 0
     name = 0
@@ -168,7 +168,7 @@ def test_save_mark(app, qtbot):
     assert ra == str(f"{app.image.marks[0].wcs_center[0]:.8f}")
     assert dec == str(f"{app.image.marks[0].wcs_center[1]:.8f}")
 
-def test_delete_save_mark(app, qtbot):
+def test_delete_save_mark(app:MainWindow, qtbot):
     app.mark(group=1, test=True)
     date = 0
     name = 0
@@ -209,7 +209,7 @@ def test_delete_save_mark(app, qtbot):
     assert ra == "nan"
     assert dec == "nan"
 
-def test_change_mark_group_save(app, qtbot):
+def test_change_mark_group_save(app:MainWindow, qtbot):
     app.mark(group=1, test=True)
     date = 0
     name = 0
@@ -256,7 +256,7 @@ def test_change_mark_group_save(app, qtbot):
     assert ra == str(f"{app.image.marks[0].wcs_center[0]:.8f}")
     assert dec == str(f"{app.image.marks[0].wcs_center[1]:.8f}")
 
-def test_next_image(app, qtbot):
+def test_next_image(app:MainWindow, qtbot):
     current_image_array = app.image.array
     app.shift(+1)
     new_image_array = app.image.array
