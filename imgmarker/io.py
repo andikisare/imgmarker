@@ -2,7 +2,7 @@
 
 import os
 import numpy as np
-from . import mark as _mark
+from .gui import Mark
 from . import image
 from . import config
 import glob as _glob
@@ -292,7 +292,7 @@ def load() -> List[image.Image]:
                     mark_args = (float(x),float(y))
                     mark_kwargs = {'image': img, 'group': group}
                     if label != 'None': mark_kwargs['text'] = label
-                    mark = _mark.Mark(*mark_args, **mark_kwargs)
+                    mark = Mark(*mark_args, **mark_kwargs)
                     img.marks.append(mark)
     return images
 

@@ -1,11 +1,9 @@
 """Configuration options and functions for interacting with the configuration file are contained within this module."""
 
-import sys
 import os
 from getpass import getuser
 from typing import Tuple, List
-from .pyqt import Qt
-from .widget import DefaultDialog
+from .gui.pyqt import Qt
 
 SAVE_DIR = os.path.expanduser('~')
 USER = getuser()
@@ -98,24 +96,6 @@ def read() -> Tuple[str,List[str],List[str],List[str],List[int]]:
                 randomize_order = val == 'True'
 
     return image_dir, group_names, category_names, group_max, randomize_order
-
-def open_save() -> str:
-    dialog = DefaultDialog()
-    dialog.setWindowTitle("Open save directory")
-    dialog.exec()
-    if dialog.closed: sys.exit()
-
-    save_dir = dialog.selectedFiles()[0]
-    return save_dir
-
-def open_ims() -> str:
-    dialog = DefaultDialog(SAVE_DIR)
-    dialog.setWindowTitle("Open image directory")
-    dialog.exec()
-    if dialog.closed: sys.exit()
-
-    image_dir = dialog.selectedFiles()[0]
-    return image_dir
 
 def update() -> None:
     """Updates any of the config variables with the corresponding parameter."""

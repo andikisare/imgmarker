@@ -4,13 +4,13 @@ from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QLabel, QScrollArea, QGraphicsView, QDialog,
                     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QCheckBox, QGraphicsScene, QColor,
                     QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QSpinBox, QMessageBox, QShortcut, PYQT_VERSION_STR)
-
-from . import HEART_SOLID, HEART_CLEAR, __version__, __license__
-from . import io
-from . import image
-from . import config
-from .widget import QHLine, QVLine, PosWidget, RestrictedLineEdit
-from .catalog import Catalog
+from . import Screen
+from .. import HEART_SOLID, HEART_CLEAR, __version__, __license__
+from .. import io
+from .. import image
+from .. import config
+from . import QHLine, QVLine, PosWidget, RestrictedLineEdit, DefaultDialog
+from ..catalog import Catalog
 import sys
 import datetime as dt
 import textwrap
@@ -22,18 +22,23 @@ from typing import Union, List
 import os
 from astropy.coordinates import Angle
 
-class Screen:
-    @staticmethod
-    def width():
-        return QApplication.primaryScreen().size().width()
-    
-    @staticmethod
-    def height():
-        return QApplication.primaryScreen().size().height()
-    
-    @staticmethod
-    def center():
-        return QApplication.primaryScreen().geometry().center()
+def _open_save() -> str:
+    dialog = DefaultDialog()
+    dialog.setWindowTitle("Open save directory")
+    dialog.exec()
+    if dialog.closed: sys.exit()
+
+    save_dir = dialog.selectedFiles()[0]
+    return save_dir
+
+def _open_ims() -> str:
+    dialog = DefaultDialog(config.SAVE_DIR)
+    dialog.setWindowTitle("Open image directory")
+    dialog.exec()
+    if dialog.closed: sys.exit()
+
+    image_dir = dialog.selectedFiles()[0]
+    return image_dir
 
 class SettingsWindow(QWidget):
     """Class for the window for settings."""
@@ -1189,7 +1194,7 @@ class MainWindow(QMainWindow):
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
         except:
-            config.IMAGE_DIR = config.open_ims()
+            config.IMAGE_DIR = _open_ims()
             if config.IMAGE_DIR == None: sys.exit()
             config.update()
             
@@ -1774,6 +1779,7 @@ class MainWindow(QMainWindow):
                 mark.label.hide()
 
     # === Utils ===
+
 
     
     

@@ -1,7 +1,7 @@
 """This module contains code for the `Image` class and image manipulation."""
 
-from ..pyqt import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QPixmap, Qt, QImage, QPointF
-from .. import mark as _mark
+from ..gui.pyqt import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QPixmap, Qt, QImage, QPointF
+from ..gui import Mark
 from io import StringIO
 import os
 from math import floor
@@ -274,8 +274,8 @@ class Image(QGraphicsPixmapItem):
                 
                 self.comment = 'None'
                 self.categories:List[int] = []
-                self.marks:List['_mark.Mark'] = []
-                self.cat_marks:List['_mark.Mark'] = []
+                self.marks:List['Mark'] = []
+                self.cat_marks:List['Mark'] = []
                 self.seen:bool = False
                 self.catalogs:List[str] = []
             else:
@@ -492,22 +492,22 @@ class ImageScene(QGraphicsScene):
         self.setSceneRect(-4*self.image.width,-4*self.image.height,9*self.image.width,9*self.image.height)
 
     @overload
-    def mark(self,x:float,y:float,shape='ellipse',text:Union[int,str]=0) -> '_mark.Mark': ...
+    def mark(self,x:float,y:float,shape='ellipse',text:Union[int,str]=0) -> 'Mark': ...
     @overload
-    def mark(self,ra:float=None,dec:float=None,shape='ellipse',text:Union[int,str]=0) -> '_mark.Mark': ...
+    def mark(self,ra:float=None,dec:float=None,shape='ellipse',text:Union[int,str]=0) -> 'Mark': ...
     @overload
-    def mark(self,mark:'_mark.Mark') -> '_mark.Mark': ... 
+    def mark(self,mark:'Mark') -> 'Mark': ... 
 
-    def mark(self,*args,**kwargs) -> '_mark.Mark':
+    def mark(self,*args,**kwargs) -> 'Mark':
         """Creates a mark object and adds it to the image scene and returns the mark."""
 
         if len(args) == 1: mark = args[0]
-        else: mark = _mark.Mark(*args,image=self.image,**kwargs)
+        else: mark = Mark(*args,image=self.image,**kwargs)
         self.addItem(mark.label)
         self.addItem(mark)
         return mark
     
-    def rmmark(self,mark:'_mark.Mark') -> None:
+    def rmmark(self,mark:'Mark') -> None:
         """Removes the specified mark from the image scene."""
 
         self.removeItem(mark)

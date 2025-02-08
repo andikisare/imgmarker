@@ -3,13 +3,13 @@
 from .pyqt import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
 from math import nan, ceil
 from astropy.wcs.utils import proj_plane_pixel_scales
-from . import config
+from .. import config
 from typing import TYPE_CHECKING, overload
 import warnings
 
 if TYPE_CHECKING:
     from imgmarker.image import Image
-    from pyqt import QAbstractGraphicsShapeItem as QAbstractItem
+    from .pyqt import QAbstractGraphicsShapeItem as QAbstractItem
 
 COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
            QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
@@ -161,7 +161,7 @@ class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
         # Initialize shape
         item_args = self.view_center.x()-self.size/2, self.view_center.y()-self.size/2, self.size, self.size
         super(shape,self).__init__(*item_args)
-        shapeitem: QAbstractItem = shape(*item_args)
+        shapeitem:QAbstractItem = shape(*item_args)
         shapeitem.setPen(QPen(self.color, int(self.size/14), Qt.PenStyle.SolidLine))
         self.paint = shapeitem.paint
         
