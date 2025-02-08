@@ -3,7 +3,7 @@
 from .pyqt import ( QApplication, QMainWindow, QPushButton,
                     QLabel, QScrollArea, QGraphicsView, QDialog,
                     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QCheckBox, QGraphicsScene, QColor,
-                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox, QMessageBox, PYQT_VERSION_STR)
+                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QPointF, QSpinBox, QMessageBox, QShortcut, PYQT_VERSION_STR)
 
 from . import HEART_SOLID, HEART_CLEAR, __version__, __license__
 from . import io
@@ -826,6 +826,16 @@ class MainWindow(QMainWindow):
         self.zoom_level = 1
         self.cursor_focus = False
         self.frame = 0
+
+        # Shortcuts
+        del_shortcuts = [QShortcut('Backspace', self), QShortcut('Delete', self)]
+        for shortcut in del_shortcuts: shortcut.activated.connect(self.del_marks)
+
+        shiftplus_shorcut = QShortcut('Space', self)
+        shiftplus_shorcut.activated.connect(partial(self.shiftframe,1))
+
+        shiftminus_shorcut = QShortcut('Shift+Space', self)
+        shiftminus_shorcut.activated.connect(partial(self.shiftframe,-1))
     
         # Initialize data
         self.date = dt.datetime.now(dt.timezone.utc).date().isoformat()
@@ -968,17 +978,17 @@ class MainWindow(QMainWindow):
         ## File menu
         file_menu = menubar.addMenu("&File")
 
-        ### Open menus
+        ### Open menu
         open_menu = file_menu.addMenu('&Open')
 
-        ### Open file menu
-        open_action = QAction('&Open save...', self)
+        #### Open file menu
+        open_action = QAction('&Open Save...', self)
         open_action.setShortcuts(['Ctrl+o'])
         open_action.triggered.connect(self.open)
         open_menu.addAction(open_action)
 
-        ### Open image folder menu
-        open_ims_action = QAction('&Open images...', self)
+        #### Open image folder menu
+        open_ims_action = QAction('&Open Images...', self)
         open_ims_action.setShortcuts(['Ctrl+Shift+o'])
         open_ims_action.triggered.connect(self.open_ims)
 
@@ -987,8 +997,8 @@ class MainWindow(QMainWindow):
         concerning liability. This should be revisited in the future.'''
         open_menu.addAction(open_ims_action)
 
-        ### Open catalog file
-        open_marks_action = QAction('&Open catalog...', self)
+        #### Open catalog file
+        open_marks_action = QAction('&Open Catalog...', self)
         open_marks_action.setShortcuts(['Ctrl+Shift+c'])
         open_marks_action.triggered.connect(self.open_catalog)
         open_menu.addAction(open_marks_action)
@@ -1005,12 +1015,12 @@ class MainWindow(QMainWindow):
         edit_menu.setToolTipsVisible(True)
 
         ### Delete marks menu
-        del_menu = QAction('&Delete all marks', self)
+        del_menu = QAction('&Delete All Marks', self)
         del_menu.triggered.connect(partial(self.del_marks,True))
         edit_menu.addAction(del_menu)
 
         ### Delete catalogs menu
-        del_catalog_menu = QAction('&Delete all catalogs', self)
+        del_catalog_menu = QAction('&Delete All Catalogs', self)
         del_catalog_menu.triggered.connect(self.del_catalog_marks)
         edit_menu.addAction(del_catalog_menu)
 
@@ -1025,15 +1035,42 @@ class MainWindow(QMainWindow):
         ## View menu
         view_menu = menubar.addMenu("&View")
 
+        ### Zoom menu
+        zoom_menu = view_menu.addMenu("&Zoom")
+
+        #### Zoom in
+        zoomin_action = QAction('&Zoom In', self)
+        zoomin_action.setShortcuts(['Ctrl+='])
+        zoomin_action.triggered.connect(partial(self.zoom,1.2,'viewport'))
+        zoom_menu.addAction(zoomin_action)
+
+        ### Zoom out
+        zoomout_action = QAction('&Zoom Out', self)
+        zoomout_action.setShortcuts(['Ctrl+-'])
+        zoomout_action.triggered.connect(partial(self.zoom,1/1.2,'viewport'))
+        zoom_menu.addAction(zoomout_action)
+
+        ### Zoom to Fit
+        zoomfit_action = QAction('&Zoom to Fit', self)
+        zoomfit_action.setShortcuts(['Ctrl+0'])
+        zoomfit_action.triggered.connect(self.zoomfit)
+        zoom_menu.addAction(zoomfit_action)
+
         ### Frame menu
-        frame_action = QAction('&Frames...', self)
-        frame_action.setShortcuts(['Ctrl+f'])
-        frame_action.triggered.connect(self.frame_window.show)
-        view_menu.addAction(frame_action)
+        view_menu.addSeparator()
+        self.frame_action = QAction('&Frames...', self)
+        self.frame_action.setShortcuts(['Ctrl+f'])
+        self.frame_action.triggered.connect(self.frame_window.show)
+        view_menu.addAction(self.frame_action)
+
+        if self.image.n_frames > 1:
+            self.frame_action.setEnabled(True)
+        else:
+            self.frame_action.setEnabled(False)
 
         ### Toggle marks menu
         view_menu.addSeparator()
-        self.marks_action = QAction('&Show marks', self)
+        self.marks_action = QAction('&Show Marks', self)
         self.marks_action.setShortcuts(['Ctrl+m'])
         self.marks_action.setCheckable(True)
         self.marks_action.setChecked(True)
@@ -1041,7 +1078,7 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self.marks_action)
 
         ### Toggle mark labels menu
-        self.labels_action = QAction('&Show mark labels', self)
+        self.labels_action = QAction('&Show Mark Labels', self)
         self.labels_action.setShortcuts(['Ctrl+l'])
         self.labels_action.setCheckable(True)
         self.labels_action.setChecked(True)
@@ -1049,7 +1086,7 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self.labels_action)
 
         ### Toggle catalogs menu
-        self.catalogs_action = QAction('&Show catalog', self)
+        self.catalogs_action = QAction('&Show Catalog', self)
         self.catalogs_action.setShortcuts(['Ctrl+Shift+m'])
         self.catalogs_action.setCheckable(True)
         self.catalogs_action.setChecked(True)
@@ -1058,7 +1095,7 @@ class MainWindow(QMainWindow):
         self.catalogs_action.setEnabled(False)
 
         ### Toggle catalog labels menu
-        self.catalog_labels_action = QAction('&Show catalog labels', self)
+        self.catalog_labels_action = QAction('&Show Catalog Labels', self)
         self.catalog_labels_action.setShortcuts(['Ctrl+Shift+l'])
         self.catalog_labels_action.setCheckable(True)
         self.catalog_labels_action.setChecked(True)
@@ -1252,19 +1289,6 @@ class MainWindow(QMainWindow):
         for group, binds in config.MARK_KEYBINDS.items():
             if event.key() in binds: self.mark(group=group)
 
-        if (event.key() == Qt.Key.Key_Backspace) or (event.key() == Qt.Key.Key_Delete):
-            self.del_marks()
-
-        if (event.key() == Qt.Key.Key_Space):
-            modifiers = QApplication.keyboardModifiers()
-            if modifiers == Qt.KeyboardModifier.ShiftModifier:
-                self.image.seek(self.frame-1)
-            else:
-                self.image.seek(self.frame+1)
-
-            self.frame = self.image.frame
-            self.frame_window.slider.setValue(self.frame)
-
     def mousePressEvent(self,event):
         """Checks which mouse button was pressed and calls the appropriate function."""
 
@@ -1303,6 +1327,8 @@ class MainWindow(QMainWindow):
         io.save(self.date,self.images)
         io.savefav(self.date,self.images,self.favorite_list)
 
+    
+
     def open(self) -> None:
         """Method for the open save directory dialog."""
 
@@ -1318,7 +1344,7 @@ class MainWindow(QMainWindow):
         
         self.__init_data__()
         self.update_images()
-        self.fitview()
+        self.zoomfit()
         self.update_marks()
         self.get_comment()
         self.update_categories()
@@ -1472,6 +1498,12 @@ class MainWindow(QMainWindow):
         self.get_comment()
         self.update_categories()
         self.update_favorites()
+
+    def shiftframe(self,delta:int):
+        self.image.seek(self.frame+delta)
+
+        self.frame = self.image.frame
+        self.frame_window.slider.setValue(self.frame)
             
     def enter(self):
         """Enter the text in the comment box into the image."""
@@ -1523,7 +1555,7 @@ class MainWindow(QMainWindow):
             transform.translate(-center.x(), -center.y())
             self.image_view.setTransform(transform)
 
-    def fitview(self):
+    def zoomfit(self):
         """Fit the image view in the viewport."""
 
         self.image_view.fitInView(self.image_scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
@@ -1608,7 +1640,7 @@ class MainWindow(QMainWindow):
                 self.order.append(self.image.name)
 
         # Fit back to view if the image dimensions have changed
-        if (self.image.width != _w) or (self.image.height != _h): self.fitview()
+        if (self.image.width != _w) or (self.image.height != _h): self.zoomfit()
 
         # Update position widget
         self.update_pos()
@@ -1649,6 +1681,11 @@ class MainWindow(QMainWindow):
         else:
             self.catalogs_action.setEnabled(True)
             self.catalog_labels_action.setEnabled(True)
+
+        if self.image.n_frames > 1:
+            self.frame_action.setEnabled(True)
+        else:
+            self.frame_action.setEnabled(False)
 
         self.toggle_marks()
         self.toggle_mark_labels()
