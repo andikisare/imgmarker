@@ -1,11 +1,8 @@
 """This contains the classes for the various windows displayed by Image Marker."""
 
-from .pyqt import ( QApplication, QMainWindow, QPushButton,
-                    QLabel, QScrollArea, QGraphicsView, QDialog,
-                    QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, QCheckBox, QGraphicsScene, QColor,
-                    QSlider, QLineEdit, QFileDialog, QIcon, QFont, QAction, Qt, QPoint, QSpinBox, QMessageBox, QShortcut, PYQT_VERSION_STR)
+from .pyqt import *
 from . import Screen
-from .. import HEART_SOLID, HEART_CLEAR, __version__, __license__
+from .. import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
 from .. import io
 from .. import image
 from .. import config
@@ -13,7 +10,6 @@ from . import QHLine, QVLine, PosWidget, RestrictedLineEdit, DefaultDialog
 from ..catalog import Catalog
 import sys
 import datetime as dt
-import textwrap
 from math import floor, inf, nan
 import numpy as np
 from numpy import argsort
@@ -172,8 +168,8 @@ class SettingsWindow(QWidget):
                 if mark.label.lineedit.text() in group_names_old:
                     mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
 
-        # Update text in the instructions window 
-        self.mainwindow.instructions_window.update_text()
+        # Update text in the controls window 
+        self.mainwindow.controls_window.update_text()
 
         # Save the new settings into the config file
         config.update()
@@ -708,60 +704,54 @@ class FrameWindow(QWidget):
         super().show()
         self.activateWindow()
 
-class InstructionsWindow(QWidget):
-    """Class for the window that displays the instructions and keymappings."""
+class ControlsWindow(QWidget):
+    """Class for the window that displays the controls."""
 
     def __init__(self):
         super().__init__()
 
         layout = QVBoxLayout()
-        self.setWindowTitle('Instructions')
         self.setLayout(layout)
-        
-        # Create the scroll area and label
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.label = QLabel()
-        self.scroll_area.setWidget(self.label)
-        self.scroll_area.setWidgetResizable(True)
-        font = QFont('Courier')
-        self.label.setFont(font)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.setWindowTitle('Controls')
+
+        self.table = QTableWidget()
+        self.table.setColumnCount(2)
+        self.table.setSizeAdjustPolicy(QScrollArea.SizeAdjustPolicy.AdjustToContents)
+        self.table.verticalHeader().setVisible(False)
+        self.table.horizontalHeader().setVisible(False)  
 
         self.update_text()
 
-        # Add scroll area to layout, get size of layout
-        layout.addWidget(self.scroll_area)
-        layout_width, layout_height = layout.sizeHint().width(), layout.sizeHint().height()
+        layout.addWidget(self.table)
 
         # Resize window according to size of layout
-        self.resize(int(layout_width*1.1),int(layout_height*1.1))
-
+        self.resize(int(Screen.width()*0.2), self.sizeHint().height())
+        self.setMaximumHeight(self.height())
+        
     def update_text(self):
         # Lists for keybindings
-        actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Favorite', 'Exit', 'Help']
+        actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Favorite']
         group_list = [f'Group \"{group}\"' for group in config.GROUP_NAMES[1:]]
         category_list = [f'Category \"{category}\"' for category in config.CATEGORY_NAMES[1:]]
         actions_list = group_list + category_list + actions_list
-        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'F', 'Ctrl+Q', 'F1', ]
+        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'F']
+        
+        items = [ (action, button) for action, button in zip(actions_list, buttons_list) ]
 
-        # Determing widths for keybindings list
-        actions_width = max([len(a) for a in actions_list])
-        buttons_width = max([len(b) for b in buttons_list]) + 10
-        fullw_text = actions_width + buttons_width
+        self.table.setRowCount(len(actions_list))
 
-        # Create text
-        text = 'All changes are autosaved.'
-        text = textwrap.wrap(text, width=fullw_text)
-        text = '\n'.join([f'{l:<{fullw_text}}' for l in text]) + '\n'
-        text += '-'*(fullw_text) + '\n'
-        text += f"{'Keybindings':^{fullw_text}}\n"
-        text += '-'*(fullw_text) + '\n'
-        for i in range(0,len(actions_list)):
-            text += f'{actions_list[i]:.<{actions_width}}{buttons_list[i]:.>{buttons_width}}\n'
-        self.label.setText(text)
+        for i, (action, button) in enumerate(items):
+            action_item = QTableWidgetItem(action)
+            button_item = QTableWidgetItem(button)
 
+            action_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            button_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+
+            self.table.setItem(i, 0, action_item)
+            self.table.setItem(i, 1, button_item)
+        
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+    
     def show(self):
         """Shows the window and moves it to the front."""
 
@@ -866,7 +856,7 @@ class MainWindow(QMainWindow):
         self.settings_window.focus_box.stateChanged.connect(partial(setattr,self.image_view,'cursor_focus'))
         self.settings_window.randomize_box.stateChanged.connect(self.toggle_randomize)
 
-        self.instructions_window = InstructionsWindow()
+        self.controls_window = ControlsWindow()
         self.about_window = AboutWindow()
 
         # Set max blur based on size of image
@@ -1145,26 +1135,31 @@ class MainWindow(QMainWindow):
         ## Help menu
         help_menu = menubar.addMenu('&Help')
 
-        ### Instructions window
-        instructions_menu = QAction('&Instructions', self)
-        instructions_menu.setShortcuts(['F1'])
-        instructions_menu.triggered.connect(self.instructions_window.show)
-        help_menu.addAction(instructions_menu)
+        ### Controls window
+        controls_action = QAction('&Controls', self)
+        controls_action.setShortcuts(['F1'])
+        controls_action.triggered.connect(self.controls_window.show)
+        help_menu.addAction(controls_action)
+
+        ### Documentation
+        docs_action = QAction('&Documentation', self)
+        docs_action.triggered.connect(partial(QDesktopServices.openUrl,QUrl(__docsurl__)))
+        help_menu.addAction(docs_action)
 
         ### About window
-        about_menu = QAction('&About', self)
-        about_menu.triggered.connect(self.about_window.show)
-        help_menu.addAction(about_menu)
+        help_menu.addSeparator()
+        about_action = QAction('&About', self)
+        about_action.triggered.connect(self.about_window.show)
+        help_menu.addAction(about_action)
         
-        # Resize and center MainWindow; move instructions off to the right
+        # Resize and center MainWindow; move controls off to the right
         self.resize(int(Screen.height()*0.8),int(Screen.height()*0.8))
         
         center = Screen.center()
         center -= QPoint(self.width(),self.height())/2
         self.move(center)
 
-        self.instructions_window.move(int(self.x()+self.width()*1.04),self.y())
-        self.instructions_window.show()
+        self.controls_window.move(int(self.x()+self.width()*1.04),self.y())
 
         # Initialize some data
         self.get_comment()
@@ -1275,7 +1270,7 @@ class MainWindow(QMainWindow):
         self.about_window.close()
         self.blur_window.close()
         self.frame_window.close()
-        self.instructions_window.close()
+        self.controls_window.close()
         self.settings_window.close()
         return super().closeEvent(a0)
 
