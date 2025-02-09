@@ -1,7 +1,7 @@
 Controls
 ======================
 
-Currently, there is no functionality for modifying the controls. Below is a table of the controls, which is also visible through **Help > Instructions**.
+Currently, there is no functionality for modifying the controls. Below is a table of the controls.
 
 .. list-table::
    :widths: 50 50

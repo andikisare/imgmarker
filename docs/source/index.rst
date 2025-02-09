@@ -24,4 +24,4 @@
    :maxdepth: 1
    :hidden:
 
-   API <reference/api>
+   API <reference/api/modules.rst>
