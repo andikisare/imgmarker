@@ -1,6 +1,6 @@
 """This module contains code for the `Image` class and image manipulation."""
 
-from ..gui.pyqt import QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QPixmap, Qt, QImage, QPointF
+from ..gui.pyqt import *
 from ..gui import Mark
 from io import StringIO
 import os
@@ -17,13 +17,13 @@ from . import fits
 from astropy.wcs import WCS
 from enum import Enum
 
-class Interval(Enum):
+class Interval:
     ZSCALE = ZScaleInterval()
     MINMAX = MinMaxInterval()
     
-class Stretch(Enum):
+class Stretch:
     LINEAR = LinearStretch()
-    LOG = LogStretch()
+    LOG = LogStretch()  
 
 class Mode(Enum):
     RGB = 0
@@ -75,56 +75,14 @@ def align8to32(bytes: bytes, width: int, bits_per_pixel: str) -> bytes:
 
     return b"".join(new_data)
 
-def rgb_to_hsv(r, g, b):
-    r = np.array(r)
-    g = np.array(g)
-    b = np.array(b)
-
-    maxc = np.max((r, g, b),axis=0)
-    minc = np.min((r, g, b),axis=0)
-    v = maxc
-    
-    np.seterr(divide='ignore', invalid='ignore')
-    s = (maxc-minc) / maxc
-
-    rc = (maxc-r) / (maxc-minc)
-    gc = (maxc-g) / (maxc-minc)
-    bc = (maxc-b) / (maxc-minc)
-    np.seterr()
-
-    h = 4.0+gc-rc
-    h = np.where(r==maxc,bc-gc,h)
-    h = np.where(g==maxc,2.0+rc-bc,h)
-    h = np.where(minc == maxc,0,h)
-
-    h = (h/6.0) % 1.0
-    
-    return h, s, v
-
-def hsv_to_rgb(h, s, v):
-    h = np.array(h)
-    s = np.array(s)
-    v = np.array(v)
-
-    r = np.where(s==0,v,np.nan)
-    g = np.where(s==0,v,np.nan)
-    b = np.where(s==0,v,np.nan)
-
-    i = (h*6.0).astype(int) # XXX assume int() truncates!
-    f = (h*6.0) - i
-    p = v*(1.0 - s)
-    q = v*(1.0 - s*f)
-    t = v*(1.0 - s*(1.0-f))
-    i = i%6
-
-    conv = [[v,t,p], [q,v,p], [p,v,t], [p,q,v], [t,p,v], [v,p,q]]
-    
-    for j in range(0,6):
-        r = np.where(i==j,conv[j][0],r)
-        g = np.where(i==j,conv[j][1],g)
-        b = np.where(i==j,conv[j][2],b)
-    
-    return r, g, b
+def vibrance(c,mode:Mode):
+    if mode == Mode.RGB:
+        v = np.max(c, axis=2)
+    elif mode == Mode.RGBA:
+        v = np.max(c[:, :, :3], axis=2)
+    else: 
+        v = c
+    return v
 
 def convolve(c,kernel,mode):
     nans =  np.isnan(c)
@@ -282,35 +240,18 @@ class Image(QGraphicsPixmapItem):
                 self.incompatible = True
 
     @property
-    def interval(self): 
-        """ Interval of the image brightness."""
-
-        interval = self._interval
-        vlims = interval.get_limits(self.vibrance)
-
-        return ManualInterval(*vlims)
-    @interval.setter
-    def interval(self,enum:Interval): self._interval = enum.value
+    def scaling(self):
+        return self.stretch + ManualInterval(*self.vlims)
 
     @property
-    def stretch(self):
-        """Stretch of the image brightness."""
-        return self._stretch
-    @stretch.setter
-    def stretch(self,enum:Stretch): self._stretch = enum.value
-
+    def v(self):
+        return vibrance(self.array,self.mode)
+    
     @property
-    def scaling(self): return self.stretch + self.interval
-
-    @property
-    def vibrance(self):
-        if self.n_channels == 3:
-            array = self.read()
-            r,g,b = array[:, :, 0], array[:, :, 1], array[:, :, 2]
-            v = np.max((r, g, b),axis=0)
-        else: v = self.read()
-
-        return v
+    def vlims(self):
+        v = vibrance(self._array,self.mode) 
+        vlims = self.interval.get_limits(v)
+        return vlims
     
     @property
     def wcs_center(self) -> list:
@@ -375,40 +316,49 @@ class Image(QGraphicsPixmapItem):
         return metadata
     
     def close(self):
+        self._array = None
         self.array = None
         self.setPixmap(QPixmap())
     
     def seek(self,frame:int=0):
         """Switches to a new frame if it exists"""
 
+        # Set frame
         frame = floor(frame)
         
         if frame > self.n_frames - 1: frame = 0
         elif frame < 0: frame = self.n_frames - 1
 
         self.frame = frame
-        self.array = self.read()
-        self.width = self.array.shape[1]
-        self.height = self.array.shape[0]
+
+        # Read data from the frame
+        self._array = self.read()
+        self.array = self._array
+        self.width = self._array.shape[1]
+        self.height = self._array.shape[0]
         
-        # reapply blur
+        # Apply blur (and scaling)
         self.blur()
 
     def rescale(self):
-        if self.n_channels == 3:
-            array = self.array.copy()
-            _r,_g,_b = array[:, :, 0], array[:, :, 1], array[:, :, 2]
-            h,s,v = rgb_to_hsv(_r,_g,_b)
+        out = self.array.astype(np.float64)
 
-            v = (self.scaling(v))*self.mode.iinfo.max
-            r,g,b = hsv_to_rgb(h,s,v)
+        if (self.mode == Mode.RGB) or (self.mode == Mode.RGBA):
+            # Calculate scale factor
+            scale = self.mode.iinfo.max*self.scaling(self.v)/self.v
 
-            array_scaled = np.stack([r,g,b],-1)
-        
+            # Apply scale factor
+            out[:, :, 0] *= scale
+            out[:, :, 1] *= scale
+            out[:, :, 2] *= scale
+
+            # Truncate values greater than the max pixel value for this mode
+            out = np.minimum(self.mode.iinfo.max,out)
+
         else:
-            array_scaled = self.scaling(self.array.copy())*self.mode.iinfo.max
+            out = self.mode.iinfo.max*self.scaling(out)
 
-        self.setPixmap(self.topixmap(array_scaled.astype(self.mode.iinfo.dtype)))
+        self.setPixmap(self.topixmap(out.astype(self.mode.iinfo.dtype)))
 
     def toqimage(self,array:np.ndarray) -> QImage:
         width, height  = array.shape[1], array.shape[0]
@@ -416,7 +366,7 @@ class Image(QGraphicsPixmapItem):
 
         if self.mode.iinfo.bits > 8: data = align8to32(data,width,self.mode.iinfo.bits)
 
-        if len(array.shape) == 3:
+        if array.ndim == 3:
             n = array.shape[2]
             qim = QImage(data,width,height,n*width,self.mode.format)
         else:
@@ -425,9 +375,8 @@ class Image(QGraphicsPixmapItem):
         return qim
 
     def topixmap(self,array:np.ndarray) -> QPixmap:
-        """Creates a QPixmap with a padding on each side to allow for fully zooming out."""
-
-        self.setPixmap(QPixmap())
+        """Creates a QPixmap from an array."""
+        
         qimage = self.toqimage(array)
         pixmap = QPixmap.fromImage(qimage)
 
@@ -446,8 +395,6 @@ class Image(QGraphicsPixmapItem):
             else: r = value
             self.r = floor(r)/10
 
-        _out = self.read()
-
         if self.r != 0:
             # Create kernel and compute padding
             kernel = astropy.convolution.Gaussian2DKernel(self.r).array
@@ -462,11 +409,11 @@ class Image(QGraphicsPixmapItem):
                 return c
             
             if self.n_channels > 1:
-                out = [_blur(_out[:, :, i]) for i in range(self.n_channels)]
+                out = [_blur(self._array[:, :, i]) for i in range(self.n_channels)]
                 out = np.stack(out,-1)
-            else: out = _blur(_out)
+            else: out = _blur(self._array)
 
-        else: out = _out
+        else: out = self._array
 
         self.array = out.copy().astype(self.mode.iinfo.dtype)
         self.rescale()
