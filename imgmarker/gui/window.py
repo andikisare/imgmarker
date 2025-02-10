@@ -1,6 +1,15 @@
 """This contains the classes for the various windows displayed by Image Marker."""
 
-from .pyqt import *
+from .pyqt import (
+    QApplication, QMainWindow, QPushButton,
+    QLabel, QScrollArea, QGraphicsView, QDialog,
+    QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, 
+    QCheckBox, QGraphicsScene, QColor, QSlider,
+    QLineEdit, QFileDialog, QIcon, QFont, QAction, 
+    Qt, QPoint, QSpinBox, QMessageBox, QTableWidget, 
+    QTableWidgetItem, QHeaderView, QShortcut, 
+    QDesktopServices, QUrl, PYQT_VERSION_STR
+)
 from . import Screen
 from .. import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
 from .. import io
