@@ -664,7 +664,7 @@ class BlurWindow(QWidget):
         self.move(qt_rectangle.topLeft())
 
     def slider_moved(self, pos):
-        self.value_label.setText(f'Radius: {floor(pos)/10}')
+        self.value_label.setText(f'Radius: {floor(pos)/2}')
 
     def show(self):
         super().show()
@@ -868,8 +868,7 @@ class MainWindow(QMainWindow):
         self.controls_window = ControlsWindow()
         self.about_window = AboutWindow()
 
-        # Set max blur based on size of image
-        self.blur_max = int((self.image.height+self.image.width)/20)
+        # Update max blur
         self.blur_window.slider.setMaximum(self.blur_max)
 
         # Current image widget
@@ -1224,6 +1223,12 @@ class MainWindow(QMainWindow):
         for img in self.images: img.stretch = value
         self.image.rescale()
 
+    @property
+    def blur_max(self):
+        _blur_max = int((self.image.height+self.image.width)/20)
+        _blur_max = 10*round(_blur_max/10)
+        return max(10, _blur_max)
+
     def inview(self,x:Union[int,float],y:Union[int,float]):
         """
         Checks if x and y are contained within the image.
@@ -1570,7 +1575,6 @@ class MainWindow(QMainWindow):
         self.frame_window.slider.valueChanged.connect(self.image.seek)
 
         self.frame_window.slider.setMaximum(self.image.n_frames-1)
-        self.blur_max = int((self.image.height+self.image.width)/20)
         self.blur_window.slider.setMaximum(self.blur_max)
 
         # Update image label

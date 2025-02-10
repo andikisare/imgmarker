@@ -11,9 +11,8 @@ from math import nan
 import numpy as np
 from typing import overload, Union, List
 from astropy.visualization import ZScaleInterval, MinMaxInterval, ManualInterval, LinearStretch, LogStretch
-import astropy.convolution
-import scipy.signal
 from . import fits
+from .convolution import gaussian_filter
 from astropy.wcs import WCS
 from enum import Enum
 
@@ -84,22 +83,7 @@ def vibrance(c,mode:Mode):
         v = c
     return v
 
-def convolve(c,kernel,mode):
-    nans =  np.isnan(c)
-    ## Use astropy if there are nans
-    if True in nans: 
-        method = scipy.signal.choose_conv_method(c,kernel,mode=mode)
-        if method == 'direct': 
-            c = astropy.convolution.convolve(c,kernel,boundary='fill',preserve_nan=True)
-        else:
-            c = astropy.convolution.convolve_fft(c,kernel,boundary='fill',preserve_nan=True)
-    
-    ## Use scipy otherwise
-    else: 
-        c = scipy.signal.convolve(c,kernel,mode=mode)
-        c[nans] = np.nan
 
-    return c
 
 def read_wcs(f):
     """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
@@ -393,29 +377,28 @@ class Image(QGraphicsPixmapItem):
             value = args[0]
             if callable(value): r = value()
             else: r = value
-            self.r = floor(r)/10
+            self.r = floor(r)/2
 
-        if self.r != 0:
-            # Create kernel and compute padding
-            kernel = astropy.convolution.Gaussian2DKernel(self.r).array
-            ph, pw = np.array(kernel.shape) // 2
-            pad_width = ((ph,), (pw,))
+        nanmask = ~np.isfinite(self._array)
+        if True in nanmask:
+            # Create auxillary array
+            _out = self._array.copy()
+            _out[nanmask] = 0
+            out = gaussian_filter(_out,self.r)
 
-            def _blur(c):
-                # Add padding, convolve, then remove padding
-                c = np.pad(c, pad_width=pad_width, mode='edge')
-                c = convolve(c,kernel,mode='same')
-                c = c[ph:c.shape[0]-ph, pw:c.shape[1]-pw]          
-                return c
-            
-            if self.n_channels > 1:
-                out = [_blur(self._array[:, :, i]) for i in range(self.n_channels)]
-                out = np.stack(out,-1)
-            else: out = _blur(self._array)
+            # Calculate weights
+            _w = np.ones_like(self._array)
+            _w[nanmask] = 0
+            w = gaussian_filter(_w,self.r)
 
-        else: out = self._array
+            # Apply weights, add nans back in
+            out = out/w
+            out[nanmask] = np.nan
 
-        self.array = out.copy().astype(self.mode.iinfo.dtype)
+        else:
+            out = gaussian_filter(self._array,self.r)
+
+        self.array = out.astype(self.mode.iinfo.dtype)
         self.rescale()
 
 class ImageScene(QGraphicsScene):
