@@ -500,9 +500,8 @@ class ImageView(QGraphicsView):
         """
 
         if (source == self.viewport()) and (event.type() == 31):
-            x = event.angleDelta().y()
-            if x > 0: self.zoom(1/1.2)
-            elif x < 0: self.zoom(1.2)
+            x = event.angleDelta().y()/120
+            self.zoom(1.2**x)
             return True
 
         return super().eventFilter(source, event)
