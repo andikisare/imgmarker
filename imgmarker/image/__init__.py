@@ -83,8 +83,6 @@ def vibrance(c,mode:Mode):
         v = c
     return v
 
-
-
 def read_wcs(f):
     """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
     try:
@@ -484,7 +482,7 @@ class ImageView(QGraphicsView):
 
         if (source == self.viewport()) and (event.type() == 31):
             x = event.angleDelta().y()/120
-            self.zoom(1.2**x)
+            self.zoom(1.2**(-x))
             return True
 
         return super().eventFilter(source, event)
