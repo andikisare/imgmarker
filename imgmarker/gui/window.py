@@ -1488,11 +1488,11 @@ class MainWindow(QMainWindow):
             try: ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
             except: ra, dec = nan, nan
 
-            ra = Angle(ra, unit='deg')
-            dec = Angle(ra, unit='deg')
+            ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
+            dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
 
-            ra_str = '{0:0.0f}:{1:0.0f}:{2:.2f}'.format(*ra.hms)
-            dec_str = '{0:0.0f}:{1:0.0f}:{2:.2f}'.format(*dec.dms).replace('-', '')
+            ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
+            dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
             if dec > 0: dec_str = '+' + dec_str
             else: dec_str = '-' + dec_str
 
