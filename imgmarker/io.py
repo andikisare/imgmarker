@@ -134,6 +134,11 @@ def save(date,images:List['image.Image']) -> None:
     if images:
         for img in images:
             if img.seen:
+                if img.duplicate == True:
+                    marks = img.dupe_marks
+                else:
+                    marks = img.marks
+
                 name = img.name
                 comment = img.comment
 
@@ -143,14 +148,19 @@ def save(date,images:List['image.Image']) -> None:
                     categories = ','.join([config.CATEGORY_NAMES[i] for i in category_list])
                 else: categories = 'None'
 
-                if not img.marks: mark_list = [None]
-                else: mark_list = img.marks.copy()
+                if not marks: mark_list = [None]
+                else: mark_list = marks.copy()
                 
                 for mark in mark_list:
                     if mark != None:
                         group_name = config.GROUP_NAMES[mark.g]
                         if mark.text == group_name: label = 'None'
                         else: label = mark.text
+                        if (img.duplicate == True) and (mark in img.dupe_marks):
+                            if (mark.text == group_name):
+                                label = "DUPLICATE"
+                            else:
+                                label = f"{mark.text}, DUPLICATE"
                         ra, dec = mark.wcs_center
                         img_ra, img_dec = img.wcs_center
                         x, y = mark.center.x(), mark.center.y()
@@ -338,6 +348,3 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
     idx = min(len(edited_images),len(paths)-1)
 
     return images, idx
-
-
-

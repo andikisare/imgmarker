@@ -15,6 +15,7 @@ from . import fits
 from .convolution import gaussian_filter
 from astropy.wcs import WCS
 from enum import Enum
+from copy import copy, deepcopy
 
 class Interval:
     ZSCALE = ZScaleInterval()
@@ -173,6 +174,9 @@ class Image(QGraphicsPixmapItem):
     cat_marks: list[imgmarker.mark.Mark]
         List of catalog marks in this image.
 
+    dupe_marks: list[imgmarker.mark.Mark]
+        List of marks made on a duplicate-showing of the same image. Kept separate for saving purposes.
+
     seen: bool
         Whether this image has been seen by the user or not.
 
@@ -216,10 +220,20 @@ class Image(QGraphicsPixmapItem):
                 self.categories:List[int] = []
                 self.marks:List['Mark'] = []
                 self.cat_marks:List['Mark'] = []
+                self.dupe_marks:List['Mark'] = []
                 self.seen:bool = False
                 self.catalogs:List[str] = []
             else:
                 self.incompatible = True
+
+    def __deepcopy__(self, memo):
+        id_self = id(self)
+        _copy = memo.get(id_self)
+        if _copy is None:
+            _copy = type(self)(
+                deepcopy(self.path, memo))
+            memo[id_self] = _copy
+        return _copy
 
     @property
     def scaling(self):
@@ -327,9 +341,8 @@ class Image(QGraphicsPixmapItem):
 
         if (self.mode == Mode.RGB) or (self.mode == Mode.RGBA):
             # Calculate scale factor
-            v = self.v
-            scale = self.mode.iinfo.max*self.scaling(v)/v
-            
+            scale = self.mode.iinfo.max*self.scaling(self.v)/self.v
+
             # Apply scale factor
             out[:, :, 0] *= scale
             out[:, :, 1] *= scale
@@ -391,16 +404,14 @@ class Image(QGraphicsPixmapItem):
             w = gaussian_filter(_w,self.r)
 
             # Apply weights, add nans back in
-            with np.errstate(divide='ignore', invalid='ignore'): 
-                out = out/w
-                out[nanmask] = np.nan
+            out = out/w
+            out[nanmask] = np.nan
 
         else:
             out = gaussian_filter(self._array,self.r)
 
-        with np.errstate(divide='ignore', invalid='ignore'):
-            self.array = out.astype(self.mode.iinfo.dtype)
-            self.rescale()
+        self.array = out.astype(self.mode.iinfo.dtype)
+        self.rescale()
 
 class ImageScene(QGraphicsScene):
     """A class in which images and marks are stored."""
@@ -485,7 +496,7 @@ class ImageView(QGraphicsView):
 
         if (source == self.viewport()) and (event.type() == 31):
             x = event.angleDelta().y()/120
-            self.zoom(1.2**-x)
+            self.zoom(1.2**(-x))
             return True
 
         return super().eventFilter(source, event)

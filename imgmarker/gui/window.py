@@ -26,6 +26,7 @@ from functools import partial
 from typing import Union, List
 import os
 from astropy.coordinates import Angle
+from copy import deepcopy
 
 def _open_save() -> str:
     dialog = DefaultDialog()
@@ -110,10 +111,36 @@ class SettingsWindow(QWidget):
         # Options
         self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
         self.randomize_box = QCheckBox(text='Randomize order of images', parent=self)
-
         self.randomize_box.setChecked(config.RANDOMIZE_ORDER)
+
         self.duplicate_box = QCheckBox(text='Insert duplicate images for testing user consistency', parent=self)
         self.duplicate_box.setChecked(True)
+        try:
+            self.duplicate_box.checkStateChanged.connect(self.duplicate_percentage_state)
+        except:
+            self.duplicate_box.stateChanged.connect(self.duplicate_percentage_state)
+
+        horizontal_duplicate_layout = QHBoxLayout()
+
+        self.duplicate_percentage_label = QLabel()
+        self.duplicate_percentage_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.duplicate_percentage_label.setText("Percentage of dataset to duplicate:")
+        
+        self.duplicate_percentage_spinbox = QSpinBox()
+        self.duplicate_percentage_spinbox.setFixedHeight(25)
+        self.duplicate_percentage_spinbox.setFixedWidth(50)
+        self.duplicate_percentage_spinbox.setRange(1,100)
+        
+        self.duplicate_percentage_spinbox.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.duplicate_percentage_spinbox.valueChanged.connect(self.update_duplicate_percentage)
+
+        if not self.duplicate_box.isChecked():
+            self.duplicate_percentage_spinbox.setEnabled(False)
+        else:
+            self.duplicate_percentage_spinbox.setEnabled(True)
+        horizontal_duplicate_layout.setContentsMargins(0,0,345,0)
+        horizontal_duplicate_layout.addWidget(self.duplicate_percentage_label)
+        horizontal_duplicate_layout.addWidget(self.duplicate_percentage_spinbox)
 
         # Main layout
         layout.addWidget(self.group_label)
@@ -127,6 +154,7 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.focus_box)
         layout.addWidget(self.randomize_box)
         layout.addWidget(self.duplicate_box)
+        layout.addLayout(horizontal_duplicate_layout)
         layout.addWidget(QHLine())
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFixedWidth(int(Screen.width()/3))
@@ -160,6 +188,16 @@ class SettingsWindow(QWidget):
         self.mainwindow.save()
         return super().closeEvent(a0)
     
+    def duplicate_percentage_state(self):
+        if not self.duplicate_box.isChecked():
+            self.duplicate_percentage_spinbox.setEnabled(False)
+        else:
+            self.duplicate_percentage_spinbox.setEnabled(True)
+
+    def update_duplicate_percentage(self):
+        percentage = self.duplicate_percentage_spinbox.value()
+        self.mainwindow.update_duplicates(percentage)
+
     def update_config(self):
         group_names_old = config.GROUP_NAMES.copy()
 
@@ -169,11 +207,15 @@ class SettingsWindow(QWidget):
         config.CATEGORY_NAMES = ['None'] + [box.text() for box in self.category_boxes]
         config.RANDOMIZE_ORDER = self.randomize_box.isChecked()
 
-        for i, box in enumerate(self.mainwindow.category_boxes): box.setText(config.CATEGORY_NAMES[i+1])
+        for i, box in enumerate(self.mainwindow.category_boxes): 
+            box.setText(config.CATEGORY_NAMES[i+1])
+            box.setShortcut(self.mainwindow.category_shortcuts[i])
 
         # Update mark labels that haven't been changed
         for image in self.mainwindow.images:
-            for mark in image.marks:
+            if image.duplicate == True: marks = image.dupe_marks
+            else: marks = image.marks
+            for mark in marks:
                 if mark.label.lineedit.text() in group_names_old:
                     mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
 
@@ -1173,7 +1215,7 @@ class MainWindow(QMainWindow):
         self.get_comment()
         self.update_marks()
         self.update_categories()
-
+        self.settings_window.update_duplicate_percentage()
 
     def __init_data__(self):
         """Initializes images."""
@@ -1396,6 +1438,11 @@ class MainWindow(QMainWindow):
     def mark(self, group:int=0, test=False) -> None:
         """Add a mark to the current image."""
 
+        if self.image.duplicate == True:
+            marks = self.image.dupe_marks
+        else:
+            marks = self.image.marks
+
         # get event position and position on image
         if not test:
             pix_pos = self.image_view.mouse_pix_pos()
@@ -1408,9 +1455,9 @@ class MainWindow(QMainWindow):
         if config.GROUP_MAX[group - 1] == 'None': limit = inf
         else: limit = int(config.GROUP_MAX[group - 1])
 
-        marks_in_group = [m for m in self.image.marks if m.g == group]
+        marks_in_group = [m for m in marks if m.g == group]
 
-        if len(self.image.marks) >= 1: self.image.marks[-1].label.enter()
+        if len(marks) >= 1: marks[-1].label.enter()
 
         if self.inview(x,y) and ((len(marks_in_group) < limit) or limit == 1):            
             mark = self.image_scene.mark(x,y,group=group)
@@ -1418,10 +1465,10 @@ class MainWindow(QMainWindow):
             if (limit == 1) and (len(marks_in_group) == 1):
                 prev_mark = marks_in_group[0]
                 self.image_scene.rmmark(prev_mark)
-                self.image.marks.remove(prev_mark)
-                self.image.marks.append(mark)
+                marks.remove(prev_mark)
+                marks.append(mark)
 
-            else: self.image.marks.append(mark)
+            else: marks.append(mark)
 
             marks_enabled = self.marks_action.isChecked()
             labels_enabled = self.labels_action.isChecked()
@@ -1438,7 +1485,7 @@ class MainWindow(QMainWindow):
 
             self.save()
         
-        if len(self.image.marks) == 0:
+        if len(marks) == 0:
             self.marks_action.setEnabled(False)
             self.labels_action.setEnabled(False)
         else:
@@ -1505,6 +1552,10 @@ class MainWindow(QMainWindow):
         else:
             self.pos_widget.cleartext()
 
+    def update_duplicates(self, percentage):
+        self.min_images_til_duplicate = int((len(self.images) - len(self.duplicates_seen)) / (percentage * 4))
+        self.max_images_til_duplicate = int((len(self.images) - len(self.duplicates_seen)) / percentage)
+
     def update_favorites(self):
         """Update favorite boxes based on the contents of favorite_list."""
 
@@ -1530,14 +1581,14 @@ class MainWindow(QMainWindow):
         except: pass
 
         # Randomizing duplicate images to show for consistency of user marks
-        seen_images = [image for image in self.images if (image.seen == True) and (len(image.marks) != 0) and (image.name not in self.duplicates_seen)]
+        seen_images = [image for image in self.images if (len(image.marks) != 0) and (image.name not in self.duplicates_seen)]
         if self.settings_window.duplicate_box.isChecked():
-            if (len(seen_images) > 15):
+            if (len(seen_images) > self.min_images_til_duplicate):
                 self.images_seen_since_duplicate_count += 1
                 if (self.images_seen_since_duplicate_count == self.duplicate_image_interval):
-                    self.duplicate_image_interval = self.rng.integers(15,30) #self.rng.integers(len(self.images)/15, len(self.images)/10)
+                    self.duplicate_image_interval = self.rng.integers(self.min_images_til_duplicate,self.max_images_til_duplicate)
                     self.images_seen_since_duplicate_count = 0
-                    duplicate_image_to_show = self.rng.choice(seen_images)
+                    duplicate_image_to_show = deepcopy(self.rng.choice(seen_images[0:-1]))
                     duplicate_image_to_show.duplicate = True
                     duplicate_image_to_show.marks.clear()
                     self.images.insert(self.idx,duplicate_image_to_show)
@@ -1663,22 +1714,32 @@ class MainWindow(QMainWindow):
     def update_marks(self):
         """Redraws all marks in image."""
         
-        for mark in self.image.marks: self.image_scene.mark(mark)
+        if self.image.duplicate == True:
+            marks = self.image.dupe_marks
+        else:
+            marks = self.image.marks
+
+        for mark in marks: self.image_scene.mark(mark)
 
     def del_marks(self,del_all=False):
         """Deletes marks, either the selected one or all."""
         
+        if self.image.duplicate == True:
+            marks = self.image.dupe_marks
+        else:
+            marks = self.image.marks
+
         if not del_all:
             pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
-            selected_items = [item for item in self.image.marks 
+            selected_items = [item for item in marks 
                               if item is self.image_scene.itemAt(pix_pos, item.transform())]
-        else: selected_items = self.image.marks.copy()
+        else: selected_items = marks.copy()
 
         for item in selected_items:
             self.image_scene.rmmark(item)
-            self.image.marks.remove(item)
+            marks.remove(item)
         
-        if len(self.image.marks) == 0:
+        if len(marks) == 0:
             self.marks_action.setEnabled(False)
             self.labels_action.setEnabled(False)
             
@@ -1734,10 +1795,15 @@ class MainWindow(QMainWindow):
     def toggle_marks(self):
         """Toggles whether or not marks are shown."""
 
+        if self.image.duplicate == True:
+            marks = self.image.dupe_marks
+        else:
+            marks = self.image.marks
+
         marks_enabled = self.marks_action.isChecked()
         labels_enabled = self.labels_action.isChecked()
 
-        for mark in self.image.marks:
+        for mark in marks:
             if marks_enabled: 
                 mark.show()
                 self.labels_action.setEnabled(True)
@@ -1750,10 +1816,15 @@ class MainWindow(QMainWindow):
     def toggle_mark_labels(self):
         """Toggles whether or not mark labels are shown."""
 
+        if self.image.duplicate == True:
+            marks = self.image.dupe_marks
+        else:
+            marks = self.image.marks
+
         marks_enabled = self.marks_action.isChecked()
         labels_enabled = self.labels_action.isChecked()
 
-        for mark in self.image.marks:
+        for mark in marks:
             if marks_enabled and labels_enabled: mark.label.show()
             else: mark.label.hide()
 
@@ -1785,9 +1856,3 @@ class MainWindow(QMainWindow):
                 mark.label.show()
             else:
                 mark.label.hide()
-
-    # === Utils ===
-
-
-    
-    
