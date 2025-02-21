@@ -114,7 +114,7 @@ class SettingsWindow(QWidget):
         self.randomize_box.setChecked(config.RANDOMIZE_ORDER)
 
         self.duplicate_box = QCheckBox(text='Insert duplicate images for testing user consistency', parent=self)
-        self.duplicate_box.setChecked(True)
+        self.duplicate_box.setChecked(False)
         try:
             self.duplicate_box.checkStateChanged.connect(self.duplicate_percentage_state)
         except:
@@ -1581,19 +1581,20 @@ class MainWindow(QMainWindow):
         except: pass
 
         # Randomizing duplicate images to show for consistency of user marks
-        seen_images = [image for image in self.images if (len(image.marks) != 0) and (image.name not in self.duplicates_seen)]
         if self.settings_window.duplicate_box.isChecked():
-            if (len(seen_images) > self.min_images_til_duplicate):
-                self.images_seen_since_duplicate_count += 1
-                if (self.images_seen_since_duplicate_count == self.duplicate_image_interval):
-                    self.duplicate_image_interval = self.rng.integers(self.min_images_til_duplicate,self.max_images_til_duplicate)
-                    self.images_seen_since_duplicate_count = 0
-                    duplicate_image_to_show = deepcopy(self.rng.choice(seen_images[0:-1]))
-                    duplicate_image_to_show.duplicate = True
-                    duplicate_image_to_show.marks.clear()
-                    self.images.insert(self.idx,duplicate_image_to_show)
-                    self.N = len(self.images)
-                    self.duplicates_seen.append(duplicate_image_to_show.name)
+            seen_images = [image for image in self.images if (len(image.marks) != 0) and (image.name not in self.duplicates_seen)]
+            if self.settings_window.duplicate_box.isChecked():
+                if (len(seen_images) > self.min_images_til_duplicate):
+                    self.images_seen_since_duplicate_count += 1
+                    if (self.images_seen_since_duplicate_count == self.duplicate_image_interval):
+                        self.duplicate_image_interval = self.rng.integers(self.min_images_til_duplicate,self.max_images_til_duplicate)
+                        self.images_seen_since_duplicate_count = 0
+                        duplicate_image_to_show = deepcopy(self.rng.choice(seen_images[0:-1]))
+                        duplicate_image_to_show.duplicate = True
+                        duplicate_image_to_show.marks.clear()
+                        self.images.insert(self.idx,duplicate_image_to_show)
+                        self.N = len(self.images)
+                        self.duplicates_seen.append(duplicate_image_to_show.name)
         
         # Continue update_images
         self.frame = self.image.frame
