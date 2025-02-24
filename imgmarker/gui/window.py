@@ -210,7 +210,7 @@ class SettingsWindow(QWidget):
         for i, box in enumerate(self.mainwindow.category_boxes): 
             box.setText(config.CATEGORY_NAMES[i+1])
             box.setShortcut(self.mainwindow.category_shortcuts[i])
-
+            
         # Update mark labels that haven't been changed
         for image in self.mainwindow.images:
             if image.duplicate == True: marks = image.dupe_marks
@@ -921,13 +921,9 @@ class MainWindow(QMainWindow):
         # Mouse position widget
         self.pos_widget = PosWidget()
         if self.image.wcs == None: 
-            self.pos_widget.wcs_label.hide()
-            self.pos_widget.ra_text.hide()
-            self.pos_widget.dec_text.hide()
+            self.pos_widget.hidewcs()
         else:
-            self.pos_widget.wcs_label.show()
-            self.pos_widget.ra_text.show()
-            self.pos_widget.dec_text.show()
+            self.pos_widget.showwcs()
 
         # Back widget
         self.back_button = QPushButton(text='Back',parent=self)
@@ -1543,8 +1539,8 @@ class MainWindow(QMainWindow):
             if dec > 0: dec_str = '+' + dec_str
             else: dec_str = '-' + dec_str
 
-            self.pos_widget.x_text.setText(f'{x}')
-            self.pos_widget.y_text.setText(f'{y}')
+            self.pos_widget.x_text.setText(f'{x} px')
+            self.pos_widget.y_text.setText(f'{y} px')
 
             self.pos_widget.ra_text.setText(ra_str)
             self.pos_widget.dec_text.setText(dec_str)
@@ -1611,13 +1607,9 @@ class MainWindow(QMainWindow):
         # Update position widget
         self.update_pos()
         if self.image.wcs == None: 
-            self.pos_widget.wcs_label.hide()
-            self.pos_widget.ra_text.hide()
-            self.pos_widget.dec_text.hide()
+            self.pos_widget.hidewcs()
         else:
-            self.pos_widget.wcs_label.show()
-            self.pos_widget.ra_text.show()
-            self.pos_widget.dec_text.show()
+            self.pos_widget.showwcs()
              
         # Update sliders
         self.blur_window.slider.setValue(int(self.image.r*10))
