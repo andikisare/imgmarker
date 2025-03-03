@@ -341,7 +341,8 @@ class Image(QGraphicsPixmapItem):
 
         if (self.mode == Mode.RGB) or (self.mode == Mode.RGBA):
             # Calculate scale factor
-            scale = self.mode.iinfo.max*self.scaling(self.v)/self.v
+            v = self.v
+            scale = self.mode.iinfo.max*self.scaling(v)/v
 
             # Apply scale factor
             out[:, :, 0] *= scale
@@ -404,14 +405,15 @@ class Image(QGraphicsPixmapItem):
             w = gaussian_filter(_w,self.r)
 
             # Apply weights, add nans back in
-            out = out/w
-            out[nanmask] = np.nan
-
+            with np.errstate(divide='ignore', invalid='ignore'): 
+                out = out/w
+                out[nanmask] = np.nan
         else:
             out = gaussian_filter(self._array,self.r)
 
-        self.array = out.astype(self.mode.iinfo.dtype)
-        self.rescale()
+        with np.errstate(divide='ignore', invalid='ignore'): 
+            self.array = out.astype(self.mode.iinfo.dtype)
+            self.rescale()
 
 class ImageScene(QGraphicsScene):
     """A class in which images and marks are stored."""
