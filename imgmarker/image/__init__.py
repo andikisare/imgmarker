@@ -29,6 +29,7 @@ class Mode(Enum):
     RGB = 0
     RGBA = 1
     I8 = 2
+    L = 2
     I16 = 3
     
     def __init__(self,value):

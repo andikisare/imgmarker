@@ -34,7 +34,7 @@ Issues = "https://github.com/andikisare/imgmarker/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["imgmarker"]
+include = ["imgmarker","imgmarker.gui","imgmarker.image","imgmarker.tests"]
 
 [tool.setuptools.package-data]
 imgmarker = ["*.ico"]
