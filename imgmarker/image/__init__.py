@@ -362,7 +362,8 @@ class Image(QGraphicsPixmapItem):
         width, height  = array.shape[1], array.shape[0]
         data = array.tobytes()
 
-        if self.mode.iinfo.bits > 8: data = align8to32(data,width,self.mode.iinfo.bits)
+        if self.mode in {Mode.I16, Mode.I8, Mode.L}: 
+            data = align8to32(data,width,self.mode.iinfo.bits)
 
         if array.ndim == 3:
             n = array.shape[2]
