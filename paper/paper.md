@@ -96,11 +96,11 @@ cons: you have to build a whole project if you just want to open and scan some i
 
 When `Image Marker` is first opened, the user is prompted to select the directory in which all of their output data will be automatically saved and then prompted to select the directory from which to load images. The currently supported image formats are FITS, TIFF, PNG, and JPEG. A bit depth of up to 16 bits is supported, which is a limitation of PyQt. For TIFFs, PNGs and JPEGs, `Image Marker` currently only officially supports RGB color channels with 8 bits per channel, but this may be expanded in the future.
 
-`Image Marker` can handle multiframeFITS and TIFF files. If a file has multiple Frames, these Frames can be cycled through using spacebar, or by using the **View > Frames** dialog. World Coordinate System (WCS) information stored in FITS and TIFF files is also accessed by `Image Marker`. If an image contains a WCS solution in its header, `Image Marker` will display the WCS coordinates of the cursor in addition to the pixel coordinates.
+`Image Marker` can handle multiframeFITS and TIFF files. If a file has multiple Frames, these Frames can be cycled through using spacebar, or by using the **View &rarr Frames** dialog. World Coordinate System (WCS) information stored in FITS and TIFF files is also accessed by `Image Marker`. If an image contains a WCS solution in its header, `Image Marker` will display the WCS coordinates of the cursor in addition to the pixel coordinates.
 
 ## Marking Images
 
-Marks can be placed in any of 9 *groups*. The user can place a *mark* by pressing any number between 1 and 9. Pressing each number will place a *mark* at the location of the cursor and in the *groups* associated with that number. The names of each *groups* can be modified in **Edit > Settings.** Once a *mark* is placed, its pixel coordinates, WCS coordinates (if applicable), *groups*, label, the name of the image associated with the *mark* and the current date are all saved into `<username>_marks.txt`, where `<username>` is the username of the user’s profile on their computer. The *mark* label can be modified simply by clicking on the label of the *mark* and typing the new label. Pressing enter or clicking outside the label will save this information in the same text file.
+Marks can be placed in any of 9 *groups*. The user can place a *mark* by pressing any number between 1 and 9. Pressing each number will place a *mark* at the location of the cursor and in the *groups* associated with that number. The names of each *groups* can be modified in **Edit &rarr Settings.** Once a *mark* is placed, its pixel coordinates, WCS coordinates (if applicable), *groups*, label, the name of the image associated with the *mark* and the current date are all saved into `<username>_marks.txt`, where `<username>` is the username of the user’s profile on their computer. The *mark* label can be modified simply by clicking on the label of the *mark* and typing the new label. Pressing enter or clicking outside the label will save this information in the same text file.
 
 Mark can also be loaded into `Image Marker` in the format of a CSV file or a CSV-formatted text file, called *catalogs*. Example files can be found in the readthedocs: https://imgmarker.readthedocs.io/en/latest/. Upon selecting a file to load as a catalog, the user is prompted to pick a color to use for the catalog. Different *catalogs* can be different colors, allowing the user to differentiate between loaded *catalogs*.
 
@@ -110,11 +110,11 @@ The user can also categorize images and enter comments on the image. Images can 
 
 ## Filters
 
-`Image Marker` includes some basic image manipulation. In **Filter > Stretch**, the user can set the brightness scaling, the two options being **Linear** (default) and **Log**. In **Filter > Interval**, the user can set the interval of brightness values that are displayed. The two options are **Min-Max** (default) and **ZScale**. **In Filter > Gaussian Blur**, the user can blur the image using a slider.
+`Image Marker` includes some basic image manipulation. In **Filter &rarr Stretch**, the user can set the brightness scaling, the two options being **Linear** (default) and **Log**. In **Filter &rarr Interval**, the user can set the interval of brightness values that are displayed. The two options are **Min-Max** (default) and **ZScale**. **In Filter &rarr Gaussian Blur**, the user can blur the image using a slider.
 
 ## Settings
 
-Settings can be edited through **Edit > Settings**. In the settings window, there are several customizations the user can make. Most importantly, the user can define the names of the *groups*, the names of the image *categories*, and the maximum *marks* per *groups*. The user can also set whether to randomize the order of images, and whether the mouse cursor will move to the center of the image when the user focuses on a point using the middle mouse button.
+Settings can be edited through **Edit &rarr Settings**. In the settings window, there are several customizations the user can make. Most importantly, the user can define the names of the *groups*, the names of the image *categories*, and the maximum *marks* per *groups*. The user can also set whether to randomize the order of images, and whether the mouse cursor will move to the center of the image when the user focuses on a point using the middle mouse button.
 # Acknowledgements
 
 Thank you Keren, Mike Gladders
