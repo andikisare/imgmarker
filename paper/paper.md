@@ -115,21 +115,6 @@ The user can also categorize images and enter comments on the image. Images can 
 ## Settings
 
 Settings can be edited through **Edit > Settings**. In the settings window, there are several customizations the user can make. Most importantly, the user can define the names of the *groups*, the names of the image *categories*, and the maximum *marks* per *groups*. The user can also set whether to randomize the order of images, and whether the mouse cursor will move to the center of the image when the user focuses on a point using the middle mouse button.
-
-# Citations
-
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
-
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
 # Acknowledgements
 
 Thank you Keren, Mike Gladders
