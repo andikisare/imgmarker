@@ -4,7 +4,7 @@ Installation
 Using pip
 ---------------------
 
-**It is recommended that you create a python environment for** ``imgmarker``. **Installing** ``imgmarker``` **automatically installs Python dependencies in the environment.**
+**It is recommended that you create a python environment for** ``imgmarker``. **Installing** ``imgmarker`` **automatically installs Python dependencies in the environment.**
 
 In the Python environment of your choice, run::
 
