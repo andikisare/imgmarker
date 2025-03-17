@@ -39,7 +39,7 @@ and run::
 
     pyinstaller  \
      	--name imgmarker \
-            --icon icon.ico \
+        --icon icon.ico \
     	--windowed  \
     	-D __init__.py \
     	--noconfirm \
