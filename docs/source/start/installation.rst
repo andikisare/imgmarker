@@ -15,7 +15,7 @@ You can now run Image Marker from the terminal in any directory by running the c
 Executables
 ---------------------
 **Due to security concerns, it is recommended that you make your own executable from the source code, but we provide precompiled executables for major releases that you may use at your own risk.**
-**We will be providing the exact commands to use for compiling and executables soon. We compile using ``pyinstaller`` to make our executables.**
+**We will be providing the exact commands to use for compiling and executables soon. We compile using** ``pyinstaller`` **to make our executables.**
 
 Portable executables are available on `Github <https://github.com/andikisare/imgmarker/releases/latest>`_. Versions are available for Windows 11, M1+ Mac, and Ubuntu 20.04+.
 
@@ -62,7 +62,7 @@ Likewise, Windows may block Image Marker the first time the application is ran. 
 FAQ
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you run into issues trying to build ``Image Marker`` manually, you may have PyQt5 installed already, which may conflict with the compilation. We recommend making a dedicated Python environment for installing ``Image Marker``. If you don't want to make a new Python environment, try adding "-exclude PyQt5" to the end of the ``pyinstaller`` command, to force it not to compile an older version of PyQt into the executable. 
+If you run into issues trying to build ``imgmarker`` manually, you may have PyQt5 installed already, which may conflict with the compilation. We recommend making a dedicated Python environment for installing ``imgmarker``. If you don't want to make a new Python environment, try adding "-exclude PyQt5" to the end of the ``pyinstaller`` command, to force it not to compile an older version of PyQt into the executable. 
 
 If you're getting a Recursion Error, try following the recommended steps in the error (if available). If there are no steps shown, try adding this line near the top of the program's .spec file::
 
