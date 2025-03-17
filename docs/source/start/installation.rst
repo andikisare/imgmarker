@@ -4,7 +4,7 @@ Installation
 Using pip
 ---------------------
 
-**It is recommended that you create a python environment for** ``imgmarker`` **using a tool like** `Anaconda <https://anaconda.org/>`_. **Installing** ``imgmarker`` **automatically installs Python dependencies in the environment.**
+**It is recommended that you create a Python environment for** ``imgmarker`` **using a tool like** `Anaconda <https://anaconda.org/>`_. **Installing** ``imgmarker`` **automatically installs Python dependencies in the environment.**
 
 In the Python environment of your choice, run::
 
@@ -23,7 +23,7 @@ Mac
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To compile manually on **Intel Mac**:
-Install ``pyinstaller`` in your desired python environment, then clone the `Github repository <https://github.com/andikisare/imgmarker/releases/latest>`_ wherever you want to store it::
+Install ``pyinstaller`` in your desired Python environment, then clone the `Github repository <https://github.com/andikisare/imgmarker/releases/latest>`_ wherever you want to store it::
 
     git clone https://github.com/andikisare/imgmarker.git
 
@@ -62,7 +62,7 @@ Likewise, Windows may block Image Marker the first time the application is ran. 
 FAQ
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you run into issues trying to build ``Image Marker`` manually, you may have PyQt5 installed already, which may conflict with the compilation. We recommend making a dedicated python environment for installing ``Image Marker``. If you don't want to make a new python environment, try adding "-exclude PyQt5" to the end of the ``pyinstaller`` command, to force it not to compile an older version of PyQt into the executable. 
+If you run into issues trying to build ``Image Marker`` manually, you may have PyQt5 installed already, which may conflict with the compilation. We recommend making a dedicated Python environment for installing ``Image Marker``. If you don't want to make a new Python environment, try adding "-exclude PyQt5" to the end of the ``pyinstaller`` command, to force it not to compile an older version of PyQt into the executable. 
 
 If you're getting a Recursion Error, try following the recommended steps in the error (if available). If there are no steps shown, try adding this line near the top of the program's .spec file::
 
