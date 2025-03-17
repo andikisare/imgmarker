@@ -65,7 +65,7 @@ FAQ
 
 * If you run into issues trying to build ``imgmarker`` manually, you may have PyQt5 installed already, which may conflict with the compilation. We recommend making a dedicated Python environment for installing ``imgmarker``. If you don't want to make a new Python environment, try adding "-exclude PyQt5" to the end of the ``pyinstaller`` command, to force it not to compile an older version of PyQt into the executable. 
 
-*If you're getting a Recursion Error, try following the recommended steps in the error (if available). If there are no steps shown, try adding this line near the top of the program's .spec file::
+* If you're getting a Recursion Error, try following the recommended steps in the error (if available). If there are no steps shown, try adding this line near the top of the program's .spec file::
 
     import sys ; sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 
