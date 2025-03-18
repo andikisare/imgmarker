@@ -34,8 +34,8 @@ One feature we intend to add in the future is the ability to track each loaded `
 
 Settings
 ---------------------
-Settings available for editing within the GUI (**Edit > Settings**) are in the table below.
-.. list-table::
+
+.. list-table:: Settings available for editing within the GUI (**Edit > Settings**)
    :widths: 50 50
    :header-rows: 1
 
@@ -57,8 +57,7 @@ Settings available for editing within the GUI (**Edit > Settings**) are in the t
      - This number box allows the customization of how much of a dataset is shown twice. A higher percentage corresponds to a higher likelihood to see the same image twice. The interval that images are shown again is randomly chosen between two values that depend on this percentage, so a small percentage will likely lead to not seeing a duplicate image until many other images have been viewed, whereas a higher percentage will likely lead to seeing a duplicate image sooner. ``Imgmarker`` will never show the same image twice in a row, but can show the same image after viewing another image (for example, if you have images 1, 2, and 3, if you view image 1 for the first time, then view image 2 for the first time, image 3 may be a duplicate of image 1, but image 2 will never be a duplicate of image 1).
 
 
-Settings available for editing within the configuration file are in the table below.
-.. list-table::
+.. list-table:: Settings available for editing within the configuration file
    :widths: 50 50
    :header-rows: 1
 
