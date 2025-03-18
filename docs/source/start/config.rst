@@ -85,5 +85,9 @@ This configuration::
    group_max = 4,1,1,None,None,None,None,None,None
    randomize_order = True
 
-renames ``group`` 1 to "Paws" and limits the number of ``marks`` in the ``group`` "Paws" to 4, renames ``group`` 2 to "Nose" and limits the number of ``marks`` in ``group`` "Nose" to 1, and renames ``group`` 3 to "Tail" and limits the number of ``marks`` in ``group`` "Tail" to 1.
+* renames ``group`` 1 to "Paws" and limits the number of ``marks`` in the ``group`` "Paws" to 4
+* renames ``group`` 2 to "Nose" and limits the number of ``marks`` in ``group`` "Nose" to 1
+* renames ``group`` 3 to "Tail" and limits the number of ``marks`` in ``group`` "Tail" to 1
+* renames ``category`` 1 to "Cat" and
+* renames ``category`` 2 to "Dog"
 
