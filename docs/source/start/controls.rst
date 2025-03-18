@@ -51,3 +51,7 @@ Currently, there is no functionality for modifying the controls. Below is a tabl
      - :kbd:`Wheel`
    * - Favorite image
      - :kbd:`F`
+
+* LMB refers to the Left Mouse Button (left click).
+* RMB refers to the Right Mouse Button (right click).
+* MMB refers to the Middle Mouse Button (scroll wheel button).
