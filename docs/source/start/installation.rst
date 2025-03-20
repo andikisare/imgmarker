@@ -4,7 +4,7 @@ Installation
 Using pip (from PyPI)
 ---------------------
 .. Important::
-    - **It is recommended that you create a Python environment for** ``imgmarker`` **using a tool like** `Anaconda <https://anaconda.org/>`_**.**
+    - **It is recommended that you create a Python environment for** ``imgmarker`` **using a tool like** `Anaconda <https://anaconda.org/>`_ **.**
     - ``Imgmarker`` **was developed using Python 3.12, so we recommend an environment with this Python version.**
     - **Installing** ``imgmarker`` **automatically installs Python dependencies in the environment.**
 
