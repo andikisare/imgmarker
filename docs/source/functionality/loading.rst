@@ -22,15 +22,15 @@ These formats are supported with the following limitations:
   - Supports logging WCS coordinates (RA and Dec in degrees) 
     - **Only when WCS solution is embedded in the TIFF/TIF header using** `STIFF <https://www.astromatic.net/software/stiff/>`_ **for embedding WCS solutions.**
   - Supports multiple frames (if two images are embedded in one file, seeking to the other image within the same file is available)
-  - Supports 8, 16, and 32 bit images...
+  - Supports 8 bit images
 - JPEG/JPG
   - Supports RGB with Alpha channel
   - **Does not** support logging WCS coordinates
-  - 8 bit...
+  - Supports 8 bit images
 - PNG
   - Supports RGB with Alpha channel
   - **Does not** support logging WCS coordinates
-  - 8 bit...
+  - Supports 8 bit images
 
 Image loading
 ------------
