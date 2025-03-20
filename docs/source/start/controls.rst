@@ -3,7 +3,8 @@ Controls
 
 Currently, there is no functionality for modifying the controls.
 
-**Note: Changing the names of** ``groups`` **and** ``categories`` **will change their name in the Controls window of** ``imgmarker`` **to help keep track of which** ``group`` **and** ``category`` **corresponds to which buttons.**
+.. Note::
+   **Changing the names of** ``groups`` **and** ``categories`` **will change their name in the Controls window of** ``imgmarker`` **to help keep track of which** ``group`` **and** ``category`` **corresponds to which buttons.**
 
 Below is a table of the controls.
 
