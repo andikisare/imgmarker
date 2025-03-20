@@ -3,8 +3,10 @@ Installation
 
 Using pip (from PyPI)
 ---------------------
-
-**It is recommended that you create a Python environment for** ``imgmarker`` **using a tool like** `Anaconda <https://anaconda.org/>`_. ``Imgmarker`` **was developed using Python 3.12, so we recommend an environment with this Python version.** **Installing** ``imgmarker`` **automatically installs Python dependencies in the environment.**
+.. Important::
+    - **It is recommended that you create a Python environment for** ``imgmarker`` **using a tool like** `Anaconda <https://anaconda.org/>`_**.**
+    - ``Imgmarker`` **was developed using Python 3.12, so we recommend an environment with this Python version.**
+    - **Installing** ``imgmarker`` **automatically installs Python dependencies in the environment.**
 
 
 The steps below walk through the process of creating a new Python environment and installing ``imgmarker`` into it. Skip to Step 4 if you already know how to create Python environments and use them.
@@ -99,7 +101,7 @@ Windows
 Likewise, Windows may block Image Marker the first time the application is ran. In the error window, click **More info**, then click **Run anyway**.
 
 FAQ
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 * If you run into issues trying to build ``imgmarker`` manually, you may have PyQt5 installed already, which may conflict with the compilation. We recommend making a dedicated Python environment for installing ``imgmarker``. If you don't want to make a new Python environment, try adding "-exclude PyQt5" to the end of the ``pyinstaller`` command, to force it not to compile an older version of PyQt into the executable. 
 
