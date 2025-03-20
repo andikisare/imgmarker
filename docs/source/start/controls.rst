@@ -55,6 +55,35 @@ Below is a table of the controls.
      - :kbd:`Wheel`
    * - Favorite image
      - :kbd:`F`
+   * - Open Save...
+     - :kbd:`Ctrl` + :kbd:`O`
+   * - Open Images...
+     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`O`
+   * - Open Catalog...
+     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`C`
+   * - Settings
+     - :kbd:`Ctrl` + :kbd:`,`
+   * - Zoom In
+     - :kbd:`Ctrl` + :kbd:`=`
+   * - Zoom Out
+     - :kbd:`Ctrl` + :kbd:`-`
+   * - Zoom to Fit
+     - :kbd:`Ctrl` + :kbd:`0`
+   * - Frames...
+     - :kbd:`Ctrl` + :kbd:`F`
+   * - Show Marks
+     - :kbd:`Ctrl` + :kbd:`M`
+   * - Show Mark Labels
+     - :kbd:`Ctrl` + :kbd:`L`
+   * - Show Catalog
+     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`M`
+   * - Show Catalog Labels
+     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`L`
+   * - Gaussian Blur...
+     - :kbd:`Ctrl` + :kbd:`B`
+   * - Controls
+     - :kbd:`F1`
+   
 
 .. [1] LMB refers to the Left Mouse Button (left click).
 .. [2] RMB refers to the Right Mouse Button (right click).
