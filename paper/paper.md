@@ -32,71 +32,49 @@ bibliography: paper.bib
 
 # Summary
 
-A rich diversity of scientific imaging datasets benefit from human inspection for purposes ranging from prosaic---such as fault identification and quality inspection---to profound, enabling the discovery of new phenomena. As such, imaging datasets come in a wide variety of forms, with diverse inspection needs. In this paper we present a software package `Image Marker` designed to help facilitate human categorization of images. The software enables flexible marking and logging of up to 9 different classes of features in files of FITS, PNG, TIFF, and JPEG format. Additional tools are provided to add text-based comments to the marking logs and for displaying external *mark* datasets on images during the classification process. As our primary use case will be the identification of features in astronomical survey data, `Image Marker` will also utilize standard World Coordinate Systems (WCS) headers embedded in FITS headers and TIFF metadata when available.  The lightweight software, based on the Qt Framework to build the GUI application, enables efficient marking of thousands of images on personal-scale computers.  We provide `Image Marker` as a Python package, and as Mac, Windows, and Linux executables. It is available [on Github](https://github.com/andikisare/imgmarker/) or via pip installation. 
+A rich diversity of scientific imaging datasets benefit from human inspection for purposes ranging from prosaic---such as fault identification and quality inspection---to profound, enabling the discovery of new phenomena. As such, imaging datasets come in a wide variety of forms, with diverse inspection needs. In this paper we present a software package `Image Marker` designed to help facilitate human categorization of images. The software enables flexible marking and logging of up to 9 different classes of features and their locations in the image in files of FITS, PNG, TIFF, and JPEG format. Additional tools are provided to add text-based comments to the marking logs and for displaying external *mark* datasets on images during the classification process. As our primary use case will be the identification of features in astronomical survey data, `Image Marker` will also utilize standard World Coordinate Systems (WCS) headers embedded in FITS headers and TIFF metadata when available.  The lightweight software, based on the Qt Framework to build the GUI application, enables efficient marking of thousands of images on personal-scale computers.  We provide `Image Marker` as a Python package, and as Mac, Windows, and Linux executables. It is available [on Github](https://github.com/andikisare/imgmarker/) or via pip installation. 
 
 # Statement of need
 
-<!-- set the stage of the current field in one paragraph and be less critical of tools in the field, and make second paragraph for what image marker is good for and say image marker is local and is meant for rapid vetting of various things, image marker is useful whenver you want to tag images for classification, get coordinates easily, save your progress and come back later, prevent using too much memory by opening all images at once, and mention that most (almost all) GUI buttons on the main window are also keyboard shortcuts to make it easier to use fast -->
+The rapid advancement in detector technology across all fields of science has led to larger and larger datasets without an equal increase in scientists with time to parse all of the data. This imbalance of available work to available workers has led to a need for developing more efficient methods of parsing data. In astronomy, SAO-DS9 [@SAO_DS9] is widely used for viewing and analyzing data, but handles smaller datasets best. In response to large datasets, projects like DES Exposure Checker [@DES_Exposure_Checker], and Space Warps [@Space_Warps] and Galaxy Zoo [@Galaxy_Zoo] using the Zooniverse framework [@Zooniverse] emerged to crowdsource classification and identification tasks in large datasets. Zooniverse offers the ability to easily outsource image identification and advanced classification statistics through the power of citizen science. This level of sophistication is not required, however, for projects which may involve a fewer collaborators or for low-level data or algorithmic phases that are not suitable for a broader audience. Zooniverse also requires an internet connection, as all data must be uploaded to their servers to create a Zooniverse project. FitsMap [@FitsMap] takes a different approach with a focus on large images and their associated catalogs by hosting a web client on the user's local machine and displaying a reduced-scale image with catalog objects overlaid. While FitsMap has broad functionality, it does not contain a method for scanning many images quickly, saving feature coordinates, or methods for crowdsourcing efforts. 
 
-The rapid advancement in detector technology across all fields of science has led to larger and larger datasets without an equal increase in scientists with time to parse all of the data. This imbalance of available work to available workers has led to a need for developing more efficient methods of parsing data. In astronomy, SAO-DS9 [@SAO_DS9] is widely used for viewing and analyzing data, but handles smaller datasets best. In response to large datasets, projects like DES Exposure Checker [@DES_Exposure_Checker], and Space Warps [@Space_Warps] and Galaxy Zoo [@Galaxy_Zoo] using the Zooniverse framework [@Zooniverse] emerged to crowdsource classification and identification tasks in large datasets. However, Zooniverse requires creating a project and uploading data, which then becomes public, requires an internet connection, and cannot be run on a local machine. FitsMap [@FitsMap] takes a different approach with a focus on large images containing large catalogs by hosting a web client on the user's local machine and displaying a reduced-scale image with catalog objects overlaid. While FitsMap has broad functionality, it does not contain a method for scanning many images quickly, saving feature coordinates, or methods for crowdsourcing efforts. 
-
-We designed `Image Marker` specifically for quickly scanning an image, logging identifications, and seeking to the next available image with a user-friendly interface and a fail-safe saving mechanism while including a suite of features and options for customization, image manipulation, and testing user consistency. By sharing an `Image Marker` configuration file and data with other users, `Image Marker` achieves a similar result as the previously mentioned projects, but with data stored locally, therefore requiring the user to share their output files. This, however, enables quicker loading times and faster identifications or classifications. `Image Marker` is entirely local and is specially designed for tagging images for classification, tagging features in images for classification and saving their coordinates, ease of use, easily picking up where you left off, and resource optimization.
+`Image Marker` is a tool specifically designed for quickly scanning images and tagging specific locations in the images or the images themselves. It is run locally, has a user-friendly interface, a fail-safe saving mechanism, and also includes a suite of features and options for customization, image manipulation, and testing user consistency. By sharing an `Image Marker` configuration file and data with other users, `Image Marker` also allows joint analyses of datasets at the expense of requiring manual sharing of files after marking is completed. This, however, enables trained observers to quickly scan through images with loading times not limited by internet connections and thus faster identifications or classifications. 
 
 ## Our use case
 
-The South Pole Telescope (SPT) is a 10 meter telescope designed for observing microwaves, millimeter-waves, and submillimeter-waves with a specific focus on minute fluctuations in the Cosmic Microwave Background (CMB) [@SPT]. Using the SPT-3G camera aboard SPT, the 1500 degree survey has detected over 1000 galaxy clusters via the Sunyaev Zel'dovich (SZ) effect. Clusters identified through the SZ effect often demonstrate miscentering: an offset between the Brightest Cluster Galaxy (BCG) and the center of the gravitational well of the cluster. This miscentering can be due to astrophysical effects, most notably mergers, which keep the cluster out of equilibrium, or systematic effects in cluster identification algorithms [@Ding-miscentering; @Kelly-miscentering]. Hydrodynamical simulations can be used to study and predict astrophysical miscentering [@Seppi_etal; @Yan_etal; @Cozio_etal]. Visual identification of BCGs is therefore a method of evaluating cluster identification algorithms [@Kelly-miscentering] as well as hydrodynamical simulations of galaxy clusters. By using `Image Marker` to identify BCGs in an ensemble of galaxy clusters from SPT, a human truth table of offsets will be analyzed and compared to results from hydrodynamical simulations.
+The South Pole Telescope (SPT) is a 10 meter telescope designed for observing the sky at  millimeter- and submillimeter-wavelengths with arcminute resolution. It has a specific focus on fluctuations in the cosmic microwave background (CMB) [@SPT]. The SPT-3G camera, installed in 2017, has surveyed ~10,000 square degrees of the Southern sky [@Benson14; @Sobrin22, @Prabhu24]. A key scientific objective of these observations has been the identification of galaxy clusters through the Sunyaev-Zel'dovich (SZ) effect [@SZ1972] and using this sample to constrain cosmology [@Chaubal22; @Raghunathan22].
 
-Machine learning has been deployed virtually everywhere in modern science for classification and identification tasks [@ImageNet_Classification_Deep_CNNs; @OverFeat_CNNs; @Deep_CNN_Analysis; @Lensing_CNNs] and has proven to be of great value for large datasets. Perhaps the greatest challenge in training a machine learning model, like a Convolutional Neural Network (CNN) or Vision Transformer (ViT), is curating the training, validation, and test datasets. Machine learning models require large datasets to train on, especially ViTs, and the larger the training dataset, the more accurate a model can be. However, curating a large image dataset, each with specific features for a machine learning model to learn, takes a lot of time and effort. We will use `Image Marker` to help curate these training sets by filtering out bad images, images without galaxy clusters, as well as simultaneously creating a human truth table for BCGs in galaxy clusters, which we will train a machine learning model to identify.
+It is projected that the SPT-3G camera will enable the detection of over 5,000 galaxy clusters via the SZ effect [@Benson14]. 
 
+It is important to understand the mass of these clusters for their use in cosmological analyses. A standard way adopted by the field to do so is through weak lensing (cite). This, however, requires a choice for the center of the cluster (cite review article with details). One of the most commonly adopted choices is using a special galaxy in galaxy clusters known as the brightest cluster galaxy (BCG). Automatic BCG selection algorithms based on catalog data can have problems, and human inspection plays an important role in both validating these algorithms and improving centering choices when they fail. (Cite X-ray BCG papers by Tesla's group you have, red mapper BCG paper Rozo & Rykoff (2014)) 
+One of our first use cases for `Image Marker` is to identify BCGs in the SPT-3G cluster sample. This human-generated BCG dataset will be analyzed and compared to results from algorithms such as redMaPPer and MCMF (cite papers) that are also run on the SPT sample.
+ 
+
+<!-- Clusters identified through the SZ effect often demonstrate miscentering: an offset between the Brightest Cluster Galaxy (BCG) and the center of the gravitational well of the cluster. This miscentering can be due to astrophysical effects, most notably mergers, which keep the cluster out of equilibrium, or systematic effects in cluster identification algorithms [@Ding-miscentering; @Kelly-miscentering]. Hydrodynamical simulations can be used to study and predict astrophysical miscentering [@Seppi_etal; @Yan_etal; @Cozio_etal]. Visual identification of BCGs is therefore a method of evaluating cluster identification algorithms [@Kelly-miscentering] as well as hydrodynamical simulations of galaxy clusters. By using `Image Marker` to identify BCGs in an ensemble of galaxy clusters from SPT, a human truth table of offsets will be analyzed and compared to results from algorithms. -->
+
+<!-- stuff on cluster cosmology multi-wavelength efforts, not exactly sure what the notes lindsey left are saying to do, if anything -->
+
+The production of a well curated BCG dataset of thousands of clusters also offers the opportunity to develop and test machine learning BCG identification tools that can be applied to the full SPT survey dataset as well as cluster samples from other surveys (cite Hilton for ACT, eROSITA). (Add this to the beginning of the next paragraph?)
+
+Machine learning has been deployed virtually everywhere in modern science for classification and identification tasks [@ImageNet_Classification_Deep_CNNs; @OverFeat_CNNs; @Deep_CNN_Analysis; @Lensing_CNNs] and has proven to be of great value for large datasets. Perhaps the greatest challenge in training a machine learning model, like a convolutional neural network (CNN) [@ImageNet_Classification_Deep_CNNS] or vision transformer (ViT) [@ViTs], is curating the training, validation, and test datasets. Machine learning models require large datasets to train on, especially ViTs, and the larger the training dataset, the more accurate a model can be. However, curating a large image dataset, each with specific features for a machine learning model to learn, takes a lot of time and effort. We are currently exploring the use of machine learning to identify BCGs in SPT-3G clusters.
+
+<!-- We will use `Image Marker` to help curate these training sets by creating a human truth table for BCGs in galaxy clusters, which we will train a machine learning model to identify. -->
+
+### *Broader use cases*
+
+While `Image Marker` was initially designed with the above use cases in mind, we have found it extremely valuable as a general tool for inspecting data products and validating algorithmic development. As an example, the ability to rapidly scan 100s of small thumbnail cutouts in a matter of minutes, mark problematic locations, and easily read in lists of these locations with WCS, helped us to improve data cleaning for an upcoming analysis of SPT data in the Euclid Deep Field South region. 
 
 <!-- -
 ##Add example output marks file picture to show what saved data looks like
 
-
-
-important for citizen science, ds9, galaxy zoo, des-image-checker, coollamps, xmm bcg, similar tools have been used for human identification (use these references)
-start with these to get references from nasa ADS
-
-one contrast is that some are browser based tools, ds9 is much more similar because it runs locally but is not set up for this sort of work
-
-we've built something shareable because you can share config files for crowd sourcing human-identification with control over the experiment, which bypasses internet lag (run locally)
-
-specific experiment: statements about SPT, gonna use this for galaxy cluster and bcg identification (cite spt papers),
-
-can also add strong lensing-ML references?
-
-can cite recent paper using ResNet18, cite ML papers like attention is all you need? or maybe just ResNet18 paper
-
-4 paragraphs?
-
-add a note to reference STIFF (astrometric software) because it's particularly useful for embedding the WCS metadata into the tif files
-also point out that the SPT cluster image was partially made with STIFF and Pillow
-
 add citations to Pillow, astropy, scipy, numpy, etc
-
-DES exposure checker: https://ui.adsabs.harvard.edu/abs/2016A%26C....16...99M/abstract
-pros: offers sign-in option, hosted on server so nothing has to be downloaded, masking option is kind of like having multiple frames, data immediately stored on stable server
-cons: Very specific use case, can't go back, no zooming or panning (intentionally), only black and white, scaling options not labeled, hosted on server so speed is reliant on internet speed, large marks that are all one color
-
-SpaceWarps: https://ui.adsabs.harvard.edu/abs/2016MNRAS.455.1171M/abstract
-pros: offers sign-in option, Shows four images, three in color, at different scalings, hosted online so all data is stored immediately and nothing needs to be downloaded, can *mark* lenses, gives a short tutorial, shows lenses initially, can zoom, pan, and rotate each frame individually, can move *marks* around, project included randomization of simulated images and images known not to contain lenses
-cons: specific use case, cant go back, cant change scaling, not a user-friendly UI for quickly moving between images
-
-Galaxy Zoo: https://ui.adsabs.harvard.edu/abs/2012amld.book..213F/abstract
-pros: offers sign-in option, includes tutorial, web-based so saves data immediately, multiple frames, provides tutorial
-cons: specific use case, sometimes slow in loading buttons, cant zoom or pan, black and white only,
-
-Zooniverse: https://dl.acm.org/doi/10.1145/2567948.2579215
-pros: provides framework for making web-based citizen science projects like galaxy zoo and spacewarps, web-based so saves immediately, already used by tons of other projects and people, don't have to download data for a project
-cons: you have to build a whole project if you just want to open and scan some images quickly, a project is still relying on internet speed,
-
 - -->
 
 # Functionality
 
-![Diagram of all `Image Marker` windows: (a) main window (b) controls window (c) Gaussian blur window (d) window for selecting frames (e) window displaying basic information about the user's installation of `Image Marker` (f) color picker window, used to select the color of an imported catalog of *marks*.\label{fig:figure1}](Figure1.pdf)
+![Diagram of all `Image Marker` windows: (a) main window; The 9 different group marks available and visible on the image of the cat. We have changed some of the labels on the marks to demonstrate customized labels. Users can read off from below the image display the pixel coordinates, and WCS coordinates if available, of the cursor. Note that the image has a comment in the main comment box in the center and has been favorited, as evidenced by the checked and filled-in heart at the bottom right of the main window. (b) controls window (c) Gaussian blur window; Note that blur has not been applied to the example image in (a). (d) window for selecting frames (e) window displaying basic information about the user's installation of `Image Marker` (f) color picker window, used to select the color of an imported *catalog* of *marks*. Window themes are dependent on the user's operating system.\label{fig:figure1}](Figure1.pdf)
 
-![Diagram showing how the user can switch between frames in a multiframe image.\label{fig:figure2}](Figure2.pdf)
+![Optical GRZ band image of a galaxy cluster from the SPT-3G survey. (a) In the left image of this figure, we display the first frame of the image file with just optical image data. (b) In the right image, we display the second frame of the same image file, which contains the optical image data with contours overlaid indicating the SZ effect detection signal-to-noise from SPT-3G. Optical images from DeCALS [@Dey19]. \label{fig:figure2}](New_Figure2.jpg)
 
 ## Loading Images
 
@@ -124,7 +102,7 @@ Settings can be edited through **Edit &rarr; Settings**. In the settings window,
 
 # Acknowledgements
 
-Thank you Keren Sharon, Mike Gladders, Giulia Campitiello, and Will Hicks for their help and suggestions.
+We thank Keren Sharon, Mike Gladders, and Giulia Campitiello for helpful suggestions on features to include, and Will Hicks for help compiling `Image Marker` on an Intel based Mac.
 This work was supported in part by the U.S. Department of Energy, Office of Science, Office of Workforce Development for Teachers and Scientists (WDTS) under the Science Undergraduate Laboratory Internships (SULI) program. Work at Argonne National Lab is supported by UChicago Argonne LLC, Operator of Argonne National Laboratory (Argonne). Argonne, a U.S. Department of Energy Office of Science Laboratory, is operated under contract no. DE-AC02-06CH11357.
 We thank the SPT-3G collaboration for the use of the Sunyaev Zel'dovich detection contours displayed on the image in Figure \ref{fig:figure2}. 
 
