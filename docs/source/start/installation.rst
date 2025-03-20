@@ -4,9 +4,24 @@ Installation
 Using pip
 ---------------------
 
-**It is recommended that you create a Python environment for** ``imgmarker`` **using a tool like** `Anaconda <https://anaconda.org/>`_. **Installing** ``imgmarker`` **automatically installs Python dependencies in the environment.**
+**It is recommended that you create a Python environment for** ``imgmarker`` **using a tool like** `Anaconda <https://anaconda.org/>`_. ``Imgmarker`` **was developed using Python 3.12, so we recommend an environment with this Python version.** **Installing** ``imgmarker`` **automatically installs Python dependencies in the environment.**
 
-In the Python environment of your choice, run::
+
+The steps below walk through the process of creating a new Python environment and installing ``imgmarker`` into it. Skip to Step 4 if you already know how to create Python environments and use them.
+
+#. Using `Anaconda <https://anaconda.org/>`_, you can create a conda Python environment by running the following (with your ``base`` environment or some other conda Python environment activated)::
+
+    conda create -n [name] python=3.12
+
+with ``"[name]"`` being the name you choose to call the environment.
+
+#. After ``conda`` finishes solving the environment, it will prompt you for basic packages to install alongside Python in your new environment. Type "y" and press ``Enter`` to proceed.
+
+#. Next, activate the new environment with::
+
+    conda activate [name]
+
+#. Lastly, in the Python environment of your choice (if you followed Steps 1-3, you should already be in your new Python environment), run::
 
     pip install imgmarker
 
