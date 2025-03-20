@@ -12,7 +12,7 @@ Below is a table of the controls.
    :header-rows: 0
 
    * - Group "1"
-     - :kbd:`LMB` or :kbd:`1`
+     - :kbd:`LMB`{1]_ or :kbd:`1`
    * - Group "2" 
      - :kbd:`2`
    * - Group "3"
@@ -46,16 +46,16 @@ Below is a table of the controls.
    * - Change frame
      - :kbd:`Space`
    * - Delete
-     - :kbd:`RMB` or :kbd:`Delete` or :kbd:`Backspace`
+     - :kbd:`RMB`[2]_ or :kbd:`Delete` or :kbd:`Backspace`
    * - Enter comment
      - :kbd:`Enter`
    * - Focus
-     - :kbd:`MMB`
+     - :kbd:`MMB`[3]_
    * - Zoom in/out
      - :kbd:`Wheel`
    * - Favorite image
      - :kbd:`F`
 
-* LMB refers to the Left Mouse Button (left click).
-* RMB refers to the Right Mouse Button (right click).
-* MMB refers to the Middle Mouse Button (scroll wheel button).
+.. [1] LMB refers to the Left Mouse Button (left click).
+.. [2] RMB refers to the Right Mouse Button (right click).
+.. [3] MMB refers to the Middle Mouse Button (scroll wheel button).
