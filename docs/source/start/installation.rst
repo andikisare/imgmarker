@@ -9,19 +9,19 @@ Using pip (from PyPI)
 
 The steps below walk through the process of creating a new Python environment and installing ``imgmarker`` into it. Skip to Step 4 if you already know how to create Python environments and use them.
 
-#. Using `Anaconda <https://anaconda.org/>`_, you can create a conda Python environment by running the following (with your ``base`` environment or some other conda Python environment activated)::
+1. Using `Anaconda <https://anaconda.org/>`_, you can create a conda Python environment by running the following (with your ``base`` environment or some other conda Python environment activated)::
 
     conda create -n [name] python=3.12
 
-    with "``[name]``" being the name you choose to call the environment.
+with "``[name]``" being the name you choose to call the environment.
 
-#. After ``conda`` finishes solving the environment, it will prompt you for basic packages to install alongside Python in your new environment. Type "y" and press ``Enter`` to proceed.
+2. After ``conda`` finishes solving the environment, it will prompt you for basic packages to install alongside Python in your new environment. Type "y" and press ``Enter`` to proceed.
 
-#. Next, activate the new environment with::
+3. Next, activate the new environment with::
 
     conda activate [name]
 
-#. Lastly, in the Python environment of your choice (if you followed Steps 1-3, you should already be in your new Python environment), run::
+4. Lastly, in the Python environment of your choice (if you followed Steps 1-3, you should already be in your new Python environment), run::
 
     pip install imgmarker
 
@@ -33,15 +33,15 @@ Using pip (from cloning the repository)
 The PyPI version of ``imgmarker`` is not constantly up to date with the `Github repository <https://github.com/andikisare/imgmarker/tree/main>`_, so you may wish to install the most recent version directly from Github. The steps below outline this process.
 We once again recommend that you create a dedicated Python environment for ``imgmarker`` to prevent any conflicts with other Python packages you may have installed in other environments, since installing ``imgmarker`` will automatically install Python dependencies in your activated environment. For instructions on how to do this using a tool like `Anaconda <https://anaconda.org/>`_, see Steps 1-3 above (under "Using pip (from PyPI)"). Once you've activated your desired Python environment or finished Step 3 above, follow the steps below to install ``imgmarker`` from Github.
 
-#. First, clone the repository wherever you'd like. There is no specific place you need to clone the repository, so navigate to the directory you want to store it in and then run the following::
+1. First, clone the repository wherever you'd like. There is no specific place you need to clone the repository, so navigate to the directory you want to store it in and then run the following::
 
     git clone https://github.com/andikisare/imgmarker.git
 
-    or::
+or::
 
     git clone git@github.com:andikisare/imgmarker.git
 
-#. Next, run the following command to install ``imgmarker`` and its dependencies into your Python environment::
+2. Next, run the following command to install ``imgmarker`` and its dependencies into your Python environment::
 
     pip install ./imgmarker
 
@@ -59,7 +59,9 @@ Mac
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To compile manually on **Intel Mac**:
-Install ``pyinstaller`` in your desired Python environment, then clone the `Github repository <https://github.com/andikisare/imgmarker/releases/latest>`_ wherever you want to store it::
+Install ``pyinstaller`` in your desired Python environment (see Steps 1-3 in "Using pip (from PyPI)" for instructions on creating and activating a new Python environment) then follow the steps below::
+
+1. Clone the `Github repository <https://github.com/andikisare/imgmarker/releases/latest>`_ wherever you want to store it::
 
     git clone https://github.com/andikisare/imgmarker.git
 
@@ -67,11 +69,11 @@ or::
 
     git clone git@github.com:andikisare/imgmarker.git
 
-then enter the main source code directory::
+2. Then navigate to the main source code directory::
 
     cd imgmarker/imgmarker
 
-and run::
+3. Lastly, run::
 
     pyinstaller  \
      	--name imgmarker \
