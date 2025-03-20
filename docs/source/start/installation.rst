@@ -39,7 +39,7 @@ We once again recommend that you create a dedicated Python environment for ``img
 
 or::
 
-    git clone git@github.com:andikisare/imgmarker.git
+        git clone git@github.com:andikisare/imgmarker.git
 
 2. Next, run the following command to install ``imgmarker`` and its dependencies into your Python environment::
 
@@ -67,7 +67,7 @@ Install ``pyinstaller`` in your desired Python environment (see Steps 1-3 in "Us
 
 or::
 
-    git clone git@github.com:andikisare/imgmarker.git
+        git clone git@github.com:andikisare/imgmarker.git
 
 2. Then navigate to the main source code directory::
 
