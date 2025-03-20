@@ -8,7 +8,8 @@ Terminology
 
 We use some terminology specific to Image Marker that may not be immediately obvious, so we try to explain it here.
 
-* "mark(s)": ``Marks`` are used to identify features in a particular image, like a cat's four paws. Placing a ``mark`` will save the x and y pixel coordinates (and right ascension and declination if available) of the center of that mark in the ``marks`` file (``<username>_marks.txt``) in your save directory. There are a few features that make ``marks`` unique:
+mark(s)
+   ``Marks`` are used to identify features in a particular image, like a cat's four paws. Placing a ``mark`` will save the x and y pixel coordinates (and right ascension and declination if available) of the center of that mark in the ``marks`` file (``<username>_marks.txt``) in your save             directory. There are a few features that make ``marks`` unique:
    #. Each ``mark`` is part of a ``group`` (see definition below), therefore allowing multiple ``marks`` having a similar property to be immediately associated with each other.
    #. Each ``group`` of ``marks`` is a different color for easy visual distinction between unassociated ``marks``.
    #. Each ``mark`` saves its coordinates, **unlike** ``categories`` (see below).
