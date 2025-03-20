@@ -101,5 +101,5 @@ This configuration::
 
 The same configuration would appear in the Settings window as below:
 
-.. image::Settings_screenshot.jpg
+.. figure:: Settings_screenshot.jpg
    :align: center
