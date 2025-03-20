@@ -1,13 +1,14 @@
 Installation
 ======================
 
-Using pip (from PyPI)
----------------------
 .. Important::
     - **It is recommended that you create a Python environment for** ``imgmarker`` **using a tool like** `Anaconda <https://anaconda.org/>`_ **.**
     - ``Imgmarker`` **was developed using Python 3.12, so we recommend an environment with this Python version.**
     - **Installing** ``imgmarker`` **automatically installs Python dependencies in the environment.**
+    - Executables **do not** install ``imgmarker``, instead they are run directly, and thus do not need a Python environment to run in.
 
+Using pip (from PyPI)
+---------------------
 
 The steps below walk through the process of creating a new Python environment and installing ``imgmarker`` into it. Skip to Step 4 if you already know how to create Python environments and use them.
 
