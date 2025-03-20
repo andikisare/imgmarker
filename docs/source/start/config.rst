@@ -99,3 +99,7 @@ This configuration::
 * renames ``category`` 1 to "Cat" and
 * renames ``category`` 2 to "Dog"
 
+The same configuration would appear in the Settings window as below:
+
+.. image::Settings_screenshot.jpg
+   :align: center
