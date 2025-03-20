@@ -82,6 +82,11 @@ Settings
    * - ``randomize_order``
      - True or False, whether or not the displayed images are shuffled randomly or displayed in alphabetical order. This can be changed in the GUI as well (**Edit > Settings**).
 
+.. Note::
+   - Renaming ``groups`` or ``categories`` after already having classified some images into the corresponding ``group`` of ``marks`` or ``category`` **will rename** the ``groups`` and ``categories`` in your save files, as well as all ``marks`` in the renamed ``groups`` that have already been placed.
+   - Decreasing the value of a ``groups'`` max ``marks`` **will not** delete any previously made ``marks`` on any image, since there is no way for Image Marker to decide which ``marks`` take priority.
+
+
 Example
 ---------------------
 
