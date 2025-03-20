@@ -12,7 +12,7 @@ Below is a table of the controls.
    :header-rows: 0
 
    * - Group "1"
-     - :kbd:`LMB`{1]_ or :kbd:`1`
+     - :kbd:`LMB` [1]_ or :kbd:`1`
    * - Group "2" 
      - :kbd:`2`
    * - Group "3"
@@ -46,11 +46,11 @@ Below is a table of the controls.
    * - Change frame
      - :kbd:`Space`
    * - Delete
-     - :kbd:`RMB`[2]_ or :kbd:`Delete` or :kbd:`Backspace`
+     - :kbd:`RMB` [2]_ or :kbd:`Delete` or :kbd:`Backspace`
    * - Enter comment
      - :kbd:`Enter`
    * - Focus
-     - :kbd:`MMB`[3]_
+     - :kbd:`MMB` [3]_
    * - Zoom in/out
      - :kbd:`Wheel`
    * - Favorite image
