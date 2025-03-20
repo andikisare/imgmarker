@@ -33,11 +33,9 @@ Using pip (from cloning the repository)
 The PyPI version of ``imgmarker`` is not constantly up to date with the `Github repository <https://github.com/andikisare/imgmarker/tree/main>`_, so you may wish to install the most recent version directly from Github. The steps below outline this process.
 We once again recommend that you create a dedicated Python environment for ``imgmarker`` to prevent any conflicts with other Python packages you may have installed in other environments, since installing ``imgmarker`` will automatically install Python dependencies in your activated environment. For instructions on how to do this using a tool like `Anaconda <https://anaconda.org/>`_, see Steps 1-3 above (under "Using pip (from PyPI)"). Once you've activated your desired Python environment or finished Step 3 above, follow the steps below to install ``imgmarker`` from Github.
 
-1. First, clone the repository wherever you'd like. There is no specific place you need to clone the repository, so navigate to the directory you want to store it in and then run the following::
+1. First, clone the repository wherever you'd like. There is no specific place you need to clone the repository, so navigate to the directory you want to store it in and then run one of the following (whichever works)::
 
     git clone https://github.com/andikisare/imgmarker.git
-
-. or::
 
     git clone git@github.com:andikisare/imgmarker.git
 
@@ -65,7 +63,7 @@ Install ``pyinstaller`` in your desired Python environment (see Steps 1-3 in "Us
 
     git clone https://github.com/andikisare/imgmarker.git
 
-. or::
+.. or::
 
     git clone git@github.com:andikisare/imgmarker.git
 
