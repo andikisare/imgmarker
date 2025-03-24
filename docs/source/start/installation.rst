@@ -61,7 +61,7 @@ Portable executables are available on `Github <https://github.com/andikisare/img
 Mac
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To compile manually on **Intel Mac**:
+To compile manually on **Mac** (Intel or M1+):
 Install ``pyinstaller`` in your desired Python environment (see Steps 1-3 in "Using pip (from PyPI)" for instructions on creating and activating a new Python environment) then follow the steps below::
 
 1. Clone the `Github repository <https://github.com/andikisare/imgmarker/releases/latest>`_ wherever you want to store it::
