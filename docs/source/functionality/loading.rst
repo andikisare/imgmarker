@@ -74,7 +74,9 @@ Image Marker can handle multi-frame FITS and TIFF files. If a file has multiple 
 .. figure:: Frames_and_WCS.jpg
   :align: center
 
-  Figure 4: Here, we show an example of a TIFF image that contains a WCS solution (embedded using `STIFF <https://www.astromatic.net/software/stiff/>`_) with x and y pixel coordinates and RA and Dec. coordinates of the cursor displayed above the comment box. We also show the Frames window in the   bottom right of the image display, which shows that the second frame of the image file is being shown (frames are index 0, so frame 0 is the first image and frame 1 is the second image in the file). Image credit: DeCALS `(Dey et al., 2019) <https://doi.org/10.3847/1538-3881/ab089d>`_
+  Figure 4: Here, we show an example of a TIFF image that contains a WCS solution. We also show the Frames window in the bottom right of the image display. Image credit: DeCALS `(Dey et al., 2019) <https://doi.org/10.3847/1538-3881/ab089d>`_
+
+Figure 4 illustrates that x and y pixel coordinates and RA and Dec. coordinates (embedded using `STIFF <https://www.astromatic.net/software/stiff/>`_) of the cursor are displayed above the comment box. Figure 4 also shows the Frames window in the bottom right of the image display, indicating that the second frame of the image file is being shown (frames are index 0, so frame 0 is the first image and frame 1 is the second image in the file).
 
 .. Note::
   If you have questions or run into problems with this process, please reach out to us in an `issue <https://github.com/andikisare/imgmarker/issues>`_ report.
