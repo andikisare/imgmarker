@@ -67,11 +67,15 @@ After an image directory is selected, Image Marker opens each image in the image
 .. figure:: First_opening.jpg
   :align: center
 
-  Figure 3: An exammple of how Image Marker should look after selecting save and image directories, with the exception of what image is displayed (dependent on the images in the chosen image directory).
+  Figure 3: An exammple of how Image Marker should look after selecting save and image directories, with the exception of what image is displayed (dependent on the images in the chosen image directory). Image credit: `Ryan Walker <https://astrorya.github.io>`_
 
-Image Marker can handle multi-frame FITS and TIFF files. If a file has multiple frames, these frames can be cycled through using spacebar, or by using the **View > Frames** dialog (see Figure 4 below). WCS information stored in FITS and TIFF files is also accessed by Image Marker. If an image contains a WCS solution in its header, Image Marker will display the WCS coordinates of the cursor in addition to the pixel coordinates (see Figure 4 below). Image credit: `Ryan Walker <https://astrorya.github.io>`_
+Image Marker can handle multi-frame FITS and TIFF files. If a file has multiple frames, these frames can be cycled through using spacebar, or by using the **View > Frames** dialog (see Figure 4 below). WCS information stored in FITS and TIFF files is also accessed by Image Marker. If an image contains a WCS solution in its header, Image Marker will display the WCS coordinates of the cursor in addition to the pixel coordinates (see Figure 4 below).
 
 .. figure:: Frames_and_WCS.jpg
   :align: center
 
   Figure 4: Here, we show an example of a TIFF image that contains a WCS solution (embedded using `STIFF <https://www.astromatic.net/software/stiff/>`_) with x and y pixel coordinates and RA and Dec. coordinates of the cursor displayed above the comment box. We also show the Frames window in the bottom right of the image display, which shows that the second frame of the image file is being shown (frames are index 0, so frame 0 is the first image and frame 1 is the second image in the file). Image credit: DeCALS `(Dey et al., 2019) <https://doi.org/10.3847/1538-3881/ab089d>`_
+
+
+.. Note::
+  If you have questions or run into problems with this process, please reach out to us in an `issue <https://github.com/andikisare/imgmarker/issues>`_ report.
