@@ -1244,6 +1244,8 @@ class MainWindow(QMainWindow):
             self.image.seek(self.frame)
             self.image.seen = True
             self.N = len(self.images)
+            if self.image.name not in self.order:
+                self.order.append(self.image.name)
 
     @property
     def interval(self): return self._interval_str
@@ -1334,6 +1336,12 @@ class MainWindow(QMainWindow):
 
     def open(self) -> None:
         """Method for the open save directory dialog."""
+
+        open_msg = 'This will overwrite all data associated with your current images, including all marks.\n\nAre you sure you want to continue?'
+        reply = QMessageBox.question(self, 'WARNING', 
+                        open_msg, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+
+        if reply == QMessageBox.StandardButton.No: return
 
         save_dir = QFileDialog.getExistingDirectory(self, 'Open save directory', config.SAVE_DIR)
         if save_dir == '': return
