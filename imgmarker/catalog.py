@@ -20,7 +20,7 @@ class Catalog:
         A list containing either the Dec or y coordinate of each object in the catalog.
     
     coord_sys: str
-        A string containing either 'galactic' or 'cartesian' for designating the input coordinate
+        A string containing either 'wcs' or 'cartesian' for designating the input coordinate
         system.
 
     color: QColor
@@ -39,7 +39,7 @@ class Catalog:
         ----------
         path: str
             A string containing the full path of the catalog file.
-        """
+        """     
         self.path:str = path
         self.labels:List[str] = []
         self.alphas:List[float] = []
@@ -53,11 +53,11 @@ class Catalog:
             var = l.split(',')
             if line0:
                 if (var[1].strip().lower() == 'ra'):
-                    self.coord_sys:str = 'galactic'
+                    self.coord_sys:str = 'wcs'
                 elif (var[1].strip().lower() == 'x'):
                     self.coord_sys:str = 'cartesian'
                 else:
-                    warnings.warn('WARNING: Invalid catalog coordinate system. Valid coordinate systems: "galactic", "cartesian"')
+                    warnings.warn('WARNING: Invalid catalog coordinate system. Valid coordinate systems: "world", "cartesian"')
                     break
                 try:
                     size_input = var[3].split(":")
