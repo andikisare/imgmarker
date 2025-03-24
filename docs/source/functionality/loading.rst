@@ -26,7 +26,7 @@ These formats are supported with the following limitations:
   - Supports RGB and grayscale images
   - Supports logging WCS coordinates (RA and Dec in degrees)
 
-    - **Only when WCS solution is embedded in the TIFF/TIF header using** `STIFF <https://www.astromatic.net/software/stiff/>`_ **for embedding WCS solutions.**
+    - *Only when WCS solution is embedded in the TIFF/TIF header using* `STIFF <https://www.astromatic.net/software/stiff/>`_ *to embed WCS solutions*
 
   - Supports multiple frames (if two images are embedded in one file, seeking to the other image within the same file is available)
   - Supports 8 bit images
@@ -34,7 +34,7 @@ These formats are supported with the following limitations:
 - JPEG/JPG
 
   - Supports RGB with Alpha channel
-  - **Does not** support logging WCS coordinates
+  - *Does not* support logging WCS coordinates
   - Supports 8 bit images
 
 - PNG
@@ -46,7 +46,20 @@ These formats are supported with the following limitations:
 
 Image loading
 ------------
-When Image Marker is first opened, the user is prompted to select the directory in which all of their output data will be automatically saved. The user is then prompted to select the directory from which to load images. The currently supported image formats are under `Supported image formats`_. FITS files support up to a 16 bit depth, which is a limitation of PyQt. For TIFFs, PNGs and JPEGs, Image Marker currently only officially supports RGB color channels with 8 bits per channel, but this may be expanded in the future. 
+
+.. sidebar:: Selecting a save directory
+
+  .. image:: Save_dir_prompt.jpg
+
+  Figure 1: The prompt for selecting a save directory, the first window that comes up after running Image Marker. Notice that the prompt has a label at the top, indicating what directory to choose (save directory or image directory).
+
+.. sidebar:: Selecting an image directory
+
+  .. image:: Image_dir_prompt.jpg
+
+  Figure 2: The prompt for selecting an image directory. This prompt comes up after selecting a save directory, as shown in Figure 1. Notice that this prompt is also labeled at the top, indicating to choose the image directory.
+
+When Image Marker is first opened, the user is prompted to select the directory in which all of their output data will be automatically saved (see Figure 1 to the right). The user is then prompted to select the directory from which to load images (see Figure 2). The currently supported image formats are under `Supported image formats`_. In short, FITS files support up to a 16 bit depth, which is a limitation of PyQt. For TIFFs, PNGs and JPEGs, Image Marker currently only officially supports RGB color channels with 8 bits per channel, alpha channels in PNGs and JPEGs, and grayscale images (luminance channel) in TIFF, but this may be expanded in the future. 
 Pillow is used to open TIFF, PNG and JPEG files. Though Pillow can currently handle FITS files, this is a relatively recent feature. As such we use astropy to open FITS files, so as to maintain compatibility with older versions of Python. 
 
 Image Marker can handle multi-frame FITS and TIFF files. If a file has multiple frames, these frames can be cycled through using spacebar, or by using the **View > Frames** dialog. WCS information stored in FITS and TIFF files is also accessed by Image Marker. If an image contains a WCS solution in its header, Image Marker will display the WCS coordinates of the cursor in addition to the pixel coordinates.
