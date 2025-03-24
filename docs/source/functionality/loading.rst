@@ -14,25 +14,35 @@ Currently, Image Marker supports the following image formats (file types):
 These formats are supported with the following limitations:
 
 - FITS/FIT
+
   - Files **MUST** have only an image(s) in them, as any FITS/FIT file with a table or other data that isn't image data (header data is of course okay) will not be handled by Image Marker
   - Image Marker will only show FITS/FIT in grayscale, since there is no functionality for creating RGB images from grayscale images in Image Marker
   - Supports logging WCS coordinates (RA and Dec in degrees)
   - Supports multiple frames (if two images are embedded in one file, seeking to the other image within the same file is available)
   - 8 and 16 bit
+
 - TIFF/TIF
+
   - Supports RGB and grayscale images
-  - Supports logging WCS coordinates (RA and Dec in degrees) 
+  - Supports logging WCS coordinates (RA and Dec in degrees)
+
     - **Only when WCS solution is embedded in the TIFF/TIF header using** `STIFF <https://www.astromatic.net/software/stiff/>`_ **for embedding WCS solutions.**
+
   - Supports multiple frames (if two images are embedded in one file, seeking to the other image within the same file is available)
   - Supports 8 bit images
+
 - JPEG/JPG
+
   - Supports RGB with Alpha channel
   - **Does not** support logging WCS coordinates
   - Supports 8 bit images
+
 - PNG
+
   - Supports RGB with Alpha channel
   - **Does not** support logging WCS coordinates
   - Supports 8 bit images
+
 
 Image loading
 ------------
