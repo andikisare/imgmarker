@@ -1685,7 +1685,7 @@ class MainWindow(QMainWindow):
             size = catalog.size
             if catalog.path not in self.image.catalogs:
                 for label, a, b in zip(catalog.labels,catalog.alphas,catalog.betas):
-                    if catalog.coord_sys == 'galactic':
+                    if catalog.coord_sys == 'wcs':
                         ra, dec = a, b
                         try:
                             mark_coord_cart = self.image.wcs.all_world2pix([[ra,dec]], 0)[0]
@@ -1694,7 +1694,11 @@ class MainWindow(QMainWindow):
                                 mark = self.image_scene.mark(x, y, shape='rect', text=label, picked_color=color, size_unit=size_unit, size=size)
                                 self.image.cat_marks.append(mark)
                         except: pass
-                    else: x, y = a, b
+                    else:
+                        x, y = a, b
+                        if self.inview(x,y):
+                            mark = self.image_scene.mark(x, y, shape='rect', text=label, picked_color=color, size_unit=size_unit, size=size)
+                            self.image.cat_marks.append(mark)
                 self.image.catalogs.append(catalog.path)
 
         if len(self.image.cat_marks) > 0:
