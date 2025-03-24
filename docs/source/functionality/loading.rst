@@ -4,13 +4,15 @@ Loading
 Supported image formats
 ----------
 
-Currently, Image Marker supports the following image formats (file types)::
+Currently, Image Marker supports the following image formats (file types):
+
 - FITS/FIT
 - TIFF/TIF
 - JPEG/JPG
 - PNG
 
-These formats are supported with the following limitations::
+These formats are supported with the following limitations:
+
 - FITS/FIT
   - Files **MUST** have only an image(s) in them, as any FITS/FIT file with a table or other data that isn't image data (header data is of course okay) will not be handled by Image Marker
   - Image Marker will only show FITS/FIT in grayscale, since there is no functionality for creating RGB images from grayscale images in Image Marker
