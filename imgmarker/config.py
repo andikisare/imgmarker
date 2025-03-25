@@ -11,7 +11,7 @@ IMAGE_DIR = None
 GROUP_NAMES = ['None','1','2','3','4','5','6','7','8','9']
 CATEGORY_NAMES = ['None','1','2','3','4','5']
 GROUP_MAX = ['None','None','None','None','None','None','None','None','None']
-RANDOMIZE_ORDER = True
+RANDOMIZE_ORDER = False
 
 MARK_KEYBINDS = {1: {Qt.MouseButton.LeftButton,Qt.Key.Key_1}, 
             2: {Qt.Key.Key_2}, 
@@ -29,7 +29,7 @@ def path():
     
 def read() -> Tuple[str,List[str],List[str],List[str],List[int]]:
     """
-    Reads in each line from imgmarker.cfg. If there is no configuration file,
+    Reads in each line from {username}_config.txt. If there is no configuration file,
     a default configuration file will be created using the required text
     format.
 
@@ -51,11 +51,11 @@ def read() -> Tuple[str,List[str],List[str],List[str],List[int]]:
     # If the config doesn't exist, create one
     if not os.path.exists(path()):
         with open(path(),'w') as config:
-            image_dir = None
-            group_names = ['None','1','2','3','4','5','6','7','8','9']
-            category_names = ['None','1','2','3','4','5']
-            group_max = ['None','None','None','None','None','None','None','None','None']
-            randomize_order = True
+            image_dir = IMAGE_DIR
+            group_names = GROUP_NAMES
+            category_names = CATEGORY_NAMES
+            group_max = GROUP_MAX
+            randomize_order = RANDOMIZE_ORDER
 
             config.write(f'image_dir = {image_dir}\n')
             config.write(f"groups = {','.join(group_names)}\n")
