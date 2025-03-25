@@ -27,6 +27,7 @@ from typing import Union, List
 import os
 from astropy.coordinates import Angle
 from copy import deepcopy
+import gc
 
 def _open_save() -> str:
     dialog = DefaultDialog()
@@ -1337,7 +1338,8 @@ class MainWindow(QMainWindow):
     def open(self) -> None:
         """Method for the open save directory dialog."""
 
-        open_msg = 'This will overwrite all data associated with your current images, including all marks.\n\nAre you sure you want to continue?'
+        open_msg = 'This will save all current data in the current save directory and begin saving new data in the newly selected save directory.\
+            Customized configuration file data will be kept if there is no available configuration file in the new save directory.\n\nAre you sure you want to continue?'
         reply = QMessageBox.question(self, 'WARNING', 
                         open_msg, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
 
@@ -1345,15 +1347,40 @@ class MainWindow(QMainWindow):
 
         save_dir = QFileDialog.getExistingDirectory(self, 'Open save directory', config.SAVE_DIR)
         if save_dir == '': return
-        if not os.path.exists(os.path.join(save_dir,f'{config.USER}_config.txt')): return
-        
+
+        before_image_dir = config.IMAGE_DIR
+        group_names_old = config.GROUP_NAMES.copy()
+
         config.SAVE_DIR = save_dir
         config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER = config.read()
+        config.update()
+
+        after_image_dir = config.IMAGE_DIR
+
+        if before_image_dir != after_image_dir: # if the image directory is different in the new config file, then we need to purge these lists
+            del self.order; del self.duplicates_seen; del self.images
+            gc.collect()
+            self.order = []
+            self.images_seen_since_duplicate_count = 0
+            self.duplicates_seen = []
 
         self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
-        
+
+        for i, box in enumerate(self.category_boxes): 
+            box.setText(config.CATEGORY_NAMES[i+1])
+            box.setShortcut(self.category_shortcuts[i])
+            
+        # Update mark labels that haven't been changed
+        for image in self.images:
+            if image.duplicate == True: marks = image.dupe_marks
+            else: marks = image.marks
+            for mark in marks:
+                if mark.label.lineedit.text() in group_names_old:
+                    mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
+
         self.__init_data__()
+        self.settings_window.__init__(self)
         self.update_images()
         self.image_view.zoomfit()
         self.update_marks()
@@ -1361,6 +1388,7 @@ class MainWindow(QMainWindow):
         self.update_categories()
         self.update_comments()
         self.update_favorites()
+        self.controls_window.update_text()
 
     def open_ims(self) -> None:
         """Method for the open image directory dialog."""
@@ -1376,6 +1404,12 @@ class MainWindow(QMainWindow):
 
         _image_dir = config.IMAGE_DIR
         config.IMAGE_DIR = image_dir
+
+        del self.order; del self.duplicates_seen; del self.images
+        gc.collect()
+        self.order = []
+        self.images_seen_since_duplicate_count = 0
+        self.duplicates_seen = []
         
         self.images, self.idx = io.glob(edited_images=[])
         self.N = len(self.images)
@@ -1528,6 +1562,7 @@ class MainWindow(QMainWindow):
         self.save()
 
     # === Update methods ===
+    
     def update_pos(self):
         # Mark if hovering over image
         pix_pos = self.image_view.mouse_pix_pos()
@@ -1606,8 +1641,8 @@ class MainWindow(QMainWindow):
         self.image.seek(self.frame)
         self.image.seen = True
         self.image_scene.update_image(self.image)
-        if self.image.name not in self.order:
-                self.order.append(self.image.name)
+        if self.image.name not in self.order:   # or self.image.duplicate == True: This could be added to preserve order when duplicates are being inserted, but the use case for someone randomizing
+                self.order.append(self.image.name)   # who wants to keep the order if duplicates have been seen and then they turn off and back on randomization is quite low
 
         # Fit back to view if the image dimensions have changed
         if (self.image.width != _w) or (self.image.height != _h): self.image_view.zoomfit()
@@ -1766,6 +1801,7 @@ class MainWindow(QMainWindow):
                     image.cat_marks.remove(cat_mark)
                 except: pass
 
+        gc.collect()
         self.catalogs_action.setEnabled(False)
         self.catalog_labels_action.setEnabled(False)
 
