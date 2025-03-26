@@ -238,7 +238,7 @@ class ColorPickerWindow(QDialog):
         layout = QVBoxLayout()
         self.setLayout(layout)
         self.mainwindow = mainwindow
-
+        self.mainwindow.picked_color = None
         # Use this for dynamic scaling of preview box based on screen resolution
         window_width = int(Screen.width()/3)
 
@@ -256,6 +256,7 @@ class ColorPickerWindow(QDialog):
         for i, color in enumerate(default_color_list):
             colorbox = QPushButton(text=color)
             colorbox.setFixedHeight(30)
+            colorbox.setFixedWidth(int(window_width/9 - 5))
             colorbox.clicked.connect(default_color_functions[i])
             self.default_color_boxes.append(colorbox)
 
@@ -1437,7 +1438,7 @@ class MainWindow(QMainWindow):
             self.color_picker_window = ColorPickerWindow(self)
             self.color_picker_window.show()
             self.color_picker_window.exec()
-
+            
             if (self.picked_color == None):
                 return
             else:
