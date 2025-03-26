@@ -1045,7 +1045,19 @@ class MainWindow(QMainWindow):
         del_catalog_menu.triggered.connect(self.del_catalog_marks)
         edit_menu.addAction(del_catalog_menu)
 
-        ### Randomize image order menu
+        ### Undo previous mark
+        undo_mark_action = QAction('&Undo Previous Mark', self)
+        undo_mark_action.setShortcuts(['Ctrl+z'])
+        undo_mark_action.triggered.connect(self.undo_prev_mark)
+        edit_menu.addAction(undo_mark_action)
+
+        ### Redo previous mark
+        redo_mark_action = QAction('&Redo Previous Mark', self)
+        redo_mark_action.setShortcuts(['Ctrl+Shift+z'])
+        redo_mark_action.triggered.connect(self.redo_prev_mark)
+        edit_menu.addAction(redo_mark_action)
+
+        ### Settings menu
         edit_menu.addSeparator()
         settings_action = QAction('&Settings...', self)
         settings_action.setShortcuts(['Ctrl+,'])
@@ -1562,6 +1574,26 @@ class MainWindow(QMainWindow):
         self.update_comments()
         self.comment_box.clearFocus()
         self.save()
+
+    def undo_prev_mark(self):
+        if self.image.duplicate == True:
+            marks = self.image.dupe_marks
+        else:
+            marks = self.image.marks
+        if len(marks) > 0:
+            self.image.undone_marks.append(marks[-1])
+            self.image_scene.rmmark(marks[-1])
+            marks.remove(marks[-1])
+
+    def redo_prev_mark(self):
+        if self.image.duplicate == True:
+            marks = self.image.dupe_marks
+        else:
+            marks = self.image.marks
+        if len(self.image.undone_marks) > 0:
+            self.image_scene.mark(self.image.undone_marks[-1])
+            marks.append(self.image.undone_marks[-1])
+            self.image.undone_marks.remove(self.image.undone_marks[-1])
 
     # === Update methods ===
     
