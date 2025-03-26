@@ -222,6 +222,7 @@ class Image(QGraphicsPixmapItem):
                 self.marks:List['Mark'] = []
                 self.cat_marks:List['Mark'] = []
                 self.dupe_marks:List['Mark'] = []
+                self.undone_marks:List['Mark'] = []
                 self.seen:bool = False
                 self.catalogs:List[str] = []
             else:
