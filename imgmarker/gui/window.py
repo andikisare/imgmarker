@@ -238,7 +238,7 @@ class ColorPickerWindow(QDialog):
         layout = QVBoxLayout()
         self.setLayout(layout)
         self.mainwindow = mainwindow
-        self.mainwindow.picked_color = None
+        MainWindow.picked_color = None
         # Use this for dynamic scaling of preview box based on screen resolution
         window_width = int(Screen.width()/3)
 
@@ -869,9 +869,10 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
         self.setWindowTitle("Image Marker")
         self.frame = 0
-
+        
         # Shortcuts
         del_shortcuts = [QShortcut('Backspace', self), QShortcut('Delete', self)]
         for shortcut in del_shortcuts: shortcut.activated.connect(self.del_marks)
@@ -1736,7 +1737,7 @@ class MainWindow(QMainWindow):
                             x, y = mark_coord_cart[0], self.image.height - mark_coord_cart[1]
                             if self.inview(x,y):
                                 mark = self.image_scene.mark(x, y, shape='rect', text=label, picked_color=color, size_unit=size_unit, size=size)
-                                self.image.cat_marks.append(mark)
+                                self.image.cat_marks.append(mark)    
                         except: pass
                     else:
                         x, y = a, b
