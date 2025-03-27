@@ -1,4 +1,4 @@
-__version__ = '0.8.0'
+__version__ = '0.8.7'
 __license__ = 'MIT License'
 __docsurl__ = 'https://imgmarker.readthedocs.io/en/latest/'
 import sys
