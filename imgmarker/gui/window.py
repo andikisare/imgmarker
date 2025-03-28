@@ -1810,6 +1810,7 @@ class MainWindow(QMainWindow):
         else: selected_items = marks.copy()
 
         for item in selected_items:
+            self.image.undone_marks.append(item)
             self.image_scene.rmmark(item)
             marks.remove(item)
         
