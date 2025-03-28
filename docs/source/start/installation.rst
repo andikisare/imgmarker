@@ -93,6 +93,7 @@ or::
 
 This should create an executable file specific to your operating system and CPU architecture (your compiled version will not work on M1+ Mac if you compile on Intel Mac, and vice versa).
 
+If you run into an error, try this fix: `If you're getting a Recursion Error`_ for changing the Recursion limit.
 
 Apple may block Image Marker the first time you try to run the application. If this happens, after attempting to launch Image Marker, navigate to **Settings > Privacy & Security** and click **Open Anyway**.
 
@@ -106,9 +107,9 @@ FAQ
 
 * If you run into issues trying to build ``imgmarker`` manually, you may have PyQt5 installed already, which may conflict with the compilation. We recommend making a dedicated Python environment for installing ``imgmarker``. If you don't want to make a new Python environment, try adding "-exclude PyQt5" to the end of the ``pyinstaller`` command, to force it not to compile an older version of PyQt into the executable. 
 
-* If you're getting a Recursion Error, try following the recommended steps in the error (if available). If there are no steps shown, try adding this line near the top of the program's .spec file::
+* _`If you're getting a Recursion Error`, try following the recommended steps in the error (if available). If there are no steps shown, try adding this line near the top of the program's .spec file::
 
     import sys ; sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 
 
-If none of these suggestions work, please open an `issue <https://github.com/andikisare/imgmarker/issues>`_ on Github with the full terminal output and your system information including your operating system and CPU and we will work with you to fix the issue as soon as possible.
+If none of these suggestions work, please open an `issue <https://github.com/andikisare/imgmarker/issues>`_ on Github with the full terminal output and your system information including your operating system and CPU and we will work with you to fix the issue.
