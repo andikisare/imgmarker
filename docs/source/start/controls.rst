@@ -67,6 +67,10 @@ Below is a table of the keybindings.
      - :kbd:`Space`
    * - Delete
      - :kbd:`RMB` [2]_ or :kbd:`Delete` or :kbd:`Backspace`
+   * - Undo mark
+     - :kbd:`Ctrl` + :kbd:`Z`
+   * - Redo mark
+     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`Z`
    * - Enter comment
      - :kbd:`Enter`
    * - Focus
