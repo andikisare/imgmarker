@@ -1584,6 +1584,8 @@ class MainWindow(QMainWindow):
             self.image.undone_marks.append(marks[-1])
             self.image_scene.rmmark(marks[-1])
             marks.remove(marks[-1])
+        
+        self.save()
 
     def redo_prev_mark(self):
         if self.image.duplicate == True:
@@ -1594,6 +1596,8 @@ class MainWindow(QMainWindow):
             self.image_scene.mark(self.image.undone_marks[-1])
             marks.append(self.image.undone_marks[-1])
             self.image.undone_marks.remove(self.image.undone_marks[-1])
+
+        self.save()
 
     # === Update methods ===
     
