@@ -31,7 +31,7 @@ bibliography: paper.bib
 
 # Summary
 
-A wide range of scientific imaging datasets benefit from human inspection for purposes ranging from prosaic---such as fault identification and quality inspection---to profound, enabling the discovery of new phenomena. As such, these datasets come in a wide variety of forms, with diverse inspection needs. In this paper we present a software package `Image Marker` designed to help facilitate human categorization of images. The software enables flexible marking and logging of up to 9 different classes of features and their locations in files of FITS, PNG, TIFF, and JPEG format. Additional tools are provided to add text-based comments to the marking logs and for displaying external *mark* datasets on images during the classification process. As our primary use case will be the identification of features in astronomical survey data, `Image Marker` will also utilize standard World Coordinate Systems (WCS) headers embedded in FITS headers and TIFF metadata when available.  The lightweight software, based on the Qt Framework to build the GUI application, enables efficient marking of thousands of images on personal-scale computers.  We provide `Image Marker` as a Python package, and as Mac and Windows executables. It is available [on Github](https://github.com/andikisare/imgmarker/) or via pip installation. 
+A wide range of scientific imaging datasets benefit from human inspection for purposes ranging from prosaic---such as fault identification and quality inspection---to profound, enabling the discovery of new phenomena. As such, these datasets come in a wide variety of forms, with diverse inspection needs. In this paper we present a software package `Image Marker` designed to help facilitate human categorization of images. The software enables flexible marking and logging of up to 9 different classes of features and their locations in files of FITS, PNG, TIFF, and JPEG format. Additional tools are provided to add text-based comments to the marking logs and for displaying external *mark* datasets on images during the classification process. As our primary use case will be the identification of features in astronomical survey data, `Image Marker` will also utilize standard World Coordinate Systems (WCS) headers embedded in FITS headers and TIFF metadata when available.  The lightweight software, based on the Qt Framework to build the GUI application, enables efficient marking of thousands of images on personal-scale computers.  We provide `Image Marker` as a Python package, and as Mac and Windows 11 executables. It is available [on Github](https://github.com/andikisare/imgmarker/) or via pip installation. 
 
 # Statement of need
 
@@ -89,6 +89,7 @@ We thank the SPT-3G collaboration for the use of the Sunyaev Zel'dovich detectio
 This work made use of Astropy[^1]: a community-developed core Python package and an ecosystem of tools and resources for astronomy [@astropy13; @astropy18; @astropy22]; Pillow [@clark15]; SciPy [@Virtanen20]; NumPy [@Harris20]; and PyQt [@PyQt].
 
 [^1]: [http://www.astropy.org](http://www.astropy.org)
+
 # References
 
 
