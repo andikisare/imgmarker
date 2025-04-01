@@ -33,13 +33,13 @@ These formats are supported with the following limitations:
 
 - JPEG/JPG
 
-  - Supports RGB with Alpha channel
+  - Supports RGB and grayscale images
   - *Does not* support logging WCS coordinates
   - Supports 8 bit images
 
 - PNG
 
-  - Supports RGB with Alpha channel
+  - Supports RGB with Alpha channel and grayscale images
   - **Does not** support logging WCS coordinates
   - Supports 8 bit images
 
