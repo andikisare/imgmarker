@@ -241,7 +241,7 @@ class ColorPickerWindow(QDialog):
         MainWindow.picked_color = None
         # Use this for dynamic scaling of preview box based on screen resolution
         window_width = int(Screen.width()/3)
-
+        
         # Default color options
         # These buttons are just the whole top row in the main layout
         self.default_color_label = QLabel()
@@ -256,7 +256,7 @@ class ColorPickerWindow(QDialog):
         for i, color in enumerate(default_color_list):
             colorbox = QPushButton(text=color)
             colorbox.setFixedHeight(30)
-            colorbox.setFixedWidth(int(window_width/9 - 5))
+            colorbox.setFixedWidth(int(window_width/8))
             colorbox.clicked.connect(default_color_functions[i])
             self.default_color_boxes.append(colorbox)
 
@@ -439,7 +439,7 @@ class ColorPickerWindow(QDialog):
         layout.addLayout(main_horizontal_layout)
 
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFixedWidth(int(Screen.width()/3))
+        self.setFixedWidth(int(Screen.width()/2.5))
         self.setFixedHeight(layout.sizeHint().height())
 
         # Set position of window
