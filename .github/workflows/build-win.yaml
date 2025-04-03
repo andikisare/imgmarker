@@ -28,8 +28,8 @@ jobs:
             pyinstaller win.spec
 
       # Optionally verify that it works (provided that it does not need user interaction)
-      - run: ./dist/your-code/your-code
-      - uses: actions/upload-artifact@v4
+      - name: Upload
+        uses: actions/upload-artifact@v4
         with:
             name: imgmarker-win
             path: dist/*
