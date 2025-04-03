@@ -1600,7 +1600,6 @@ class MainWindow(QMainWindow):
         self.save()
 
     # === Update methods ===
-    
     def update_pos(self):
         # Mark if hovering over image
         pix_pos = self.image_view.mouse_pix_pos()
