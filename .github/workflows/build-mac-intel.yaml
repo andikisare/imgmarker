@@ -1,4 +1,4 @@
-name: Build for Windows
+name: Build for Mac (Intel)
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ permissions:
   
 jobs:
     build-win:
-      runs-on: windows-2022
+      runs-on: macos-13
       strategy:
         fail-fast: false
   
@@ -19,13 +19,6 @@ jobs:
         with:
           python-version: 3.12
       
-      - name: Setup Windows
-        run: |
-          sudo apt install libegl1
-          sudo apt install libxcb*
-          sudo apt install libxkb*
-          sudo apt install libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 x11-utils
-
       - name: Install Python dependencies
         run: |
           pip install pyinstaller
@@ -34,11 +27,12 @@ jobs:
       - name: Build Image Marker
         run: |
           cd pyinstaller
-          pyinstaller win.spec
+          pyinstaller mac.spec
           ls
 
+      # Optionally verify that it works (provided that it does not need user interaction)
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-            name: imgmarker-win
+            name: imgmarker-mac-intel
             path: dist
