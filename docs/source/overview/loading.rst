@@ -1,51 +1,7 @@
-Loading
-======================
-
-Supported image formats
-----------
-
-Currently, Image Marker supports the following image formats (file types):
-
-- FITS/FIT
-- TIFF/TIF
-- JPEG/JPG
-- PNG
-
-These formats are supported with the following limitations:
-
-- FITS/FIT
-
-  - Files **MUST** have only an image(s) in them, as any FITS/FIT file with a table or other data that isn't image data (header data is of course okay) will not be handled by Image Marker
-  - Image Marker will only show FITS/FIT in grayscale, since there is no functionality for creating RGB images from grayscale images in Image Marker
-  - Supports logging WCS coordinates (RA and Dec in degrees)
-  - Supports multiple frames (if two images are embedded in one file, seeking to the other image within the same file is available)
-  - 8 and 16 bit
-
-- TIFF/TIF
-
-  - Supports RGB and grayscale images
-  - Supports logging WCS coordinates (RA and Dec in degrees)
-
-    - *Only when WCS solution is embedded in the TIFF/TIF header using* `STIFF <https://www.astromatic.net/software/stiff/>`_ *to embed WCS solutions*
-
-  - Supports multiple frames (if two images are embedded in one file, seeking to the other image within the same file is available)
-  - Supports 8 bit images
-
-- JPEG/JPG
-
-  - Supports RGB and grayscale images
-  - *Does not* support logging WCS coordinates
-  - Supports 8 bit images
-
-- PNG
-
-  - Supports RGB with Alpha channel and grayscale images
-  - *Does not* support logging WCS coordinates
-  - Supports 8 bit images
-
+.. _loading:
 
 Image loading
-------------
+======================
 
 When Image Marker is first opened, the user is prompted to select the directory in which all of their output data will be automatically saved (see Figure 1 below). The currently supported image formats are under `Supported image formats`_. In short, FITS files support up to a 16 bit depth, which is a limitation of PyQt. For TIFFs, PNGs and JPEGs, Image Marker currently only officially supports RGB color channels with 8 bits per channel, alpha channels in PNGs and JPEGs, and grayscale images (luminance channel) in TIFF, but this may be expanded in the future. 
 Pillow is used to open TIFF, PNG and JPEG files. Though Pillow can currently handle FITS files, this is a relatively recent feature. As such we use astropy to open FITS files, so as to maintain compatibility with older versions of Python. 
@@ -67,7 +23,7 @@ After an image directory is selected, Image Marker opens each image in the image
 .. figure:: First_opening.jpg
   :align: center
 
-  Figure 3: An exammple of how Image Marker should look after selecting save and image directories, with the exception of what image is displayed (dependent on the images in the chosen image directory). Image credit: `Ryan Walker <https://astrorya.github.io>`_
+  Figure 3: An example of how Image Marker should look after selecting save and image directories, with the exception of what image is displayed (dependent on the images in the chosen image directory). Image credit: `Ryan Walker <https://astrorya.github.io>`_
 
 Image Marker can handle multi-frame FITS and TIFF files. If a file has multiple frames, these frames can be cycled through using spacebar, or by using the **View > Frames** dialog (see Figure 4 below). WCS information stored in FITS and TIFF files is also accessed by Image Marker. If an image contains a WCS solution in its header, Image Marker will display the WCS coordinates of the cursor in addition to the pixel coordinates (see Figure 4 below).
 
@@ -80,3 +36,41 @@ Figure 4 illustrates that x and y pixel coordinates and RA and Dec. coordinates 
 
 .. Note::
   If you have questions or run into problems with this process, please reach out to us in an `issue <https://github.com/andikisare/imgmarker/issues>`_ report.
+
+
+Supported image formats
+----------
+
+Currently, Image Marker supports the following image formats (file types):
+
+- FITS/FIT
+- TIFF/TIF
+- JPEG/JPG
+- PNG
+
+These formats are supported with the following limitations:
+
+- FITS/FIT
+
+  - FITS files **MUST** have at least one image in them. Tables or other data that aren't images or headers will not be handled by Image Marker
+  - Supports logging WCS coordinates (RA and Dec in degrees)
+  - Supports multiple frames (if two images are embedded in one file, seeking to the other image within the same file is available)
+  - 8 and 16 bit
+
+- TIFF/TIF
+
+  - Supports RGB and grayscale images
+  - Supports logging WCS coordinates (RA and Dec in degrees)
+
+    - *Only when WCS solution is embedded in the TIFF/TIF header using* `STIFF <https://www.astromatic.net/software/stiff/>`_ *to embed WCS solutions*
+
+  - Supports multiple frames (if two images are embedded in one file, switching to the other image within the same file is available)
+
+- JPEG/JPG
+  - **Does not** support logging WCS coordinates
+
+- PNG
+  - Supports RGB with Alpha channel
+  - **Does not** support logging WCS coordinates
+
+Furthermore, RGB images are limited to 8 bits per channel, and grayscale images are limited to 16 bits. Images with higher bit depths will have their bit depth reduced.

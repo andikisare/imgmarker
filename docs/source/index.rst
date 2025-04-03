@@ -1,23 +1,25 @@
 .. include:: ../../README.rst
    
 .. toctree::
-   :caption: Getting started
+   :caption: Getting Started
    :maxdepth: 1
    :hidden:
 
    Installation <start/installation>
    Configuration <start/config>
    Controls <start/controls>
+   FAQ <start/faq>
 
 .. toctree::
-   :caption: Functionality
+   :caption: Overview
    :maxdepth: 1
    :hidden:
 
-   Loading <functionality/loading>
-   Marking images <functionality/marking>
-   Categorizing and commenting <functionality/categories>
-   Filters <functionality/filters>
+   Image Loading <overview/loading>
+   Image Categories & Comments <overview/categories>
+   Marks <overview/marks>
+   Mark Groups <overview/groups>
+   Filters <overview/filters>
 
 .. toctree::
    :caption: Reference

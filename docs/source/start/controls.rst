@@ -4,23 +4,7 @@ Controls and Keybindings
 Currently, there is no functionality for modifying the keybindings.
 
 .. Note::
-   **Changing the names of** ``groups`` **and** ``categories`` **will change their name in the Controls window of** ``imgmarker`` **to help keep track of which** ``group`` **and** ``category`` **corresponds to which buttons.**
-
-Terminology (brief)
--------------------
-.. Note::
-  See the `Configuration page <https://imgmarker.readthedocs.io/en/latest/start/config.html#terminology>`_ for more explicit definitions of terminology, but we provide a brief description below.
-mark(s)
-  A tag used for identifying objects **within** an image and saving their coordinates. Each ``mark`` belongs to a ``group``.
-
-group(s)
-  Each ``mark`` belongs to a ``group``. Each ``group`` name can be customized. If there are multiple different types of features you want to tag in one image, you want to use multiple ``groups`` of ``marks`` to identify them.
-
-categor(y/ies)
-  Image-level classification. If you want to tag an image as a whole, use a ``category``. ``Category`` names can also be customized.
-
-catalog(s)
-  An external set of coordinates that can be overlaid on each image. The function of a ``catalog`` differs based on whether the input coordinates are RA and Dec and the images loaded have WCS solutions, or if the input is in cartesian (x,y) pixel coordinates.
+   Changing the names of :ref:`mark groups <groups>` and :ref:`image categories <categories>` will change their name in the Controls window of Image Marker to help keep track of which mark group and category corresponds to which buttons.
 
 Keybindings
 -----------
@@ -32,7 +16,7 @@ Below is a table of the keybindings.
    :header-rows: 0
 
    * - Group "1"
-     - :kbd:`LMB` [1]_ or :kbd:`1`
+     - :kbd:`LeftMouseButton` or :kbd:`1`
    * - Group "2" 
      - :kbd:`2`
    * - Group "3"
@@ -66,7 +50,7 @@ Below is a table of the keybindings.
    * - Change frame
      - :kbd:`Space`
    * - Delete
-     - :kbd:`RMB` [2]_ or :kbd:`Delete` or :kbd:`Backspace`
+     - :kbd:`RightMouseButton` or :kbd:`Delete` or :kbd:`Backspace`
    * - Undo mark
      - :kbd:`Ctrl` + :kbd:`Z`
    * - Redo mark
@@ -74,7 +58,7 @@ Below is a table of the keybindings.
    * - Enter comment
      - :kbd:`Enter`
    * - Focus
-     - :kbd:`MMB` [3]_
+     - :kbd:`MiddleMouseButton`
    * - Zoom in/out
      - :kbd:`Wheel`
    * - Favorite image
@@ -107,8 +91,3 @@ Below is a table of the keybindings.
      - :kbd:`Ctrl` + :kbd:`B`
    * - Controls
      - :kbd:`F1`
-   
-
-.. [1] LMB refers to the Left Mouse Button (left click).
-.. [2] RMB refers to the Right Mouse Button (right click).
-.. [3] MMB refers to the Middle Mouse Button (scroll wheel button).
