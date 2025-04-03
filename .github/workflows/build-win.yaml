@@ -1,4 +1,4 @@
-name: Release
+name: Build for Windows
 
 on:
   workflow_dispatch:
@@ -15,8 +15,9 @@ jobs:
         #  os: ['windows-2022', 'ubuntu-22.04', 'macos-14']
   
       steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.12
   
@@ -28,6 +29,7 @@ jobs:
 
       # Optionally verify that it works (provided that it does not need user interaction)
       - run: ./dist/your-code/your-code
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
-          path: dist/*
+            name: imgmarker-win
+            path: dist/*
