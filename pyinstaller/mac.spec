@@ -52,7 +52,7 @@ coll = COLLECT(
 )
 app = BUNDLE(
     coll,
-    name='imgmarker.app',
+    name='Image Marker.app',
     icon='../imgmarker/icon.ico',
     bundle_identifier=None,
 )
