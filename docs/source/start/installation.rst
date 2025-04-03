@@ -7,10 +7,6 @@ Installation
     - Installing Image Marker automatically installs Python dependencies in the environment.
     - Executables **do not** install Image Marker, instead they are run directly, and thus do not need a Python environment to run in.
 
-Creating python environment
----------------------
-Before continuing with the installation procedures 
-
 Using pip (from PyPI)
 ---------------------
 
@@ -35,7 +31,7 @@ Lastly, after activating the Python environment of your choice, run::
 You can now run Image Marker from the terminal in any directory by running the command ``imgmarker``. The configuration file generated upon first running Image Marker is made in the save directory selected on startup.
 
 
-Using pip (from GitHub repository)
+Using pip (from source)
 ---------------------
 The PyPI version of Image Marker is not constantly up to date with the `GitHub repository <https://github.com/andikisare/imgmarker/tree/main>`_, so you may wish to install the most recent version directly from GitHub. The steps below outline this process.
 We once again recommend that you create a dedicated Python environment for Image Marker to prevent any conflicts with other Python packages you may have installed in other environments, since installing Image Marker will automatically install Python dependencies in your activated environment. For instructions on how to do this using a tool like `Anaconda <https://anaconda.org/>`_, see Steps 1-3 above under `Using pip (from PyPI)`_. Once you've activated your desired Python environment or finished Step 3 above, follow the steps below to install Image Marker from GitHub.
@@ -63,7 +59,7 @@ Executables
 Portable executables are available on `GitHub <https://github.com/andikisare/imgmarker/releases/latest>`_. Versions are available for Windows 11 and M1+ Mac.
 
 
-Building from Source
+Building from source
 ---------------------
 To build Image Marker yourself, first ``pyinstaller`` in your desired Python environment::
 

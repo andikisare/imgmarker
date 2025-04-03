@@ -1,0 +1,12 @@
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
+repos:
+  # - repo: ...
+
+  - repo: https://github.com/andikisare/imgmarker
+    rev: latest
+    hooks:
+      - id: imgmarker
+        stages: [commit-msg]
