@@ -7,6 +7,9 @@ on:
   workflow_dispatch:
   push:
     branches: [ "main" ]
+    paths:
+      - imgmarker/**
+      - .github/workflows/draft-pdf.yml
   pull_request:
     branches: [ "main" ]
 

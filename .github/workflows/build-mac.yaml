@@ -7,7 +7,7 @@ permissions:
   contents: read
   
 jobs:
-    build-win:
+    build-mac:
       runs-on: macos-14
       strategy:
         fail-fast: false
@@ -34,4 +34,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
             name: imgmarker-mac
-            path: dist
+            path: /Users/runner/work/imgmarker/imgmarker/pyinstaller/dist
