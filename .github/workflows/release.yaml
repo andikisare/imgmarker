@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  
+jobs:
+    build-win:
+      runs-on: windows-2022
+      strategy:
+        fail-fast: false
+        #matrix:
+        #  os: ['windows-2022', 'ubuntu-22.04', 'macos-14']
+  
+      steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+  
+      - run: |
+            pip install pyinstaller
+            pip install ./imgmarker
+            cd pyinstaller
+            pyinstaller win.spec
+
+      # Optionally verify that it works (provided that it does not need user interaction)
+      - run: ./dist/your-code/your-code
+      - uses: actions/upload-artifact@v2
+        with:
+          path: dist/*
