@@ -23,13 +23,14 @@ jobs:
   
       - run: |
             pip install pyinstaller
-            pip install ./imgmarker
+            pip install .
             cd pyinstaller
             pyinstaller win.spec
+            ls
 
       # Optionally verify that it works (provided that it does not need user interaction)
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
             name: imgmarker-win
-            path: dist/*
+            path: D:\a\imgmarker\imgmarker\pyinstaller\dist
