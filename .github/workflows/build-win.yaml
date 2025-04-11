@@ -33,8 +33,12 @@ jobs:
       - name: Zip
         run: |
           cd D:\a\imgmarker\imgmarker\pyinstaller\dist
-          Compress-Archive -Path 'Image Marker' -DestinationPath 'Image Marker (Windows).zip'
+          Compress-Archive -Path 'Image Marker' -DestinationPath 'imgmarker.zip'
           ls
+
+      - name: Gets latest created release info
+        id: latest_release_info
+        uses: jossef/action-latest-release-info@v1.2.2
 
       - name: Upload Release Asset
         id: upload-release-asset 
@@ -42,9 +46,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: https://uploads.github.com/repos/andikisare/imgmarker/releases/latest/assets{?name,label}
-          asset_path: D:\a\imgmarker\imgmarker\pyinstaller\dist\Image Marker (Windows).zip
-          asset_name: Image Marker (Windows)
+          upload_url: ${{ steps.latest_release_info.outputs.upload_url }}
+          asset_path: D:\a\imgmarker\imgmarker\pyinstaller\dist\imgmarker.zip
+          asset_name: imgmarker-${{ steps.latest_release_info.outputs.tag_name }}-win.zip
           asset_content_type: application/zip
 
       - name: Upload
