@@ -34,6 +34,7 @@ jobs:
         run: |
           cd D:\a\imgmarker\imgmarker\pyinstaller\dist
           Compress-Archive -Path 'Image Marker' -DestinationPath 'Image Marker (Windows).zip'
+          ls
 
       - name: Upload Release Asset
         id: upload-release-asset 
@@ -42,7 +43,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: https://github.com/andikisare/imgmarker/releases/latest
-          asset_path: Image Marker (Windows).zip
+          asset_path: D:\a\imgmarker\imgmarker\pyinstaller\dist\Image Marker (Windows).zip
           asset_name: Image Marker (Windows)
           asset_content_type: application/zip
 
