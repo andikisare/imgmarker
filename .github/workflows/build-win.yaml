@@ -42,7 +42,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: https://github.com/andikisare/imgmarker/releases/latest
+          upload_url: https://uploads.github.com/repos/andikisare/imgmarker/releases/latest/assets{?name,label}
           asset_path: D:\a\imgmarker\imgmarker\pyinstaller\dist\Image Marker (Windows).zip
           asset_name: Image Marker (Windows)
           asset_content_type: application/zip
