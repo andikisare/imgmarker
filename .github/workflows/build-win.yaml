@@ -33,7 +33,7 @@ jobs:
       - name: Zip
         run: |
           cd D:\a\imgmarker\imgmarker\pyinstaller\dist
-          zip -r 'Image Marker (Windows).zip' 'Image Marker'
+          Compress-Archive -Path 'Image Marker' -DestinationPath 'Image Marker (Windows).zip'
 
       - name: Release the new binaries
         uses: mini-bomba/create-github-release@v1.1.3
