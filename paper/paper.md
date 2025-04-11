@@ -60,7 +60,7 @@ While `Image Marker` was initially designed with the above use cases in mind, we
 
 Currently supported image formats are FITS, TIFF, PNG, and JPEG. PyQt has limitations on bit depth. For RGB(A) images, up to 8 bits per channel is supported. For grayscale images, up to 16 bits is supported. Images that exceed these limitations will have their bit depth lowered.
 
-`Image Marker` can handle multi-frame FITS and TIFF files (Figure \ref{fig:figure2}). World Coordinate System (WCS) information stored in FITS and TIFF files is also accessed and displayed below the image in `Image Marker`. If an image contains a WCS solution in its header, `Image Marker` will display the WCS coordinates of the cursor in addition to the pixel coordinates. WCS solutions can be embedded in TIFFs using e.g., STIFF [@STIFF].
+`Image Marker` can handle multi-frame FITS and TIFF files (Figure \ref{fig:figure2}). World Coordinate System (WCS) information stored in FITS and TIFF files is also accessed by `Image Marker`. If an image contains a WCS solution in its header, `Image Marker` will display the WCS coordinates of the cursor in addition to the pixel coordinates below the image. WCS solutions can be embedded in TIFFs using e.g., STIFF [@STIFF].
 
 ## Marking Images
 
