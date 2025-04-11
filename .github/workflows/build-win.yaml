@@ -44,6 +44,7 @@ jobs:
           upload_url: https://github.com/andikisare/imgmarker/releases/latest
           asset_path: Image Marker (Windows).zip
           asset_name: Image Marker (Windows)
+          asset_content_type: application/zip
 
       - name: Upload
         uses: actions/upload-artifact@v4
