@@ -828,7 +828,7 @@ class AboutWindow(QWidget):
         labels = [QLabel(f'<div>{__version__}</div>'),
                   QLabel(f'<div>{PYQT_VERSION_STR}</div>'),
                   QLabel(f'<div><a href="https://opensource.org/license/mit">{__license__}</a></div>'),
-                  QLabel(f'<div>Andi Kisare and Ryan Walker</div>')]
+                  QLabel(f'<div>Andi Kisare, Ryan Walker, and Lindsey Bleem</div>')]
 
         for label, param in zip(labels, params):
             param_layout = QHBoxLayout()
