@@ -29,9 +29,21 @@ jobs:
           cd pyinstaller
           pyinstaller win.spec
           ls
+      
+      - name: Zip
+        run: |
+          cd D:\a\imgmarker\imgmarker\pyinstaller\dist
+          zip -r 'Image Marker (Windows).zip' 'Image Marker'
+
+      - name: Update release
+        uses: johnwbyrd/update-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: 'Image Marker (Windows).zip'
+          draft: true
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-            name: imgmarker-win
+            name: Image Marker (Windows)
             path: D:\a\imgmarker\imgmarker\pyinstaller\dist
