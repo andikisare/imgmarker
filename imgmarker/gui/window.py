@@ -110,7 +110,10 @@ class SettingsWindow(QWidget):
         for box in self.category_boxes: self.category_layout.addWidget(box)
 
         # Options
+        self.show_sexigesimal_box = QCheckBox(text='Show sexigesimal coordinates of cursor', parent=self)
+        
         self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
+        
         self.randomize_box = QCheckBox(text='Randomize order of images', parent=self)
         self.randomize_box.setChecked(config.RANDOMIZE_ORDER)
 
@@ -152,6 +155,7 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.category_label)
         layout.addLayout(self.category_layout)
         layout.addWidget(QHLine())
+        layout.addWidget(self.show_sexigesimal_box)
         layout.addWidget(self.focus_box)
         layout.addWidget(self.randomize_box)
         layout.addWidget(self.duplicate_box)
@@ -907,6 +911,7 @@ class MainWindow(QMainWindow):
         self.frame_window.slider.setMaximum(self.image.n_frames-1)
 
         self.settings_window = SettingsWindow(self)
+        # self.settings_window.show_sexigesimal_box.stateChanged.connect(self.show_sexigesimal)
         self.settings_window.focus_box.stateChanged.connect(partial(setattr,self.image_view,'cursor_focus'))
         self.settings_window.randomize_box.stateChanged.connect(self.toggle_randomize)
 
@@ -1611,11 +1616,17 @@ class MainWindow(QMainWindow):
             try: ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
             except: ra, dec = nan, nan
 
-            ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
-            dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
+            if self.settings_window.show_sexigesimal_box.isChecked():
+                ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
+                dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
 
-            ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
-            dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
+                ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
+                dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
+
+            else:
+                ra_str = f'{ra:03.5f}°'
+                dec_str = f'{np.abs(dec):02.5f}°'
+
             if dec > 0: dec_str = '+' + dec_str
             else: dec_str = '-' + dec_str
 
