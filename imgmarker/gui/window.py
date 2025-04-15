@@ -7,7 +7,7 @@ from .pyqt import (
     QCheckBox, QGraphicsScene, QColor, QSlider,
     QLineEdit, QFileDialog, QIcon, QFont, QAction, 
     Qt, QPoint, QSpinBox, QMessageBox, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QShortcut, 
+    QTableWidgetItem, QHeaderView, QShortcut,
     QDesktopServices, QUrl, PYQT_VERSION_STR
 )
 from . import Screen
@@ -111,7 +111,11 @@ class SettingsWindow(QWidget):
 
         # Options
         self.show_sexigesimal_box = QCheckBox(text='Show sexigesimal coordinates of cursor', parent=self)
-        
+        if self.mainwindow.image.wcs == None:
+            self.show_sexigesimal_box.setEnabled(False)
+        else:
+            self.show_sexigesimal_box.setEnabled(True)
+
         self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
         
         self.randomize_box = QCheckBox(text='Randomize order of images', parent=self)
@@ -191,6 +195,7 @@ class SettingsWindow(QWidget):
 
         self.update_config()
         self.mainwindow.save()
+        self.mainwindow.centralWidget().setFocus()
         return super().closeEvent(a0)
     
     def duplicate_percentage_state(self):
@@ -787,11 +792,11 @@ class ControlsWindow(QWidget):
         
     def update_text(self):
         # Lists for keybindings
-        actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Favorite']
+        actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Copy mark coordinates' ,'Favorite']
         group_list = [f'Group \"{group}\"' for group in config.GROUP_NAMES[1:]]
         category_list = [f'Category \"{category}\"' for category in config.CATEGORY_NAMES[1:]]
         actions_list = group_list + category_list + actions_list
-        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'F']
+        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'Ctrl + C', 'F']
         
         items = [ (action, button) for action, button in zip(actions_list, buttons_list) ]
 
@@ -895,6 +900,7 @@ class MainWindow(QMainWindow):
         self.image_scene = image.ImageScene(self.image)
         self.image_view = image.ImageView(self.image_scene)
         self.image_view.mouseMoveEvent = self.mouseMoveEvent
+        self.clipboard = QApplication.clipboard()
 
         #Initialize inserting duplicates at random
         self.images_seen_since_duplicate_count = 0 #keeps track of how many images have been seen since last duplicate
@@ -1316,6 +1322,9 @@ class MainWindow(QMainWindow):
         for group, binds in config.MARK_KEYBINDS.items():
             if event.key() in binds: self.mark(group=group)
 
+        if (event.keyCombination() == config.COPY_KEYBIND) and (PYQT_VERSION_STR[0] == '6'):
+            self.copy_to_clipboard()
+
     def mousePressEvent(self,event):
         """Checks which mouse button was pressed and calls the appropriate function."""
 
@@ -1491,6 +1500,60 @@ class MainWindow(QMainWindow):
         elif (i in self.image.categories):
             self.image.categories.remove(i)
         self.save()
+
+    def calculate_pix_dist(self,x1,y1,x2,y2):
+        dist = np.sqrt(((x2-x1)**2) + ((y2-y1)**2))
+        return dist
+
+    def copy_to_clipboard(self):
+
+        if self.image.wcs == None:
+            has_wcs = False
+        else: 
+            has_wcs = True
+
+        if self.image.duplicate == True:
+            marks = self.image.dupe_marks
+        else:
+            marks = self.image.marks
+        
+        x_pos = self.image_view.mouse_pix_pos(correction=False).x()
+        y_pos = self.image_view.mouse_pix_pos(correction=False).y()
+        pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
+        selected_items = [item for item in marks 
+                            if item is self.image_scene.itemAt(pix_pos, item.transform())]
+        selected_items_dist = [np.abs(self.calculate_pix_dist(x_pos, y_pos, item.center.x(), item.center.y())) for item in selected_items]
+
+        try:
+            mark_to_copy = selected_items[np.argmin(selected_items_dist)]
+
+        except:
+            return
+
+        if has_wcs:
+            ra, dec = mark_to_copy.wcs_center
+        
+            if self.settings_window.show_sexigesimal_box.isChecked():
+                ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
+                dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
+
+                ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
+                dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
+
+            else:
+                ra_str = f'{ra:03.6f}'
+                dec_str = f'{np.abs(dec):02.6f}'
+
+            if dec > 0: dec_str = '+' + dec_str
+            else: dec_str = '-' + dec_str
+            
+            string_copy = ra_str + ", " + dec_str
+
+        else:
+            x, y = str(mark_to_copy.center.x()), str(mark_to_copy.center.y())
+            string_copy = x + ", " + y
+
+        self.clipboard.setText(string_copy)
 
     def mark(self, group:int=0, test=False) -> None:
         """Add a mark to the current image."""
@@ -1734,6 +1797,11 @@ class MainWindow(QMainWindow):
             self.frame_action.setEnabled(True)
         else:
             self.frame_action.setEnabled(False)
+
+        if self.image.wcs == None:
+            self.settings_window.show_sexigesimal_box.setEnabled(False)
+        else:
+            self.settings_window.show_sexigesimal_box.setEnabled(True)
 
         self.toggle_marks()
         self.toggle_mark_labels()

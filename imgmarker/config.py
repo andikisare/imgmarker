@@ -3,7 +3,7 @@
 import os
 from getpass import getuser
 from typing import Tuple, List
-from .gui.pyqt import Qt
+from .gui.pyqt import Qt, QKeyCombination
 
 SAVE_DIR = os.path.expanduser('~')
 USER = getuser()
@@ -23,6 +23,7 @@ MARK_KEYBINDS = {1: {Qt.MouseButton.LeftButton,Qt.Key.Key_1},
             8: {Qt.Key.Key_8}, 
             9: {Qt.Key.Key_9}}
         
+COPY_KEYBIND = QKeyCombination(Qt.KeyboardModifier.ControlModifier, Qt.Key.Key_C)
 
 def path():
     return os.path.join(SAVE_DIR,f'{USER}_config.txt')

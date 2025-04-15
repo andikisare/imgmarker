@@ -10,8 +10,8 @@ try:
         QLineEdit, QGraphicsScene, QGraphicsPixmapItem, QSpinBox, QAbstractGraphicsShapeItem, QMessageBox,
         QTableWidget, QTableWidgetItem, QHeaderView
     )
-    from PyQt6.QtGui import QIcon, QFont, QAction, QPen, QColor, QPixmap, QPainter, QImage, QShortcut, QDesktopServices
-    from PyQt6.QtCore import Qt, QPoint, QPointF, QEvent, QUrl, PYQT_VERSION_STR
+    from PyQt6.QtGui import QIcon, QFont, QClipboard, QAction, QPen, QColor, QPixmap, QPainter, QImage, QShortcut, QDesktopServices
+    from PyQt6.QtCore import Qt, QPoint, QKeyCombination, QPointF, QEvent, QUrl, PYQT_VERSION_STR
 
 except: 
     from PyQt5.QtWidgets import (
