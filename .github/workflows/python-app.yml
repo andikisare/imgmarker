@@ -20,7 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os : [ubuntu-20.04]
+        os : [ubuntu-22.04]
         python: ["3.12"]
     env:
       DISPLAY: ':99.0'
