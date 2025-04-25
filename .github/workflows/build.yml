@@ -27,7 +27,7 @@ jobs:
           if [ ${{ github.event_name }} == 'workflow_dispatch' ]; then
             echo "ref=${{inputs.ref}}" >> $GITHUB_OUTPUT
           else
-            echo "ref=${{github.ref_name}}" >> $GITHUB_OUTPUT
+            echo "ref=${{github.event.release.tag_name}}" >> $GITHUB_OUTPUT
           fi      
 
   build:
@@ -59,7 +59,7 @@ jobs:
         
     - name: Install Python dependencies
       run: |
-        pip install pyinstaller
+        pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
         pip install .
 
     - name: Build Image Marker
