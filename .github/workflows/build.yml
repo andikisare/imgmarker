@@ -54,14 +54,35 @@ jobs:
         
     - name: Install Python dependencies
       run: |
-        PYINSTALLER_COMPILE_BOOTLOADER=1 pip install git+https://github.com/pyinstaller/pyinstaller.git@develop
-        pip install .
-
+        pip install astropy>=5.2.2
+        pip install pillow>=10.4.0
+        pip install PyQt6>=6.7.1
+        pip install scipy>=1.10.1
+        pip install git+https://github.com/pyinstaller/pyinstaller.git@develop
+        
     - name: Build Image Marker
+      if: ${{matrix.spec != 'mac'}} 
       run: |
 
         cd ${{github.workspace}}/pyinstaller
         pyinstaller  ${{matrix.spec}}.spec
+
+    - name: Build Image Marker (mac)
+      if: ${{matrix.spec == 'mac'}} 
+      run: |
+        cd ${{github.workspace}}/imgmarker
+        pyinstaller  \
+        --name "Image Marker" \
+        --icon icon.ico \
+        --windowed  \
+        -D __init__.py \
+        --noconfirm \
+        --distpath ../pyinstaller/dist \
+        --clean \
+        --collect-all imgmarker \
+        --hidden-import=imgmarker \
+        --hidden-import=imgmarker.pyqt \
+        --add-data=".:."
   
     - name: Upload artifact
       uses: actions/upload-artifact@v4
