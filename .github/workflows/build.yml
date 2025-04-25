@@ -1,10 +1,6 @@
 name: Build
 on:
   workflow_dispatch:
-    inputs:
-      ref:
-        description: Reference (tag, branch, etc)
-        required: true
 
   release:
     types: [published]
@@ -25,9 +21,9 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch'}}
         run: |
           if [ ${{ github.event_name }} == 'workflow_dispatch' ]; then
-            echo "ref=${{inputs.ref}}" >> $GITHUB_OUTPUT
-          else
             echo "ref=${{github.ref_name}}" >> $GITHUB_OUTPUT
+          else
+            echo "ref=${{github.event.release.tag_name}}" >> $GITHUB_OUTPUT
           fi      
 
   build:
@@ -59,7 +55,7 @@ jobs:
         
     - name: Install Python dependencies
       run: |
-        pip install pyinstaller
+        PYINSTALLER_COMPILE_BOOTLOADER=1 pip install git+https://github.com/pyinstaller/pyinstaller.git@develop
         pip install .
 
     - name: Build Image Marker
