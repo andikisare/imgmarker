@@ -4,11 +4,13 @@ import os
 from getpass import getuser
 from typing import Tuple, List
 from .gui.pyqt import Qt, QKeyCombination
+from glob import glob
 
 SAVE_DIR = os.path.expanduser('~')
 USER = getuser()
 IMAGE_DIR = None
 GROUP_NAMES = ['None','1','2','3','4','5','6','7','8','9']
+GROUP_SHAPES = ['rect'] + ['ellipse']*9
 CATEGORY_NAMES = ['None','1','2','3','4','5']
 GROUP_MAX = ['None','None','None','None','None','None','None','None','None']
 RANDOMIZE_ORDER = False
@@ -23,8 +25,6 @@ MARK_KEYBINDS = {1: {Qt.MouseButton.LeftButton,Qt.Key.Key_1},
             8: {Qt.Key.Key_8}, 
             9: {Qt.Key.Key_9}}
         
-COPY_KEYBIND = QKeyCombination(Qt.KeyboardModifier.ControlModifier, Qt.Key.Key_C)
-
 def path():
     return os.path.join(SAVE_DIR,f'{USER}_config.txt')
     

@@ -9,7 +9,7 @@ import PIL.Image as pillow
 from PIL.TiffTags import TAGS
 from math import nan
 import numpy as np
-from typing import overload, Union, List
+from typing import overload, Union, List, Set
 from astropy.visualization import ZScaleInterval, MinMaxInterval, ManualInterval, LinearStretch, LogStretch
 from . import fits
 from .convolution import gaussian_filter
@@ -172,17 +172,14 @@ class Image(QGraphicsPixmapItem):
     marks: list[imgmarker.mark.Mark]
         List of the marks in this image.
 
-    cat_marks: list[imgmarker.mark.Mark]
-        List of catalog marks in this image.
-
     dupe_marks: list[imgmarker.mark.Mark]
         List of marks made on a duplicate-showing of the same image. Kept separate for saving purposes.
 
     seen: bool
         Whether this image has been seen by the user or not.
 
-    catalogs: list[str]
-        List of paths to the catalogs that have been imported for this image
+    markfiles: list[str]
+        List of paths to the markfiles that have been imported for this image
     """
     
     def __init__(self,path:str):
@@ -220,11 +217,10 @@ class Image(QGraphicsPixmapItem):
                 self.comment = 'None'
                 self.categories:List[int] = []
                 self.marks:List['Mark'] = []
-                self.cat_marks:List['Mark'] = []
                 self.dupe_marks:List['Mark'] = []
                 self.undone_marks:List['Mark'] = []
                 self.seen:bool = False
-                self.catalogs:List[str] = []
+                self.markfiles:Set[str] = set()
             else:
                 self.incompatible = True
 
@@ -451,13 +447,13 @@ class ImageScene(QGraphicsScene):
         if len(args) == 1: mark = args[0]
         else: mark = Mark(*args,image=self.image,**kwargs)
         self.addItem(mark.label)
-        self.addItem(mark)
+        self.addItem(mark.shapeitem)
         return mark
     
     def rmmark(self,mark:'Mark') -> None:
         """Removes the specified mark from the image scene."""
 
-        self.removeItem(mark)
+        self.removeItem(mark.shapeitem)
         self.removeItem(mark.label)
 
 class ImageView(QGraphicsView):

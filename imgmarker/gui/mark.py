@@ -1,23 +1,25 @@
 """This module contains the `Mark` class and related classes."""
 
 from .pyqt import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
+from .pyqt import QAbstractGraphicsShapeItem as QAbstractItem
+from .. import config
+import os
 from math import nan, ceil
 from astropy.wcs.utils import proj_plane_pixel_scales
 from .. import config
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, overload, Literal
 import warnings
 
 if TYPE_CHECKING:
-    from imgmarker.image import Image
-    from .pyqt import QAbstractGraphicsShapeItem as QAbstractItem
+    from imgmarker.image import Image 
 
 COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
            QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
            QColor(0,0,255),QColor(128,0,255),QColor(255,0,255) ]
 
-SHAPES = {'ellipse':QGraphicsEllipseItem, 'rect':QGraphicsRectItem}
+SHAPES:dict[str,type[QAbstractItem]] = {'ellipse':QGraphicsEllipseItem, 'rect':QGraphicsRectItem}
 
-class AbstractMark:
+'''class AbstractMark:
     """Abstract mark containing default mark properties created using Qt framework"""
 
     @overload
@@ -40,7 +42,7 @@ class AbstractMark:
             self.wcs_center = (kwargs['ra'],kwargs['dec'])
             _x, _y = self.image.wcs.all_world2pix([[kwargs['ra'], kwargs['dec']]], 0)[0]
             self.center = QPointF(_x, self.image.height-_y)
-            self.view_center = self.center + QPointF(0.5,0.5)
+            self.view_center = self.center + QPointF(0.5,0.5)'''
 
 class MarkLabel(QGraphicsProxyWidget):
     """Mark label and its attributes associated with a particular mark"""
@@ -97,73 +99,105 @@ class MarkLabel(QGraphicsProxyWidget):
         w = fm.boundingRect(self.lineedit.text()).width()+fm.boundingRect('AA').width()
         self.lineedit.setFixedWidth(w)
 
-class Mark(AbstractMark,QGraphicsEllipseItem,QGraphicsRectItem):
+class Mark:
     """Class for creating marks and associating label to mark"""
 
     @overload
     def __init__(self,x:int,y:int,
                  shape:str='ellipse',
-                 image:'Image'=None,group:int=0,text:str=None,picked_color:QColor=None,size_unit:str=None,size:float=None,
+                 image:'Image'=None,group:int=0,text:str=None,color:QColor=None,size_unit:str=None,size:float=None,
     ) -> None: ...
     @overload
     def __init__(self,ra:float=None,dec:float=None,
                  shape:str='ellipse',
-                 image:'Image'=None,group:int=0,text:str=None,picked_color:QColor=None,size_unit:str=None,size:float=None,
+                 image:'Image'=None,group:int=0,text:str=None,color:QColor=None,size_unit:str=None,size:float=None,
     ) -> None: ...
     def __init__(self,*args,**kwargs) -> None:
-        abstract_kwargs = kwargs.copy()
-        keys = kwargs.keys()
+        
+        # Set up image
+        self.image = None
+        if 'image' in kwargs: 
+            self.image:'Image' = kwargs['image']
+
+        try: w, h = self.image.width, self.image.height
+        except: w, h = 512, 512  
 
         # Set up some default values
-        if not 'image' in keys: raise ValueError('No image provided')
-        else: image:'Image' = kwargs['image']
+        self.g = 0
+        self.color = COLORS[0]
+        self.shape = SHAPES['ellipse']
+        self.size = ceil((w+h)/200)*2
+        size_unit = 'pixels'
+        self.path = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')
 
-        if not 'group' in keys: self.color = kwargs["picked_color"]
-        else:
+        if 'group' in kwargs:
             self.g:int = kwargs['group']
             self.color = COLORS[self.g]
 
-        if not 'text' in keys: self.text = config.GROUP_NAMES[self.g]
-        else: self.text:str = kwargs['text']
+        if 'picked_color' in kwargs:
+            self.color = kwargs["picked_color"]
 
-        if not 'shape' in keys: shape = QGraphicsEllipseItem
-        else: shape:str = SHAPES[kwargs['shape']]
-        
-        if not "size_unit" in keys: pixel_size = ceil((image.width+image.height)/200)*2
+        if 'text' in kwargs:
+            self.text:str = kwargs['text']
         else:
-            if kwargs["size_unit"] == None: pixel_size = ceil((image.width+image.height)/200)*2
-            else:
-                size_unit = kwargs['size_unit']
-                size = kwargs['size']
-                if size_unit == "arcseconds":
-                    pixel_scale = proj_plane_pixel_scales(image.wcs)[0] * 3600
-                    pixel_size = size / pixel_scale
-                elif size_unit == "pixels":
-                    pixel_size = size
-                else:
-                    warnings.warn("Invalid size unit for catalog marks. Valid units: arcseconds, pixels")
-                    return
+            self.text = config.GROUP_NAMES[self.g]
 
-        # Set up AbstractMark args
-        if 'ra' not in kwargs.keys():
-            x,y = args
-            abstract_args = (pixel_size,x,y) 
-        else: abstract_args = (pixel_size,)
-
-        # Set up AbstractMark kwargs
-        if 'group' in keys: del abstract_kwargs['group']
-        if 'text' in keys: del abstract_kwargs['text']
-        if 'shape' in keys: del abstract_kwargs['shape']
-
-        # Initialize AbstractMark
-        super().__init__(*abstract_args,**abstract_kwargs)
-
-        # Initialize shape
-        item_args = self.view_center.x()-self.size/2, self.view_center.y()-self.size/2, self.size, self.size
-        super(shape,self).__init__(*item_args)
-        shapeitem:QAbstractItem = shape(*item_args)
-        shapeitem.setPen(QPen(self.color, int(self.size/14), Qt.PenStyle.SolidLine))
-        self.paint = shapeitem.paint
+        if 'shape' in kwargs:
+            self.shape = SHAPES[kwargs['shape']]
         
-        # Set up label
-        self.label = MarkLabel(self)
+        if "size" in kwargs:
+            if 'size_unit' in kwargs:
+                size_unit = kwargs['size_unit']
+            size = kwargs['size']
+            if size_unit == "arcseconds":
+                pixel_scale = proj_plane_pixel_scales(self.image.wcs)[0] * 3600
+                self.size = size / pixel_scale
+            elif size_unit == "pixels":
+                self.size = size
+            else:
+                warnings.warn("Invalid size unit for catalog marks. Valid units: arcseconds, pixels")
+                return
+
+        if 'ra' in kwargs:
+            self._wcs_center = (kwargs['ra'],kwargs['dec'])            
+        else:
+            self._center = QPointF(*args)
+
+    @property
+    def center(self):
+        if not hasattr(self,'_center'):
+            _x, _y = self.image.wcs.all_world2pix([list(self.wcs_center)], 0)[0]
+            return QPointF(_x, self.image.height-_y)
+        else:
+            return self._center
+    
+    @property
+    def view_center(self):
+        return self.center + QPointF(0.5,0.5)
+
+    @property
+    def wcs_center(self):
+        if not hasattr(self,'_wcs_center'):
+            if (self.image.wcs != None):
+                _x, _y = self.center.x(), self.image.height - self.center.y()
+                return self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
+            else: 
+                return (nan, nan)
+        else:
+            return self._wcs_center
+    
+    @property
+    def shapeitem(self):
+        if not hasattr(self,'_shapeitem'):
+            args = self.view_center.x()-self.size/2, self.view_center.y()-self.size/2, self.size, self.size
+            self._shapeitem = self.shape(*args)
+            self._shapeitem.setPen(QPen(self.color, int(self.size/10), Qt.PenStyle.SolidLine))
+        
+        return self._shapeitem
+    
+    @property
+    def label(self):
+        if not hasattr(self,'_label'):
+            self._label = MarkLabel(self)
+        
+        return self._label  
