@@ -914,7 +914,7 @@ class MarkMenu(QMenu):
         if path == window.markpath:
             labels_action.setShortcuts(['Ctrl+l'])
 
-            del_marks_action = QAction(f'Delete Marks', self)
+            del_marks_action = QAction(f'Delete Marks in Current Image', self)
             del_marks_action.triggered.connect(partial(window.del_usermarks,True))
             self.menus[path].addAction(del_marks_action)
         else:
@@ -1083,21 +1083,21 @@ class MainWindow(QMainWindow):
         ## File menu
         file_menu = menubar.addMenu("&File")
 
-        #### Open file menu
+        ### Open file menu
         open_action = QAction('&Open Save...', self)
         open_action.setShortcuts(['Ctrl+o'])
         open_action.triggered.connect(self.open)
         file_menu.addAction(open_action)
 
-        #### Import image folder menu
+        file_menu.addSeparator()
+
+        ### Import image folder menu
         import_ims_action = QAction('&Import Images...', self)
         import_ims_action.setShortcuts(['Ctrl+Shift+i'])
         import_ims_action.triggered.connect(self.import_ims)
         file_menu.addAction(import_ims_action)
 
-        file_menu.addSeparator()
-
-        #### Import mark file
+        ### Import mark file
         import_marks_action = QAction('&Import Mark File...', self)
         import_marks_action.setShortcuts(['Ctrl+Shift+m'])
         import_marks_action.triggered.connect(self.import_markfile)
@@ -1262,7 +1262,6 @@ class MainWindow(QMainWindow):
         self.get_comment()
         self.update_marks()
         self.update_categories()
-        self.update_catalogs()
         self.settings_window.update_duplicate_percentage()
 
     def __init_data__(self):
@@ -1491,11 +1490,13 @@ class MainWindow(QMainWindow):
         self.update_categories()
         self.update_comments()
 
-    def import_markfile(self, test=False):
+    def import_markfile(self, **kwargs):
         """Method for opening a catalog file."""
-        if not test:
+        if 'src' not in kwargs:
             src = QFileDialog.getOpenFileName(self, 'Import mark file', config.SAVE_DIR, 'Text files (*.txt *.csv)')[0]
             if src == '': return
+        else:
+            src = kwargs['src']
         
         file = src.split(os.sep)[-1]
         dst = os.path.join(config.SAVE_DIR,'imports')
@@ -1505,8 +1506,7 @@ class MainWindow(QMainWindow):
                                                         mark_out_path = mark_out_path)
         self.imageless_marks += imageless_marks
 
-        if len(imageless_marks) > 0:
-            self.update_catalogs()
+        self.update_marks()
 
         '''if catalog and not test:
             self.color_picker_window = ColorPickerWindow(self)
@@ -1668,7 +1668,6 @@ class MainWindow(QMainWindow):
         self.update_comments()
         self.update_images()
         self.update_marks()
-        self.update_catalogs()
         self.get_comment()
         self.update_categories()
         self.update_favorites()
@@ -1863,25 +1862,6 @@ class MainWindow(QMainWindow):
         for i in self.image.categories:
             self.category_boxes[i-1].setChecked(True)
 
-    def update_catalogs(self):
-        for mark in self.imageless_marks:
-            mark.image = self.image
-            x,y = mark.center.x(), mark.center.y()
-            if self.inview(x,y) and not (mark.shapeitem in self.image_scene.items()):
-                self.image_scene.mark(mark)
-            mark.image = None
-        
-        self.update_mark_menu()
-
-        self.save()
-
-        '''if len(self.image.cat_marks) > 0:
-            self.catalogs_action.setEnabled(True)
-            self.catalog_labels_action.setEnabled(True)
-        else:
-            self.catalogs_action.setEnabled(False)
-            self.catalog_labels_action.setEnabled(False)
-        '''
     def update_marks(self):
         """Redraws all marks in image."""
         
@@ -1893,6 +1873,17 @@ class MainWindow(QMainWindow):
         for mark in marks: 
             if mark.shapeitem not in self.image_scene.items():
                 self.image_scene.mark(mark)
+
+        for mark in self.imageless_marks:
+            mark.image = self.image
+            x,y = mark.center.x(), mark.center.y()
+            if self.inview(x,y) and not (mark.shapeitem in self.image_scene.items()):
+                self.image_scene.mark(mark)
+            mark.image = None
+        
+        self.update_mark_menu()
+
+        self.save()
 
     def update_mark_menu(self):
         for path in io.markpaths():
