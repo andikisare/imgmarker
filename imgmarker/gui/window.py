@@ -1954,7 +1954,8 @@ class MainWindow(QMainWindow):
         if not del_all:
             pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
             selected_marks = [mark for mark in marks 
-                              if mark.shapeitem is self.image_scene.itemAt(pix_pos, mark.shapeitem.transform())]
+                              if (mark.shapeitem is self.image_scene.itemAt(pix_pos, mark.shapeitem.transform()))
+                              and (mark.path == self.markpath)]
         else: selected_marks = marks.copy()
 
         for mark in selected_marks:
