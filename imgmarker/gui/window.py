@@ -1956,7 +1956,7 @@ class MainWindow(QMainWindow):
             selected_marks = [mark for mark in marks 
                               if (mark.shapeitem is self.image_scene.itemAt(pix_pos, mark.shapeitem.transform()))
                               and (mark.path == self.markpath)]
-        else: selected_marks = marks.copy()
+        else: selected_marks = [mark for mark in marks if mark.path == self.markpath]
 
         for mark in selected_marks:
             self.image.undone_marks.append(mark)
