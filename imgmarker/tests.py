@@ -69,13 +69,18 @@ def test_import_markfile(app:MainWindow, qtbot:QtBot):
     assert len(app.image_scene.items()) == 3
 
 def test_place_mark(app:MainWindow, qtbot):
+    for mark in app.image.marks + app.imageless_marks:
+        app.image_scene.rmmark(mark)
+
     app.mark(group=1, test=True)
-    print(app.image_scene.items())
 
     assert len(app.image_scene.items()) == 3
     assert len(app.image.marks) == 1
 
 def test_mark_limit(app:MainWindow, qtbot:QtBot):
+    for mark in app.image.marks + app.imageless_marks:
+        app.image_scene.rmmark(mark)
+
     config.GROUP_MAX[0] = 1
     config.GROUP_MAX[1] = 2
 
@@ -89,6 +94,9 @@ def test_mark_limit(app:MainWindow, qtbot:QtBot):
     assert len(app.image.marks) == 3
 
 def test_mark_delete(app:MainWindow, qtbot:QtBot):
+    for mark in app.image.marks + app.imageless_marks:
+        app.image_scene.rmmark(mark)
+
     app.mark(group=1, test=True)
     app.mark(group=2, test=True)
     app.mark(group=3, test=True)
@@ -98,15 +106,22 @@ def test_mark_delete(app:MainWindow, qtbot:QtBot):
     assert len(app.image.marks) == 0
 
 def test_catalog_delete(app:MainWindow, qtbot:QtBot):
+    for mark in app.image.marks + app.imageless_marks:
+        app.image_scene.rmmark(mark)
+
     app.import_markfile(src=test_catalog_dir_txt)
     
     assert len(app.image_scene.items()) == 3
 
     app.shift(+1)
+    for mark in app.image.marks:
+        app.image_scene.rmmark(mark)
 
     assert len(app.image_scene.items()) == 3
     
     app.shift(+1)
+    for mark in app.image.marks:
+        app.image_scene.rmmark(mark)
 
     assert len(app.image_scene.items()) == 3
 
@@ -140,10 +155,10 @@ def test_save_mark(app:MainWindow, qtbot:QtBot):
     ra = 0
     dec = 0
     line0 = True
-    for line in open(test_save_dir + USER + "_marks.txt"):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
         if line0: line0 = False
         else:
-            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('|\n','').split('|')]
+            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
 
     assert date == dt.datetime.now(dt.timezone.utc).date().isoformat()
     assert name == app.image.name
@@ -165,10 +180,10 @@ def test_delete_save_mark(app:MainWindow, qtbot:QtBot):
     ra = 0
     dec = 0
     line0 = True
-    for line in open(test_save_dir + USER + "_marks.txt"):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
         if line0: line0 = False
         else:
-            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('|\n','').split('|')]
+            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
 
     assert date == dt.datetime.now(dt.timezone.utc).date().isoformat()
     assert name == app.image.name
@@ -181,10 +196,10 @@ def test_delete_save_mark(app:MainWindow, qtbot:QtBot):
 
     app.del_usermarks(del_all=True)
     line0 = True
-    for line in open(test_save_dir + USER + "_marks.txt"):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
         if line0: line0 = False
         else:
-            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('|\n','').split('|')]
+            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
 
     assert date == dt.datetime.now(dt.timezone.utc).date().isoformat()
     assert name == app.image.name
@@ -206,10 +221,10 @@ def test_change_mark_group_save(app:MainWindow, qtbot:QtBot):
     ra = 0
     dec = 0
     line0 = True
-    for line in open(test_save_dir + USER + "_marks.txt"):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
         if line0: line0 = False
         else:
-            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('|\n','').split('|')]
+            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
 
     assert date == dt.datetime.now(dt.timezone.utc).date().isoformat()
     assert name == app.image.name
@@ -228,10 +243,10 @@ def test_change_mark_group_save(app:MainWindow, qtbot:QtBot):
     app.save()
 
     line0 = True
-    for line in open(test_save_dir + USER + "_marks.txt"):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
         if line0: line0 = False
         else:
-            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('|\n','').split('|')]
+            date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
     
     assert date == dt.datetime.now(dt.timezone.utc).date().isoformat()
     assert name == app.image.name
@@ -260,10 +275,10 @@ def test_next_image(app:MainWindow, qtbot):
 #     ra = 0
 #     dec = 0
 #     line0 = True
-#     for line in open(test_save_dir + USER + "_marks.txt"):
+#     for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
 #         if line0: line0 = False
 #         else:
-#             date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('|\n','').split('|')]
+#             date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
 
 #     assert date == dt.datetime.now(dt.timezone.utc).date().isoformat()
 #     assert name == app.image.name
