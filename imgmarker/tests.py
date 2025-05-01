@@ -31,18 +31,16 @@ test_images_dir = "./tests/test_images/"
 test_catalog_dir_txt = "./tests/TEST_catalog.txt"
 test_catalog_dir_csv = "./tests/TEST_catalog.csv"
 
+USER = getuser()
+
 if os.path.exists(test_save_dir):
-    try:
-        os.remove(test_save_dir + "astrorya_config.txt")
-        os.remove(test_save_dir + "astrorya_marks.txt")
-        os.remove(test_save_dir + "astrorya_images.txt")
-    except: pass
+    os.remove(test_save_dir + f"{USER}_config.txt")
+    os.remove(test_save_dir + f"{USER}_marks.csv")
+    os.remove(test_save_dir + f"{USER}_images.csv")
     os.rmdir(test_save_dir)
     os.mkdir(test_save_dir)
 else:
     os.mkdir(test_save_dir)
-
-USER = getuser()
 
 @pytest.fixture
 def app(qtbot:QtBot):
@@ -69,17 +67,25 @@ def test_import_markfile(app:MainWindow, qtbot:QtBot):
     assert len(app.image_scene.items()) == 3
 
 def test_place_mark(app:MainWindow, qtbot):
-    for mark in app.image.marks + app.imageless_marks:
+    for mark in app.image.marks:
         app.image_scene.rmmark(mark)
-
+    for mark in app.imageless_marks:
+        app.imageless_marks.remove(mark)
+        try: app.image_scene.rmmark(mark)
+        except: pass
+        
     app.mark(group=1, test=True)
 
     assert len(app.image_scene.items()) == 3
     assert len(app.image.marks) == 1
 
 def test_mark_limit(app:MainWindow, qtbot:QtBot):
-    for mark in app.image.marks + app.imageless_marks:
+    for mark in app.image.marks:
         app.image_scene.rmmark(mark)
+    for mark in app.imageless_marks:
+        app.imageless_marks.remove(mark)
+        try: app.image_scene.rmmark(mark)
+        except: pass
 
     config.GROUP_MAX[0] = 1
     config.GROUP_MAX[1] = 2
@@ -94,8 +100,12 @@ def test_mark_limit(app:MainWindow, qtbot:QtBot):
     assert len(app.image.marks) == 3
 
 def test_mark_delete(app:MainWindow, qtbot:QtBot):
-    for mark in app.image.marks + app.imageless_marks:
+    for mark in app.image.marks:
         app.image_scene.rmmark(mark)
+    for mark in app.imageless_marks:
+        app.imageless_marks.remove(mark)
+        try: app.image_scene.rmmark(mark)
+        except: pass
 
     app.mark(group=1, test=True)
     app.mark(group=2, test=True)
@@ -106,8 +116,12 @@ def test_mark_delete(app:MainWindow, qtbot:QtBot):
     assert len(app.image.marks) == 0
 
 def test_catalog_delete(app:MainWindow, qtbot:QtBot):
-    for mark in app.image.marks + app.imageless_marks:
+    for mark in app.image.marks:
         app.image_scene.rmmark(mark)
+    for mark in app.imageless_marks:
+        app.imageless_marks.remove(mark)
+        try: app.image_scene.rmmark(mark)
+        except: pass
 
     app.import_markfile(src=test_catalog_dir_txt)
     
@@ -155,7 +169,7 @@ def test_save_mark(app:MainWindow, qtbot:QtBot):
     ra = 0
     dec = 0
     line0 = True
-    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')):
         if line0: line0 = False
         else:
             date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
@@ -180,7 +194,7 @@ def test_delete_save_mark(app:MainWindow, qtbot:QtBot):
     ra = 0
     dec = 0
     line0 = True
-    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')):
         if line0: line0 = False
         else:
             date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
@@ -196,7 +210,7 @@ def test_delete_save_mark(app:MainWindow, qtbot:QtBot):
 
     app.del_usermarks(del_all=True)
     line0 = True
-    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')):
         if line0: line0 = False
         else:
             date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
@@ -221,7 +235,7 @@ def test_change_mark_group_save(app:MainWindow, qtbot:QtBot):
     ra = 0
     dec = 0
     line0 = True
-    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')):
         if line0: line0 = False
         else:
             date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
@@ -243,7 +257,7 @@ def test_change_mark_group_save(app:MainWindow, qtbot:QtBot):
     app.save()
 
     line0 = True
-    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
+    for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')):
         if line0: line0 = False
         else:
             date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
@@ -275,7 +289,7 @@ def test_next_image(app:MainWindow, qtbot):
 #     ra = 0
 #     dec = 0
 #     line0 = True
-#     for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks')):
+#     for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')):
 #         if line0: line0 = False
 #         else:
 #             date,name,group,label,x,y,ra,dec = [i.strip() for i in line.replace('\n','').split(',')]
