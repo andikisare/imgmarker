@@ -180,8 +180,8 @@ def test_save_mark(app:MainWindow, qtbot:QtBot):
     assert label == "None"
     assert x == str(float(app.image.width/2))
     assert y == str(float(app.image.height/2))
-    assert ra == str(f"{app.image.marks[0].wcs_center[0]:.8f}")
-    assert dec == str(f"{app.image.marks[0].wcs_center[1]:.8f}")
+    assert ra == str(app.image.marks[0].wcs_center[0])
+    assert dec == str(app.image.marks[0].wcs_center[1])
 
 def test_delete_save_mark(app:MainWindow, qtbot:QtBot):
     app.mark(group=1, test=True)
@@ -205,8 +205,8 @@ def test_delete_save_mark(app:MainWindow, qtbot:QtBot):
     assert label == "None"
     assert x == str(float(app.image.width/2))
     assert y == str(float(app.image.height/2))
-    assert ra == str(f"{app.image.marks[0].wcs_center[0]:.8f}")
-    assert dec == str(f"{app.image.marks[0].wcs_center[1]:.8f}")
+    assert ra == str(app.image.marks[0].wcs_center[0])
+    assert dec == str(app.image.marks[0].wcs_center[1])
 
     app.del_usermarks(del_all=True)
     line0 = True
@@ -246,8 +246,8 @@ def test_change_mark_group_save(app:MainWindow, qtbot:QtBot):
     assert label == "None"
     assert x == str(float(app.image.width/2))
     assert y == str(float(app.image.height/2))
-    assert ra == str(f"{app.image.marks[0].wcs_center[0]:.8f}")
-    assert dec == str(f"{app.image.marks[0].wcs_center[1]:.8f}")
+    assert ra == str(app.image.marks[0].wcs_center[0])
+    assert dec == str(app.image.marks[0].wcs_center[1])
 
     new_group = "BCG"
 
@@ -268,8 +268,8 @@ def test_change_mark_group_save(app:MainWindow, qtbot:QtBot):
     assert label == "1"
     assert x == str(float(app.image.width/2))
     assert y == str(float(app.image.height/2))
-    assert ra == str(f"{app.image.marks[0].wcs_center[0]:.8f}")
-    assert dec == str(f"{app.image.marks[0].wcs_center[1]:.8f}")
+    assert ra == str(app.image.marks[0].wcs_center[0])
+    assert dec == str(app.image.marks[0].wcs_center[1])
 
 def test_next_image(app:MainWindow, qtbot):
     current_image_array = app.image.array
@@ -300,5 +300,5 @@ def test_next_image(app:MainWindow, qtbot):
 #     assert label == "None"
 #     assert x == str(float(app.image.width/2))
 #     assert y == str(float(app.image.height/2))
-#     assert ra == str(f"{app.image.marks[0].wcs_center[0]:.8f}")
-#     assert dec == str(f"{app.image.marks[0].wcs_center[1]:.8f}")
+#     assert ra == str(app.image.marks[0].wcs_center[0]")
+#     assert dec == str(app.image.marks[0].wcs_center[1]")
