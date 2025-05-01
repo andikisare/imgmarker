@@ -110,11 +110,11 @@ class SettingsWindow(QWidget):
         for box in self.category_boxes: self.category_layout.addWidget(box)
 
         # Options
-        self.show_sexigesimal_box = QCheckBox(text='Show sexigesimal coordinates of cursor', parent=self)
+        self.show_sexagesimal_box = QCheckBox(text='Show sexagesimal coordinates of cursor', parent=self)
         if self.mainwindow.image.wcs == None:
-            self.show_sexigesimal_box.setEnabled(False)
+            self.show_sexagesimal_box.setEnabled(False)
         else:
-            self.show_sexigesimal_box.setEnabled(True)
+            self.show_sexagesimal_box.setEnabled(True)
 
         self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
         
@@ -159,7 +159,7 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.category_label)
         layout.addLayout(self.category_layout)
         layout.addWidget(QHLine())
-        layout.addWidget(self.show_sexigesimal_box)
+        layout.addWidget(self.show_sexagesimal_box)
         layout.addWidget(self.focus_box)
         layout.addWidget(self.randomize_box)
         layout.addWidget(self.duplicate_box)
@@ -986,7 +986,7 @@ class MainWindow(QMainWindow):
         self.frame_window.slider.setMaximum(self.image.n_frames-1)
 
         self.settings_window = SettingsWindow(self)
-        # self.settings_window.show_sexigesimal_box.stateChanged.connect(self.show_sexigesimal)
+        # self.settings_window.show_sexagesimal_box.stateChanged.connect(self.show_sexagesimal)
         self.settings_window.focus_box.stateChanged.connect(partial(setattr,self.image_view,'cursor_focus'))
         self.settings_window.randomize_box.stateChanged.connect(self.toggle_randomize)
 
@@ -1573,7 +1573,7 @@ class MainWindow(QMainWindow):
         if has_wcs:
             ra, dec = mark_to_copy.wcs_center
         
-            if self.settings_window.show_sexigesimal_box.isChecked():
+            if self.settings_window.show_sexagesimal_box.isChecked():
                 ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
                 dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
 
@@ -1723,7 +1723,7 @@ class MainWindow(QMainWindow):
             try: ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
             except: ra, dec = nan, nan
 
-            if self.settings_window.show_sexigesimal_box.isChecked():
+            if self.settings_window.show_sexagesimal_box.isChecked():
                 ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
                 dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
 
@@ -1831,9 +1831,9 @@ class MainWindow(QMainWindow):
             self.frame_action.setEnabled(False)
 
         if self.image.wcs == None:
-            self.settings_window.show_sexigesimal_box.setEnabled(False)
+            self.settings_window.show_sexagesimal_box.setEnabled(False)
         else:
-            self.settings_window.show_sexigesimal_box.setEnabled(True)
+            self.settings_window.show_sexagesimal_box.setEnabled(True)
 
         
     
