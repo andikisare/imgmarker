@@ -139,7 +139,7 @@ def test_catalog_delete(app:MainWindow, qtbot:QtBot):
 
     assert len(app.image_scene.items()) == 3
 
-    app.del_markfile(test_catalog_dir_txt)
+    app.del_markfile(os.path.join(config.SAVE_DIR,'imports',test_catalog_dir_txt.split(os.sep)[-1]))
 
     assert len(app.image_scene.items()) == 1
 
