@@ -24,7 +24,7 @@ The left panel in Figure 1 shows an image of Messier 31, a nearby galaxy, before
 
 Importing mark files
 ----------
-Mark files can be imported via **File > Import Mark File**. Any imported mark files will be copied into your save directory under ``imports``. Mark files that you import must be comma-separated and have at least three columns: ``label``, ``RA`` and ``DEC`` or ``label``, ``x`` and ``y``. Check out `here <https://github.com/andikisare/imgmarker/blob/main/imgmarker/tests/TEST_catalog.csv>` for an example.
+Mark files can be imported via **File > Import Mark File**. Any imported mark files will be copied into your save directory under ``imports``. Mark files that you import must be comma-separated and have at least three columns: ``label``, ``RA`` and ``DEC`` or ``label``, ``x`` and ``y``. Check out `here <https://github.com/andikisare/imgmarker/blob/main/imgmarker/tests/TEST_catalog.csv>`_ for an example.
 
 If a mark file does not specify an image under the ``image`` column, then each time you look at an image, Image Marker will show all marks that have pixel coordinates or wcs coordinates that are within the bounds of the image. For this reason, if you have many marks in the mark file that don't have a specified image, this may slow down Image Marker when cycling between images.
 
