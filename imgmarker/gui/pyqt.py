@@ -6,11 +6,11 @@ try:
         QScrollArea, QGraphicsView, QVBoxLayout, QWidget, 
         QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
         QSlider, QLineEdit, QFileDialog, QFrame, QDialog,
-        QSizePolicy, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget,
-        QLineEdit, QGraphicsScene, QGraphicsPixmapItem, QSpinBox, QAbstractGraphicsShapeItem, QMessageBox,
+        QSizePolicy, QGraphicsPathItem, QGraphicsProxyWidget,
+        QLineEdit, QGraphicsScene, QGraphicsPixmapItem, QSpinBox, QMessageBox,
         QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QColorDialog
     )
-    from PyQt6.QtGui import QIcon, QFont, QClipboard, QAction, QPen, QColor, QPixmap, QPainter, QImage, QShortcut, QDesktopServices
+    from PyQt6.QtGui import QIcon, QFont, QClipboard, QAction, QPen, QColor, QPixmap, QPainter, QPainterPathStroker, QPainterPath, QImage, QShortcut, QDesktopServices
     from PyQt6.QtCore import Qt, QPoint, QKeyCombination, QPointF, QEvent, QUrl, PYQT_VERSION_STR
 
 except: 
@@ -19,9 +19,9 @@ except:
         QScrollArea, QGraphicsView, QVBoxLayout, QWidget, 
         QHBoxLayout, QLineEdit, QInputDialog, QCheckBox, 
         QSlider, QLineEdit, QFileDialog, QFrame, QDialog,
-        QSizePolicy, QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget,
-        QLineEdit, QGraphicsScene, QGraphicsPixmapItem, QAction, QSpinBox, QAbstractGraphicsShapeItem, QMessageBox,
+        QSizePolicy, QGraphicsPathItem, QGraphicsProxyWidget,
+        QLineEdit, QGraphicsScene, QGraphicsPixmapItem, QAction, QSpinBox, QMessageBox,
         QTableWidget, QTableWidgetItem, QHeaderView, QMenu
     )
-    from PyQt5.QtGui import QIcon, QFont, QPen, QColor, QPixmap, QPainter, QImage, QShortcut, QDesktopServices
+    from PyQt5.QtGui import QIcon, QFont, QPen, QColor, QPixmap, QPainter, QPainterPath, QImage, QShortcut, QDesktopServices
     from PyQt5.QtCore import Qt, QPoint, QPointF, QEvent, PYQT_VERSION_STR

@@ -8,7 +8,7 @@ from .pyqt import (
     QLineEdit, QFileDialog, QIcon, QFont, QAction, 
     Qt, QPoint, QSpinBox, QMessageBox, QTableWidget, 
     QTableWidgetItem, QHeaderView, QShortcut,
-    QDesktopServices, QUrl, QMenu, QAbstractGraphicsShapeItem, PYQT_VERSION_STR
+    QDesktopServices, QUrl, QMenu, PYQT_VERSION_STR
 )
 from . import Screen
 from .. import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
@@ -915,7 +915,7 @@ class MarkMenu(QMenu):
             labels_action.setShortcuts(['Ctrl+l'])
 
             del_marks_action = QAction(f'Delete Marks in Current Image', self)
-            del_marks_action.triggered.connect(partial(window.del_usermarks,True))
+            del_marks_action.triggered.connect(partial(window.del_usermarks,'all'))
             self.menus[path].addAction(del_marks_action)
         else:
             labels_action.setShortcuts(['Ctrl+Shift+l'])
@@ -1271,7 +1271,7 @@ class MainWindow(QMainWindow):
         self.images, self.imageless_marks = io.load_markfile(io.load_imagesfile())
         for path in io.markpaths():
             if path != self.markpath:
-                self.images, imageless_marks = io.load_markfile(self.images,mark_out_path=path)
+                self.images, imageless_marks = io.load_markfile(self.images,mark_dst=path)
                 self.imageless_marks += imageless_marks
         
         self.favorite_list = io.loadfav()
@@ -1301,6 +1301,8 @@ class MainWindow(QMainWindow):
             self.N = len(self.images)
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
+
+        
    
     @property
     def markpath(self):
@@ -1329,8 +1331,8 @@ class MainWindow(QMainWindow):
         return max(10, _blur_max)
     
     def n_marks(self,path):
-        marks = [mark for mark in self.image.marks if mark.path == path]
-        marks += [mark for mark in self.imageless_marks if mark.path == path]
+        marks = [mark for mark in self.image.marks if mark.dst == path]
+        marks += [mark for mark in self.imageless_marks if mark.dst == path]
         return len(marks)
 
     def inview(self,x:Union[int,float],y:Union[int,float]):
@@ -1353,34 +1355,36 @@ class MainWindow(QMainWindow):
 
     # === Events ===
 
-    def keyPressEvent(self,event):
+    def keyPressEvent(self, a0):
         """Checks which keyboard button was pressed and calls the appropriate function."""
         
         # Check if key is bound with marking the image
         for group, binds in config.MARK_KEYBINDS.items():
-            if event.key() in binds: self.mark(group=group)
+            if a0.key() in binds: self.mark(group=group)
 
-    def mousePressEvent(self,event):
+    def mousePressEvent(self, a0):
         """Checks which mouse button was pressed and calls the appropriate function."""
 
+        #super().mousePressEvent(a0)
+
         modifiers = QApplication.keyboardModifiers()
-        leftbutton = event.button() == Qt.MouseButton.LeftButton
-        rightbutton = event.button() == Qt.MouseButton.RightButton
-        middlebutton = event.button() == Qt.MouseButton.MiddleButton
-        ctrl = modifiers == Qt.KeyboardModifier.ControlModifier
+        leftbutton = a0.button() == Qt.MouseButton.LeftButton
+        middlebutton = a0.button() == Qt.MouseButton.MiddleButton
+        alt = modifiers == Qt.KeyboardModifier.AltModifier
+        shift = modifiers == Qt.KeyboardModifier.ShiftModifier
         nomod = modifiers == Qt.KeyboardModifier.NoModifier
 
         # Check if key is bound with marking the image
         for group, binds in config.MARK_KEYBINDS.items():
-            if (event.button() in binds) and nomod: self.mark(group=group)
+            if (a0.button() in binds) and nomod: self.mark(group=group)
 
-        if middlebutton or (ctrl and leftbutton): self.image_view.center_cursor()
-
-        if rightbutton: self.del_usermarks()
-
-    def mouseMoveEvent(self, event):
+        if middlebutton or (alt and leftbutton): self.image_view.center_cursor()
+        if shift and leftbutton: self.del_usermarks(mode='cursor')
+        
+    def mouseMoveEvent(self, a0):
         """Operations executed when the mouse cursor is moved."""
 
+        super().mouseMoveEvent(a0)
         self.update_pos()
 
     def closeEvent(self, a0):
@@ -1500,10 +1504,11 @@ class MainWindow(QMainWindow):
         
         file = src.split(os.sep)[-1]
         dst = os.path.join(config.SAVE_DIR,'imports')
-        mark_out_path = shutil.copy(src,dst)
+        mark_dst = shutil.copy(src,dst)
 
         self.images, imageless_marks = io.load_markfile(self.images,
-                                                        mark_out_path = mark_out_path)
+                                                        mark_dst = mark_dst)
+            
         self.imageless_marks += imageless_marks
 
         self.update_marks()
@@ -1556,19 +1561,13 @@ class MainWindow(QMainWindow):
             marks = self.image.dupe_marks
         else:
             marks = self.image.marks
-        
-        x_pos = self.image_view.mouse_pix_pos(correction=False).x()
-        y_pos = self.image_view.mouse_pix_pos(correction=False).y()
-        pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
-        selected_marks = [mark for mark in marks 
-                            if mark.shapeitem is self.image_scene.itemAt(pix_pos, mark.shapeitem.transform())]
-        selected_marks_dist = [np.abs( dist([x_pos, y_pos], [mark.center.x(), mark.center.y()]) ) for mark in selected_marks]
 
-        try:
-            mark_to_copy = selected_marks[np.argmin(selected_marks_dist)]
+        selected_marks = [mark for mark in marks if mark.isSelected()]
 
-        except:
-            return
+        if len(selected_marks) == 0:
+            return 
+        else:
+            mark_to_copy = selected_marks[-1]
 
         if has_wcs:
             ra, dec = mark_to_copy.wcs_center
@@ -1619,6 +1618,7 @@ class MainWindow(QMainWindow):
 
         if len(marks) >= 1: marks[-1].label.enter()
 
+
         marks_action = [action for action in self.mark_menu.menus[self.markpath].actions() if action.text() == "&Show Marks"][0]
         labels_action = [action for action in self.mark_menu.menus[self.markpath].actions() if action.text() == "&Show Mark Labels"][0]
 
@@ -1640,13 +1640,14 @@ class MainWindow(QMainWindow):
             else: mark.label.hide()
 
             if marks_enabled: 
-                mark.shapeitem.show()
+                mark.show()
                 if labels_enabled: mark.label.show()
             else: 
-                mark.shapeitem.hide()
+                mark.hide()
                 mark.label.hide()
 
             self.save()
+        
         
         if len(marks) == 0:
             marks_action.setEnabled(False)
@@ -1865,20 +1866,23 @@ class MainWindow(QMainWindow):
     def update_marks(self):
         """Redraws all marks in image."""
         
+        # Update regular marks
         if self.image.duplicate == True:
             marks = self.image.dupe_marks
         else:
             marks = self.image.marks
 
         for mark in marks: 
-            if mark.shapeitem not in self.image_scene.items():
+            if mark not in self.image_scene.items():
                 self.image_scene.mark(mark)
 
+        # Update imageless marks
         for mark in self.imageless_marks:
             mark.image = self.image
             x,y = mark.center.x(), mark.center.y()
-            if self.inview(x,y) and not (mark.shapeitem in self.image_scene.items()):
+            if self.inview(x,y) and not (mark in self.image_scene.items()):
                 self.image_scene.mark(mark)
+                mark.show()
             mark.image = None
         
         self.update_mark_menu()
@@ -1900,31 +1904,31 @@ class MainWindow(QMainWindow):
                 del self.mark_menu.menus[path]
 
     def del_markfile(self, path):
-        """Deletes marks, either the selected one or all."""
+        """Deletes a markfile."""
 
         if path == self.markpath:
             if self.image.duplicate == True:
-                marks = [mark for mark in self.image.dupe_marks if mark.path == path]
+                marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
             else:
-                marks = [mark for mark in self.image.marks if mark.path == path]
+                marks = [mark for mark in self.image.marks if mark.dst == path]
         
         else:
             marks = []
             for image in self.images:
                 if image.duplicate == True:
-                    _marks = [mark for mark in self.image.dupe_marks if mark.path == path]
+                    _marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
                 else:
-                    _marks = [mark for mark in self.image.marks if mark.path == path]
+                    _marks = [mark for mark in self.image.marks if mark.dst == path]
 
                 marks += _marks
             os.remove(path)
                     
-        imageless_marks = [mark for mark in self.imageless_marks if mark.path == path]
+        imageless_marks = [mark for mark in self.imageless_marks if mark.dst == path]
 
         for mark in marks:
             self.image.undone_marks.append(mark)
 
-            if mark.shapeitem in self.image_scene.items():
+            if mark in self.image_scene.items():
                 self.image_scene.rmmark(mark)
             
             if mark in self.image.marks:
@@ -1934,16 +1938,15 @@ class MainWindow(QMainWindow):
                 self.image.dupe_marks.remove(mark)
 
         for mark in imageless_marks:
-            if hasattr(mark,'_shapeitem'):
-                if mark.shapeitem in self.image_scene.items():
-                    self.image_scene.rmmark(mark)
+            if mark in self.image_scene.items():
+                self.image_scene.rmmark(mark)
             self.imageless_marks.remove(mark)
 
         self.update_mark_menu()
         
         self.save()
     
-    def del_usermarks(self,del_all=False):
+    def del_usermarks(self,mode='selected'):
         """Deletes marks, either the selected one or all."""
         
         if self.image.duplicate == True:
@@ -1951,13 +1954,16 @@ class MainWindow(QMainWindow):
         else:
             marks = self.image.marks
 
-        if not del_all:
-            pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
+        if mode == 'all':
+            selected_marks = [mark for mark in marks if mark.dst == self.markpath]
+        elif mode == 'selected': 
             selected_marks = [mark for mark in marks 
-                              if (mark.shapeitem is self.image_scene.itemAt(pix_pos, mark.shapeitem.transform()))
-                              and (mark.path == self.markpath)]
-        else: selected_marks = [mark for mark in marks if mark.path == self.markpath]
-
+                              if (mark.dst == self.markpath) and mark.isSelected()]
+        elif mode == 'cursor':
+            pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
+            selected_marks = [mark for mark in marks if (mark is self.image_scene.itemAt(pix_pos, mark.transform()))
+                              and (mark.dst == self.markpath)]
+            
         for mark in selected_marks:
             self.image.undone_marks.append(mark)
             self.image_scene.rmmark(mark)
@@ -1999,22 +2005,22 @@ class MainWindow(QMainWindow):
         """Toggles whether or not marks are shown."""
 
         if self.image.duplicate == True:
-            marks = [mark for mark in self.image.dupe_marks if mark.path == path]
+            marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
         else:
-            marks = [mark for mark in self.image.marks if mark.path == path]
+            marks = [mark for mark in self.image.marks if mark.dst == path]
 
-        marks += [mark for mark in self.imageless_marks if hasattr(mark,'_shapeitem') and (mark.path == path)]
+        marks += [mark for mark in self.imageless_marks if (mark.dst == path)]
 
         marks_enabled = self.mark_menu.marks_action(path).isChecked()
         labels_enabled = self.mark_menu.labels_action(path).isChecked()
 
         for mark in marks:
             if marks_enabled: 
-                mark.shapeitem.show()
+                mark.show()
                 self.mark_menu.labels_action(path).setEnabled(True)
                 if labels_enabled: mark.label.show()
             else: 
-                mark.shapeitem.hide()
+                mark.hide()
                 mark.label.hide()
                 self.mark_menu.labels_action(path).setEnabled(False)
 
@@ -2022,11 +2028,11 @@ class MainWindow(QMainWindow):
         """Toggles whether or not mark labels are shown."""
 
         if self.image.duplicate == True:
-            marks = [mark for mark in self.image.dupe_marks if mark.path == path]
+            marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
         else:
-            marks = [mark for mark in self.image.marks if mark.path == path]
+            marks = [mark for mark in self.image.marks if mark.dst == path]
 
-        marks += [mark for mark in self.imageless_marks if hasattr(mark,'_shapeitem') and (mark.path == path)]
+        marks += [mark for mark in self.imageless_marks if mark.dst == path]
 
         marks_enabled = self.mark_menu.marks_action(path).isChecked()
         labels_enabled = self.mark_menu.labels_action(path).isChecked()

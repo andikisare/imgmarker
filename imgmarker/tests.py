@@ -110,7 +110,7 @@ def test_mark_delete(app:MainWindow, qtbot:QtBot):
     app.mark(group=1, test=True)
     app.mark(group=2, test=True)
     app.mark(group=3, test=True)
-    app.del_usermarks(del_all=True)
+    app.del_usermarks(mode='all')
 
     assert len(app.image_scene.items()) == 1
     assert len(app.image.marks) == 0
@@ -208,7 +208,7 @@ def test_delete_save_mark(app:MainWindow, qtbot:QtBot):
     assert ra == str(app.image.marks[0].wcs_center[0])
     assert dec == str(app.image.marks[0].wcs_center[1])
 
-    app.del_usermarks(del_all=True)
+    app.del_usermarks(mode='all')
     line0 = True
     for line in open(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')):
         if line0: line0 = False

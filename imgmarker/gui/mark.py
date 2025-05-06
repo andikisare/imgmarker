@@ -1,7 +1,6 @@
 """This module contains the `Mark` class and related classes."""
 
-from .pyqt import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
-from .pyqt import QAbstractGraphicsShapeItem as QAbstractItem
+from .pyqt import QGraphicsPathItem, QPainterPath, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
 from .. import config
 import os
 from math import nan, ceil
@@ -16,33 +15,6 @@ if TYPE_CHECKING:
 COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
            QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
            QColor(0,0,255),QColor(128,0,255),QColor(255,0,255) ]
-
-SHAPES:dict[str,type[QAbstractItem]] = {'ellipse':QGraphicsEllipseItem, 'rect':QGraphicsRectItem}
-
-'''class AbstractMark:
-    """Abstract mark containing default mark properties created using Qt framework"""
-
-    @overload
-    def __init__(self,r:int,x:int,y:int,image:'Image'=None) -> None: ...
-    @overload
-    def __init__(self,r:int,ra:float=None,dec:float=None,image:'Image'=None) -> None: ...
-    def __init__(self,*args,**kwargs):
-        self.image:'Image' = kwargs['image']
-        if 'ra' not in kwargs.keys(): 
-            self.size, x, y = args
-            self.center = QPointF(x,y)
-            self.view_center = self.center + QPointF(0.5,0.5)
-
-            if (self.image.wcs != None):
-                _x, _y = self.center.x(), self.image.height - self.center.y()
-                self.wcs_center = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
-            else: self.wcs_center = (nan, nan)
-        else:
-            self.size = args[0]
-            self.wcs_center = (kwargs['ra'],kwargs['dec'])
-            _x, _y = self.image.wcs.all_world2pix([[kwargs['ra'], kwargs['dec']]], 0)[0]
-            self.center = QPointF(_x, self.image.height-_y)
-            self.view_center = self.center + QPointF(0.5,0.5)'''
 
 class MarkLabel(QGraphicsProxyWidget):
     """Mark label and its attributes associated with a particular mark"""
@@ -99,18 +71,18 @@ class MarkLabel(QGraphicsProxyWidget):
         w = fm.boundingRect(self.lineedit.text()).width()+fm.boundingRect('AA').width()
         self.lineedit.setFixedWidth(w)
 
-class Mark:
+class Mark(QGraphicsPathItem):
     """Class for creating marks and associating label to mark"""
 
     @overload
     def __init__(self,x:int,y:int,
                  shape:str='ellipse',
-                 image:'Image'=None,group:int=0,text:str=None,color:QColor=None,size_unit:str=None,size:float=None,
+                 image:'Image'=None,group:int=0,text:str=None,color:QColor=None,size_unit:Literal['px','arcsec']=None,size:float=None,
     ) -> None: ...
     @overload
     def __init__(self,ra:float=None,dec:float=None,
                  shape:str='ellipse',
-                 image:'Image'=None,group:int=0,text:str=None,color:QColor=None,size_unit:str=None,size:float=None,
+                 image:'Image'=None,group:int=0,text:str=None,color:QColor=None,size_unit:Literal['px','arcsec']=None,size:float=None,
     ) -> None: ...
     def __init__(self,*args,**kwargs) -> None:
         
@@ -125,10 +97,11 @@ class Mark:
         # Set up some default values
         self.g = 0
         self.color = COLORS[0]
-        self.shape = SHAPES['ellipse']
-        self.size = ceil((w+h)/200)*2
-        size_unit = 'pixels'
-        self.path = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')
+        self._shape = 'ellipse'
+        self._size = ceil((w+h)/200)*2
+        self.size_unit = 'px'
+        self.dst = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')
+        self.label = QGraphicsProxyWidget()
 
         if 'group' in kwargs:
             self.g:int = kwargs['group']
@@ -143,26 +116,33 @@ class Mark:
             self.text = config.GROUP_NAMES[self.g]
 
         if 'shape' in kwargs:
-            self.shape = SHAPES[kwargs['shape']]
+            self._shape = kwargs['shape']
         
         if "size" in kwargs:
             if 'size_unit' in kwargs:
-                size_unit = kwargs['size_unit']
-            size = kwargs['size']
-            if size_unit == "arcseconds":
-                pixel_scale = proj_plane_pixel_scales(self.image.wcs)[0] * 3600
-                self.size = size / pixel_scale
-            elif size_unit == "pixels":
-                self.size = size
-            else:
-                warnings.warn("Invalid size unit for catalog marks. Valid units: arcseconds, pixels")
-                return
+                self.size_unit = kwargs['size_unit']
+            self._size = kwargs['size']
 
         if 'ra' in kwargs:
             self._wcs_center = (kwargs['ra'],kwargs['dec'])            
         else:
             self._center = QPointF(*args)
-
+        
+        super().__init__()
+        
+        self.setFlag(self.GraphicsItemFlag.ItemIsSelectable)
+    
+    @property
+    def size(self):
+        if self.size_unit == "arcsec":
+            pixel_scale = proj_plane_pixel_scales(self.image.wcs)[0] * 3600
+            return self._size / pixel_scale
+        elif self.size_unit == "px":
+            return self._size
+        else:
+            warnings.warn("Invalid size unit for catalog marks. Valid units: arcsec, px")
+            return
+        
     @property
     def center(self):
         if not hasattr(self,'_center'):
@@ -185,19 +165,29 @@ class Mark:
                 return (nan, nan)
         else:
             return self._wcs_center
-    
-    @property
-    def shapeitem(self):
-        if not hasattr(self,'_shapeitem'):
-            args = self.view_center.x()-self.size/2, self.view_center.y()-self.size/2, self.size, self.size
-            self._shapeitem = self.shape(*args)
-            self._shapeitem.setPen(QPen(self.color, int(self.size/10), Qt.PenStyle.SolidLine))
-        
-        return self._shapeitem
-    
-    @property
-    def label(self):
-        if not hasattr(self,'_label'):
-            self._label = MarkLabel(self)
-        
-        return self._label  
+
+    def show(self):
+        super().show()
+
+    def draw(self):
+        if self.path().isEmpty():
+            args = (self.view_center.x()-self.size/2,
+                    self.view_center.y()-self.size/2,
+                    self.size,
+                    self.size)
+            
+            path = QPainterPath()
+
+            if self._shape == 'ellipse':
+                path.addEllipse(*args)
+            elif self._shape == 'rect':
+                path.addRect(*args)
+            
+            self.setPath(path)
+            pen = QPen(self.color, # brush
+                    int(self.size/10), # width
+                    Qt.PenStyle.SolidLine, # style
+                    Qt.PenCapStyle.RoundCap, # cap
+                    Qt.PenJoinStyle.MiterJoin) # join
+            self.setPen(pen)
+

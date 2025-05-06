@@ -123,7 +123,7 @@ def save_imagesfile(date,images:List['image.Image']) -> None:
 
     image_rows:list[dict] = []
    
-    images_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_images.csv')
+    images_dst = os.path.join(config.SAVE_DIR,f'{config.USER}_images.csv')
 
     for img in images:
         if img.seen:
@@ -145,7 +145,7 @@ def save_imagesfile(date,images:List['image.Image']) -> None:
         
     if len(image_rows) != 0:
 
-        with open(images_out_path, 'w') as f:
+        with open(images_dst, 'w') as f:
 
             writer = csv.DictWriter(f, fieldnames=image_rows[0].keys())
             writer.writeheader()
@@ -190,7 +190,7 @@ def save_markfile(date,images:List[image.Image],imageless_marks:List[Mark]) -> N
                 row = {}
 
                 if mark != None:
-                    path = mark.path
+                    path = mark.dst
                     group_name = config.GROUP_NAMES[mark.g]
 
                     if mark.text == group_name: 
@@ -232,7 +232,7 @@ def save_markfile(date,images:List[image.Image],imageless_marks:List[Mark]) -> N
     for mark in imageless_marks:
         row = {}
         if mark != None:
-            path = mark.path
+            path = mark.dst
             group_name = config.GROUP_NAMES[mark.g]
 
             if mark.text == group_name: 
@@ -304,24 +304,22 @@ def load_markfile(images:List[image.Image],**kwargs) -> Tuple[List[image.Image],
     ----------
     images: list[`imgmarker.image.Image`]
     """
-    if 'mark_out_path' in kwargs:
-        mark_out_path = kwargs['mark_out_path']
+    if 'mark_dst' in kwargs:
+        mark_dst = kwargs['mark_dst']
     else:
-        mark_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')
+        mark_dst = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')
 
     imageless = []
     
     # Get list of marks for each image
-    if os.path.exists(mark_out_path):
-        with open(mark_out_path,'r') as f:
+    if os.path.exists(mark_dst):
+        with open(mark_dst,'r') as f:
             delimiter = '|' if '|' in f.readline() else ','
-            #print(delimiter)
             f.seek(0)
             reader = csv.DictReader(f,delimiter=delimiter)
 
             for row in reader:
                 keys = row.copy().keys()
-                #print(keys)
                 for key in keys: row[key.strip().lower()] = row.pop(key).strip()
 
                 # Default values
@@ -332,6 +330,8 @@ def load_markfile(images:List[image.Image],**kwargs) -> Tuple[List[image.Image],
                 label = 'None'
                 x,y = nan,nan
                 ra,dec = nan,nan
+                size = None
+                size_unit = None
 
                 # Values from row
                 if 'date' in row: date = row['date']
@@ -350,29 +350,52 @@ def load_markfile(images:List[image.Image],**kwargs) -> Tuple[List[image.Image],
                 if 'ra' in row: ra = float(row['ra'])
                 if 'dec' in row: dec = float(row['dec'])
 
+                if 'size(arcsec)' in row: 
+                    size = float(row['size(arcsec)'])
+                    size_unit = 'arcsec'
+                
+                if 'size(px)' in row:
+                    size = float(row['size(px)'])
+                    size_unit = 'px'
+
+                if 'size' in row:
+                    size = float(row['size'])
+                    size_unit = 'px'
+
                 if name != 'None':
                     for img in images:
                         if (name == img.name) and (not isnan(float(x))) and (not isnan(float(y))):
                             args = (float(x),float(y))
                             kwargs = {'image': img, 'group': group, 'shape': shape}
-                            if label != 'None': kwargs['text'] = label
+
+                            if label != 'None': 
+                                kwargs['text'] = label
+
+                            if size != None: 
+                                kwargs['size'] = size
+                                kwargs['size_unit'] = size_unit
+
                             mark = Mark(*args, **kwargs)
-                            mark.path = mark_out_path
+                            mark.dst = mark_dst
                             img.marks.append(mark)
 
                 else:
                     if isnan(float(ra)) and isnan(float(dec)):
                         args = (float(x),float(y))
                         kwargs = {'image': None, 'group': group, 'shape': shape}
-                        if label != 'None': kwargs['text'] = label
-                        
                     else:
                         args = ()
                         kwargs = {'image': None,'group': group, 'shape': shape, 'ra': ra, 'dec': dec}
-                        if label != 'None': kwargs['text'] = label
+
+                    if label != 'None': 
+                        kwargs['text'] = label
+
+                    if size != None: 
+                        kwargs['size'] = size
+                        kwargs['size_unit'] = size_unit
                     
                     mark = Mark(*args, **kwargs)
-                    mark.path = mark_out_path
+                    mark.dst = mark_dst
                     imageless.append(mark)
 
     return images, imageless
@@ -387,12 +410,12 @@ def load_imagesfile() -> Tuple[List[image.Image],List[Mark]]:
     images: list[`imgmarker.image.Image`]
     """
 
-    images_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_images.csv')
+    images_dst = os.path.join(config.SAVE_DIR,f'{config.USER}_images.csv')
     images:List[image.Image] = []
     
     # Get list of images from images.csv
-    if os.path.exists(images_out_path):
-        with open(images_out_path,'r') as f:
+    if os.path.exists(images_dst):
+        with open(images_dst,'r') as f:
             delimiter = '|' if '|' in f.readline() else ','
             f.seek(0)
             reader = csv.DictReader(f,delimiter=delimiter)

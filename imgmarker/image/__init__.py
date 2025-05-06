@@ -1,7 +1,7 @@
 """This module contains code for the `Image` class and image manipulation."""
 
-from ..gui.pyqt import QImage, QGraphicsPixmapItem, QGraphicsView, QGraphicsScene, QPixmap, Qt, QPointF
-from ..gui import Mark
+from ..gui.pyqt import QImage, QGraphicsPixmapItem, QGraphicsView, QGraphicsScene, QPixmap, Qt, QPointF, QApplication
+from ..gui import Mark, MarkLabel
 from io import StringIO
 import os
 from math import floor
@@ -16,6 +16,7 @@ from .convolution import gaussian_filter
 from astropy.wcs import WCS
 from enum import Enum
 from copy import copy, deepcopy
+import warnings
 
 class Interval:
     ZSCALE = ZScaleInterval()
@@ -292,7 +293,7 @@ class Image(QGraphicsPixmapItem):
                     metadata['wcs'] = read_wcs(f[self.frame])
                     
                 except:
-                    print(f"File \"{self.name}\" is not compatible and will not be loaded. Skipping \"{self.name}\".")
+                    warnings.warn(f"File \"{self.name}\" is not compatible and will not be loaded. Skipping \"{self.name}\".")
                     self.incompatible = True
                     return None
 
@@ -424,6 +425,15 @@ class ImageScene(QGraphicsScene):
         self.addItem(self.image)
         self.setSceneRect(-4*self.image.width,-4*self.image.height,9*self.image.width,9*self.image.height)
 
+    def mousePressEvent(self, event):
+        modifiers = QApplication.keyboardModifiers()
+        leftbutton = event.button() == Qt.MouseButton.LeftButton
+        shift = modifiers == Qt.KeyboardModifier.ShiftModifier
+        if not (leftbutton and shift):
+            return super().mousePressEvent(event)
+        
+    
+
     def update_image(self,image:Image):
         """Updates the current image with a new image."""
         # Remove items
@@ -446,14 +456,16 @@ class ImageScene(QGraphicsScene):
 
         if len(args) == 1: mark = args[0]
         else: mark = Mark(*args,image=self.image,**kwargs)
+        mark.draw()
+        mark.label = MarkLabel(mark)
+        self.addItem(mark)
         self.addItem(mark.label)
-        self.addItem(mark.shapeitem)
         return mark
     
     def rmmark(self,mark:'Mark') -> None:
         """Removes the specified mark from the image scene."""
 
-        self.removeItem(mark.shapeitem)
+        self.removeItem(mark)
         self.removeItem(mark.label)
 
 class ImageView(QGraphicsView):
@@ -479,7 +491,7 @@ class ImageView(QGraphicsView):
         #Install event filter for zooming
         self.viewport().installEventFilter(self)
 
-    def eventFilter(self, source, event):
+    def eventFilter(self, a0, a1):
         """
         Performs operations based on the event source and type.
 
@@ -495,12 +507,12 @@ class ImageView(QGraphicsView):
         True if the event triggered an some operation.
         """
 
-        if (source == self.viewport()) and (event.type() == 31):
-            x = event.angleDelta().y()/120
+        if (a0 == self.viewport()) and (a1.type() == 31):
+            x = a1.angleDelta().y()/120
             self.zoom(1.2**(-x))
             return True
 
-        return super().eventFilter(source, event)
+        return super().eventFilter(a0, a1)        
     
     def scene(self) -> ImageScene:
         """Returns the associated image scene."""
