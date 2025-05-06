@@ -13,14 +13,6 @@ Subpackages
 Submodules
 ----------
 
-imgmarker.catalog module
-------------------------
-
-.. automodule:: imgmarker.catalog
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 imgmarker.config module
 -----------------------
 

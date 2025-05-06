@@ -65,10 +65,10 @@ Below is a table of the keybindings.
      - :kbd:`F`
    * - Open Save...
      - :kbd:`Ctrl` + :kbd:`O`
-   * - Open Images...
-     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`O`
-   * - Open Catalog...
-     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`C`
+   * - Import Images...
+     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`I`
+   * - Import Mark File...
+     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`M`
    * - Settings
      - :kbd:`Ctrl` + :kbd:`,`
    * - Zoom In
@@ -83,10 +83,6 @@ Below is a table of the keybindings.
      - :kbd:`Ctrl` + :kbd:`M`
    * - Show Mark Labels
      - :kbd:`Ctrl` + :kbd:`L`
-   * - Show Catalog
-     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`M`
-   * - Show Catalog Labels
-     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`L`
    * - Gaussian Blur...
      - :kbd:`Ctrl` + :kbd:`B`
    * - Controls
