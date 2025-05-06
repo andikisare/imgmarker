@@ -3,7 +3,7 @@
 import os
 from getpass import getuser
 from typing import Tuple, List
-from .gui.pyqt import Qt, QKeyCombination
+from .gui.pyqt import Qt, QKeyCombination, QColor
 from glob import glob
 
 SAVE_DIR = os.path.expanduser('~')
@@ -11,6 +11,9 @@ USER = getuser()
 IMAGE_DIR = None
 GROUP_NAMES = ['None','1','2','3','4','5','6','7','8','9']
 GROUP_SHAPES = ['rect'] + ['ellipse']*9
+GROUP_COLORS = [QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
+                QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
+                QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
 CATEGORY_NAMES = ['None','1','2','3','4','5']
 GROUP_MAX = ['None','None','None','None','None','None','None','None','None']
 RANDOMIZE_ORDER = False

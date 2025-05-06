@@ -12,10 +12,6 @@ import warnings
 if TYPE_CHECKING:
     from imgmarker.image import Image 
 
-COLORS = [ QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
-           QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
-           QColor(0,0,255),QColor(128,0,255),QColor(255,0,255) ]
-
 class MarkLabel(QGraphicsProxyWidget):
     """Mark label and its attributes associated with a particular mark"""
 
@@ -96,16 +92,16 @@ class Mark(QGraphicsPathItem):
 
         # Set up some default values
         self.g = 0
-        self.color = COLORS[0]
+        self.color = config.GROUP_COLORS[0]
         self._shape = 'ellipse'
         self._size = ceil((w+h)/200)*2
         self.size_unit = 'px'
         self.dst = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')
-        self.label = QGraphicsProxyWidget()
+        self.label:MarkLabel = QGraphicsProxyWidget()
 
         if 'group' in kwargs:
             self.g:int = kwargs['group']
-            self.color = COLORS[self.g]
+            self.color = config.GROUP_COLORS[self.g]
 
         if 'picked_color' in kwargs:
             self.color = kwargs["picked_color"]
@@ -170,24 +166,23 @@ class Mark(QGraphicsPathItem):
         super().show()
 
     def draw(self):
-        if self.path().isEmpty():
-            args = (self.view_center.x()-self.size/2,
-                    self.view_center.y()-self.size/2,
-                    self.size,
-                    self.size)
-            
-            path = QPainterPath()
+        args = (self.view_center.x()-self.size/2,
+                self.view_center.y()-self.size/2,
+                self.size,
+                self.size)
+        
+        path = QPainterPath()
 
-            if self._shape == 'ellipse':
-                path.addEllipse(*args)
-            elif self._shape == 'rect':
-                path.addRect(*args)
-            
-            self.setPath(path)
-            pen = QPen(self.color, # brush
-                    int(self.size/10), # width
-                    Qt.PenStyle.SolidLine, # style
-                    Qt.PenCapStyle.RoundCap, # cap
-                    Qt.PenJoinStyle.MiterJoin) # join
-            self.setPen(pen)
+        if self._shape == 'ellipse':
+            path.addEllipse(*args)
+        elif self._shape == 'rect':
+            path.addRect(*args)
+        
+        self.setPath(path)
+        pen = QPen(self.color, # brush
+                int(self.size/10), # width
+                Qt.PenStyle.SolidLine, # style
+                Qt.PenCapStyle.RoundCap, # cap
+                Qt.PenJoinStyle.MiterJoin) # join
+        self.setPen(pen)
 

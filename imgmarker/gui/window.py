@@ -8,7 +8,7 @@ from .pyqt import (
     QLineEdit, QFileDialog, QIcon, QFont, QAction, 
     Qt, QPoint, QSpinBox, QMessageBox, QTableWidget, 
     QTableWidgetItem, QHeaderView, QShortcut,
-    QDesktopServices, QUrl, QMenu, PYQT_VERSION_STR
+    QDesktopServices, QUrl, QMenu, QColorDialog, PYQT_VERSION_STR
 )
 from . import Screen
 from .. import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
@@ -226,462 +226,16 @@ class SettingsWindow(QWidget):
             if image.duplicate == True: marks = image.dupe_marks
             else: marks = image.marks
             for mark in marks:
-                if mark.label.lineedit.text() in group_names_old:
-                    mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
+                try:
+                    if mark.label.lineedit.text() in group_names_old:
+                        mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
+                except: pass
 
         # Update text in the controls window 
         self.mainwindow.controls_window.update_text()
 
         # Save the new settings into the config file
         config.update()
-
-class ColorPickerWindow(QDialog):
-    """Class for the window for color picker."""
-
-    def __init__(self,mainwindow:'MainWindow'):
-        super().__init__()
-        
-        self.setWindowTitle("Color picker")
-
-        # This is the main vertical layout, and is the main layout overall, for the window that everything will be added to
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-        self.mainwindow = mainwindow
-        MainWindow.picked_color = None
-        # Use this for dynamic scaling of preview box based on screen resolution
-        window_width = int(Screen.width()/3)
-        
-        # Default color options
-        # These buttons are just the whole top row in the main layout
-        self.default_color_label = QLabel()
-        self.default_color_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.default_color_label.setText("Default colors")
-
-        default_color_list = ["Red", "Orange", "Yellow", "Green", "Blue", "Cyan", "Purple", "Black", "White"]
-        default_color_functions = [self.default_red,self.default_orange,self.default_yellow,self.default_green,
-                                   self.default_blue,self.default_cyan,self.default_purple,self.default_black,
-                                   self.default_white]
-        self.default_color_boxes = []
-        for i, color in enumerate(default_color_list):
-            colorbox = QPushButton(text=color)
-            colorbox.setFixedHeight(30)
-            colorbox.setFixedWidth(int(window_width/8))
-            colorbox.clicked.connect(default_color_functions[i])
-            self.default_color_boxes.append(colorbox)
-
-        self.default_color_box_layout = QHBoxLayout()
-        for colorbox in self.default_color_boxes: self.default_color_box_layout.addWidget(colorbox)
-
-        # Left and right vertical layouts are self-explanatory, main horizontal layout is the only other layout
-        # that gets added to the main vertical layout, "layout"
-        left_vertical_layout = QVBoxLayout()
-        right_vertical_layout = QVBoxLayout()
-        main_horizontal_layout = QHBoxLayout()
-
-        # RGB inputs
-        # This layout contains the row with RGB labels, as opposed to just adding a QLabel to the left horizontal layout,
-        # in order to allow for dynamic spacing
-        horizontal_RGB_label_layout = QHBoxLayout()
-
-        self.RGB_spinbox_labels_list = ["R", "G", "B"]
-
-        for i in range(0,3):
-            RGB_label = QLabel()
-            RGB_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            RGB_label.setText(self.RGB_spinbox_labels_list[i])
-            horizontal_RGB_label_layout.addWidget(RGB_label)
-
-        self.RGB_spinbox_functions = [self.R, self.G, self.B]
-
-        # This layout is the row containing the RGB spinboxes
-        self.RGB_spinboxes_layout = QHBoxLayout()
-        self.RGB_spinboxes = []
-
-        for i in range(0,3):
-            RGB_spinbox = QSpinBox()
-            RGB_spinbox.setFixedHeight(30)
-            RGB_spinbox.setFixedWidth(50)
-
-            # This forces the values to be 8 bit (sorry, you don't need more colors)
-            RGB_spinbox.setRange(0,255)
-            RGB_spinbox.valueChanged.connect(self.RGB_spinbox_functions[i])
-            self.RGB_spinboxes_layout.addWidget(RGB_spinbox)
-            
-            # Store the spinboxes in a class variable to be accessed later by syncing functions and for
-            # making colors
-            self.RGB_spinboxes.append(RGB_spinbox)
-
-        self.RGB_spinboxes_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # These margins space out the labels to line up with the spinboxes, but this hasn't been tested on
-        # a different resolution screen (only 1920x1080), so relative values using screen width may be required down the line
-        horizontal_RGB_label_layout.setContentsMargins(55,0,55,0)
-        left_vertical_layout.addLayout(horizontal_RGB_label_layout)
-        left_vertical_layout.addLayout(self.RGB_spinboxes_layout)
-
-        # The remaining unexplained layouts, variables, and loops follow the same idea as the RGB layouts
-
-        # HSV inputs
-        horizontal_HSV_label_layout = QHBoxLayout()
-        self.HSV_spinbox_labels_list = ["H", "S", "V"]
-
-        for i in range(0,3):
-            HSV_label = QLabel()
-            HSV_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            HSV_label.setText(self.HSV_spinbox_labels_list[i])
-            horizontal_HSV_label_layout.addWidget(HSV_label)
-
-        self.HSV_spinbox_functions = [self.H, self.S, self.V]
-        self.HSV_spinboxes_layout = QHBoxLayout()
-        self.HSV_spinboxes = []
-
-        for i in range(0,3):
-            HSV_spinbox = QSpinBox()
-            HSV_spinbox.setFixedHeight(30)
-            HSV_spinbox.setFixedWidth(50)
-            HSV_spinbox.setRange(0,255)
-            HSV_spinbox.valueChanged.connect(self.HSV_spinbox_functions[i])
-            self.HSV_spinboxes_layout.addWidget(HSV_spinbox)
-            self.HSV_spinboxes.append(HSV_spinbox)
-
-        self.HSV_spinboxes_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        horizontal_HSV_label_layout.setContentsMargins(55,0,55,0)
-        left_vertical_layout.addWidget(QHLine())
-        left_vertical_layout.addLayout(horizontal_HSV_label_layout)
-        left_vertical_layout.addLayout(self.HSV_spinboxes_layout)
-
-        # CMYK inputs
-        horizontal_CMYK_label_layout = QHBoxLayout()
-        self.CMYK_spinbox_labels_list = ["C", "M", "Y", "K"]
-
-        for i in range(0,4):
-            CMYK_label = QLabel()
-            CMYK_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            CMYK_label.setText(self.CMYK_spinbox_labels_list[i])
-            horizontal_CMYK_label_layout.addWidget(CMYK_label)
-
-        self.CMYK_spinbox_functions = [self.C, self.M, self.Y, self.K]
-        self.CMYK_spinboxes_layout = QHBoxLayout()
-        self.CMYK_spinboxes = []
-
-        for i in range(0,4):
-            CMYK_spinbox = QSpinBox()
-            CMYK_spinbox.setFixedHeight(30)
-            CMYK_spinbox.setFixedWidth(50)
-            CMYK_spinbox.setRange(0,100)
-            CMYK_spinbox.valueChanged.connect(self.CMYK_spinbox_functions[i])
-            self.CMYK_spinboxes_layout.addWidget(CMYK_spinbox)
-            self.CMYK_spinboxes.append(CMYK_spinbox)
-
-        self.CMYK_spinboxes_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        horizontal_CMYK_label_layout.setContentsMargins(35,0,35,0)
-        left_vertical_layout.addWidget(QHLine())
-        left_vertical_layout.addLayout(horizontal_CMYK_label_layout)
-        left_vertical_layout.addLayout(self.CMYK_spinboxes_layout)
-
-        # Hex code input
-        # This layout is solely to allow for adding the # symbol to the left of the input
-        self.hex_line_layout = QHBoxLayout()
-
-        self.hex_label = QLabel()
-        self.hex_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.hex_label.setText("Hex code color")
-
-        self.hex_pound = QLabel()
-        self.hex_pound.setText("#")
-        self.hex_pound.setAlignment(Qt.AlignmentFlag.AlignRight)
-
-        self.hex_input = QLineEdit()
-        # setInputMask allows us to force only hexadecimal values to be inputted (H) using meta characters provided
-        # by the Qt framework for QLineEdit: https://doc.qt.io/qt-6/qlineedit.html#inputMask-prop
-        self.hex_input.setInputMask("HHHHHH;*")
-        self.hex_input.textChanged.connect(self.hex)
-
-        self.hex_line_layout.addWidget(self.hex_pound)
-        self.hex_line_layout.addWidget(self.hex_input)
-
-        left_vertical_layout.addWidget(QHLine())
-        left_vertical_layout.addWidget(self.hex_label)
-        left_vertical_layout.addLayout(self.hex_line_layout)
-
-        # Preview box
-        self.preview_label = QLabel()
-        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview_label.setText("Color preview")
-
-        self.preview_box = QGraphicsScene()
-        self.color = QColor("Red")
-        self.preview_box.setBackgroundBrush(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-        self.preview_box.setSceneRect(0,0,window_width/6,window_width/3)
-        self.preview_box_view = QGraphicsView(self.preview_box)
-        right_vertical_layout.addWidget(self.preview_label)
-        right_vertical_layout.addWidget(self.preview_box_view)
-
-        # Cancel/apply buttons
-        cancel_apply_button_layout = QHBoxLayout()
-
-        self.cancel_button = QPushButton()
-        self.cancel_button.setFixedHeight(30)
-        self.cancel_button.setText("Cancel")
-        self.cancel_button.clicked.connect(self.cancel)
-
-        self.apply_button = QPushButton()
-        self.apply_button.setFixedHeight(30)
-        self.apply_button.setText("Apply")
-        self.apply_button.clicked.connect(self.apply)
-
-        cancel_apply_button_layout.addWidget(self.cancel_button)
-        cancel_apply_button_layout.addWidget(self.apply_button)
-        right_vertical_layout.addLayout(cancel_apply_button_layout)
-
-        # Main layout
-        main_horizontal_layout.addLayout(left_vertical_layout)
-        main_horizontal_layout.addWidget(QVLine())
-        main_horizontal_layout.addLayout(right_vertical_layout)
-        layout.addWidget(self.default_color_label)
-        layout.addLayout(self.default_color_box_layout)
-        layout.addWidget(QHLine())
-        layout.addLayout(main_horizontal_layout)
-
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFixedWidth(int(Screen.width()/2.5))
-        self.setFixedHeight(layout.sizeHint().height())
-
-        # Set position of window
-        qt_rectangle = self.frameGeometry()
-        qt_rectangle.moveCenter(Screen.center())
-        self.move(qt_rectangle.topLeft())
-
-    # Default color setters
-
-    def default_red(self):
-        self.color = QColor("Red")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_orange(self):
-        self.color = QColor("Orange")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_yellow(self):
-        self.color = QColor("Yellow")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_green(self):
-        self.color = QColor("Green")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_blue(self):
-        self.color = QColor("Blue")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_cyan(self):
-        self.color = QColor("Cyan")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_purple(self):
-        self.color = QColor("Purple")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_black(self):
-        self.color = QColor("Black")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_white(self):
-        self.color = QColor("White")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def R(self):
-        self.color = self.make_QColor_from_RGB()
-        self.update_preview(self.color)
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def G(self):
-        self.color = self.make_QColor_from_RGB()
-        self.update_preview(self.color)
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def B(self):
-        self.color = self.make_QColor_from_RGB()
-        self.update_preview(self.color)
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def H(self):
-        self.color = self.make_QColor_from_HSV()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def S(self):
-        self.color = self.make_QColor_from_HSV()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def V(self):
-        self.color = self.make_QColor_from_HSV()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def C(self):
-        self.color = self.make_QColor_from_CMYK()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_hex()
-
-    def M(self):
-        self.color = self.make_QColor_from_CMYK()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_hex()
-
-    def Y(self):
-        self.color = self.make_QColor_from_CMYK()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_hex()
-
-    def K(self):
-        self.color = self.make_QColor_from_CMYK()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_hex()
-
-    def hex(self):
-        hex_code = "#" + str(self.hex_input.text())
-        self.color = QColor(hex_code)
-        self.update_preview(self.color)
-
-    def make_QColor_from_RGB(self): 
-        R = self.RGB_spinboxes[0].value()
-        G = self.RGB_spinboxes[1].value()
-        B = self.RGB_spinboxes[2].value()
-
-        return QColor(R, G, B)
-
-    def make_QColor_from_HSV(self):
-        H = self.HSV_spinboxes[0].value()
-        S = self.HSV_spinboxes[1].value()
-        V = self.HSV_spinboxes[2].value()
-        
-        return QColor.fromHsv(H, S, V)
-
-    def make_QColor_from_CMYK(self):
-        C = self.CMYK_spinboxes[0].value()
-        M = self.CMYK_spinboxes[1].value()
-        Y = self.CMYK_spinboxes[2].value()
-        K = self.CMYK_spinboxes[3].value()
-
-        return QColor.fromCmyk(C, M, Y, K)
-
-    def sync_RGB(self):
-        red = self.color.red()
-        green = self.color.green()
-        blue = self.color.blue()
-        rgb = [red, green, blue]
-
-        for i, spinbox in enumerate(self.RGB_spinboxes):
-            spinbox.blockSignals(True)
-            spinbox.setValue(rgb[i])
-            spinbox.blockSignals(False)
-
-    def sync_HSV(self):
-        hue = self.color.hsvHue()
-        saturation = self.color.hsvSaturation()
-        value = self.color.value()
-        hsv = [hue, saturation, value]
-
-        for i, spinbox in enumerate(self.HSV_spinboxes):
-            spinbox.blockSignals(True)
-            spinbox.setValue(hsv[i])
-            spinbox.blockSignals(False)
-
-    def sync_CMYK(self):
-        cyan = self.color.cyan()
-        magenta = self.color.magenta()
-        yellow = self.color.yellow()
-        black = self.color.black()
-        cmyk = [cyan, magenta, yellow, black]
-        
-        for i, spinbox in enumerate(self.CMYK_spinboxes):
-            spinbox.blockSignals(True)
-            spinbox.setValue(cmyk[i])
-            spinbox.blockSignals(False)
-
-    def sync_hex(self):
-        hex = self.color.name()
-        stripped_hex = hex.replace("#", "")
-        self.hex_input.blockSignals(True)
-        self.hex_input.setText(stripped_hex)
-        self.hex_input.blockSignals(False)
-
-    def update_preview(self, color):
-        self.preview_box.setBackgroundBrush(color)
-
-    def apply(self):
-        MainWindow.picked_color = self.color
-        self.close()
-
-    def cancel(self):
-        MainWindow.picked_color = None
-        self.close()
-
-    def show(self):
-        super().show()
-        self.activateWindow()
 
 class BlurWindow(QWidget):
     """Class for the blur adjustment window."""
@@ -874,15 +428,16 @@ class AboutWindow(QWidget):
         self.activateWindow()
 
 class MarkMenu(QMenu):
-    def __init__(self):
+    def __init__(self,mainwindow:'MainWindow'):
         super().__init__()
         self.menus:dict[str,QMenu] = {}
+        self.mainwindow = mainwindow
         self.setTitle('&Mark')
 
-    def menu_setup(self,path:str,window:'MainWindow'):
+    def menu_setup(self,path:str):
         file = path.split(os.sep)[-1]
 
-        if path == window.markpath:
+        if path == self.mainwindow.markpath:
             self.menus[path] = QMenu(f'&{file} (default)')
         else:
             self.menus[path] = QMenu(f'&{file}')
@@ -892,17 +447,17 @@ class MarkMenu(QMenu):
         marks_action.setShortcuts(['Ctrl+m'])
         marks_action.setCheckable(True)
         marks_action.setChecked(True)
-        marks_action.triggered.connect(partial(window.toggle_marks,path))
+        marks_action.triggered.connect(partial(self.mainwindow.toggle_marks,path))
         self.menus[path].addAction(marks_action)
         
         ### Toggle mark labels menu
         labels_action = QAction('&Show Mark Labels', self)
         labels_action.setCheckable(True)
         labels_action.setChecked(True)
-        labels_action.triggered.connect(partial(window.toggle_mark_labels,path))
+        labels_action.triggered.connect(partial(self.mainwindow.toggle_mark_labels,path))
         self.menus[path].addAction(labels_action)
 
-        if window.n_marks(path) == 0:
+        if self.mainwindow.n_marks(path) == 0:
             marks_action.setEnabled(False)
             labels_action.setEnabled(False)
         else:
@@ -911,23 +466,23 @@ class MarkMenu(QMenu):
 
         self.menus[path].addSeparator()
 
-        if path == window.markpath:
+        if path == self.mainwindow.markpath:
             labels_action.setShortcuts(['Ctrl+l'])
 
             del_marks_action = QAction(f'Delete Marks in Current Image', self)
-            del_marks_action.triggered.connect(partial(window.del_usermarks,'all'))
+            del_marks_action.triggered.connect(partial(self.mainwindow.del_usermarks,'all'))
             self.menus[path].addAction(del_marks_action)
         else:
             labels_action.setShortcuts(['Ctrl+Shift+l'])
 
             del_file_action = QAction(f'Delete', self)
-            del_file_action.triggered.connect(partial(window.del_markfile,path))
+            del_file_action.triggered.connect(partial(self.mainwindow.del_markfile,path))
             self.menus[path].addAction(del_file_action)
 
         self.addMenu(self.menus[path])
 
-    def update_menu(self,path:str,window:'MainWindow'):
-        if window.n_marks(path) == 0:
+    def update_menu(self,path:str):
+        if self.mainwindow.n_marks(path) == 0:
             self.marks_action(path).setEnabled(False)
             self.labels_action(path).setEnabled(False)
         else:
@@ -1126,11 +681,17 @@ class MainWindow(QMainWindow):
         redo_mark_action.triggered.connect(self.redo_prev_mark)
         edit_menu.addAction(redo_mark_action)
 
+        edit_menu.addSeparator()
+
+        color_action = QAction('&Default Color...', self)
+        color_action.triggered.connect(self.update_colors)
+        color_action.setToolTip('Edit color of marks that aren\'t part of a group')
+        edit_menu.addAction(color_action)
+
         ### Settings menu
         edit_menu.addSeparator()
         settings_action = QAction('&Settings...', self)
         settings_action.setShortcuts(['Ctrl+,'])
-        settings_action.setToolTip('Randomize the order in which images appear')
         settings_action.triggered.connect(self.settings_window.show)
         edit_menu.addAction(settings_action)
 
@@ -1223,10 +784,11 @@ class MainWindow(QMainWindow):
         zscale_action.triggered.connect(partial(zscale_action.setChecked,True))
 
         ### Marks Menu
-        self.mark_menu = MarkMenu()
+        self.mark_menu = MarkMenu(self)
+        self.mark_menu.setToolTipsVisible(True)
         for path in io.markpaths():
-            self.mark_menu.menu_setup(path,self)
-                
+            self.mark_menu.menu_setup(path)
+
         menubar.addMenu(self.mark_menu)
 
         ## Help menu
@@ -1445,8 +1007,10 @@ class MainWindow(QMainWindow):
             if image.duplicate == True: marks = image.dupe_marks
             else: marks = image.marks
             for mark in marks:
-                if mark.label.lineedit.text() in group_names_old:
-                    mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
+                try:
+                    if mark.label.lineedit.text() in group_names_old:
+                        mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
+                except: pass
 
         self.__init_data__()
         self.settings_window.__init__(self)
@@ -1616,8 +1180,9 @@ class MainWindow(QMainWindow):
 
         marks_in_group = [m for m in marks if m.g == group]
 
-        if len(marks) >= 1: marks[-1].label.enter()
-
+        try: 
+            if len(marks) >= 1: marks[-1].label.enter()
+        except: pass
 
         marks_action = [action for action in self.mark_menu.menus[self.markpath].actions() if action.text() == "&Show Marks"][0]
         labels_action = [action for action in self.mark_menu.menus[self.markpath].actions() if action.text() == "&Show Mark Labels"][0]
@@ -1892,9 +1457,9 @@ class MainWindow(QMainWindow):
     def update_mark_menu(self):
         for path in io.markpaths():
             if path not in self.mark_menu.menus:
-                self.mark_menu.menu_setup(path,self)
+                self.mark_menu.menu_setup(path)
             else:
-                self.mark_menu.update_menu(path,self)
+                self.mark_menu.update_menu(path)
                 self.toggle_marks(path)
                 self.toggle_mark_labels(path)
 
@@ -1902,6 +1467,27 @@ class MainWindow(QMainWindow):
         for path in menu_paths:
             if path not in io.markpaths():
                 del self.mark_menu.menus[path]
+
+    def update_colors(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            config.GROUP_COLORS[0] = color
+        
+        if self.image.duplicate == True:
+            marks = self.image.dupe_marks
+        else:
+            marks = self.image.marks
+        
+        marks += self.imageless_marks
+
+        for mark in marks:
+            if mark.g == 0:
+                mark.color = color
+                if mark in self.image_scene.items():
+                    mark.setPen(color)
+                    mark.label.lineedit.setStyleSheet(f"""background-color: rgba(0,0,0,0);
+                                                      border: none; 
+                                                      color: rgba{color.getRgb()}""")
 
     def del_markfile(self, path):
         """Deletes a markfile."""

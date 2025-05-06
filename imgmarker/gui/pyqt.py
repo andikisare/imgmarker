@@ -21,7 +21,7 @@ except:
         QSlider, QLineEdit, QFileDialog, QFrame, QDialog,
         QSizePolicy, QGraphicsPathItem, QGraphicsProxyWidget,
         QLineEdit, QGraphicsScene, QGraphicsPixmapItem, QAction, QSpinBox, QMessageBox,
-        QTableWidget, QTableWidgetItem, QHeaderView, QMenu
+        QTableWidget, QTableWidgetItem, QHeaderView, QMenu, QColorDialog
     )
     from PyQt5.QtGui import QIcon, QFont, QPen, QColor, QPixmap, QPainter, QPainterPath, QImage, QShortcut, QDesktopServices
     from PyQt5.QtCore import Qt, QPoint, QPointF, QEvent, PYQT_VERSION_STR
