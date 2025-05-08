@@ -1497,31 +1497,40 @@ class MainWindow(QMainWindow):
                 marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
             else:
                 marks = [mark for mark in self.image.marks if mark.dst == path]
+
+            for mark in marks:
+                self.image.undone_marks.append(mark)
+
+                if mark in self.image_scene.items():
+                    self.image_scene.rmmark(mark)
+                
+                if mark in self.image.marks:
+                    self.image.marks.remove(mark)
+
+                if mark in self.image.dupe_marks:
+                    self.image.dupe_marks.remove(mark)
         
         else:
-            marks = []
             for image in self.images:
                 if image.duplicate == True:
-                    _marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
+                    marks = [mark for mark in image.dupe_marks if os.path.samefile(mark.dst, path)]
+                    
                 else:
-                    _marks = [mark for mark in self.image.marks if mark.dst == path]
+                    marks = [mark for mark in image.marks if os.path.samefile(mark.dst, path)]
 
-                marks += _marks
+                for mark in marks:
+                    if mark in self.image_scene.items():
+                        self.image_scene.rmmark(mark)
+
+                    if mark in image.marks:
+                        image.marks.remove(mark)
+                    
+                    if mark in image.dupe_marks:
+                        image.dupe_marks.remove(mark)
+
             os.remove(path)
                     
-        imageless_marks = [mark for mark in self.imageless_marks if mark.dst == path]
-
-        for mark in marks:
-            self.image.undone_marks.append(mark)
-
-            if mark in self.image_scene.items():
-                self.image_scene.rmmark(mark)
-            
-            if mark in self.image.marks:
-                self.image.marks.remove(mark)
-
-            if mark in self.image.dupe_marks:
-                self.image.dupe_marks.remove(mark)
+        imageless_marks = [mark for mark in self.imageless_marks if mark.dst == path]            
 
         for mark in imageless_marks:
             if mark in self.image_scene.items():
