@@ -97,7 +97,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ steps.download-artifact.outputs.download-path }}/imgmarker-${{needs.setup.outputs.ref}}-${{matrix.spec}}-${{matrix.arch}}.zip
+          asset_path: ${{ steps.download-artifact.outputs.download-path }}/Image Marker
           asset_name: imgmarker-${{needs.setup.outputs.ref}}-${{matrix.spec}}-${{matrix.arch}}.zip
           asset_content_type: application/zip
 
