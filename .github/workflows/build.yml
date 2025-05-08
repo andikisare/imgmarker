@@ -34,12 +34,6 @@ jobs:
           - os: windows-2019
             spec: win
             arch: x64
-          - os: macos-15
-            spec: mac
-            arch: arm64
-          - os: macos-13
-            spec: mac
-            arch: x64
 
     runs-on: ${{matrix.os}}  
 
@@ -61,28 +55,9 @@ jobs:
         pip install git+https://github.com/pyinstaller/pyinstaller.git@develop
         
     - name: Build Image Marker
-      if: ${{matrix.spec != 'mac'}} 
       run: |
-
         cd ${{github.workspace}}/pyinstaller
         pyinstaller  ${{matrix.spec}}.spec
-
-    - name: Build Image Marker (mac)
-      if: ${{matrix.spec == 'mac'}} 
-      run: |
-        cd ${{github.workspace}}/imgmarker
-        pyinstaller  \
-        --name "Image Marker" \
-        --icon icon.ico \
-        --windowed  \
-        -D __init__.py \
-        --noconfirm \
-        --distpath ../pyinstaller/dist \
-        --clean \
-        --collect-all imgmarker \
-        --hidden-import=imgmarker \
-        --hidden-import=imgmarker.pyqt \
-        --add-data=".:."
   
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -98,10 +73,6 @@ jobs:
       matrix:
         include:
           - spec: win
-            arch: x64
-          - spec: mac
-            arch: arm64
-          - spec: mac
             arch: x64
 
     runs-on: ubuntu-latest
