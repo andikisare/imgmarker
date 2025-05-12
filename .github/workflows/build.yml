@@ -88,8 +88,8 @@ jobs:
           merge-multiple: true
       - run: |
           ls artifact
-          echo ${{ steps.download-artifact.outputs.download-path }}
-          zip -r ${{ steps.download-artifact.outputs.download-path }}/imgmarker-${{needs.setup.outputs.ref}}-${{matrix.spec}}-${{matrix.arch}}.zip "${{ steps.download-artifact.outputs.download-path }}/Image Marker"
+          cd ${{ steps.download-artifact.outputs.download-path }}
+          zip -r imgmarker-${{needs.setup.outputs.ref}}-${{matrix.spec}}-${{matrix.arch}}.zip "Image Marker"
 
       - name: Upload artifact to release
         id: upload-release-asset 
