@@ -1,16 +1,20 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_all
 
-datas = [ ('../imgmarker/heart_clear.ico', '.'), ('../imgmarker/heart_solid.ico', '.'), ('../imgmarker/icon.ico', '.') ]
-binaries = []
-hiddenimports = ['imgmarker', 'imgmarker.pyqt']
-tmp_ret = collect_all('imgmarker')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+import sys
+sys.path.insert(0, '../')
+import imgmarker
+from PyInstaller.utils.hooks import collect_submodules, collect_data_files, collect_dynamic_libs
 
+hiddenimports = collect_submodules('imgmarker') 
+datas = collect_data_files('imgmarker') 
+for i, _ in enumerate(datas):
+    datas[i] = (datas[i][0], datas[i][1].replace('imgmarker','.'))
+print(datas)
+binaries = collect_dynamic_libs('imgmarker')
 
 a = Analysis(
-    ['../imgmarker/__init__.py'],
-    pathex=[],
+    ['../imgmarker/__main__.py'],
+    pathex=['../'],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

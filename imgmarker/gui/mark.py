@@ -1,11 +1,10 @@
 """This module contains the `Mark` class and related classes."""
 
-from .pyqt import QGraphicsPathItem, QPainterPath, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
-from .. import config
+from imgmarker.gui.pyqt import QGraphicsPathItem, QPainterPath, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
+from imgmarker import config
 import os
 from math import nan, ceil
 from astropy.wcs.utils import proj_plane_pixel_scales
-from .. import config
 from typing import TYPE_CHECKING, overload, Literal
 import warnings
 

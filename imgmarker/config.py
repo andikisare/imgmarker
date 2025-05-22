@@ -3,7 +3,7 @@
 import os
 from getpass import getuser
 from typing import Tuple, List
-from .gui.pyqt import Qt, QKeyCombination, QColor
+from imgmarker.gui.pyqt import Qt, QKeyCombination, QColor
 from glob import glob
 
 SAVE_DIR = os.path.expanduser('~')

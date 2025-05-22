@@ -1,6 +1,6 @@
 """This contains the classes for the various windows displayed by Image Marker."""
 
-from .pyqt import (
+from imgmarker.gui.pyqt import (
     QApplication, QMainWindow, QPushButton,
     QLabel, QScrollArea, QGraphicsView, QDialog,
     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, 
@@ -10,12 +10,10 @@ from .pyqt import (
     QTableWidgetItem, QHeaderView, QShortcut,
     QDesktopServices, QUrl, QMenu, QColorDialog, PYQT_VERSION_STR
 )
-from . import Screen
-from .. import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
-from .. import io
-from .. import image
-from .. import config
-from . import QHLine, QVLine, PosWidget, RestrictedLineEdit, DefaultDialog
+from imgmarker.gui import Screen, QHLine, QVLine, PosWidget, RestrictedLineEdit, DefaultDialog
+from imgmarker import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
+from imgmarker import io, image, config
+from imgmarker.coordinates import SkyCoord, Angle
 import sys
 import datetime as dt
 from math import floor, inf, nan, dist
@@ -24,7 +22,6 @@ from numpy import argsort
 from functools import partial
 from typing import Union, List
 import os
-from astropy.coordinates import Angle
 from copy import deepcopy
 import gc
 import shutil
@@ -1137,8 +1134,8 @@ class MainWindow(QMainWindow):
             ra, dec = mark_to_copy.wcs_center
         
             if self.settings_window.show_sexagesimal_box.isChecked():
-                ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
-                dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
+                ra_h,ra_m,ra_s = Angle(ra).hms
+                dec_d,dec_m,dec_s = Angle(dec).dms
 
                 ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
                 dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
@@ -1290,8 +1287,8 @@ class MainWindow(QMainWindow):
             except: ra, dec = nan, nan
 
             if self.settings_window.show_sexagesimal_box.isChecked():
-                ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
-                dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
+                ra_h,ra_m,ra_s = Angle(ra).hms
+                dec_d,dec_m,dec_s = Angle(dec).dms
 
                 ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
                 dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')

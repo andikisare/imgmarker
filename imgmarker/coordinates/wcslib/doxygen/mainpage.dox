@@ -1,0 +1,1294 @@
+/** @mainpage WCSLIB 8.4 and PGSBOX 8.4
+
+@image html Bonne.gif "Bonne's projection"
+
+@section contents Contents
+
+- @subpage intro
+- @subpage software
+- @subpage overview
+- @subpage structs
+- @subpage memory
+- @subpage diagnostics
+- @subpage vector
+- @subpage threads
+- @subpage limits
+- @subpage testing
+- @subpage fortran
+- @subpage pgsbox
+- @subpage versioning
+
+@section copyright Copyright
+
+@verbatim
+  WCSLIB 8.4 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2024, Mark Calabretta
+
+  WCSLIB is free software: you can redistribute it and/or modify it under the
+  terms of the GNU Lesser General Public License as published by the Free
+  Software Foundation, either version 3 of the License, or (at your option)
+  any later version.
+
+  WCSLIB is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+  more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
+
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
+
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: mainpage.dox,v 8.4 2024/10/28 13:56:17 mcalabre Exp $
+@endverbatim
+*/
+
+/** @page intro Introduction
+
+WCSLIB is a C library, supplied with a full set of Fortran wrappers, that
+implements the "World Coordinate System" (WCS) standard in FITS (Flexible
+Image Transport System).  It also includes a @ref software "PGPLOT"-based
+routine, @ref pgsbox "PGSBOX", for drawing general curvilinear coordinate
+graticules, and also a number of utility programs.
+
+The FITS data format is widely used within the international astronomical
+community, from the radio to gamma-ray regimes, for data interchange and
+archive, and also increasingly as an online format.  It is described in
+
+- "Definition of The Flexible Image Transport System (FITS)",
+   FITS Standard, Version 3.0, 2008 July 10.
+
+available from the FITS Support Office at http://fits.gsfc.nasa.gov.
+
+The FITS WCS standard is described in
+
+- "Representations of world coordinates in FITS" (Paper I),
+   Greisen, E.W., & Calabretta, M.R. 2002, A&A, 395, 1061-1075
+
+- "Representations of celestial coordinates in FITS" (Paper II),
+   Calabretta, M.R., & Greisen, E.W. 2002, A&A, 395, 1077-1122
+
+- "Representations of spectral coordinates in FITS" (Paper III),
+   Greisen, E.W., Calabretta, M.R., Valdes, F.G., & Allen, S.L.
+   2006, A&A, 446, 747
+
+- "Representations of distortions in FITS world coordinate systems",
+   Calabretta, M.R. et al. (WCS Paper IV, draft dated 2004/04/22),
+   available from http://www.atnf.csiro.au/people/Mark.Calabretta
+
+- "Mapping on the HEALPix Grid" (HPX, Paper V),
+   Calabretta, M.R., & Roukema, B.F. 2007, MNRAS, 381, 865
+
+- "Representing the 'Butterfly' Projection in FITS: Projection Code XPH"
+   (XPH, Paper VI), Calabretta, M.R., & Lowe, S.R. 2013, PASA, 30, e050
+
+- "Representations of time coordinates in FITS: Time and relative dimension in
+   space" (Paper VII), Rots, A.H., Bunclark, P.S., Calabretta, M.R.,
+   Allen, S.L., Manchester R.N., & Thompson, W.T. 2015, A&A, 574, A36
+
+Reprints of all published papers may be obtained from NASA's Astrophysics
+Data System (ADS), http://adsabs.harvard.edu/.  Reprints of Papers I, II
+(including HPX & XPH), and III are available from
+http://www.atnf.csiro.au/people/Mark.Calabretta.  This site also includes
+errata and supplementary material for Papers I, II and III.
+
+Additional information on all aspects of FITS and its various software
+implementations may be found at the FITS Support Office
+http://fits.gsfc.nasa.gov.
+*/
+
+
+/** @page software FITS-WCS and related software
+
+Several implementations of the FITS WCS standards are available:
+
+  - The @ref overview "WCSLIB" software distribution (i.e. this library) may
+    be obtained from
+    http://www.atnf.csiro.au/people/Mark.Calabretta/WCS/<I></I>.  The
+    remainder of this manual describes its use.
+
+    WCSLIB is included in the Astrophysics Source Code Library (@b ASCL
+    https://ascl.net) as record ascl:1108.003 (https://ascl.net/1108.003), and
+    in the Astrophysics Data System (@b ADS https://ui.adsabs.harvard.edu)
+    with bibcode 2011ascl.soft08003C
+    (https://ui.adsabs.harvard.edu/abs/2011ascl.soft08003C).
+
+  - @b wcstools, developed by Jessica Mink, may be obtained from
+    http://tdc-www.harvard.edu/software/wcstools/<I></I>.
+
+    ASCL: https://ascl.net/1109.015 @n
+    ADS: https://ui.adsabs.harvard.edu/abs/2011ascl.soft09015M
+
+  - @b AST, developed by David Berry within the U.K. Starlink project,
+    http://www.starlink.ac.uk/ast/ and now supported by JAC, Hawaii
+    http://starlink.jach.hawaii.edu/starlink/<I></I>.  A useful utility for
+    experimenting with FITS WCS descriptions (similar to @a wcsgrid) is also
+    provided; go to the above site and then look at the section entitled
+    "FITS-WCS Plotting Demo".
+
+    ASCL: https://ascl.net/1404.016 @n
+    ADS: https://ui.adsabs.harvard.edu/abs/2014ascl.soft04016B
+
+  - @b SolarSoft, http://sohowww.nascom.nasa.gov/solarsoft/<I></I>, primarily
+    an IDL-based system for analysis of Solar physics data, contains a module
+    written by Bill Thompson oriented towards Solar coordinate systems,
+    including spectral,
+    http://sohowww.nascom.nasa.gov/solarsoft/gen/idl/wcs/<I></I>.
+
+    ASCL: https://ascl.net/1208.013 @n
+    ADS: https://ui.adsabs.harvard.edu/abs/2012ascl.soft08013F
+
+  - The IDL Astronomy Library, http://idlastro.gsfc.nasa.gov/<I></I>, contains
+    an independent implementation of FITS-WCS in IDL by Rick Balsano,
+    Wayne Landsman and others.  See
+    http://idlastro.gsfc.nasa.gov/contents.html#C5<I></I>.
+
+Python wrappers to @ref overview "WCSLIB" are provided by
+
+  - The <B>Kapteyn Package</B> http://www.astro.rug.nl/software/kapteyn/ by
+    Hans Terlouw and Martin Vogelaar.
+
+    ASCL: https://ascl.net/1611.010 @n
+    ADS: https://ui.adsabs.harvard.edu/abs/2016ascl.soft11010T
+
+  - <B>pywcs</B>, http://stsdas.stsci.edu/astrolib/pywcs/ by
+    Michael Droettboom, which is distributed within Astropy,
+    https://www.astropy.org.
+
+    ASCL (Astropy): https://ascl.net/1304.002 @n
+    ADS (Astropy): https://ui.adsabs.harvard.edu/abs/2013ascl.soft04002G
+
+Java is supported via
+
+  - CADC/CCDA Java Native Interface (JNI) bindings to @ref overview "WCSLIB"
+    4.2 http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cadc/source/ by
+    Patrick Dowler.
+
+and Javascript by
+
+  -  <B>wcsjs</B>, https://github.com/astrojs/wcsjs, a port created by Amit
+     Kapadia using Emscripten, an LLVM to Javascript compiler.  wcsjs provides
+     a code base for running @ref overview "WCSLIB" on web browsers.
+
+Julia wrappers (https://en.wikipedia.org/wiki/Julia_(programming_language))
+are provided by
+
+  - <B>WCS.jl</B>, https://github.com/JuliaAstro/WCS.jl, a component of Julia
+    Astro, https://github.com/JuliaAstro.
+
+An interface for the R programming language
+(https://en.wikipedia.org/wiki/R_(programming_language)) is available at
+
+  - <B>Rwcs</B>, https://github.com/asgr/Rwcs/ by Aaron Robotham.
+
+Recommended WCS-aware FITS image viewers:
+
+  - Bill Joye's <B>DS9</B>, http://hea-www.harvard.edu/RD/ds9/<I></I>, and
+
+    ASCL: https://ascl.net/0003.002 @n
+    ADS: https://ui.adsabs.harvard.edu/abs/2000ascl.soft03002S
+
+  - <B>Fv</B> by Pan Chai, http://heasarc.gsfc.nasa.gov/ftools/fv/<I></I>.
+
+    ASCL: https://ascl.net/1205.005 @n
+    ADS: https://ui.adsabs.harvard.edu/abs/2012ascl.soft05005P
+
+both handle 2-D images.
+
+Currently (2013/01/29) I know of no image viewers that handle 1-D spectra
+properly nor multi-dimensional data, not even multi-dimensional data with
+only two non-degenerate image axes (please inform me if you know otherwise).
+
+Pre-built @ref overview "WCSLIB" packages are available, generally a little
+behind the main release (this list will probably be stale by the time you read
+it, best do a web search):
+
+  - archlinux (tgz),
+    https://www.archlinux.org/packages/extra/i686/wcslib<I></I>.
+
+  - Debian (deb),
+    http://packages.debian.org/search?keywords=wcslib<I></I>.
+
+  - Fedora (RPM),
+    https://admin.fedoraproject.org/pkgdb/package/wcslib<I></I>.
+
+  - Fresh Ports (RPM), http://www.freshports.org/astro/wcslib<I></I>.
+
+  - Gentoo, http://packages.gentoo.org/package/sci-astronomy/wcslib<I></I>.
+
+  - Homebrew (MacOSX),
+    https://github.com/Homebrew/homebrew-science<I></I>.
+
+  - RPM (general)
+    http://rpmfind.net/linux/rpm2html/search.php?query=wcslib<I></I>,
+    http://www.rpmseek.com/rpm-pl/wcslib.html<I></I>.
+
+  - Ubuntu (deb),
+    https://launchpad.net/ubuntu/+source/wcslib<I></I>.
+
+Bill Pence's general FITS IO library, <B>CFITSIO</B> is available from
+http://heasarc.gsfc.nasa.gov/fitsio/<I></I>.  It is used optionally by some of
+the high-level WCSLIB test programs and is required by two of the utility
+programs.
+
+ASCL: https://ascl.net/1010.001 @n
+ADS: https://ui.adsabs.harvard.edu/abs/2010ascl.soft10001P
+
+<B>PGPLOT</B>, Tim Pearson's Fortran plotting package on which @ref pgsbox
+"PGSBOX" is based, also used by some of the WCSLIB self-test suite and a
+utility program, is available from
+http://astro.caltech.edu/~tjp/pgplot/<I></I>.
+
+ASCL: https://ascl.net/1103.002 @n
+ADS: https://ui.adsabs.harvard.edu/abs/2011ascl.soft03002P
+*/
+
+
+/** @page overview Overview of WCSLIB
+
+WCSLIB is documented in the prologues of its header files which provide a
+detailed description of the purpose of each function and its interface (this
+material is, of course, used to generate the doxygen manual).  Here we explain
+how the library as a whole is structured.  We will normally refer to WCSLIB
+'routines', meaning C functions or Fortran 'subroutines', though the latter
+are actually wrappers implemented in C.
+
+WCSLIB is layered software, each layer depends only on those beneath;
+understanding WCSLIB first means understanding its stratigraphy.  There are
+essentially three levels, though some intermediate levels exist within these:
+
+- The <B>top layer</B> consists of routines that provide the connection
+  between FITS files and the high-level WCSLIB data structures, the main
+  function being to parse a FITS header, extract WCS information, and copy it
+  into a wcsprm struct.  The lexical parsers among these are implemented as
+  Flex descriptions (source files with .l suffix) and the C code generated
+  from these by Flex is included in the source distribution.
+  - wcshdr.h,c    -- Routines for constructing wcsprm data structures from
+                     information in a FITS header and conversely for writing a
+                     wcsprm struct out as a FITS header.
+  - wcspih.l      -- Flex implementation of wcspih(), a lexical parser for WCS
+                     "keyrecords" in an image header.  A @b @e keyrecord
+                     (formerly called "card image") consists of a
+                     @b @e keyword, its value - the @b @e keyvalue - and an
+                     optional comment, the @b @e keycomment.
+  - wcsbth.l      -- Flex implementation of wcsbth() which parses binary table
+                     image array and pixel list headers in addition to image
+                     array headers.
+  - getwcstab.h,c -- Implementation of a -TAB binary table reader in @ref
+                     software "CFITSIO".
+  .
+  @n
+  A generic FITS header parser is also provided to handle non-WCS keyrecords
+  that are ignored by wcspih():
+  - fitshdr.h,l   -- Generic FITS header parser (not WCS-specific).
+  .
+  @n
+  The philosophy adopted for dealing with non-standard WCS usage is to
+  translate it at this level so that the middle- and low-level routines need
+  only deal with standard constructs:
+  - wcsfix.h,c    -- Translator for non-standard FITS WCS constructs (uses
+                     wcsutrne()).
+  - wcsutrn.l     -- Lexical translator for non-standard units specifications.
+  .
+  @n
+  As a concrete example, within this layer the @c CTYPEia keyvalues would be
+  extracted from a FITS header and copied into the @a ctype[] array within a
+  wcsprm struct.  None of the header keyrecords are interpreted.
+
+- The <B>middle layer</B> analyses the WCS information obtained from the FITS
+  header by the top-level routines, identifying the separate steps of the WCS
+  algorithm chain for each of the coordinate axes in the image.  It constructs
+  the various data structures on which the low-level routines are based and
+  invokes them in the correct sequence.  Thus the wcsprm struct is essentially
+  the glue that binds together the low-level routines into a complete
+  coordinate description.
+  - wcs.h,c       -- Driver routines for the low-level routines.
+  - wcsunits.h,c  -- Unit conversions (uses wcsulexe()).
+  - wcsulex.l     -- Lexical parser for units specifications.
+  .
+  @n
+  To continue the above example, within this layer the @a ctype[] keyvalues in
+  a wcsprm struct are analysed to determine the nature of the coordinate axes
+  in the image.
+
+- Applications programmers who use the top- and middle-level routines
+  generally need know nothing about the <B>low-level routines</B>.  These are
+  essentially mathematical in nature and largely independent of FITS itself.
+  The mathematical formulae and algorithms cited in the WCS Papers, for
+  example the spherical projection equations of Paper II and the lookup-table
+  methods of Paper III, are implemented by the routines in this layer, some of
+  which serve to aggregate others:
+  - cel.h,c       -- Celestial coordinate transformations, combines prj.h,c
+                     and sph.h,c.
+  - spc.h,c       -- Spectral coordinate transformations, combines
+                     transformations from spx.h,c.
+  .
+  @n
+  The remainder of the routines in this level are independent of everything
+  other than the grass-roots mathematical functions:
+  - lin.h,c       -- Linear transformation matrix.
+  - dis.h,c       -- Distortion functions.
+  - log.h,c       -- Logarithmic coordinates.
+  - prj.h,c       -- Spherical projection equations.
+  - sph.h,c       -- Spherical coordinate transformations.
+  - spx.h,c       -- Basic spectral transformations.
+  - tab.h,c       -- Coordinate lookup tables.
+  .
+  @n
+  As the routines within this layer are quite generic, some, principally the
+  implementation of the spherical projection equations, have been used in
+  other packages (AST, wcstools) that provide their own implementations of the
+  functionality of the top and middle-level routines.
+
+- At the <B>grass-roots level</B> there are a number of mathematical and
+  utility routines.
+  @n@n
+  When dealing with celestial coordinate systems it is often desirable to use
+  an angular measure that provides an exact representation of the latitude of
+  the north or south pole.  The WCSLIB routines use the following
+  trigonometric functions that take or return angles in degrees:
+  - cosd(), sind(), sincosd(), tand(), acosd(), asind(), atand(), atan2d()
+  .
+  @n
+  These "trigd" routines are expected to handle angles that are a multiple of
+  @f$90^\circ@f$ returning an exact result.  Some C implementations provide
+  these as part of a system library and in such cases it may (or may not!) be
+  preferable to use them.  wcstrig.c provides wrappers on the standard trig
+  functions based on radian measure, adding tests for multiples of
+  @f$90^\circ@f$.
+  @n@n
+  However, wcstrig.h also provides the choice of using preprocessor macro
+  implementations of the trigd functions that don't test for multiples of
+  @f$90^\circ@f$ (compile with @c -DWCSTRIG_MACRO).  These are typically 20%
+  faster but may lead to problems near the poles.
+  - wcsmath.h     -- Defines mathematical and other constants.
+  - wcstrig.h,c   -- Various implementations of trigd functions.
+  - wcsutil.h,c   -- Simple utility functions for string manipulation, etc.
+                     used by WCSLIB.
+
+Complementary to the C library, a set of wrappers are provided that allow all
+WCSLIB C functions to be called by Fortran programs, see below.
+
+Plotting of coordinate graticules is one of the more important requirements of
+a world coordinate system.  WCSLIB provides a @ref software "PGPLOT"-based
+subroutine, @ref pgsbox "PGSBOX" (Fortran), which handles general curvilinear
+coordinates via a user-supplied function - @c PGWCSL provides the interface
+to WCSLIB.  A C wrapper, @a cpgsbox(), is also provided, see below.
+
+Several utility programs are distributed with WCSLIB:
+
+- @a wcsgrid extracts the WCS keywords for an image from the specified FITS
+  file and uses @a cpgsbox() to plot a 2-D coordinate graticule for it.  It
+  requires WCSLIB, @ref pgsbox "PGSBOX" and @ref software "CFITSIO".
+
+- @a wcsware extracts the WCS keywords for an image from the specified FITS
+  file and constructs wcsprm structs for each coordinate representation found.
+  The structs may then be printed or used to transform pixel coordinates to
+  world coordinates.  It requires WCSLIB and @ref software "CFITSIO".
+
+- @a HPXcvt reorganises HEALPix data into a 2-D FITS image with HPX coordinate
+  system.  The input data may be stored in a FITS file as a primary image or
+  image extension, or as a binary table extension.  Both NESTED and RING pixel
+  indices are supported.  It uses @ref software "CFITSIO".
+
+- @a fitshdr lists headers from a FITS file specified on the command line, or
+  else on stdin, printing them as 80-character keyrecords without trailing
+  blanks.  It is independent of WCSLIB.
+*/
+
+
+/** @page structs WCSLIB data structures
+
+The WCSLIB routines are based on data structures specific to them: wcsprm for
+the wcs.h,c routines, celprm for cel.h,c, and likewise spcprm, linprm, prjprm,
+tabprm, and disprm, with struct definitions contained in the corresponding
+header files: wcs.h, cel.h, etc.  The structs store the parameters that define
+a coordinate transformation and also intermediate values derived from those
+parameters.  As a high-level object, the wcsprm struct contains linprm,
+tabprm, spcprm, and celprm structs, and in turn the linprm struct contains
+disprm structs, and the celprm struct contains a prjprm struct.  Hence the
+wcsprm struct contains everything needed for a complete coordinate
+description.
+
+Applications programmers who use the top- and middle-level routines generally
+only need to pass wcsprm structs from one routine that fills them to another
+that uses them.  However, since these structs are fundamental to WCSLIB it is
+worthwhile knowing something about the way they work.
+
+Three basic operations apply to all WCSLIB structs:
+
+- Initialize.  Each struct has a specific initialization routine, e.g.
+  wcsinit(), celini(), spcini(), etc.  These allocate memory (if required) and
+  set all struct members to default values.
+
+- Fill in the required values.  Each struct has members whose values must be
+  provided.  For example, for wcsprm these values correspond to FITS WCS
+  header keyvalues as are provided by the top-level header parsing routine,
+  wcspih().
+
+- Compute intermediate values.  Specific setup routines, e.g. wcsset(),
+  celset(), spcset(), etc., compute intermediate values from the values
+  provided.  In particular, wcsset() analyses the FITS WCS keyvalues provided,
+  fills the required values in the lower-level structs contained in wcsprm,
+  and invokes the setup routine for each of them.
+
+Each struct contains a @a flag member that records its setup state.  This is
+cleared by the initialization routine and checked by the routines that use the
+struct; they will invoke the setup routine automatically if necessary, hence
+it need not be invoked specifically by the application programmer.  However,
+if any of the required values in a struct are changed then either the setup
+routine must be invoked on it, or else the @a flag must be zeroed to signal
+that the struct needs to be reset.
+
+The initialization routine may be invoked repeatedly on a struct if it is
+desired to reuse it.  However, the @a flag member of structs that contain
+allocated memory (wcsprm, linprm, tabprm, and disprm) must be set to -1 before
+the first initialization to initialize memory management, but not subsequently
+or else memory leaks will result.
+
+Each struct has one or more service routines: to do deep copies from one to
+another, to print its contents, and to free allocated memory.  Refer to the
+header files for a detailed description.
+*/
+
+
+/** @page memory Memory management
+
+The initialization routines for certain of the WCSLIB data structures allocate
+memory for some of their members:
+
+- wcsinit() optionally allocates memory for the @a crpix, @a pc, @a cdelt,
+    @a crval, @a cunit, @a ctype, @a pv, @a ps, @a cd, @a crota, @a colax,
+    @a cname, @a crder, and @a csyer arrays in the wcsprm struct (using
+    lininit() for certain of these).  Note that wcsinit() does not allocate
+    memory for the @a tab array - refer to the usage notes for wcstab() in
+    wcshdr.h.  If the @a pc matrix is not unity, wcsset() (via linset()) also
+    allocates memory for the @a piximg and @a imgpix arrays.
+
+- lininit(): optionally allocates memory for the @a crpix, @a pc, and @a cdelt
+    arrays in the linprm struct.  If the @a pc matrix is not unity, linset()
+    also allocates memory for the @a piximg and @a imgpix arrays.  Typically
+    these would be used by wcsinit() and wcsset().
+
+- tabini(): optionally allocates memory for the @a K, @a map, @a crval,
+    @a index, and @a coord arrays (including the arrays referenced by
+    @a index[]) in the tabprm struct.  tabmem() takes control of any of these
+    arrays that may have been allocated by the user, specifically in that
+    tabfree() will then free it.  tabset() also allocates memory for the
+    @a sense, @a p0, @a delta and @a extrema arrays.
+
+- disinit(): optionally allocates memory for the @a dtype, @a dp, and @a maxdis
+    arrays.  disset() also allocates memory for a number of arrays that
+    hold distortion parmeters and intermediate values: @a axmap, @a Nhat,
+    @a offset, @a scale, @a iparm, and @a dparm, and also several private work
+    arrays: @a disp2x, @a disx2p, and @a tmpmem.
+
+The caller may load data into these arrays but must not modify the struct
+members (i.e. the pointers) themselves or else memory leaks will result.
+
+wcsinit() maintains a record of memory it has allocated and this is used by
+wcsfree() which wcsinit() uses to free any memory that it may have allocated
+on a previous invokation.  Thus it is not necessary for the caller to invoke
+wcsfree() separately if wcsinit() is invoked repeatedly on the same wcsprm
+struct.  Likewise, wcsset() deallocates memory that it may have allocated on
+a previous invokation.  The same comments apply to lininit(), linfree(), and
+linset(), to tabini(), tabfree(), and tabset(), and to disinit(), disfree()
+and disset().
+
+A memory leak will result if a wcsprm, linprm, tabprm, or disprm struct goes
+out of scope before the memory has been @a free'd, either by the relevant
+routine, wcsfree(), linfree(), tabfree(), or disfree() or otherwise.
+Likewise, if one of these structs itself has been @a malloc'd and the
+allocated memory is not @a free'd when the memory for the struct is @a free'd.
+A leak may also arise if the caller interferes with the array pointers in the
+"private" part of these structs.
+
+Beware of making a shallow copy of a wcsprm, linprm, tabprm, or disprm struct
+by assignment; any changes made to allocated memory in one would be reflected
+in the other, and if the memory allocated for one was @a free'd the other
+would reference unallocated memory.  Use the relevant routine instead to make
+a deep copy: wcssub(), lincpy(), tabcpy(), or discpy().
+*/
+
+
+/** @page diagnostics Diagnostic output
+
+All @ref overview "WCSLIB" functions return a status value, each of which is
+associated with a fixed error message which may be used for diagnostic output.
+For example
+@verbatim
+  int status;
+  struct wcsprm wcs;
+
+  ...
+
+  if ((status = wcsset(&wcs)) {
+    fprintf(stderr, "ERROR %d from wcsset(): %s.\n", status, wcs_errmsg[status]);
+    return status;
+  }
+@endverbatim
+This might produce output like
+@verbatim
+ERROR 5 from wcsset(): Invalid parameter value.
+@endverbatim
+The error messages are provided as global variables with names of the form
+@a cel_errmsg, @a prj_errmsg, etc. by including the relevant header file.
+
+As of version 4.8, courtesy of Michael Droettboom @ref software "(pywcs)",
+WCSLIB has a second error messaging system which provides more detailed
+information about errors, including the function, source file, and line number
+where the error occurred.  For example,
+@verbatim
+  struct wcsprm wcs;
+
+  /* Enable wcserr and send messages to stderr. */
+  wcserr_enable(1);
+  wcsprintf_set(stderr);
+
+  ...
+
+  if (wcsset(&wcs) {
+    wcsperr(&wcs);
+    return wcs.err->status;
+  }
+@endverbatim
+In this example, if an error was generated in one of the prjset() functions,
+wcsperr() would print an error traceback starting with wcsset(), then
+celset(), and finally the particular projection-setting function that
+generated the error.  For each of them it would print the status return value,
+function name, source file, line number, and an error message which may be
+more specific and informative than the general error messages reported in the
+first example.  For example, in response to a deliberately generated error,
+the @c twcs test program, which tests wcserr among other things, produces a
+traceback similar to this:
+@verbatim
+ERROR 5 in wcsset() at line 1564 of file wcs.c:
+  Invalid parameter value.
+ERROR 2 in celset() at line 196 of file cel.c:
+  Invalid projection parameters.
+ERROR 2 in bonset() at line 5727 of file prj.c:
+  Invalid parameters for Bonne's projection.
+@endverbatim
+
+Each of the @ref structs "structs" in @ref overview "WCSLIB" includes a
+pointer, called @a err, to a wcserr struct.  When an error occurs, a struct is
+allocated and error information stored in it.  The wcserr pointers and the
+@ref memory "memory" allocated for them are managed by the routines that
+manage the various structs such as wcsinit() and wcsfree().
+
+wcserr messaging is an opt-in system enabled via wcserr_enable(), as in the
+example above.  If enabled, when an error occurs it is the user's
+responsibility to free the memory allocated for the error message using
+wcsfree(), celfree(), prjfree(), etc.  Failure to do so before the struct goes
+out of scope will result in memory leaks (if execution continues beyond the
+error).
+*/
+
+
+/** @page vector Vector API
+
+WCSLIB's API is vector-oriented.  At the least, this allows the function call
+overhead to be amortised by spreading it over multiple coordinate
+transformations.  However, vector computations may provide an opportunity for
+caching intermediate calculations and this can produce much more significant
+efficiencies.  For example, many of the spherical projection equations are
+partially or fully separable in the mathematical sense, i.e. @f$ (x,y) =
+f(\phi) g(\theta) @f$, so if @f$ \theta @f$ was invariant for a set of
+coordinate transformations then @f$ g(\theta) @f$ would only need to be
+computed once.  Depending on the circumstances, this may well lead to speedups
+of a factor of two or more.
+
+WCSLIB has two different categories of vector API:
+
+- Certain steps in the WCS algorithm chain operate on coordinate vectors as a
+  whole rather than particular elements of it.  For example, the linear
+  transformation takes one or more pixel coordinate vectors, multiples by the
+  transformation matrix, and returns whole intermediate world coordinate
+  vectors.
+  @n
+  The routines that implement these steps, wcsp2s(), wcss2p(), linp2x(),
+  linx2p(), tabx2s(), tabs2x(), disp2x() and disx2p() accept and return
+  two-dimensional arrays, i.e. a number of coordinate vectors.  Because WCSLIB
+  permits these arrays to contain unused elements, three parameters are needed
+  to describe them:
+  - @a  naxis: the number of coordinate elements, as per the FITS @c NAXIS or
+               @c WCSAXES keyvalues,
+  - @a ncoord: the number of coordinate vectors,
+  - @a  nelem: the total number of elements in each vector, unused as well as
+               used.  Clearly, @a nelem must equal or exceed @a naxis.  (Note
+               that when @a ncoord is unity, @a nelem is irrelevant and so is
+               ignored.  It may be set to 0.)
+  .
+  @a ncoord and @a nelem are specified as function arguments while @a naxis is
+  provided as a member of the wcsprm (or linprm or disprm) struct.
+  @n
+  For example, wcss2p() accepts an array of world coordinate vectors,
+  <EM>world[ncoord][nelem]</EM>.  In the following example, @a naxis = 4,
+  @a ncoord = 5, and @a nelem = 7:
+  @verbatim
+    s1  x1  y1  t1  u   u   u
+    s2  x2  y2  t2  u   u   u
+    s3  x3  y3  t3  u   u   u
+    s4  x4  y4  t4  u   u   u
+    s5  x5  y5  t5  u   u   u
+  @endverbatim
+  where @a u indicates unused array elements, and the array is laid out in
+  memory as
+  @verbatim
+    s1  x1  y1  t1  u   u   u   s2  x2  y2  ...
+  @endverbatim
+  @b Note that the <EM>stat[]</EM> vector returned by routines in this
+  category is of length @a ncoord, as are the intermediate <EM>phi[]</EM> and
+  <EM>theta[]</EM> vectors returned by wcsp2s() and wcss2p().
+  @n
+  @b Note also that the function prototypes for routines in this category
+  have to declare these two-dimensional arrays as one-dimensional vectors in
+  order to avoid warnings from the C compiler about declaration of "incomplete
+  types".  This was considered preferable to declaring them as simple
+  pointers-to-double which gives no indication that storage is associated with
+  them.
+
+- Other steps in the WCS algorithm chain typically operate only on a part of
+  the coordinate vector.  For example, a spectral transformation operates on
+  only one element of an intermediate world coordinate that may also contain
+  celestial coordinate elements.  In the above example, spcx2s() might operate
+  only on the @a s (spectral) coordinate elements.
+  @n
+  Routines like spcx2s() and celx2s() that implement these steps accept and
+  return one-dimensional vectors in which the coordinate element of interest
+  is specified via a starting address, a length, and a stride.  To continue
+  the previous example, the starting address for the spectral elements is
+  @a s1, the length is 5, and the stride is 7.
+
+@section lengths Vector lengths
+
+Routines such as spcx2s() and celx2s() accept and return either one coordinate
+vector, or a pair of coordinate vectors (one-dimensional C arrays).  As
+explained above, the coordinate elements of interest are usually embedded in a
+two-dimensional array and must be selected by specifying a starting point,
+length and stride through the array.  For routines such as spcx2s() that
+operate on a single element of each coordinate vector these parameters have a
+straightforward interpretation.
+
+However, for routines such as celx2s() that operate on a pair of elements in
+each coordinate vector, WCSLIB allows these parameters to be specified
+independently for each input vector, thereby providing a much more general
+interpretation than strictly needed to traverse an array.
+
+This is best described by illustration.  The following diagram describes the
+situation for cels2x(), as a specific example, with <EM>nlng = 5</EM>, and
+<EM>nlat = 3:</EM>
+
+@verbatim
+             lng[0]   lng[1]   lng[2]  lng[3]   lng[4]
+             ------   ------   ------  ------   ------
+  lat[0]  |  x,y[0]   x,y[1]   x,y[2]  x,y[3]   x,y[4]
+  lat[1]  |  x,y[5]   x,y[6]   x,y[7]  x,y[8]   x,y[9]
+  lat[2]  |  x,y[10]  x,y[11]  x,y[12] x,y[13]  x,y[14]
+@endverbatim
+
+In this case, while only 5 longitude elements and 3 latitude elements are
+specified, the world-to-pixel routine would calculate <EM>nlng * nlat = 15
+(x,y)</EM> coordinate pairs.  It is the responsibility of the caller to ensure
+that sufficient space has been allocated in <EM><B>all</B></EM> of the output
+arrays, in this case <EM>phi[]</EM>, <EM>theta[]</EM>, <EM>x[]</EM>,
+<EM>y[]</EM> and <EM>stat[]</EM>.
+
+Vector computation will often be required where neither @a lng nor @a lat is
+constant.  This is accomplished by setting @a nlat = 0 which is interpreted to
+mean <EM>nlat = nlng</EM> but only the matrix diagonal is to be computed.
+Thus, for <EM>nlng = 3</EM> and <EM>nlat = 0</EM> only three <EM>(x,y)</EM>
+coordinate pairs are computed:
+
+@verbatim
+             lng[0]   lng[1]   lng[2]
+             ------   ------   ------
+  lat[0]  |  x,y[0]
+  lat[1]  |           x,y[1]
+  lat[2]  |                    x,y[2]
+@endverbatim
+
+Note how this differs from <EM>nlng = 3, nlat = 1</EM>:
+
+@verbatim
+             lng[0]   lng[1]   lng[2]
+             ------   ------   ------
+  lat[0]  |  x,y[0]   x,y[1]   x,y[2]
+@endverbatim
+
+The situation for celx2s() is similar; the <EM>x</EM>-coordinate (like @a lng)
+varies fastest.
+
+Similar comments can be made for all routines that accept arguments specifying
+vector length(s) and stride(s).  (tabx2s() and tabs2x() do not fall into this
+category because the @c -TAB algorithm is fully <EM>N</EM>-dimensional so
+there is no way to know in advance how many coordinate elements may be
+involved.)
+
+The reason that WCSLIB allows this generality is related to the aforementioned
+opportunities that vector computations may provide for caching intermediate
+calculations and the significant efficiencies that can result.  The high-level
+routines, wcsp2s() and wcss2p(), look for opportunities to collapse a set of
+coordinate transformations where one of the coordinate elements is invariant,
+and the low-level routines take advantage of such to cache intermediate
+calculations.
+
+
+@section strides Vector strides
+
+As explained above, the vector stride arguments allow the caller to specify
+that successive elements of a vector are not contiguous in memory.  This
+applies equally to vectors given to, or returned from a function.
+
+As a further example consider the following two arrangements in memory of the
+elements of four <EM>(x,y)</EM> coordinate pairs together with an @a s
+coordinate element (e.g. spectral):
+
+- <EM>x1 x2 x3 x4 y1 y2 y3 y4 s1 s2 s3 s4</EM> @n
+  the address of <EM>x[]</EM> is @a x1, its stride is 1, and length 4, @n
+  the address of <EM>y[]</EM> is @a y1, its stride is 1, and length 4, @n
+  the address of <EM>s[]</EM> is @a s1, its stride is 1, and length 4.
+
+- <EM>x1 y1 s1 x2 y2 s2 x3 y3 s3 x4 y4 s4</EM> @n
+  the address of <EM>x[]</EM> is @a x1, its stride is 3, and length 4, @n
+  the address of <EM>y[]</EM> is @a y1, its stride is 3, and length 4, @n
+  the address of <EM>s[]</EM> is @a s1, its stride is 3, and length 4.
+
+For routines such as cels2x(), each of the pair of input vectors is assumed to
+have the same stride.  Each of the output vectors also has the same stride,
+though it may differ from the input stride.  For example, for cels2x() the
+input <EM>lng[]</EM> and <EM>lat[]</EM> vectors each have vector stride
+@a sll, while the <EM>x[]</EM> and <EM>y[]</EM> output vectors have stride
+@a sxy.  However, the intermediate <EM>phi[]</EM> and <EM>theta[]</EM> arrays
+each have unit stride, as does the <EM>stat[]</EM> vector.
+
+If the vector length is 1 then the stride is irrelevant and so ignored.  It
+may be set to 0.
+*/
+
+
+/** @page threads Thread-safety
+
+WCSLIB is thread-safe as long as the following provisos are observed:
+
+- The WCSLIB structs - wcsprm, linprm, disprm, tabprm, spcprm, celprm, and
+  prjprm - contain parameter values that must be provided by the user and
+  intermediate values that are computed from them by the setup routines -
+  wcsset(), linset(), disset(), tabset(), spcset(), celset(), and prjset().
+
+  Once the structs have been set up they essentially become read-only objects
+  as far as the WCSLIB routines are concerned.  This must be done once and for
+  all before threaded execution commences.  Note that the setup routines
+  themselves are not thread-safe unless the struct has been put into "bypass"
+  mode.
+
+  Thus, if, for some reason, calls to a setup routine, for example wcsset(),
+  can't be avoided during threaded execution, then the struct must be put into
+  bypass mode.  This is done by setting the flag member to 1, e.g.
+  wcsprm::flag = 1 (rather than 0) before calling wcsset().  Then, after
+  setting up the struct, wcsset() will reset the flag to a special value that
+  causes it to return immediately if reinvoked on that struct.
+
+  To take a struct out of bypass mode, simply reset the flag member to zero.
+  This, of course, must be done during non-threaded execution.  See also
+  wcsenq().
+
+- The low-level routines wcsnpv(), wcsnps(), and disndp() are not thread-safe,
+  but they are not used within WCSLIB itself other than to get (not set) the
+  values of the global variables NPVMAX, NPSMAX, and NDPMAX.
+
+  wcsinit(), lininit, lindist(), and disinit() only do so to get default
+  values if the relevant parameters are not provided as function arguments.
+  Note that wcsini() invokes wcsinit() with defaults which cause this
+  behavior, as does linini() invoking lininit(), lindis() invoking lindist(),
+  and disini() invoking disinit().
+
+  The preset values of NPVMAX(=64), NPSMAX(=8), and NDPMAX(=256) are large
+  enough to cover most practical cases.  However, it may be desirable to
+  tailor them to avoid allocating memory that remains unused.  If so, and
+  thread-safety is an issue, then use wcsinit() and disinit() instead with the
+  relevant values specified.  This is what WCSLIB routines, such as the header
+  parsers wcspih() and wcsbth(), do to avoid wasting memory.
+
+- wcserr_enable() sets a static variable and so is not thread-safe.  However,
+  the error reporting facility is not intended to be used dynamically.  If
+  detailed error messages are required, enable wcserr when execution starts
+  and don't change it.
+
+- The Flex scanners were made reentrant at release 5.18 and consequently
+  should be thread-safe.  This was achieved by rewriting them as thin wrappers
+  (with the same API) over scanners that were modified (with changed API), as
+  required to use Flex's "reentrant" option.
+
+Note that diagnostic routines that print the contents of the various structs,
+namely celprt(), disprt(), linprt(), prjprt(), spcprt(), tabprt(), wcsprt(),
+and wcsperr() use printf() which is thread-safe by the POSIX requirement on
+@c stdio.  However, this is only at the function level.  Where multiple
+threads invoke these routines simultaneously their output is likely to be
+interleaved.
+*/
+
+
+/** @page limits Limits
+While the FITS WCS standard imposes a limit of 99 on the number of image
+coordinate axes, WCSLIB has a limit of 32 on the number it can handle --
+enforced by wcsset(), though allowed by wcsinit().  This arises in wcsp2s()
+and wcss2p() from the use of the <EM>stat[]</EM> vector as a bit mask to
+indicate invalid pixel or world coordinate elements.
+
+In the unlikely event that it ever becomes necessary to handle more than 32
+axes, it would be a simple matter to modify the <EM>stat[]</EM> bit mask so
+that bit 32 applies to all axes beyond 31.  However, it was not considered
+worth introducing the various tests required just for the sake of pandering to
+unrealistic possibilities.
+
+In addition, wcssub() has a hard-coded limit of 32 coordinate elements
+(matching the <EM>stat[]</EM> bit mask), and likewise for tabs2p() (via a
+static helper function, tabvox()).  While it would be a simple matter to
+generalise this by allocating memory from the heap, since tabvox() calls
+itself recursively and needs to be as fast as possible, again it was not
+considered worth pandering to unrealistic possibilities.
+*/
+
+
+
+/** @page testing Example code, testing and verification
+
+WCSLIB has an extensive test suite that also provides programming templates
+as well as demonstrations.  Test programs, with names that indicate the main
+WCSLIB routine under test, reside in @c ./{C,Fortran}/test and each contains a
+brief description of its purpose.
+
+The high- and middle-level test programs are more instructive for applications
+programming, while the low-level tests are important for verifying the
+integrity of the mathematical routines.
+
+- High level:
+  @n
+  @a twcstab provides an example of high-level applications programming using
+  WCSLIB and @ref software "CFITSIO".  It constructs an input FITS test file,
+  specifically for testing TAB coordinates, partly using @c wcstab.keyrec, and
+  then extracts the coordinate description from it following the steps
+  outlined in wcshdr.h.
+  @n@n
+  @a tpih1 and @a tpih2 verify wcspih().  The first prints the contents of the
+  structs returned by wcspih() using wcsprt() and the second uses @a cpgsbox()
+  to draw coordinate graticules.  Input for these comes from a FITS WCS test
+  header implemented as a list of keyrecords, @c wcs.keyrec, one keyrecord per
+  line, together with a program, @a tofits, that compiles these into a valid
+  FITS file.
+  @n@n
+  @a tbth1 tests wcsbth() by reading a test header and printing the resulting
+  wcsprm structs.  In the process it also tests wcsfix().
+  @n@n
+  @a tfitshdr also uses @c wcs.keyrec to test the generic FITS header parsing
+  routine.
+  @n@n
+  @a twcsfix sets up a wcsprm struct containing various non-standard
+  constructs and then invokes wcsfix() to translate them all to standard
+  usage.
+  @n@n
+  @a twcslint tests the syntax checker for FITS WCS keyrecords (wcsware -l) on
+  a specially constructed header riddled with invalid entries.
+  @n@n
+  @a tdis3 uses wcsware to test the handling of different types of distortion
+  functions encoded in a set of test FITS headers.
+
+- Middle level:
+  @n
+  @a twcs tests closure of wcss2p() and wcsp2s() for a number of selected
+  projections.  @a twcsmix verifies wcsmix() on the @f$1^\circ@f$ grid of
+  celestial longitude and latitude for a number of selected projections.  It
+  plots a test grid for each projection and indicates the location of
+  successful and failed solutions.  @a tdis2 and @a twcssub test the
+  extraction of a coordinate description for a subimage from a wcsprm struct
+  by wcssub().
+  @n@n
+  @a tunits tests wcsutrne(), wcsunitse() and wcsulexe(), the units
+  specification translator, converter and parser, either interactively or
+  using a list of units specifications contained in units_test.
+  @n@n
+  @a twcscompare tests particular aspects of the comparison routine,
+  wcscompare().
+
+- Low level:
+  @n
+  @a tdis1, @a tlin, @a tlog, @a tprj1, @a tspc, @a tsph, @a tspx, and ttab1
+  test "closure" of the respective routines.  Closure tests apply the forward
+  and reverse transformations in sequence and compare the result with the
+  original value.  Ideally, the result should agree exactly, but because of
+  floating point rounding errors there is usually a small discrepancy so it is
+  only required to agree within a "closure tolerance".
+  @n@n
+  @a tprj1 tests for closure separately for longitude and latitude except at
+  the poles where it only tests for closure in latitude.  Note that closure in
+  longitude does not deal with angular displacements on the sky.  This is
+  appropriate for many projections such as the cylindricals where circumpolar
+  parallels are projected at the same length as the equator.  On the other
+  hand, @a tsph does test for closure in angular displacement.
+  @n@n
+  The tolerance for reporting closure discrepancies is set at @f$10^{-10}@f$
+  degree for most projections; this is slightly less than 3 microarcsec.  The
+  worst case closure figure is reported for each projection and this is
+  usually better than the reporting tolerance by several orders of magnitude.
+  @a tprj1 and @a tsph test closure at all points on the @f$1^\circ@f$ grid of
+  native longitude and latitude and to within @f$5^\circ@f$ of any latitude of
+  divergence for those projections that cannot represent the full sphere.
+  Closure is also tested at a sequence of points close to the reference point
+  (@a tprj1) or pole (@a tsph).
+  @n@n
+  Closure has been verified at all test points for SUN workstations.  However,
+  non-closure may be observed for other machines near native latitude
+  @f$-90^\circ@f$ for the zenithal, cylindrical and conic equal area
+  projections (<TT><B>ZEA</B></TT>, <TT><B>CEA</B></TT> and
+  <TT><B>COE</B></TT>), and near divergent latitudes of projections such as
+  the azimuthal perspective and stereographic projections (<TT><B>AZP</B></TT>
+  and <TT><B>STG</B></TT>).   Rounding errors may also carry points between
+  faces of the quad-cube projections (<TT><B>CSC</B></TT>,
+  <TT><B>QSC</B></TT>, and <TT><B>TSC</B></TT>).  Although such excursions may
+  produce long lists of non-closure points, this is not necessarily indicative
+  of a fundamental problem.
+  @n@n
+  Note that the inverse of the COBE quad-qube projection (<TT><B>CSC</B></TT>)
+  is a polynomial approximation and its closure tolerance is intrinsically
+  poor.
+  @n@n
+  Although tests for closure help to verify the internal consistency of the
+  routines they do not verify them in an absolute sense.  This is partly
+  addressed by @a tcel1, @a tcel2, @a tprj2, @a ttab2 and @a ttab3 which plot
+  graticules for visual inspection of scaling, orientation, and other
+  macroscopic characteristics of the projections.
+  @n@n
+  There are also a number of other special-purpose test programs that are not
+  automatically exercised by the test suite.
+*/
+
+
+/** @page fortran WCSLIB Fortran wrappers
+
+The Fortran subdirectory contains wrappers, written in C, that allow Fortran
+programs to use WCSLIB.  The wrappers have no associated C header files, nor C
+function prototypes, as they are only meant to be called by Fortran code.
+Hence the C code must be consulted directly to determine the argument lists.
+This resides in files with names of the form @c *_f.c.  However, there are
+associated Fortran @c INCLUDE files that declare function return types and
+various parameter definitions.  There are also @c BLOCK @c DATA modules, in
+files with names of the form @c *_data.f, used solely to initialise error
+message strings.
+
+A prerequisite for using the wrappers is an understanding of the usage of the
+associated C routines, in particular the data structures they are based on.
+The principle difficulty in creating the wrappers was the need to manage these
+C structs from within Fortran, particularly as they contain pointers to
+allocated memory, pointers to C functions, and other structs that themselves
+contain similar entities.
+
+To this end, routines have been provided to set and retrieve values of the
+various structs, for example @c WCSPUT and @c WCSGET for the wcsprm struct,
+and @c CELPUT and @c CELGET for the celprm struct.  These must be used in
+conjunction with wrappers on the routines provided to manage the structs in C,
+for example @c WCSINIT, @c WCSSUB, @c WCSCOPY, @c WCSFREE, and @c WCSPRT which
+wrap wcsinit(), wcssub(), wcscopy(), wcsfree(), and wcsprt().
+
+Compilers (e.g. gfortran) may warn of inconsistent usage of the third argument
+in the various @c *PUT and @c *GET routines, and as of gfortran 10, these
+warnings have been promoted to errors.  Thus, type-specific variants are
+provided for each of the @c *PUT routines, @c *PTI, @c *PTD, and @c *PTC for
+@a int, @a double, or @a char[], and likewise @c *GTI, @c *GTD, and @c *GTC
+for the @c *GET routines.  While, for brevity, we will here continue to refer
+to the @c *PUT and @c *GET routines, as compilers are generally becoming
+stricter, use of the type-specific variants is recommended.
+
+The various @c *PUT and @c *GET routines are based on codes defined in Fortran
+include files (*.inc).  If your Fortran compiler does not support the
+@c INCLUDE statement then you will need to include these manually in your code
+as necessary.  Codes are defined as parameters with names like @c WCS_CRPIX
+which refers to wcsprm::crpix (if your Fortran compiler does not support long
+symbolic names then you will need to rename these).
+
+The include files also contain parameters, such as @c WCSLEN, that define the
+length of an @c INTEGER array that must be declared to hold the struct.  This
+length may differ for different platforms depending on how the C compiler
+aligns data within the structs.  A test program for the C library, @a twcs,
+prints the size of the struct in <EM>sizeof(int)</EM> units and the values in
+the Fortran include files must equal or exceed these.  On some platforms, such
+as Suns, it is important that the start of the @c INTEGER array be
+<EM><B>aligned on a @c DOUBLE @c PRECISION boundary</B></EM>, otherwise a
+mysterious @c BUS error may result.  This may be achieved via an
+@c EQUIVALENCE with a @c DOUBLE @c PRECISION variable, or by sequencing
+variables in a @c COMMON block so that the @c INTEGER array follows
+immediately after a @c DOUBLE @c PRECISION variable.
+
+The @c *PUT routines set only one element of an array at a time; the final one
+or two integer arguments of these routines specify 1-relative array indices
+(N.B. not 0-relative as in C).  The one exception is the prjprm::pv array.
+
+The @c *PUT routines also reset the @a flag element to signal that the struct
+needs to be reinitialized.  Therefore, if you wanted to set wcsprm::flag
+itself to -1 prior to the first call to @c WCSINIT, for example, then that
+@c WCSPUT must be the last one before the call.
+
+The @c *GET routines retrieve whole arrays at a time and expect array
+arguments of the appropriate length where necessary.  Note that they do not
+initialize the structs, i.e. via wcsset(), prjset(), or whatever.
+
+A basic coding fragment is
+
+@verbatim
+      INTEGER   LNGIDX, STATUS
+      CHARACTER CTYPE1*72
+
+      INCLUDE 'wcs.inc'
+
+*     WCSLEN is defined as a parameter in wcs.inc.
+      INTEGER   WCS(WCSLEN)
+      DOUBLE PRECISION DUMMY
+      EQUIVALENCE (WCS, DUMMY)
+
+*     Allocate memory and set default values for 2 axes.
+      STATUS = WCSPTI (WCS, WCS_FLAG, -1, 0, 0)
+      STATUS = WCSINI (2, WCS)
+
+*     Set CRPIX1, and CRPIX2; WCS_CRPIX is defined in wcs.inc.
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 512D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 512D0, 2, 0)
+
+*     Set PC1_2 to 5.0 (I = 1, J = 2).
+      STATUS = WCSPTD (WCS, WCS_PC, 5D0, 1, 2)
+
+*     Set CTYPE1 to 'RA---SIN'; N.B. must be given as CHARACTER*72.
+      CTYPE1 = 'RA---SIN'
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE1, 1, 0)
+
+*     Use an alternate method to set CTYPE2.
+      STATUS = WCSPTC (WCS, WCS_CTYPE, 'DEC--SIN'//CHAR(0), 2, 0)
+
+*     Set PV1_3 to -1.0 (I = 1, M = 3).
+      STATUS = WCSPTD (WCS, WCS_PV, -1D0, 1, 3)
+
+      etc.
+
+*     Initialize.
+      STATUS = WCSSET (WCS)
+      IF (STATUS.NE.0) THEN
+        CALL FLUSH (6)
+        STATUS = WCSPERR (WCS, 'EXAMPLE: '//CHAR(0))
+      ENDIF
+
+*     Find the "longitude" axis.
+      STATUS = WCSGTI (WCS, WCS_LNG, LNGIDX)
+
+*     Free memory.
+      STATUS = WCSFREE (WCS)
+@endverbatim
+
+Refer to the various Fortran test programs for further programming examples.
+In particular, @a twcs and @a twcsmix show how to retrieve elements of the
+celprm and prjprm structs contained within the wcsprm struct.
+
+Treatment of @c CHARACTER arguments in wrappers such as @c SPCTYPE, @c SPECX,
+and @c WCSSPTR, depends on whether they are given or returned.  Where a
+@c CHARACTER variable is returned, its length must match the declared length
+in the definition of the C wrapper.  The terminating null character in the C
+string, and all following it up to the declared length, are replaced with
+blanks.  If the Fortran @c CHARACTER variable were shorter than the declared
+length, an out-of-bounds memory access error would result.  If longer, the
+excess, uninitialized, characters could contain garbage.
+
+If the @c CHARACTER argument is given, a null-terminated @c CHARACTER variable
+may be provided as input, e.g. constructed using the Fortran @c CHAR(0)
+intrinsic as in the example code above.  The wrapper makes a
+character-by-character copy, searching for a NULL character in the process.
+If it finds one, the copy terminates early, resulting in a valid C string.
+In this case any trailing blanks before the @c NULL character are preserved if
+it makes sense to do so, such as in setting a prefix for use by the @c *PERR
+wrappers, such as @c WCSPERR in the example above.  If a NULL is not found,
+then the @c CHARACTER argument must be at least as long as the declared
+length, and any trailing blanks are stripped off.  Should a @c CHARACTER
+argument exceed the declared length, the excess characters are ignored.
+
+There is one exception to the above caution regarding @c CHARACTER arguments.
+The @c WCSLIB_VERSION wrapper is unusual in that it provides for the length of
+its @c CHARACTER argument to be specified, and only so many characters as fit
+within that length are returned.
+
+Note that the data type of the third argument to the @c *PUT (or @c *PTI,
+@c *PTD, or @c *PTC) and @c *GET (or @c *GTI, @c *GTD, or @c *GTC) routines
+differs depending on the data type of the corresponding C struct member, be it
+@a int, @a double, or @a char[].  It is essential that the Fortran data type
+match that of the C struct for @a int and @a double types, and be a
+@c CHARACTER variable of the correct length for @a char[] types, or
+else be null-terminated, as in the coding example above.  As a further
+example, in the two equivalent calls
+
+@verbatim
+      STATUS = PRJGET (PRJ, PRJ_NAME, NAME)
+      STATUS = PRJGTC (PRJ, PRJ_NAME, NAME)
+@endverbatim
+
+which return a character string, @c NAME must be a @c CHARACTER variable of
+length 40, as declared in the prjprm struct, no less and no more, the comments
+above pertaining to wrappers that contain @c CHARACTER arguments also applying
+here.  However, a few exceptions have been made to simplify coding.  The
+relevant @c *PUT (or @c *PTC) wrappers allow unterminated @c CHARACTER
+variables of less than the declared length for the following: @c prjprm::code
+(3 characters), @c spcprm::type (4 characters), @c spcprm::code (3
+characters), and @c fitskeyid::name (8 characters).  It doesn't hurt to
+specify longer @c CHARACTER variables, but the trailing characters will be
+ignored.  Notwithstanding this simplification, the length of the corresponding
+variables in the @c *GET (or @c *GTC) wrappers must match the length declared
+in the struct.
+
+When calling wrappers for C functions that print to @a stdout, such as
+@c WCSPRT, and @c WCSPERR, or that may print to @a stderr, such as @c WCSPIH,
+@c WCSBTH, @c WCSULEXE, or @c WCSUTRNE, it may be necessary to flush the
+Fortran I/O buffers beforehand so that the output appears in the correct
+order.  The wrappers for these functions do call @c fflush(NULL), but
+depending on the particular system, this may not succeed in flushing the
+Fortran I/O buffers.  Most Fortran compilers provide the non-standard
+intrinsic @c FLUSH(), which is called with unit number 6 to flush @a stdout
+(as in the example above), and unit 0 for @a stderr.
+
+A basic assumption made by the wrappers is that an @c INTEGER variable is no
+less than half the size of a @c DOUBLE @c PRECISION.
+*/
+
+
+/** @page pgsbox PGSBOX
+
+@c PGSBOX, which is provided as a separate part of WCSLIB, is a @ref software
+"PGPLOT" routine (PGPLOT being a Fortran graphics library) that draws and
+labels curvilinear coordinate grids.  Example @c PGSBOX grids can be seen at
+http://www.atnf.csiro.au/people/Mark.Calabretta/WCS/PGSBOX/index.html.
+
+The prologue to pgsbox.f contains usage instructions.  pgtest.f and cpgtest.c
+serve as test and demonstration programs in Fortran and C and also as well-
+documented examples of usage.
+
+@c PGSBOX requires a separate routine, @c EXTERNAL @c NLFUNC, to define the
+coordinate transformation.  Fortran subroutine @c PGCRFN (pgcrfn.f) is
+provided to define separable pairs of non-linear coordinate systems.  Linear,
+logarithmic and power-law axis types are currently defined; further types may
+be added as required.  A C function, @a pgwcsl_(), with Fortran-like interface
+defines an @c NLFUNC that interfaces to WCSLIB 4.x for @c PGSBOX to draw
+celestial coordinate grids.
+
+@ref software "PGPLOT" is implemented as a Fortran library with a set of C
+wrapper routines that are generated by a software tool.  However, @c PGSBOX
+has a more complicated interface than any of the standard PGPLOT routines,
+especially in having an @c EXTERNAL function in its argument list.
+Consequently, @c PGSBOX is implemented in Fortran but with a hand-coded C
+wrapper, @a cpgsbox().
+
+As an example, in this suite the C test/demo program, @a cpgtest, calls the C
+wrapper, @a cpgsbox(), passing it a pointer to @a pgwcsl_().  In turn,
+@a cpgsbox() calls @c PGSBOX, which invokes @a pgwcsl_() as an @c EXTERNAL
+subroutine.  In this sequence, a complicated C struct defined by @a cpgtest is
+passed through @c PGSBOX to @a pgwcsl_() as an @c INTEGER array.
+
+While there are no formal standards for calling Fortran from C, there are some
+fairly well established conventions.  Nevertheless, it's possible that you may
+need to modify the code if you use a combination of Fortran and C compilers
+with linkage conventions that differ from that of the GNU compilers, gcc and
+g77.
+*/
+
+/** @page versioning WCSLIB version numbers
+
+The full WCSLIB/PGSBOX version number is composed of three integers in fields
+separated by periods:
+
+ - <B>Major</B>: the first number changes only when the ABI changes, a rare
+   occurence (and the API never changes).  Typically, the ABI changes when the
+   contents of a struct change.  For example, the contents of the
+   <I>linprm</I> struct changed between 4.25.1 and 5.0.
+
+   In practical terms, this number becomes the major version number of the
+   WCSLIB sharable library, <B>libwcs.so.<I><major></I></B>.  To avoid
+   possible segmentation faults or bus errors that may arise from the altered
+   ABI, the dynamic (runtime) linker will not allow an application linked to a
+   sharable library with a particular major version number to run with that of
+   a different major version number.
+
+   Application code must be recompiled and relinked to use a newer version of
+   the WCSLIB sharable library with a new major version number.
+
+ - <B>Minor</B>: the second number changes when existing code is changed,
+   whether due to added functionality or bug fixes.  This becomes the minor
+   version number of the WCSLIB sharable library,
+   <B>libwcs.so.<I><major>.<minor></I></B>.
+
+   Because the ABI remains unchanged, older applications can use the new
+   sharable library without needing to be recompiled, thus obtaining the
+   benefit of bug fixes, speed enhancements, etc.
+
+   Application code written subsequently to use the added functionality would,
+   of course, need to be recompiled.
+
+ - <B>Patch</B>: the third number, which is often omitted, indicates a change
+   to the build procedures, documentation, or test suite.  It may also
+   indicate changes to the utility applications (<I>wcsware</I>,
+   <I>HPXcvt</I>, etc.), including the addition of new ones.
+
+   However, the library itself, including the definitions in the header files,
+   remains unaltered, so there is no point in recompiling applications.
+
+The following describes what happens (or should happen) when WCSLIB's
+installation procedures are used on a typical Linux system using the GNU gcc
+compiler and GNU linker.
+
+The sharable library should be installed as libwcs.so.<I><major>.<minor></I>,
+say libwcs.so.5.4 for concreteness, and a number of symbolic links created as
+follows:
+
+@verbatim
+  libwcs.so     -> libwcs.so.5
+  libwcs.so.5   -> libwcs.so.5.4
+  libwcs.so.5.4
+@endverbatim
+
+When an application is linked using '-lwcs', the linker finds libwcs.so and
+the symlinks lead it to libwcs.so.5.4.  However, that library's SONAME is
+actually 'libwcs.so.5', by virtue of linker options used when the sharable
+library was created, as can be seen by running
+
+@verbatim
+  readelf -d libwcs.so.5.4
+@endverbatim
+
+Thus, when an application that was compiled and linked to libwcs.so.5.4 begins
+execution, the dynamic linker, ld.so, will attempt to bind it to libwcs.so.5,
+as can be seen by running
+
+@verbatim
+  ldd <application>
+@endverbatim
+
+Later, when WCSLIB  5.5 is installed, the library symbolic links will become
+
+@verbatim
+  libwcs.so     -> libwcs.so.5
+  libwcs.so.5   -> libwcs.so.5.5
+  libwcs.so.5.4
+  libwcs.so.5.5
+@endverbatim
+
+Thus, even without being recompiled, existing applications will link
+automatically to libwcs.so.5.5 at runtime.  In fact, libwcs.so.5.4 would no
+longer be used and could be deleted.
+
+If WCSLIB 6.0 were to be installed at some later time, then the libwcs.so.6
+libraries would be used for new compilations.  However, the libwcs.so.5
+libraries must be left in place for existing executables that still require
+them:
+
+@verbatim
+  libwcs.so     -> libwcs.so.6
+  libwcs.so.6   -> libwcs.so.6.0
+  libwcs.so.6.0
+  libwcs.so.5   -> libwcs.so.5.5
+  libwcs.so.5.5
+@endverbatim
+*/

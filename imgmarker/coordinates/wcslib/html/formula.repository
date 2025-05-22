@@ -1,0 +1,78 @@
+\_form#0=28x14:$(x,y)$
+\_form#1=28x14:$(\alpha,\delta)$
+\_form#2=28x14:$(\phi,\theta)$
+\_form#3=13x13:$\phi_0$
+\_form#4=10x13:$\theta_0$
+\_form#5=13x14:$\phi_{\mathrm p}$
+\_form#6=11x14:$\theta_{\mathrm p}$
+\_form#7=11x14:$\delta_{\mathrm p}$
+\_form#8=9x9:$\pm$
+\_form#9=9x10:$Z$
+\_form#10=13x10:$X$
+\_form#11=13x10:$Z'$
+\_form#12=61x16:$\sqrt(x^2 + y^2)$
+\_form#13=49x15:$(x^2 + y^2)$
+\_form#14=31x8:$n \times n$
+\_form#15=34x11:$i n + j$
+\_form#16=5x9:$i$
+\_form#17=6x11:$j$
+\_form#18=19x10:$90^\circ$
+\_form#19=91x14:$ (x,y) =
+f(\phi) g(\theta) $
+\_form#20=6x10:$ \theta $
+\_form#21=23x14:$ g(\theta) $
+\_form#22=11x10:$1^\circ$
+\_form#23=30x11:$10^{-10}$
+\_form#24=11x10:$5^\circ$
+\_form#25=28x10:$-90^\circ$
+\_form#26=8x13:$\phi$
+\_form#27=6x10:$\theta$
+\_form#28=70x14:$[-180^\circ,180^\circ]$
+\_form#29=58x14:$[-90^\circ,90^\circ]$
+\_form#30=79x10:$0^\circ.0000000001$
+\_form#31=38x14:$180^\circ/\pi$
+\_form#32=8x6:$x$
+\_form#33=8x9:$y$
+\_form#34=9x10:$S$
+\_form#35=10x10:$P$
+\_form#36=38x14:$dX/dS$
+\_form#37=38x14:$dS/dX$
+\_form#38=10x10:$G$
+\_form#39=13x6:$m$
+\_form#40=8x6:$\alpha$
+\_form#41=14x9:$n_r$
+\_form#42=13x13:$\lambda_r$
+\_form#43=14x14:$n'_r$
+\_form#44=34x14:$dn/d\lambda$
+\_form#45=5x6:$\epsilon$
+\_form#46=69x10:$X\leadsto P\rightarrow S$
+\_form#47=68x10:$S\rightarrow P\leadsto X$
+\_form#48=16x6:$cos$
+\_form#49=18x9:$sin$
+\_form#50=76x14:$(\alpha_0,+90^\circ-\epsilon)$
+\_form#51=76x14:$(\alpha_0,-90^\circ+\epsilon)$
+\_form#52=24x10:$180^\circ$
+\_form#53=13x10:$0^\circ$
+\_form#54=44x14:$\beta = v/c$
+\_form#55=39x14:$= 1 / 2 \pi$
+\_form#56=26x9:$= 2 \pi$
+\_form#57=33x14:$= 1/h$
+\_form#58=20x10:$= h$
+\_form#59=19x6:$= c$
+\_form#60=31x14:$= 1/c$
+\_form#61=84x14:$(K_1, K_2,... K_M)$
+\_form#62=9x11:$\leq$
+\_form#63=71x13:$K_1 K_2 \ldots K_M$
+\_form#64=19x13:$\Upsilon_m$
+\_form#65=15x13:$K_1$
+\_form#66=9x11:$\le$
+\_form#67=39x14:$\pi/180^\circ$
+\_form#68=16x14:$\sqrt{2}$
+\_form#69=29x15:$1/\sqrt{2}$
+\_form#70=9x13:$\beta$
+\_form#71=29x14:$(\rho,\beta)$
+\_form#72=46x14:$\arg(x,y)$
+\_form#73=8x6:$v$
+\_form#74=173x14:$1 < |v| < 1 + WCSTRIG\_TOL$
+\_form#75=45x14:$|v| == 1$
+\_form#76=18x11:$10^6$

@@ -1,0 +1,119 @@
+/** @fn polyset(int j, struct disprm *dis)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the general Polynomial
+* distortion.
+*/
+
+/** @fn pol2tpd(int j, struct disprm *dis)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the general Polynomial
+* distortion.
+*/
+
+/** @fn dispoly(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the general Polynomial
+* distortion.
+*/
+
+/** @fn tpvset(int j, struct disprm *dis)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the TPV "projection".
+*/
+
+/** @fn sipset(int j, struct disprm *dis)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Simple Imaging Polynomial
+* distortion (SIP).
+*/
+
+/** @fn tpdset(int j, struct disprm *dis)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+
+/** @fn tpd1(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+
+/** @fn tpd2(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+
+/** @fn tpd3(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+
+/** @fn tpd4(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+
+/** @fn tpd5(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+
+/** @fn tpd6(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+
+/** @fn tpd7(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+
+/** @fn tpd8(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+
+/** @fn tpd9(DISP2X_ARGS)
+*
+* @brief (Internal use only.)
+*
+* For internal use only in the implementation of the Template Polynomial
+* Distortion (TPD).
+*/
+

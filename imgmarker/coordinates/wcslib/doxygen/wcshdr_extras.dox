@@ -1,0 +1,295 @@
+/** @def WCSHDR_none
+* @brief Bit mask for wcspih() and wcsbth() - reject all extensions.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - reject
+* all extensions.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_all
+* @brief Bit mask for wcspih() and wcsbth() - accept all extensions.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* all extensions.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_reject
+* @brief Bit mask for wcspih() and wcsbth() - reject non-standard keywords.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - reject
+* non-standard keywords.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_CROTAia
+* @brief Bit mask for wcspih() and wcsbth() - accept <TT><B>CROTA</B>ia</TT>,
+* <TT>i<B>CROT</B>na</TT>, <TT><B>TCROT</B>na</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT><B>CROTA</B>ia</TT>, <TT>i<B>CROT</B>na</TT>, <TT><B>TCROT</B>na</TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_EPOCHa
+* @brief Bit mask for wcspih() and wcsbth() - accept <TT><B>EPOCH</B>a</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT><B>EPOCH</B>a</TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_VELREFa
+* @brief Bit mask for wcspih() and wcsbth() - accept <TT><B>VELREF</B>a</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT><B>VELREF</B>a</TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_CD00i00j
+* @brief Bit mask for wcspih() and wcsbth() - accept
+* <TT><B>CD00</B>i<B>00</B>j</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT><B>CD00</B>i<B>00</B>j</TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_PC00i00j
+* @brief Bit mask for wcspih() and wcsbth() - accept
+* <TT><B>PC00</B>i<B>00</B>j</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT><B>PC00</B>i<B>00</B>j</TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_PROJPn
+* @brief Bit mask for wcspih() and wcsbth() - accept <TT><B>PROJP</B>n</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT><B>PROJP</B>n</TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_RADECSYS
+* @brief Bit mask for wcspih() and wcsbth() - accept <TT><B>RADECSYS</B></TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT><B>RADECSYS</B></TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_VSOURCE
+* @brief Bit mask for wcspih() and wcsbth() - accept <TT><B>VSOURCE</B>a</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT><B>VSOURCE</B>a</TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_DOBSn
+* @brief Bit mask for wcspih() and wcsbth() - accept <TT><B>DOBS</B>n</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT><B>DOBS</B>n</TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_LONGKEY
+* @brief Bit mask for wcspih() and wcsbth() - accept long forms of the
+* alternate binary table and pixel list WCS keywords.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() -
+* accept long forms of the alternate binary table and pixel list WCS keywords.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_CNAMn
+* @brief Bit mask for wcspih() and wcsbth() - accept
+* <TT>i<B>CNAM</B>n</TT>, <TT><B>TCNAM</B>n</TT>,
+* <TT>i<B>CRDE</B>n</TT>, <TT><B>TCRDE</B>n</TT>,
+* <TT>i<B>CSYE</B>n</TT>, <TT><B>TCSYE</B>n</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() - accept
+* <TT>i<B>CNAM</B>n</TT>, <TT><B>TCNAM</B>n</TT>,
+* <TT>i<B>CRDE</B>n</TT>, <TT><B>TCRDE</B>n</TT>,
+* <TT>i<B>CSYE</B>n</TT>, <TT><B>TCSYE</B>n</TT>.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_AUXIMG
+* @brief Bit mask for wcspih() and wcsbth() - allow the image-header form of
+* an auxiliary WCS keyword to provide a default value for all images.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() -
+* allow the image-header form of an auxiliary WCS keyword with
+* representation-wide scope to provide a default value for all images.
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_ALLIMG
+* @brief Bit mask for wcspih() and wcsbth() - allow the image-header form of
+* <EM>all</EM> image header WCS keywords to provide a default value for all
+* images.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcspih() and wcsbth() -
+* allow the image-header form of <EM>all</EM> image header WCS keywords to
+* provide a default value for all image arrays in a binary table (n.b. not
+* pixel list).
+*
+* Refer to wcsbth() note 5.
+*/
+
+/** @def WCSHDR_IMGHEAD
+* @brief Bit mask for wcsbth() - restrict to image header keywords only.
+*
+* Bit mask for the <VAR>keysel</VAR> argument of wcsbth() -
+* restrict keyword types considered to image header keywords only.
+*/
+
+/** @def WCSHDR_BIMGARR
+* @brief Bit mask for wcsbth() - restrict to binary table image array keywords
+* only.
+*
+* Bit mask for the <VAR>keysel</VAR> argument of wcsbth() -
+* restrict keyword types considered to binary table image array keywords only.
+*/
+
+/** @def WCSHDR_PIXLIST
+* @brief Bit mask for wcsbth() - restrict to pixel list keywords only.
+*
+* Bit mask for the <VAR>keysel</VAR> argument of wcsbth() -
+* restrict keyword types considered to pixel list keywords only.
+*/
+
+/** @def WCSHDO_none
+* @brief Bit mask for wcshdo() - don't write any extensions.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcshdo() -
+* don't write any extensions.
+*
+* Refer to the notes for wcshdo().
+*/
+
+/** @def WCSHDO_all
+* @brief Bit mask for wcshdo() - write all extensions.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcshdo() -
+* write all extensions.
+*
+* Refer to the notes for wcshdo().
+*/
+
+/** @def WCSHDO_safe
+* @brief Bit mask for wcshdo() - write safe extensions only.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcshdo() -
+* write only extensions that are considered safe.
+*
+* Refer to the notes for wcshdo().
+*/
+
+/** @def WCSHDO_DOBSn
+* @brief Bit mask for wcshdo() - write <TT><B>DOBS</B>n</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcshdo() - write
+* <TT><B>DOBS</B>n</TT>, the column-specific analogue of DATE-OBS for
+* use in binary tables and pixel lists.
+*
+* Refer to the notes for wcshdo().
+*/
+
+/** @def WCSHDO_TPCn_ka
+* @brief Bit mask for wcshdo() - write <TT><B>TPC</B>n<B>_</B>ka</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcshdo() - write
+* <TT><B>TPC</B>n<B>_</B>ka</TT>
+* if less than eight characters instead of
+* <TT><B>TP</B>n<B>_</B>ka</TT>.
+*
+* Refer to the notes for wcshdo().
+*/
+
+/** @def WCSHDO_PVn_ma
+* @brief Bit mask for wcshdo() - write
+* <TT>i<B>PV</B>n<B>_</B>ma</TT>, <TT><B>TPV</B>n<B>_</B>ma</TT>,
+* <TT>i<B>PS</B>n<B>_</B>ma</TT>, <TT><B>TPS</B>n<B>_</B>ma</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcshdo() - write
+* <TT>i<B>PV</B>n<B>_</B>ma</TT>, <TT><B>TPV</B>n<B>_</B>ma</TT>,
+* <TT>i<B>PS</B>n<B>_</B>ma</TT>, <TT><B>TPS</B>n<B>_</B>ma</TT>,
+* if less than eight characters instead of
+* <TT>i<B>V</B>n<B>_</B>ma</TT>, <TT><B>TV</B>n<B>_</B>ma</TT>,
+* <TT>i<B>S</B>n<B>_</B>ma</TT>, <TT><B>TS</B>n<B>_</B>ma</TT>.
+*
+* Refer to the notes for wcshdo().
+*/
+
+/** @def WCSHDO_CRPXna
+* @brief Bit mask for wcshdo() - write
+* <TT>j<B>CRPX</B>na</TT>, <TT><B>TCRPX</B>na</TT>,
+* <TT>i<B>CDLT</B>na</TT>, <TT><B>TCDLT</B>na</TT>,
+* <TT>i<B>CUNI</B>na</TT>, <TT><B>TCUNI</B>na</TT>,
+* <TT>i<B>CTYP</B>na</TT>, <TT><B>TCTYP</B>na</TT>,
+* <TT>i<B>CRVL</B>na</TT>, <TT><B>TCRVL</B>na</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcshdo() - write
+* <TT>j<B>CRPX</B>na</TT>, <TT><B>TCRPX</B>na</TT>,
+* <TT>i<B>CDLT</B>na</TT>, <TT><B>TCDLT</B>na</TT>,
+* <TT>i<B>CUNI</B>na</TT>, <TT><B>TCUNI</B>na</TT>,
+* <TT>i<B>CTYP</B>na</TT>, <TT><B>TCTYP</B>na</TT>,
+* <TT>i<B>CRVL</B>na</TT>, <TT><B>TCRVL</B>na</TT>,
+* if less than eight characters instead of
+* <TT>j<B>CRP</B>na</TT>, <TT><B>TCRP</B>na</TT>,
+* <TT>i<B>CDE</B>na</TT>, <TT><B>TCDE</B>na</TT>,
+* <TT>i<B>CUN</B>na</TT>, <TT><B>TCUN</B>na</TT>,
+* <TT>i<B>CTY</B>na</TT>, <TT><B>TCTY</B>na</TT>,
+* <TT>i<B>CRV</B>na</TT>, <TT><B>TCRV</B>na</TT>.
+*
+* Refer to the notes for wcshdo().
+*/
+
+/** @def WCSHDO_CNAMna
+* @brief Bit mask for wcshdo() - write
+* <TT>i<B>CNAM</B>na</TT>, <TT><B>TCNAM</B>na</TT>,
+* <TT>i<B>CRDE</B>na</TT>, <TT><B>TCRDE</B>na</TT>,
+* <TT>i<B>CSYE</B>na</TT>, <TT><B>TCSYE</B>na</TT>.
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcshdo() - write
+* <TT>i<B>CNAM</B>na</TT>, <TT><B>TCNAM</B>na</TT>,
+* <TT>i<B>CRDE</B>na</TT>, <TT><B>TCRDE</B>na</TT>,
+* <TT>i<B>CSYE</B>na</TT>, <TT><B>TCSYE</B>na</TT>,
+* if less than eight characters instead of
+* <TT>i<B>CNA</B>na</TT>, <TT><B>TCNA</B>na</TT>,
+* <TT>i<B>CRD</B>na</TT>, <TT><B>TCRD</B>na</TT>,
+* <TT>i<B>CSY</B>na</TT>, <TT><B>TCSY</B>na</TT>.
+*
+* Refer to the notes for wcshdo().
+*/
+
+/** @def WCSHDO_WCSNna
+* @brief Bit mask for wcshdo() - write <TT><B>WCSN</B>na</TT> instead of
+* <TT><B>TWCS</B>na</TT>
+*
+* Bit mask for the <VAR>relax</VAR> argument of wcshdo() -
+* write <TT><B>WCSN</B>na</TT> instead of <TT><B>TWCS</B>na</TT>.
+*
+* Refer to the notes for wcshdo().
+*/

@@ -1,0 +1,32 @@
+/** @def D2R
+* @brief Degrees to radians conversion factor.
+*
+* Factor @f$\pi/180^\circ@f$ to convert from degrees to radians.
+*/
+
+/** @def R2D
+* @brief Radians to degrees conversion factor.
+*
+* Factor @f$180^\circ/\pi@f$ to convert from radians to degrees.
+*/
+
+/** @def SQRT2
+* @f$\sqrt{2}@f$, used only by molset() (<B><TT>MOL</TT></B> projection).
+*/
+
+/** @def SQRT2INV
+* @f$1/\sqrt{2}@f$, used only by qscx2s() (<B><TT>QSC</TT></B> projection).
+*/
+
+/** @def UNDEFINED
+* @brief Value used to indicate an undefined quantity.
+*
+* Value used to indicate an undefined quantity (noting that NaNs cannot be
+* used portably).
+*/
+
+/** @def undefined
+* @brief Macro used to test for an undefined quantity.
+*
+* Macro used to test for an undefined value.
+*/

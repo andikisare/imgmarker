@@ -1,0 +1,21 @@
+var searchData=
+[
+  ['s_0',['s',['../structfitskey.html#af8a20869919be987389281ab802981d0',1,'fitskey']]],
+  ['scale_1',['scale',['../structdisprm.html#a51d897762466167f4c98850050614d9c',1,'disprm']]],
+  ['sense_2',['sense',['../structtabprm.html#a11412c7d27506d2b9e19103ff2de7c1b',1,'tabprm']]],
+  ['set_5fm_3',['set_M',['../structtabprm.html#a71057a73168d71019b0caaa203fe5a05',1,'tabprm']]],
+  ['simple_4',['simple',['../structlinprm.html#af3a8524b6c3c11315e4048d4bd6864c8',1,'linprm']]],
+  ['simplezen_5',['simplezen',['../structprjprm.html#afecdd175932cbf29fcfac575b1a5cb9b',1,'prjprm']]],
+  ['spc_6',['spc',['../structwcsprm.html#ae83952aec7c1ac76c090bc89bf4eeea7',1,'wcsprm']]],
+  ['spc_5ferrmsg_7',['spc_errmsg',['../spc_8h.html#af2f2452dec8dcf572ae0ae30135ebd0a',1,'spc.h']]],
+  ['spec_8',['spec',['../structwcsprm.html#ab9729795155b8f37afd80784fb70068b',1,'wcsprm']]],
+  ['specsys_9',['specsys',['../structwcsprm.html#aa37530e00bdc9bae0d0ab8267be6f3b3',1,'wcsprm']]],
+  ['spx_5ferrmsg_10',['spx_errmsg',['../spx_8h.html#a286f473d94247fbd7c2485e515fee67f',1,'spx.h']]],
+  ['spxp2s_11',['spxP2S',['../structspcprm.html#a15bf430dec2d7536864282a728cb1b70',1,'spcprm']]],
+  ['spxp2x_12',['spxP2X',['../structspcprm.html#a5d6ca09833c076e8a527ac06e8e77318',1,'spcprm']]],
+  ['spxs2p_13',['spxS2P',['../structspcprm.html#aaf0dc13a4ee35251bb4fcc9ef413b63b',1,'spcprm']]],
+  ['spxx2p_14',['spxX2P',['../structspcprm.html#a6a3015faf6c9bae86ab2022ec6ab76c7',1,'spcprm']]],
+  ['ssysobs_15',['ssysobs',['../structwcsprm.html#a0c572d2893ac15d95958cf67941ee911',1,'wcsprm']]],
+  ['ssyssrc_16',['ssyssrc',['../structwcsprm.html#aa4ffae7a2f5a0e0ad84720ce43d6d67f',1,'wcsprm']]],
+  ['status_17',['status',['../structfitskey.html#a935a63ff3aa2c0403ed8eee1a94662e7',1,'fitskey::status'],['../structwcserr.html#a417d725c2e5615c3fb73cc210e0ccff2',1,'wcserr::status']]]
+];

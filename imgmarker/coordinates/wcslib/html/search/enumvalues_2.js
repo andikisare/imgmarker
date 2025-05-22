@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['fitshdrerr_5fdata_5ftype_0',['FITSHDRERR_DATA_TYPE',['../fitshdr_8h.html#a4d7dfa6de37191eb897faa60ce216412a9904089dd772386251e46f4a1f118b0f',1,'fitshdr.h']]],
+  ['fitshdrerr_5fflex_5fparser_1',['FITSHDRERR_FLEX_PARSER',['../fitshdr_8h.html#a4d7dfa6de37191eb897faa60ce216412a303803fdbecabde6bc9bb607cb284242',1,'fitshdr.h']]],
+  ['fitshdrerr_5fmemory_2',['FITSHDRERR_MEMORY',['../fitshdr_8h.html#a4d7dfa6de37191eb897faa60ce216412ab423fa4f6030c2480b8ed78088318bbe',1,'fitshdr.h']]],
+  ['fitshdrerr_5fnull_5fpointer_3',['FITSHDRERR_NULL_POINTER',['../fitshdr_8h.html#a4d7dfa6de37191eb897faa60ce216412a63a6fb5e1687601e9b4f2788260bbf46',1,'fitshdr.h']]],
+  ['fitshdrerr_5fsuccess_4',['FITSHDRERR_SUCCESS',['../fitshdr_8h.html#a4d7dfa6de37191eb897faa60ce216412a8f88dbd41c3e1e65e4953e5fc6f2cb51',1,'fitshdr.h']]],
+  ['fixerr_5fbad_5fcoord_5ftrans_5',['FIXERR_BAD_COORD_TRANS',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a5dd410d6f1a55543c4f7d0f82435eb40',1,'wcsfix.h']]],
+  ['fixerr_5fbad_5fcorner_5fpix_6',['FIXERR_BAD_CORNER_PIX',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a3f4b7a9a303943f6c12ea51cce2240cf',1,'wcsfix.h']]],
+  ['fixerr_5fbad_5fctype_7',['FIXERR_BAD_CTYPE',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a421fc9b9a2aac54bc832b3c1180f8f07',1,'wcsfix.h']]],
+  ['fixerr_5fbad_5fparam_8',['FIXERR_BAD_PARAM',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a26d787caed068586fbef3d3c0fbce41f',1,'wcsfix.h']]],
+  ['fixerr_5fdate_5ffix_9',['FIXERR_DATE_FIX',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a1edfc4a839295befd132ce460d253311',1,'wcsfix.h']]],
+  ['fixerr_5fill_5fcoord_5ftrans_10',['FIXERR_ILL_COORD_TRANS',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a81b5390b4f770515ae950d9e382b2885',1,'wcsfix.h']]],
+  ['fixerr_5fmemory_11',['FIXERR_MEMORY',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a1e4cf4eeb3cd2f4d8c2c1f040aa62f6c',1,'wcsfix.h']]],
+  ['fixerr_5fno_5fchange_12',['FIXERR_NO_CHANGE',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183aec3fdc50ed9f4ca8d80d7ce7751ef0e3',1,'wcsfix.h']]],
+  ['fixerr_5fno_5fref_5fpix_5fcoord_13',['FIXERR_NO_REF_PIX_COORD',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183ad6bf7801d043f41f67c54677d6cfcb75',1,'wcsfix.h']]],
+  ['fixerr_5fno_5fref_5fpix_5fval_14',['FIXERR_NO_REF_PIX_VAL',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a15a9e5f9cbb559ef53018e9aade43e88',1,'wcsfix.h']]],
+  ['fixerr_5fnull_5fpointer_15',['FIXERR_NULL_POINTER',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183af574a836e251e8a0257da97580bb9354',1,'wcsfix.h']]],
+  ['fixerr_5fobsgeo_5ffix_16',['FIXERR_OBSGEO_FIX',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a1e29d170017673feccf26343a7fd9528',1,'wcsfix.h']]],
+  ['fixerr_5fsingular_5fmtx_17',['FIXERR_SINGULAR_MTX',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a8553bf40509263e3c3a198810f83d26e',1,'wcsfix.h']]],
+  ['fixerr_5fspc_5fupdate_18',['FIXERR_SPC_UPDATE',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a7906f35912dd0fb39954bfd5140672a7',1,'wcsfix.h']]],
+  ['fixerr_5fsuccess_19',['FIXERR_SUCCESS',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183aee9fbc64e56bb6d307d06d8ef8e8b244',1,'wcsfix.h']]],
+  ['fixerr_5funits_5falias_20',['FIXERR_UNITS_ALIAS',['../wcsfix_8h.html#a0399bbea1e28abad3259a8ea05b25183a1e255b3aa269ff0c251ada8a6c3f9602',1,'wcsfix.h']]]
+];

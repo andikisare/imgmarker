@@ -1,0 +1,102 @@
+/** @def WCSSUB_LONGITUDE
+* @brief Mask for extraction of longitude axis by wcssub().
+*
+* Mask to use for extracting the longitude axis when sub-imaging, refer to the
+* <VAR>axes</VAR> argument of wcssub().
+*/
+
+/** @def WCSSUB_LATITUDE
+* @brief Mask for extraction of latitude axis by wcssub().
+*
+* Mask to use for extracting the latitude axis when sub-imaging, refer to the
+* <VAR>axes</VAR> argument of wcssub().
+*/
+
+/** @def WCSSUB_CUBEFACE
+* @brief Mask for extraction of <B><TT>CUBEFACE</TT></B> axis by wcssub().
+*
+* Mask to use for extracting the <B><TT>CUBEFACE</TT></B> axis when
+* sub-imaging, refer to the <VAR>axes</VAR> argument of wcssub().
+*/
+
+/** @def WCSSUB_CELESTIAL
+* @brief Mask for extraction of celestial axes by wcssub().
+*
+* Mask to use for extracting the celestial axes (longitude, latitude and
+* cubeface) when sub-imaging, refer to the <VAR>axes</VAR> argument of
+* wcssub().
+*/
+
+/** @def WCSSUB_SPECTRAL
+* @brief Mask for extraction of spectral axis by wcssub().
+*
+* Mask to use for extracting the spectral axis when sub-imaging, refer to the
+* <VAR>axes</VAR> argument of wcssub().
+*/
+
+/** @def WCSSUB_STOKES
+* @brief Mask for extraction of <B><TT>STOKES</TT></B> axis by wcssub().
+*
+* Mask to use for extracting the <B><TT>STOKES</TT></B> axis when sub-imaging,
+* refer to the <VAR>axes</VAR> argument of wcssub().
+*/
+
+/** @def WCSLEN
+* @brief Size of the wcsprm struct in int units.
+*
+* Size of the wcsprm struct in @a int units, used by the Fortran wrappers.
+*/
+
+/** @def wcsini_errmsg
+* @brief Deprecated.
+* @deprecated Added for backwards compatibility, use #wcs_errmsg directly now
+* instead.
+*/
+
+/** @def wcssub_errmsg
+* @brief Deprecated.
+* @deprecated Added for backwards compatibility, use #wcs_errmsg directly now
+* instead.
+*/
+
+/** @def wcscopy_errmsg
+* @brief Deprecated.
+* @deprecated Added for backwards compatibility, use #wcs_errmsg directly now
+* instead.
+*/
+
+/** @def wcsfree_errmsg
+* @brief Deprecated.
+* @deprecated Added for backwards compatibility, use #wcs_errmsg directly now
+* instead.
+*/
+
+/** @def wcsprt_errmsg
+* @brief Deprecated.
+* @deprecated Added for backwards compatibility, use #wcs_errmsg directly now
+* instead.
+*/
+
+/** @def wcsset_errmsg
+* @brief Deprecated.
+* @deprecated Added for backwards compatibility, use #wcs_errmsg directly now
+* instead.
+*/
+
+/** @def wcsp2s_errmsg
+* @brief Deprecated.
+* @deprecated Added for backwards compatibility, use #wcs_errmsg directly now
+* instead.
+*/
+
+/** @def wcss2p_errmsg
+* @brief Deprecated.
+* @deprecated Added for backwards compatibility, use #wcs_errmsg directly now
+* instead.
+*/
+
+/** @def wcsmix_errmsg
+* @brief Deprecated.
+* @deprecated Added for backwards compatibility, use #wcs_errmsg directly now
+* instead.
+*/

@@ -1,0 +1,29 @@
+Overview of generation of the WCSLIB manual using doxygen
+---------------------------------------------------------
+Documentation is extracted from the C header files using a flex scanner,
+doxextr (see ./doxextr.l).  doxextr relies on strict adherence to a set
+of formatting rules in order to minimize the amount of doxygen markup
+required in the C source files.
+
+doxextr extracts information from the header files and applies doxygen
+markup to it.  This is passed through a generic sed filter, doxexr.sed,
+and possibly also a specific sed filter, e.g. prj.sed for prj.h, which
+applies additional doxygen markup, mainly for fonts and formulae.  The
+makefile rule that drives this process writes the output to a set of
+files with names of the form *.dox, e.g. prj.dox.
+
+Additional doxygen markup may also be provided via files in this
+directory with names of the form *_extras.dox, e.g. prj_extras.dox.
+These are maintained manually.  Similarly, the main page and explanatory
+sections of the manual are maintained in mainpage.dox.
+
+The makefile rule concatenates ../C/wcslib.h and all of the .dox files
+in this directory onto ./wcslib.h for input to doxygen which is told
+via its configuration file, Doxyfile, to ignore ../C/wcslib.h.  This
+subterfuge is necessary to avoid spurious file references in the
+generated latex manual.
+
+
+Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+http://www.atnf.csiro.au/people/Mark.Calabretta
+$Id: README,v 8.4 2024/10/28 13:56:17 mcalabre Exp $

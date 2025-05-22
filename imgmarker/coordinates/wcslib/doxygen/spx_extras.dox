@@ -1,0 +1,196 @@
+/** @fn int afrqfreq(SPX_ARGS)
+* @brief Convert angular frequency to frequency (vector).
+*
+* @b %afrqfreq() converts angular frequency to frequency.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int freqener(SPX_ARGS)
+* @brief Convert frequency to photon energy (vector).
+*
+* @b %freqener() converts frequency to photon energy.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int enerfreq(SPX_ARGS)
+* @brief Convert photon energy to frequency (vector).
+*
+* @b %enerfreq() converts photon energy to frequency.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int freqwavn(SPX_ARGS)
+* @brief Convert frequency to wave number (vector).
+*
+* @b %freqwavn() converts frequency to wave number.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int wavnfreq(SPX_ARGS)
+* @brief Convert wave number to frequency (vector).
+*
+* @b %wavnfreq() converts wave number to frequency.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int freqwave(SPX_ARGS)
+* @brief Convert frequency to vacuum wavelength (vector).
+*
+* @b %freqwave() converts frequency to vacuum wavelength.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int wavefreq(SPX_ARGS)
+* @brief Convert vacuum wavelength to frequency (vector).
+*
+* @b %wavefreq() converts vacuum wavelength to frequency.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int freqawav(SPX_ARGS)
+* @brief Convert frequency to air wavelength (vector).
+*
+* @b %freqawav() converts frequency to air wavelength.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int awavfreq(SPX_ARGS)
+* @brief Convert air wavelength to frequency (vector).
+*
+* @b %awavfreq() converts air wavelength to frequency.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int waveawav(SPX_ARGS)
+* @brief Convert vacuum wavelength to air wavelength (vector).
+*
+* @b %waveawav() converts vacuum wavelength to air wavelength.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int awavwave(SPX_ARGS)
+* @brief Convert air wavelength to vacuum wavelength (vector).
+*
+* @b %awavwave() converts air wavelength to vacuum wavelength.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int velobeta(SPX_ARGS)
+* @brief Convert relativistic velocity to relativistic beta (vector).
+*
+* @b %velobeta() converts relativistic velocity to relativistic beta.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int betavelo(SPX_ARGS)
+* @brief Convert relativistic beta to relativistic velocity (vector).
+*
+* @b %betavelo() converts relativistic beta to relativistic velocity.
+*
+* See freqafrq() for a description of the API.
+*/
+
+/** @fn int velofreq(SPX_ARGS)
+* @brief Convert relativistic velocity to frequency (vector).
+*
+* @b %velofreq() converts relativistic velocity to frequency.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @fn int freqvrad(SPX_ARGS)
+* @brief Convert frequency to radio velocity (vector).
+*
+* @b %freqvrad() converts frequency to radio velocity.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @fn int vradfreq(SPX_ARGS)
+* @brief Convert radio velocity to frequency (vector).
+*
+* @b %vradfreq() converts radio velocity to frequency.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @fn int velowave(SPX_ARGS)
+* @brief Convert relativistic velocity to vacuum wavelength (vector).
+*
+* @b %velowave() converts relativistic velocity to vacuum wavelength.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @fn int awavvelo(SPX_ARGS)
+* @brief Convert air wavelength to relativistic velocity (vector).
+*
+* @b %awavvelo() converts air wavelength to relativistic velocity.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @fn int veloawav(SPX_ARGS)
+* @brief Convert relativistic velocity to air wavelength (vector).
+*
+* @b %veloawav() converts relativistic velocity to air wavelength.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @fn int wavevopt(SPX_ARGS)
+* @brief Convert vacuum wavelength to optical velocity (vector).
+*
+* @b %wavevopt() converts vacuum wavelength to optical velocity.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @fn int voptwave(SPX_ARGS)
+* @brief Convert optical velocity to vacuum wavelength (vector).
+*
+* @b %voptwave() converts optical velocity to vacuum wavelength.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @fn int wavezopt(SPX_ARGS)
+* @brief Convert vacuum wavelength to redshift (vector).
+*
+* @b %wavevopt() converts vacuum wavelength to redshift.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @fn int zoptwave(SPX_ARGS)
+* @brief Convert redshift to vacuum wavelength (vector).
+*
+* @b %zoptwave() converts redshift to vacuum wavelength.
+*
+* See freqvelo() for a description of the API.
+*/
+
+/** @def SPX_ARGS
+* @brief For use in declaring spectral conversion function prototypes.
+*
+* Preprocessor macro used for declaring spectral conversion function
+* prototypes.
+*/
+
+/** @def SPXLEN
+* @brief Size of the spxprm struct in @a int units.
+*
+* Size of the spxprm struct in @a int units, used by the Fortran wrappers.
+*/

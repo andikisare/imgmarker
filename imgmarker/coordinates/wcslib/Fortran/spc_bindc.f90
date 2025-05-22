@@ -1,0 +1,301 @@
+!=============================================================================
+! WCSLIB 8.4 - an implementation of the FITS WCS standard.
+! Copyright (C) 1995-2024, Mark Calabretta
+!
+! This file is part of WCSLIB.
+!
+! WCSLIB is free software: you can redistribute it and/or modify it under the
+! terms of the GNU Lesser General Public License as published by the Free
+! Software Foundation, either version 3 of the License, or (at your option)
+! any later version.
+!
+! WCSLIB is distributed in the hope that it will be useful, but WITHOUT ANY
+! WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+! FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+! more details.
+!
+! You should have received a copy of the GNU Lesser General Public License
+! along with WCSLIB.  If not, see http://www.gnu.org/licenses.
+!
+! Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+! http://www.atnf.csiro.au/people/Mark.Calabretta
+! $Id: spc_bindc.f90,v 8.4 2024/10/28 13:56:17 mcalabre Exp $
+!=============================================================================
+
+INTEGER FUNCTION SPCPTC (SPC, WHAT, VALUE, M)
+  INTEGER :: SPC(*), WHAT
+  CHARACTER :: VALUE(*)
+  INTEGER :: M
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCPTC_C (SPC, WHAT, VALUE, M) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      INTEGER(C_INT) :: SPC(*), WHAT
+      CHARACTER(KIND=C_CHAR, LEN=1) :: VALUE(*)
+      INTEGER(C_INT) :: M
+    END FUNCTION SPCPTC_C
+  END INTERFACE
+
+  SPCPTC = SPCPTC_C (SPC, WHAT, VALUE, M)
+END FUNCTION SPCPTC
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCGTC (SPC, WHAT, VALUE)
+  INTEGER :: SPC(*), WHAT
+  CHARACTER :: VALUE(*)
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCGTC_C (SPC, WHAT, VALUE) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      INTEGER(C_INT) :: SPC(*), WHAT
+      CHARACTER(KIND=C_CHAR, LEN=1) :: VALUE(*)
+    END FUNCTION SPCGTC_C
+  END INTERFACE
+
+  SPCGTC = SPCGTC_C (SPC, WHAT, VALUE)
+END FUNCTION SPCGTC
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCPERR (SPC, PREFIX)
+  INTEGER :: SPC(*)
+  CHARACTER :: PREFIX(*)
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCPERR_C (SPC, PREFIX) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      INTEGER(C_INT) :: SPC(*)
+      CHARACTER(KIND=C_CHAR, LEN=1) :: PREFIX(72)
+    END FUNCTION SPCPERR_C
+  END INTERFACE
+
+  SPCPERR = SPCPERR_C (SPC, PREFIX)
+END FUNCTION SPCPERR
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCTYPE (CTYPEI, STYPE, SCODE, SNAME, UNITS, PTYPE, XTYPE, &
+                          RESTREQ, ERR)
+  CHARACTER :: CTYPEI(8), STYPE(4), SCODE(3), SNAME(21), UNITS(7), PTYPE(1), &
+               XTYPE(1)
+  INTEGER :: RESTREQ, ERR(*)
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCTYPE_C (CTYPEI, STYPE, SCODE, SNAME, UNITS, &
+                                       PTYPE, XTYPE, RESTREQ, ERR) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPEI(8), STYPE(4), SCODE(3), &
+                                       SNAME(21), UNITS(7), PTYPE(1), XTYPE(1)
+      INTEGER(C_INT) :: RESTREQ, ERR(*)
+    END FUNCTION SPCTYPE_C
+  END INTERFACE
+
+  SPCTYPE = SPCTYPE_C (CTYPEI, STYPE, SCODE, SNAME, UNITS, PTYPE, XTYPE, &
+                       RESTREQ, ERR)
+END FUNCTION SPCTYPE
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCTYP (CTYPEI, STYPE, SCODE, SNAME, UNITS, PTYPE, XTYPE, &
+                         RESTREQ)
+  CHARACTER :: CTYPEI(8), STYPE(4), SCODE(3), SNAME(21), UNITS(7), PTYPE(1), &
+               XTYPE(1)
+  INTEGER :: RESTREQ
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCTYP_C (CTYPEI, STYPE, SCODE, SNAME, UNITS, &
+                                      PTYPE, XTYPE, RESTREQ) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPEI(8), STYPE(4), SCODE(3), &
+                                       SNAME(21), UNITS(7), PTYPE(1), XTYPE(1)
+      INTEGER(C_INT) :: RESTREQ
+    END FUNCTION SPCTYP_C
+  END INTERFACE
+
+  SPCTYP = SPCTYP_C (CTYPEI, STYPE, SCODE, SNAME, UNITS, PTYPE, XTYPE, &
+                     RESTREQ)
+END FUNCTION SPCTYP
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCSPXE (CTYPES, CRVALS, RESTFRQ, RESTWAV, PTYPE, XTYPE, &
+                          RESTREQ, CRVALX, DXDS, ERR)
+  CHARACTER :: CTYPES(8)
+  DOUBLE PRECISION :: CRVALS, RESTFRQ, RESTWAV
+  CHARACTER :: PTYPE(1), XTYPE(1)
+  INTEGER :: RESTREQ
+  DOUBLE PRECISION :: CRVALX, DXDS
+  INTEGER :: ERR(*)
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCSPXE_C (CTYPES, CRVALS, RESTFRQ, RESTWAV, &
+                                       PTYPE, XTYPE, RESTREQ, CRVALX, DXDS, &
+                                       ERR) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPES(8)
+      REAL(C_DOUBLE) :: CRVALS, RESTFRQ, RESTWAV
+      CHARACTER(KIND=C_CHAR, LEN=1) :: PTYPE(1), XTYPE(1)
+      INTEGER(C_INT) :: RESTREQ
+      REAL(C_DOUBLE) :: CRVALX, DXDS
+      INTEGER(C_INT) :: ERR(*)
+    END FUNCTION SPCSPXE_C
+  END INTERFACE
+
+  SPCSPXE = SPCSPXE_C (CTYPES, CRVALS, RESTFRQ, RESTWAV, PTYPE, XTYPE, &
+                       RESTREQ, CRVALX, DXDS, ERR)
+END FUNCTION SPCSPXE
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCSPX (CTYPES, CRVALS, RESTFRQ, RESTWAV, PTYPE, XTYPE, &
+                         RESTREQ, CRVALX, DXDS)
+  CHARACTER :: CTYPES(8)
+  DOUBLE PRECISION :: CRVALS, RESTFRQ, RESTWAV
+  CHARACTER :: PTYPE(1), XTYPE(1)
+  INTEGER :: RESTREQ
+  DOUBLE PRECISION :: CRVALX, DXDS
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCSPX_C (CTYPES, CRVALS, RESTFRQ, RESTWAV, &
+                                      PTYPE, XTYPE, RESTREQ, CRVALX, DXDS) &
+                                      BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPES(8)
+      REAL(C_DOUBLE) :: CRVALS, RESTFRQ, RESTWAV
+      CHARACTER(KIND=C_CHAR, LEN=1) :: PTYPE(1), XTYPE(1)
+      INTEGER(C_INT) :: RESTREQ
+      REAL(C_DOUBLE) :: CRVALX, DXDS
+    END FUNCTION SPCSPX_C
+  END INTERFACE
+
+  SPCSPX = SPCSPX_C (CTYPES, CRVALS, RESTFRQ, RESTWAV, PTYPE, XTYPE, &
+                     RESTREQ, CRVALX, DXDS)
+END FUNCTION SPCSPX
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCXPSE (CTYPES, CRVALX, RESTFRQ, RESTWAV, PTYPE, XTYPE, &
+                          RESTREQ, CRVALS, DSDX, ERR)
+  CHARACTER :: CTYPES(8)
+  DOUBLE PRECISION :: CRVALX, RESTFRQ, RESTWAV
+  CHARACTER :: PTYPE(1), XTYPE(1)
+  INTEGER :: RESTREQ
+  DOUBLE PRECISION :: CRVALS, DSDX
+  INTEGER :: ERR(*)
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCXPSE_C (CTYPES, CRVALX, RESTFRQ, RESTWAV, &
+                                       PTYPE, XTYPE, RESTREQ, CRVALS, DSDX, &
+                                       ERR) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPES(8)
+      REAL(C_DOUBLE) :: CRVALX, RESTFRQ, RESTWAV
+      CHARACTER(KIND=C_CHAR, LEN=1) :: PTYPE(1), XTYPE(1)
+      INTEGER(C_INT) :: RESTREQ
+      REAL(C_DOUBLE) :: CRVALS, DSDX
+      INTEGER(C_INT) :: ERR(*)
+    END FUNCTION SPCXPSE_C
+  END INTERFACE
+
+  SPCXPSE = SPCXPSE_C (CTYPES, CRVALX, RESTFRQ, RESTWAV, PTYPE, XTYPE, &
+                       RESTREQ, CRVALS, DSDX, ERR)
+END FUNCTION SPCXPSE
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCXPS (CTYPES, CRVALX, RESTFRQ, RESTWAV, PTYPE, XTYPE, &
+                         RESTREQ, CRVALS, DSDX)
+  CHARACTER :: CTYPES(8)
+  DOUBLE PRECISION :: CRVALX, RESTFRQ, RESTWAV
+  CHARACTER :: PTYPE(1), XTYPE(1)
+  INTEGER :: RESTREQ
+  DOUBLE PRECISION :: CRVALS, DSDX
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCXPS_C (CTYPES, CRVALX, RESTFRQ, RESTWAV, &
+                                      PTYPE, XTYPE, RESTREQ, CRVALS, DSDX) &
+                                      BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPES(8)
+      REAL(C_DOUBLE) :: CRVALX, RESTFRQ, RESTWAV
+      CHARACTER(KIND=C_CHAR, LEN=1) :: PTYPE(1), XTYPE(1)
+      INTEGER(C_INT) :: RESTREQ
+      REAL(C_DOUBLE) :: CRVALS, DSDX
+    END FUNCTION SPCXPS_C
+  END INTERFACE
+
+  SPCXPS = SPCXPS_C (CTYPES, CRVALX, RESTFRQ, RESTWAV, PTYPE, XTYPE, &
+                     RESTREQ, CRVALS, DSDX)
+END FUNCTION SPCXPS
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCTRNE (CTYPES1, CRVALS1, CDELTS1, RESTFRQ, RESTWAV, &
+                          CTYPES2, CRVALS2, CDELTS2, ERR)
+  CHARACTER :: CTYPES1(8)
+  DOUBLE PRECISION :: CRVALS1, CDELTS1, RESTFRQ, RESTWAV
+  CHARACTER :: CTYPES2(8)
+  DOUBLE PRECISION :: CRVALS2, CDELTS2
+  INTEGER :: ERR(*)
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCTRNE_C ( &
+        CTYPES1, CRVALS1, CDELTS1, RESTFRQ, RESTWAV, &
+        CTYPES2, CRVALS2, CDELTS2, ERR) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPES1(8)
+      REAL(C_DOUBLE) :: CRVALS1, CDELTS1, RESTFRQ, RESTWAV
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPES2(8)
+      REAL(C_DOUBLE) :: CRVALS2, CDELTS2
+      INTEGER(C_INT) :: ERR(*)
+    END FUNCTION SPCTRNE_C
+  END INTERFACE
+
+  SPCTRNE = SPCTRNE_C (CTYPES1, CRVALS1, CDELTS1, RESTFRQ, RESTWAV, &
+                       CTYPES2, CRVALS2, CDELTS2, ERR)
+END FUNCTION SPCTRNE
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCTRN (CTYPES1, CRVALS1, CDELTS1, RESTFRQ, RESTWAV, &
+                         CTYPES2, CRVALS2, CDELTS2)
+  CHARACTER :: CTYPES1(8)
+  DOUBLE PRECISION :: CRVALS1, CDELTS1, RESTFRQ, RESTWAV
+  CHARACTER :: CTYPES2(8)
+  DOUBLE PRECISION :: CRVALS2, CDELTS2
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCTRN_C ( &
+        CTYPES1, CRVALS1, CDELTS1, RESTFRQ, RESTWAV, &
+        CTYPES2, CRVALS2, CDELTS2) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPES1(8)
+      REAL(C_DOUBLE) :: CRVALS1, CDELTS1, RESTFRQ, RESTWAV
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPES2(8)
+      REAL(C_DOUBLE) :: CRVALS2, CDELTS2
+    END FUNCTION SPCTRN_C
+  END INTERFACE
+
+  SPCTRN = SPCTRN_C (CTYPES1, CRVALS1, CDELTS1, RESTFRQ, RESTWAV, &
+                     CTYPES2, CRVALS2, CDELTS2)
+END FUNCTION SPCTRN
+
+!-----------------------------------------------------------------------------
+
+INTEGER FUNCTION SPCAIPS (CTYPEA, VELREF, CTYPE, SPECSYS)
+  CHARACTER :: CTYPEA(8)
+  INTEGER :: VELREF
+  CHARACTER :: CTYPE(8), SPECSYS(8)
+
+  INTERFACE
+    INTEGER(C_INT) FUNCTION SPCAIPS_C (CTYPEA, VELREF, CTYPE, SPECSYS) BIND (C)
+      USE, INTRINSIC :: ISO_C_BINDING
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPEA(8)
+      INTEGER(C_INT) :: VELREF
+      CHARACTER(KIND=C_CHAR, LEN=1) :: CTYPE(8), SPECSYS(8)
+    END FUNCTION SPCAIPS_C
+  END INTERFACE
+
+  SPCAIPS = SPCAIPS_C (CTYPEA, VELREF, CTYPE, SPECSYS)
+END FUNCTION SPCAIPS
