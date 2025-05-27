@@ -13,7 +13,7 @@ from imgmarker.gui.pyqt import (
 from imgmarker.gui import Screen, QHLine, QVLine, PosWidget, RestrictedLineEdit, DefaultDialog
 from imgmarker import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
 from imgmarker import io, image, config
-from imgmarker.coordinates import SkyCoord, Angle
+from imgmarker.coordinates import PixCoord, WorldCoord
 import sys
 import datetime as dt
 from math import floor, inf, nan, dist
@@ -1131,26 +1131,26 @@ class MainWindow(QMainWindow):
             mark_to_copy = selected_marks[-1]
 
         if has_wcs:
-            ra, dec = mark_to_copy.wcs_center
+            world = mark_to_copy.wcs_center
         
             if self.settings_window.show_sexagesimal_box.isChecked():
-                ra_h,ra_m,ra_s = Angle(ra).hms
-                dec_d,dec_m,dec_s = Angle(dec).dms
+                ra_h,ra_m,ra_s = world.ra.hms
+                dec_d,dec_m,dec_s = world.dec.dms
 
                 ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
                 dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
 
             else:
-                ra_str = f'{ra:03.6f}'
-                dec_str = f'{np.abs(dec):02.6f}'
+                ra_str = f'{world.ra:03.6f}'
+                dec_str = f'{np.abs(world.dec):02.6f}'
 
-            if dec > 0: dec_str = '+' + dec_str
+            if world.dec > 0: dec_str = '+' + dec_str
             else: dec_str = '-' + dec_str
             
             string_copy = ra_str + ", " + dec_str
 
         else:
-            x, y = str(mark_to_copy.center.x()), str(mark_to_copy.center.y())
+            x, y = str(mark_to_copy.center.x), str(mark_to_copy.center.y)
             string_copy = x + ", " + y
 
         self.clipboard.setText(string_copy)
@@ -1165,11 +1165,9 @@ class MainWindow(QMainWindow):
 
         # get event position and position on image
         if not test:
-            pix_pos = self.image_view.mouse_pix_pos()
-            x, y = pix_pos.x(), pix_pos.y()
-        else: 
-            x = self.image.width/2
-            y = self.image.height/2
+            pix = self.image_view.mouse_pixcoord()
+        else:
+            pix = PixCoord(self.image.width/2,self.image.height/2)
             
         # Mark if hovering over image
         if config.GROUP_MAX[group - 1] == 'None': limit = inf
@@ -1184,8 +1182,8 @@ class MainWindow(QMainWindow):
         marks_action = [action for action in self.mark_menu.menus[self.markpath].actions() if action.text() == "&Show Marks"][0]
         labels_action = [action for action in self.mark_menu.menus[self.markpath].actions() if action.text() == "&Show Mark Labels"][0]
 
-        if self.inview(x,y) and ((len(marks_in_group) < limit) or limit == 1):            
-            mark = self.image_scene.mark(x,y,group=group)
+        if self.inview(*pix) and ((len(marks_in_group) < limit) or limit == 1):            
+            mark = self.image_scene.mark(*pix,group=group)
             
             if (limit == 1) and (len(marks_in_group) == 1):
                 prev_mark = marks_in_group[0]
@@ -1277,31 +1275,29 @@ class MainWindow(QMainWindow):
     # === Update methods ===
     def update_pos(self):
         # Mark if hovering over image
-        pix_pos = self.image_view.mouse_pix_pos()
-        x, y = pix_pos.x(), pix_pos.y()
+        pix = self.image_view.mouse_pixcoord()
 
-        if self.inview(x,y):
-            _x, _y = x, self.image.height - y
+        if self.inview(*pix):
 
-            try: ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
-            except: ra, dec = nan, nan
+            try: world = pix.toworld(self.image.wcs)
+            except: world = WorldCoord(nan, nan)
 
             if self.settings_window.show_sexagesimal_box.isChecked():
-                ra_h,ra_m,ra_s = Angle(ra).hms
-                dec_d,dec_m,dec_s = Angle(dec).dms
+                ra_h,ra_m,ra_s = world.ra.hms
+                dec_d,dec_m,dec_s = world.dec.dms
 
                 ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
                 dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
 
             else:
-                ra_str = f'{ra:03.5f}°'
-                dec_str = f'{np.abs(dec):02.5f}°'
+                ra_str = f'{world.ra:03.5f}°'
+                dec_str = f'{np.abs(world.dec):02.5f}°'
 
-            if dec > 0: dec_str = '+' + dec_str
+            if world.dec > 0: dec_str = '+' + dec_str
             else: dec_str = '-' + dec_str
 
-            self.pos_widget.x_text.setText(f'{x} px')
-            self.pos_widget.y_text.setText(f'{y} px')
+            self.pos_widget.x_text.setText(f'{pix.x} px')
+            self.pos_widget.y_text.setText(f'{pix.y} px')
 
             self.pos_widget.ra_text.setText(ra_str)
             self.pos_widget.dec_text.setText(dec_str)
@@ -1441,8 +1437,7 @@ class MainWindow(QMainWindow):
         # Update imageless marks
         for mark in self.imageless_marks:
             mark.image = self.image
-            x,y = mark.center.x(), mark.center.y()
-            if self.inview(x,y) and not (mark in self.image_scene.items()):
+            if self.inview(*mark.center) and not (mark in self.image_scene.items()):
                 self.image_scene.mark(mark)
                 mark.show()
             mark.image = None
@@ -1552,8 +1547,8 @@ class MainWindow(QMainWindow):
             selected_marks = [mark for mark in marks 
                               if (mark.dst == self.markpath) and mark.isSelected()]
         elif mode == 'cursor':
-            pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
-            selected_marks = [mark for mark in marks if (mark is self.image_scene.itemAt(pix_pos, mark.transform()))
+            pix = self.image_view.mouse_pixcoord(correction=False)
+            selected_marks = [mark for mark in marks if (mark is self.image_scene.itemAt(*pix, mark.transform()))
                               and (mark.dst == self.markpath)]
             
         for mark in selected_marks:

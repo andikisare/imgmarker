@@ -1,10 +1,10 @@
 """This module contains the `Mark` class and related classes."""
 
 from imgmarker.gui.pyqt import QGraphicsPathItem, QPainterPath, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
+from imgmarker.coordinates import WorldCoord, PixCoord
 from imgmarker import config
 import os
 from math import nan, ceil
-from astropy.wcs.utils import proj_plane_pixel_scales
 from typing import TYPE_CHECKING, overload, Literal
 import warnings
 
@@ -36,7 +36,8 @@ class MarkLabel(QGraphicsProxyWidget):
         self.setWidget(self.lineedit)
         self.autoresize()
         self.installEventFilter(self)
-        self.setPos(self.mark.view_center+QPointF(self.mark.size/2,self.mark.size/2))
+        pos = self.mark.view_center + self.mark.size/2
+        self.setPos(pos.x,pos.y)
 
     def enter(self):
         self.setCursor(Qt.CursorShape.ArrowCursor)
@@ -119,9 +120,9 @@ class Mark(QGraphicsPathItem):
             self._size = kwargs['size']
 
         if 'ra' in kwargs:
-            self._wcs_center = (kwargs['ra'],kwargs['dec'])            
+            self._wcs_center = WorldCoord(kwargs['ra'],kwargs['dec'])            
         else:
-            self._center = QPointF(*args)
+            self._center = PixCoord(*args)
         
         super().__init__()
         
@@ -130,7 +131,7 @@ class Mark(QGraphicsPathItem):
     @property
     def size(self):
         if self.size_unit == "arcsec":
-            pixel_scale = proj_plane_pixel_scales(self.image.wcs)[0] * 3600
+            pixel_scale = self.image.wcs.cdelt[0] * 3600
             return self._size / pixel_scale
         elif self.size_unit == "px":
             return self._size
@@ -141,23 +142,21 @@ class Mark(QGraphicsPathItem):
     @property
     def center(self):
         if not hasattr(self,'_center'):
-            _x, _y = self.image.wcs.all_world2pix([list(self.wcs_center)], 0)[0]
-            return QPointF(_x, self.image.height-_y)
+            return self.wcs_center.topix(self.image.wcs)
         else:
             return self._center
     
     @property
     def view_center(self):
-        return self.center + QPointF(0.5,0.5)
+        return self.center + 0.5
 
     @property
-    def wcs_center(self):
+    def wcs_center(self) -> WorldCoord:
         if not hasattr(self,'_wcs_center'):
             if (self.image.wcs != None):
-                _x, _y = self.center.x(), self.image.height - self.center.y()
-                return self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
+                return self.center.toworld(self.image.wcs)
             else: 
-                return (nan, nan)
+                return WorldCoord(nan, nan)
         else:
             return self._wcs_center
 
@@ -165,8 +164,8 @@ class Mark(QGraphicsPathItem):
         super().show()
 
     def draw(self):
-        args = (self.view_center.x()-self.size/2,
-                self.view_center.y()-self.size/2,
+        args = (self.view_center.x-self.size/2,
+                self.view_center.y-self.size/2,
                 self.size,
                 self.size)
         

@@ -1,9 +1,0 @@
-/** @def WCSTRIG_TOL
-* @brief Domain tolerance for asin() and acos() functions.
-*
-* Domain tolerance for the asin() and acos() functions to allow for floating
-* point rounding errors.
-*
-* If @f$v@f$ lies in the range @f$1 < |v| < 1 + WCSTRIG\_TOL@f$ then it will
-* be treated as @f$|v| == 1@f$.
-*/

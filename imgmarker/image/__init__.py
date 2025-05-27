@@ -11,11 +11,11 @@ from math import nan
 import numpy as np
 from typing import overload, Union, List, Set
 from astropy.visualization import ZScaleInterval, MinMaxInterval, ManualInterval, LinearStretch, LogStretch
-from . import fits
-from .convolution import gaussian_filter
-from astropy.wcs import WCS
+from imgmarker.io import fits
+from imgmarker.image.convolution import gaussian_filter
+from imgmarker.coordinates import WCS, PixCoord, WorldCoord
 from enum import Enum
-from copy import copy, deepcopy
+from copy import deepcopy
 import warnings
 
 class Interval:
@@ -87,10 +87,9 @@ def vibrance(c,mode:Mode):
     return v
 
 def read_wcs(f):
-    """Reads WCS information from headers if available. Returns `astropy.wcs.WCS`."""
+    """Reads WCS information from headers if available. Returns `imgmarker.coordinates.WCS`."""
     try:
         if isinstance(f,fits.PrimaryHDU) or isinstance(f,fits.ImageHDU):
-            
             if not 'CRPIX1' in f.header.keys(): return None
             else: 
                 _header = f.header.copy()
@@ -152,8 +151,11 @@ class Image(QGraphicsPixmapItem):
     wcs: `astropy.wcs.WCS` or None
         WCS solution.
 
-    wcs_center: list[float]
-        Center of the image in WCS coordinates.
+    center: `imgmarker.coordinates.PixCoord`
+        Center of the image in pixel coordinates.
+
+    wcs_center: `imgmarker.coordinates.WorldCoord`
+        Center of the image in world coordinates.
 
     r: float
         Blur radius applied to the image.
@@ -170,10 +172,10 @@ class Image(QGraphicsPixmapItem):
     categories: list[int]
         List containing the categories for this image.
 
-    marks: list[imgmarker.mark.Mark]
+    marks: list[`imgmarker.mark.Mark`]
         List of the marks in this image.
 
-    dupe_marks: list[imgmarker.mark.Mark]
+    dupe_marks: list[`imgmarker.mark.Mark`]
         List of marks made on a duplicate-showing of the same image. Kept separate for saving purposes.
 
     seen: bool
@@ -249,9 +251,14 @@ class Image(QGraphicsPixmapItem):
         return vlims
     
     @property
-    def wcs_center(self) -> list:
-        try: return self.wcs.all_pix2world([[self.width/2, self.height/2]], 0)[0]
-        except: return nan, nan
+    def center(self) -> PixCoord:
+        return PixCoord(self.width/2, self.height/2)
+        
+    @property
+    def wcs_center(self) -> WorldCoord:
+        try:
+            return self.center.toworld(self.wcs)
+        except: return WorldCoord(nan, nan)
 
     def read(self) -> np.ndarray:
         if self.format == 'FITS':
@@ -518,13 +525,13 @@ class ImageView(QGraphicsView):
         """Returns the associated image scene."""
         return super().scene()
     
-    def mouse_pix_pos(self,correction:bool=True):
+    def mouse_pixcoord(self,correction:bool=True) -> PixCoord:
         """
         Gets mouse image coordinates.
 
         Returns
         ----------
-        pix_pos: `QPoint`
+        pix: `imgmarker.coordinates.PixCoord`
             position of mouse in the image.
         """
 
@@ -536,8 +543,9 @@ class ImageView(QGraphicsView):
 
         # Correct half-pixel error
         if correction: pix_pos -= QPointF(0.5,0.5)
-        
-        return pix_pos.toPoint()
+        x,y = pix_pos.toPoint().x(), pix_pos.toPoint().y()
+        pix = PixCoord(x,y)
+        return pix
     
     def mouse_pos(self):
         """
@@ -592,10 +600,10 @@ class ImageView(QGraphicsView):
 
         center = self.viewport().rect().center()
         scene_center = self.mapToScene(center)
-        pix_pos = self.mouse_pix_pos(correction=False)
-
-        delta = scene_center.toPoint() - pix_pos
-        self.translate(delta.x(),delta.y())
+        mouse_pix = self.mouse_pixcoord(correction=False)
+        
+        delta = PixCoord(scene_center.x(),scene_center.y()) - mouse_pix
+        self.translate(*delta)
         
         if self.cursor_focus:
             global_center = self.mapToGlobal(center)
