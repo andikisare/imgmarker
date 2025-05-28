@@ -1,7 +1,7 @@
 """This module contains code for the `Image` class and image manipulation."""
 
-from ..gui.pyqt import QImage, QGraphicsPixmapItem, QGraphicsView, QGraphicsScene, QPixmap, Qt, QPointF, QApplication
-from ..gui import Mark, MarkLabel
+from imgmarker.gui.pyqt import QImage, QGraphicsPixmapItem, QGraphicsView, QGraphicsScene, QPixmap, Qt, QPointF, QApplication
+from imgmarker.gui import Mark, MarkLabel
 from io import StringIO
 import os
 from math import floor
@@ -15,7 +15,7 @@ from . import fits
 from .convolution import gaussian_filter
 from astropy.wcs import WCS
 from enum import Enum
-from copy import copy, deepcopy
+from copy import deepcopy
 import warnings
 
 class Interval:

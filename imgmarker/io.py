@@ -2,9 +2,8 @@
 
 import os
 import numpy as np
-from .gui import Mark
-from . import image
-from . import config
+from imgmarker.gui import Mark
+from imgmarker import image, config
 import glob as _glob
 from math import nan, isnan
 from typing import Tuple, List

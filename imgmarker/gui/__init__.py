@@ -1,7 +1,7 @@
 
-from .pyqt import QApplication
-from .mark import *
-from .widget import *
+from imgmarker.gui.pyqt import QApplication
+from imgmarker.gui.mark import *
+from imgmarker.gui.widget import *
 
 class Screen:
     @staticmethod

@@ -40,6 +40,6 @@ include = ["imgmarker","imgmarker.gui","imgmarker.image","imgmarker.tests"]
 imgmarker = ["*.ico"]
 
 [project.scripts]
-imgmarker = "imgmarker.__init__:main"
+imgmarker = "imgmarker.__main__:run"
 
 
