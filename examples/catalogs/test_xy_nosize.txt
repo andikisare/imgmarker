@@ -1,4 +1,4 @@
-Name,x,y
+label,x,y
 Brightest Cluster Galaxy,325,182
 Star 1,199,271
 Star 2,311,401
