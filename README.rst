@@ -18,10 +18,13 @@
 .. |CI| image:: https://github.com/andikisare/imgmarker/actions/workflows/python-app.yml/badge.svg
     :target: https://github.com/andikisare/imgmarker/actions/workflows/python-app.yml
 
+.. |JOSS| image:: https://joss.theoj.org/papers/21a640a3fd4e2ad1815891a61af4a21b/status.svg
+    :target: https://github.com/openjournals/joss-reviews/issues/8302
+
 |icon| Image Marker
 #####################
 
-|github| |license| |pyqt| |docs| |CI|
+|github| |license| |pyqt| |docs| |CI| |JOSS|
 
 Image Marker is a tool for marking, categorizing, and annotating TIFF, FITS, PNG, and JPEG files.
 Image Marker does not modify the image itself, it only displays it and creates text files containing 
