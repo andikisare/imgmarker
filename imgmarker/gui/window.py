@@ -1281,8 +1281,8 @@ class MainWindow(QMainWindow):
             except: ra, dec = nan, nan
 
             if self.settings_window.show_sexagesimal_box.isChecked():
-                ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
-                dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
+                ra_h,ra_m,ra_s = Angle(ra).hms
+                dec_d,dec_m,dec_s = Angle(dec).dms
 
                 ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
                 dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
