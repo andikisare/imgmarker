@@ -33,8 +33,14 @@ Homepage = "https://github.com/andikisare/imgmarker"
 Issues = "https://github.com/andikisare/imgmarker/issues"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["imgmarker","imgmarker.gui","imgmarker.image","imgmarker.tests"]
+include = [
+  "imgmarker",
+  "imgmarker.coordinates",
+  "imgmarker.gui",
+  "imgmarker.image",
+  "imgmarker.libwcs",
+  "imgmarker.tests"
+]
 
 [tool.setuptools.package-data]
 imgmarker = ["*.ico"]
