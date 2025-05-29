@@ -823,8 +823,6 @@ class MainWindow(QMainWindow):
         self.update_categories()
         self.settings_window.update_duplicate_percentage()
 
-        print(self.markfile.path)
-
     def __init_data__(self):
         """Initializes images."""
         
