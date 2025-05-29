@@ -19,7 +19,7 @@
     :target: https://github.com/andikisare/imgmarker/actions/workflows/python-app.yml
 
 .. |JOSS| image:: https://joss.theoj.org/papers/21a640a3fd4e2ad1815891a61af4a21b/status.svg
-    :target: https://github.com/openjournals/joss-reviews/issues/8302
+    :target: https://joss.theoj.org/papers/21a640a3fd4e2ad1815891a61af4a21b
 
 |icon| Image Marker
 #####################
