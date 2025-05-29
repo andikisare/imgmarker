@@ -2,8 +2,16 @@ __version__ = '1.0.4'
 __license__ = 'MIT License'
 __docsurl__ = 'https://imgmarker.readthedocs.io/en/latest/'
 
-import pkg_resources
+import sys
+import os
+from importlib import resources
 
-ICON = pkg_resources.resource_filename(__package__, 'icon.ico')
-HEART_SOLID = pkg_resources.resource_filename(__package__, 'heart_solid.ico')
-HEART_CLEAR = pkg_resources.resource_filename(__package__, 'heart_clear.ico')
+def resource_path(resource):
+    if hasattr(sys,'_MEIPASS'):
+        return os.path.join(sys._MEIPASS, resource)
+    else: 
+        return str(resources.files(__package__).joinpath(resource))
+
+ICON = resource_path('icon.ico')
+HEART_SOLID = resource_path('heart_solid.ico')
+HEART_CLEAR = resource_path('heart_clear.ico')

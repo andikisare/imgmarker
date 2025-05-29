@@ -28,18 +28,14 @@ cfiles = [
 ]
 
 class libwcs_ext(build_ext):
-
+    
     def build_extension(self,ext):
-            
-        compiler_type = self.compiler.compiler_type
+        compile_args = {
+            'msvc': ['/Wall','/Zc:__STDC__','/std:c17'],
+            'unix': ['-Wall','-fPIC','-std=gnu17']
+        }
 
-        if compiler_type == 'msvc':
-            ext.extra_compile_args = ['/W0','/Zc:__STDC__']
-        if compiler_type == 'unix':
-            ext.extra_compile_args = ['-Wall','-fPIC','-Wstrict-prototypes']
-
-        #print(self.compiler.compiler_type)
-        #self.compiler.compile(cfiles)
+        ext.extra_compile_args = compile_args[self.compiler.compiler_type]
         build_ext.build_extension(self,ext)
 
 setup(
