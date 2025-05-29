@@ -433,7 +433,7 @@ class MarkMenu(QMenu):
     def menu_setup(self,path:str):
         file = path.split(os.sep)[-1]
 
-        if path == self.mainwindow.markpath:
+        if path == self.mainwindow.markfile.path:
             self.menus[path] = QMenu(f'&{file} (default)')
         else:
             self.menus[path] = QMenu(f'&{file}')
@@ -462,7 +462,7 @@ class MarkMenu(QMenu):
 
         self.menus[path].addSeparator()
 
-        if path == self.mainwindow.markpath:
+        if path == self.mainwindow.markfile.path:
             labels_action.setShortcuts(['Ctrl+l'])
 
             del_marks_action = QAction(f'Delete Marks in Current Image', self)
@@ -499,6 +499,8 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Image Marker")
         self.frame = 0
+        self.markfile = io.MarkFile(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv'))
+        self.imagesfile = io.ImagesFile()
         
         # Shortcuts
         del_shortcuts = [QShortcut('Backspace', self), QShortcut('Delete', self)]
@@ -514,7 +516,6 @@ class MainWindow(QMainWindow):
         ctrlc_shortcut.activated.connect(self.copy_to_clipboard)
     
         # Initialize data
-        self.date = dt.datetime.now(dt.timezone.utc).date().isoformat()
         self.order = []
         self.__init_data__()
         self.image_scene = image.ImageScene(self.image)
@@ -822,14 +823,15 @@ class MainWindow(QMainWindow):
         self.update_categories()
         self.settings_window.update_duplicate_percentage()
 
+        print(self.markfile.path)
+
     def __init_data__(self):
         """Initializes images."""
         
-        # Initialize output dictionary
-        self.images, self.imageless_marks = io.load_markfile(io.load_imagesfile())
+        self.images, self.imageless_marks = self.markfile.read(self.imagesfile.read())
         for path in io.markpaths():
-            if path != self.markpath:
-                self.images, imageless_marks = io.load_markfile(self.images,mark_dst=path)
+            if path != self.markfile.path:
+                self.images, imageless_marks = io.MarkFile(path).read(self.images)
                 self.imageless_marks += imageless_marks
         
         self.favorite_list = io.loadfav()
@@ -859,12 +861,6 @@ class MainWindow(QMainWindow):
             self.N = len(self.images)
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
-
-        
-   
-    @property
-    def markpath(self):
-        return os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')
     
     @property
     def interval(self): return self._interval_str
@@ -958,9 +954,9 @@ class MainWindow(QMainWindow):
     def save(self) -> None:
         """Method for saving image data"""
         
-        io.save_markfile(self.date,self.images,self.imageless_marks)
-        io.save_imagesfile(self.date,self.images)
-        io.savefav(self.date,self.images,self.favorite_list)
+        self.markfile.save(self.images,self.imageless_marks)
+        self.imagesfile.save(self.images)
+        io.savefav(self.images,self.favorite_list)
 
     def open(self) -> None:
         """Method for the open save directory dialog."""
@@ -1066,8 +1062,7 @@ class MainWindow(QMainWindow):
         dst = os.path.join(config.SAVE_DIR,'imports')
         mark_dst = shutil.copy(src,dst)
 
-        self.images, imageless_marks = io.load_markfile(self.images,
-                                                        mark_dst = mark_dst)
+        self.images, imageless_marks = io.MarkFile(mark_dst).read(self.images)
             
         self.imageless_marks += imageless_marks
 
@@ -1097,12 +1092,12 @@ class MainWindow(QMainWindow):
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
             self.favorite_list.append(self.image.name)
-            io.savefav(self.date,self.images,self.favorite_list)
+            io.savefav(self.images,self.favorite_list)
         else:
             self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             if self.image.name in self.favorite_list: 
                 self.favorite_list.remove(self.image.name)
-            io.savefav(self.date,self.images,self.favorite_list)
+            io.savefav(self.images,self.favorite_list)
 
     def categorize(self,i:int) -> None:
         """Categorize the current image."""
@@ -1180,8 +1175,8 @@ class MainWindow(QMainWindow):
             if len(marks) >= 1: marks[-1].label.enter()
         except: pass
 
-        marks_action = [action for action in self.mark_menu.menus[self.markpath].actions() if action.text() == "&Show Marks"][0]
-        labels_action = [action for action in self.mark_menu.menus[self.markpath].actions() if action.text() == "&Show Mark Labels"][0]
+        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Marks"][0]
+        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Mark Labels"][0]
 
         if self.inview(x,y) and ((len(marks_in_group) < limit) or limit == 1):            
             mark = self.image_scene.mark(x,y,group=group)
@@ -1488,7 +1483,7 @@ class MainWindow(QMainWindow):
     def del_markfile(self, path):
         """Deletes a markfile."""
 
-        if path == self.markpath:
+        if path == self.markfile.path:
             if self.image.duplicate == True:
                 marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
             else:
@@ -1546,14 +1541,14 @@ class MainWindow(QMainWindow):
             marks = self.image.marks
 
         if mode == 'all':
-            selected_marks = [mark for mark in marks if mark.dst == self.markpath]
+            selected_marks = [mark for mark in marks if mark.dst == self.markfile.path]
         elif mode == 'selected': 
             selected_marks = [mark for mark in marks 
-                              if (mark.dst == self.markpath) and mark.isSelected()]
+                              if (mark.dst == self.markfile.path) and mark.isSelected()]
         elif mode == 'cursor':
             pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
             selected_marks = [mark for mark in marks if (mark is self.image_scene.itemAt(pix_pos, mark.transform()))
-                              and (mark.dst == self.markpath)]
+                              and (mark.dst == self.markfile.path)]
             
         for mark in selected_marks:
             self.image.undone_marks.append(mark)
