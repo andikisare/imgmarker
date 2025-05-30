@@ -7,10 +7,10 @@ import datetime as dt
 from imgmarker.gui.window import MainWindow
 from imgmarker import gui, config, io, image
 
-test_save_dir = "./tests/test_save/"
-test_images_dir = "./tests/test_images/"
-test_catalog_dir_txt = "./tests/TEST_catalog.txt"
-test_catalog_dir_csv = "./tests/TEST_catalog.csv"
+test_save_dir = os.path.abspath("./tests/test_save/")
+test_images_dir = os.path.abspath("./tests/test_images/")
+test_catalog_dir_txt = os.path.abspath("./tests/TEST_catalog.txt")
+test_catalog_dir_csv = os.path.abspath("./tests/TEST_catalog.csv")
 
 USER = getuser()
 
@@ -48,25 +48,19 @@ def test_import_markfile(app:MainWindow, qtbot:QtBot):
     assert len(app.image_scene.items()) == 3
 
 def test_place_mark(app:MainWindow, qtbot):
-    for mark in app.image.marks:
-        app.image_scene.rmmark(mark)
-    for mark in app.imageless_marks:
-        app.imageless_marks.remove(mark)
-        try: app.image_scene.rmmark(mark)
-        except: pass
+    nitems_init = len(app.image_scene.items())
+    nmarks_init = len(app.image.marks)
         
     app.mark(group=1, test=True)
 
-    assert len(app.image_scene.items()) == 3
-    assert len(app.image.marks) == 1
+    assert len(app.image_scene.items()) == nitems_init + 2
+    assert len(app.image.marks) == nmarks_init + 1
 
 def test_mark_limit(app:MainWindow, qtbot:QtBot):
-    for mark in app.image.marks:
-        app.image_scene.rmmark(mark)
-    for mark in app.imageless_marks:
-        app.imageless_marks.remove(mark)
-        try: app.image_scene.rmmark(mark)
-        except: pass
+    app.del_usermarks(mode='all')
+
+    nitems_init = len(app.image_scene.items())
+    nmarks_init = len(app.image.marks)
 
     config.GROUP_MAX[0] = 1
     config.GROUP_MAX[1] = 2
@@ -77,60 +71,49 @@ def test_mark_limit(app:MainWindow, qtbot:QtBot):
     app.mark(group=2, test=True)
     app.mark(group=2, test=True)
 
-    assert len(app.image_scene.items()) == 7
-    assert len(app.image.marks) == 3
+    assert len(app.image_scene.items()) == nitems_init + 6
+    assert len(app.image.marks) == nmarks_init + 3
 
 def test_mark_delete(app:MainWindow, qtbot:QtBot):
-    for mark in app.image.marks:
-        app.image_scene.rmmark(mark)
-    for mark in app.imageless_marks:
-        app.imageless_marks.remove(mark)
-        try: app.image_scene.rmmark(mark)
-        except: pass
+    app.del_usermarks(mode='all')
+
+    nitems_init = len(app.image_scene.items())
+    nmarks_init = len(app.image.marks)
 
     app.mark(group=1, test=True)
     app.mark(group=2, test=True)
     app.mark(group=3, test=True)
     app.del_usermarks(mode='all')
 
-    assert len(app.image_scene.items()) == 1
-    assert len(app.image.marks) == 0
+    assert len(app.image_scene.items()) == nitems_init
+    assert len(app.image.marks) == nmarks_init
 
 def test_catalog_delete(app:MainWindow, qtbot:QtBot):
-    for mark in app.image.marks:
-        app.image_scene.rmmark(mark)
-    for mark in app.imageless_marks:
-        app.imageless_marks.remove(mark)
-        try: app.image_scene.rmmark(mark)
-        except: pass
+
+    nitems_init = [len(app.image_scene.items())]
+    app.shift(+1)
+    nitems_init.append(len(app.image_scene.items())) 
+    app.shift(+1)
+    nitems_init.append(len(app.image_scene.items()))
+    app.shift(+1)
 
     app.import_markfile(src=test_catalog_dir_txt)
-    
-    assert len(app.image_scene.items()) == 3
+    assert len(app.image_scene.items()) == nitems_init[0] + 2
 
     app.shift(+1)
-    for mark in app.image.marks:
-        app.image_scene.rmmark(mark)
-
-    assert len(app.image_scene.items()) == 3
+    assert len(app.image_scene.items()) == nitems_init[1] + 2
     
     app.shift(+1)
-    for mark in app.image.marks:
-        app.image_scene.rmmark(mark)
-
-    assert len(app.image_scene.items()) == 3
+    assert len(app.image_scene.items()) == nitems_init[2] + 2
 
     app.del_markfile(os.path.join(config.SAVE_DIR,'imports',test_catalog_dir_txt.split(os.sep)[-1]))
-
-    assert len(app.image_scene.items()) == 1
-
-    app.shift(+1)
-
-    assert len(app.image_scene.items()) == 1
+    assert len(app.image_scene.items()) == nitems_init[2]
 
     app.shift(+1)
+    assert len(app.image_scene.items()) == nitems_init[0]
 
-    assert len(app.image_scene.items()) == 1
+    app.shift(+1)
+    assert len(app.image_scene.items()) == nitems_init[1]
 
 def test_frame_seek(app:MainWindow, qtbot:QtBot):
     first_frame_array = app.image.array
