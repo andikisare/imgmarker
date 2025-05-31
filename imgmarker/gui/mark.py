@@ -2,6 +2,7 @@
 
 from imgmarker.gui.pyqt import QGraphicsPathItem, QPainterPath, QGraphicsProxyWidget, QLineEdit, QPen, QColor, Qt, QPointF, QEvent
 from imgmarker import config
+from imgmarker.coordinates import PixCoord, WorldCoord
 import os
 from math import nan, ceil
 from astropy.wcs.utils import proj_plane_pixel_scales
@@ -64,7 +65,9 @@ class MarkLabel(QGraphicsProxyWidget):
     def autoresize(self):
         fm = self.lineedit.fontMetrics()
         w = fm.boundingRect(self.lineedit.text()).width()+fm.boundingRect('AA').width()
+        h = fm.boundingRect('AA').height()
         self.lineedit.setFixedWidth(w)
+        self.lineedit.setFixedHeight(h)
 
 class Mark(QGraphicsPathItem):
     """Class for creating marks and associating label to mark"""
@@ -80,23 +83,17 @@ class Mark(QGraphicsPathItem):
                  image:'Image'=None,group:int=0,text:str=None,color:QColor=None,size_unit:Literal['px','arcsec']=None,size:float=None,
     ) -> None: ...
     def __init__(self,*args,**kwargs) -> None:
-        
-        # Set up image
-        self.image = None
-        if 'image' in kwargs: 
-            self.image:'Image' = kwargs['image']
-
-        try: w, h = self.image.width, self.image.height
-        except: w, h = 512, 512  
-
         # Set up some default values
+        self.image = None
         self.g = 0
         self.color = config.GROUP_COLORS[0]
         self._shape = 'ellipse'
-        self._size = ceil((w+h)/200)*2
         self.size_unit = 'px'
         self.dst = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')
         self.label:MarkLabel = QGraphicsProxyWidget()
+
+        if 'image' in kwargs: 
+            self.image:'Image' = kwargs['image']
 
         if 'group' in kwargs:
             self.g:int = kwargs['group']
@@ -116,53 +113,57 @@ class Mark(QGraphicsPathItem):
         if "size" in kwargs:
             if 'size_unit' in kwargs:
                 self.size_unit = kwargs['size_unit']
-            self._size = kwargs['size']
+            self._size_value = kwargs['size']
 
         if 'ra' in kwargs:
-            self._wcs_center = (kwargs['ra'],kwargs['dec'])            
+            self._wcs_center = WorldCoord(kwargs['ra'],kwargs['dec'])            
         else:
-            self._center = QPointF(*args)
+            self._center = PixCoord(*args)
         
         super().__init__()
         
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable)
+
+    @property
+    def size_value(self):
+        if hasattr(self,'_size_value'):
+            return self._size_value
+        elif self.image != None:
+            return ceil((self.image.width+self.image.height)/200)*2
+        else:
+            return 10
     
     @property
     def size(self):
         if self.size_unit == "arcsec":
             pixel_scale = proj_plane_pixel_scales(self.image.wcs)[0] * 3600
-            return self._size / pixel_scale
+            return self.size_value / pixel_scale
         elif self.size_unit == "px":
-            return self._size
+            return self.size_value
         else:
             warnings.warn("Invalid size unit for catalog marks. Valid units: arcsec, px")
             return
         
     @property
-    def center(self):
+    def center(self) -> PixCoord:
         if not hasattr(self,'_center'):
-            _x, _y = self.image.wcs.all_world2pix([list(self.wcs_center)], 0)[0]
-            return QPointF(_x, self.image.height-_y)
+            return self.wcs_center.topix(self.image.wcs)
         else:
             return self._center
     
     @property
     def view_center(self):
-        return self.center + QPointF(0.5,0.5)
+        return QPointF(*self.center) + QPointF(0.5,0.5)
 
     @property
-    def wcs_center(self):
+    def wcs_center(self) -> WorldCoord:
         if not hasattr(self,'_wcs_center'):
             if (self.image.wcs != None):
-                _x, _y = self.center.x(), self.image.height - self.center.y()
-                return self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
+                return self.center.toworld(self.image.wcs)
             else: 
                 return (nan, nan)
         else:
             return self._wcs_center
-
-    def show(self):
-        super().show()
 
     def draw(self):
         args = (self.view_center.x()-self.size/2,

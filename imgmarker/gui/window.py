@@ -13,9 +13,8 @@ from imgmarker.gui.pyqt import (
 from imgmarker.gui import Screen, QHLine, PosWidget, RestrictedLineEdit, DefaultDialog
 from imgmarker import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
 from imgmarker import io, image, config
-from imgmarker.coordinates import Angle
+from imgmarker.coordinates import Angle, PixCoord, WorldCoord
 import sys
-import datetime as dt
 from math import floor, inf, nan
 import numpy as np
 from numpy import argsort
@@ -903,7 +902,7 @@ class MainWindow(QMainWindow):
         True if the (x,y) is contained within the image, False otherwise.
         """
 
-        return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
+        return (0 <= x) & (x <=self.image.width-1) & (0 <= y) & ( y <= self.image.height-1)
 
     # === Events ===
 
@@ -1126,8 +1125,8 @@ class MainWindow(QMainWindow):
             ra, dec = mark_to_copy.wcs_center
         
             if self.settings_window.show_sexagesimal_box.isChecked():
-                ra_h,ra_m,ra_s = Angle(ra).hms
-                dec_d,dec_m,dec_s = Angle(dec).dms
+                ra_h,ra_m,ra_s = ra.hms
+                dec_d,dec_m,dec_s = dec.dms
 
                 ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
                 dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
@@ -1142,7 +1141,7 @@ class MainWindow(QMainWindow):
             string_copy = ra_str + ", " + dec_str
 
         else:
-            x, y = str(mark_to_copy.center.x()), str(mark_to_copy.center.y())
+            x, y = str(mark_to_copy.center.x), str(mark_to_copy.center.y)
             string_copy = x + ", " + y
 
         self.clipboard.setText(string_copy)
@@ -1419,7 +1418,7 @@ class MainWindow(QMainWindow):
 
     def update_marks(self):
         """Redraws all marks in image."""
-        
+
         # Update regular marks
         if self.image.duplicate == True:
             marks = self.image.dupe_marks
@@ -1431,17 +1430,44 @@ class MainWindow(QMainWindow):
                 self.image_scene.mark(mark)
 
         # Update imageless marks
-        for mark in self.imageless_marks:
-            mark.image = self.image
-            x,y = mark.center.x(), mark.center.y()
-            if self.inview(x,y) and not (mark in self.image_scene.items()):
-                self.image_scene.mark(mark)
-                mark.show()
-            mark.image = None
-        
-        self.update_mark_menu()
+        if len(self.imageless_marks) > 0:
 
-        self.save()
+            # get imageless marks with coordinates in ra/dec
+            marks_world = [mark for mark in self.imageless_marks if hasattr(mark,'_wcs_center')]
+            
+            # get imageless marks with coordinates in x/y
+            marks_pix = [mark for mark in self.imageless_marks if hasattr(mark,'_center') ]
+
+            # create list of ras/decs
+            ra = [mark.wcs_center.ra.value for mark in marks_world]
+            dec = [mark.wcs_center.dec.value for mark in marks_world]
+
+            # create list of x/y
+            x = [mark.center.x for mark in marks_pix]
+            y = [mark.center.y for mark in marks_pix]
+
+            # create pixcoords, converting ras/decs into x/y
+            world_pix = WorldCoord(ra,dec).topix(self.image.wcs)
+            pix_pix = PixCoord(x,y)
+
+            # find which coordinates are inside the image
+            world_filter = self.inview(world_pix.x,world_pix.y)
+            pix_filter = self.inview(pix_pix.x,pix_pix.y)
+
+            # add marks to image scene if it is inside the image
+            for mark, viewable in zip(marks_world, world_filter):
+                if viewable and (mark not in self.image_scene.items()):
+                    mark.image = self.image
+                    self.image_scene.mark(mark)
+                    mark.image = None
+
+            for mark, viewable in zip(marks_pix, pix_filter):
+                if viewable and (mark not in self.image_scene.items()):
+                    mark.image = self.image
+                    self.image_scene.mark(mark)
+                    mark.image = None
+            
+            self.update_mark_menu()    
 
     def update_mark_menu(self):
         for path in io.markpaths():
