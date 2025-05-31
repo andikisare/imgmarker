@@ -3,6 +3,8 @@ from astropy.wcs import WCS
 
 
 class Angle:
+    """Represents a single angle or an array of angles."""
+
     def __init__(self,value):
         self.value = value
 
@@ -47,8 +49,9 @@ class Angle:
         d, m = np.divmod(m, 60)
         return sign*d, sign*m, sign*s
     
-    
 class WorldCoord:
+    """Object containing a right ascension and declination or arrays thereof."""
+
     def __init__(self, ra:Angle|float|int, dec:Angle|float|int):
         self.ra = Angle(ra)
         self.dec = Angle(dec)
@@ -63,6 +66,8 @@ class WorldCoord:
         return 2
     
     def topix(self, wcs:WCS) -> 'PixCoord':
+        """Converts world coordinate into pixel coordinates. The origin is the upper-left corner."""
+
         _radec = np.dstack((self.ra.value,self.dec.value))[0]
         x, _y = wcs.all_world2pix(_radec, 0).T
         y = wcs.pixel_shape[1] - _y
@@ -74,6 +79,8 @@ class WorldCoord:
 
 
 class PixCoord:
+    """Object containing an x and y coordinate or arrays thereof."""
+    
     def __init__(self, x:int|float, y:int|float):
         self.x = np.round(x)
         self.y = np.round(y)
@@ -88,6 +95,8 @@ class PixCoord:
         return 2
     
     def toworld(self,wcs:WCS) -> WorldCoord:
+        """Converts pixel coordinate into world coordinates. The origin is the upper-left corner."""
+
         _x, _y = self.x, wcs.pixel_shape[1] - self.y
         _xy = np.dstack((_x,_y))[0]
         ra, dec = wcs.all_pix2world(_xy, 0).T
