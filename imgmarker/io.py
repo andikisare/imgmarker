@@ -14,6 +14,9 @@ import datetime as dt
 class MarkFile:
     def __init__(self,path):
         self.path = path
+
+        if path not in config.DEFAULT_COLORS:
+            config.DEFAULT_COLORS[path] = config.GROUP_COLORS[0]
     
     def __eq__(self, value):
         if hasattr(value,'path'):
@@ -237,12 +240,11 @@ class MarkFile:
                 rows.append(row)
         
         # Write lines if there are lines to print
-        for row in rows:
-            with open(self.path, 'w', newline='') as f:
-                writer = csv.DictWriter(f, fieldnames=rows[0].keys())
-                writer.writeheader()
-                for row in rows:
-                    writer.writerow(row)
+        with open(self.path, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            for row in rows:
+                writer.writerow(row)
 
 
 class ImagesFile:
@@ -329,15 +331,12 @@ class ImagesFile:
                                     'DEC': str(img.wcs_center[1]),
                                     'categories': str(categories),
                                     'comment': str(comment)})
-            
-        if len(image_rows) != 0:
 
-            with open(self.path, 'w') as f:
-
-                writer = csv.DictWriter(f, fieldnames=image_rows[0].keys())
-                writer.writeheader()
-                for row in image_rows:
-                    writer.writerow(row)
+        with open(self.path, 'w') as f:
+            writer = csv.DictWriter(f, fieldnames=image_rows[0].keys())
+            writer.writeheader()
+            for row in image_rows:
+                writer.writerow(row)
         
 
 def markpaths() -> List[str]:

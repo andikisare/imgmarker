@@ -10,22 +10,37 @@ USER = getuser()
 IMAGE_DIR = None
 GROUP_NAMES = ['None','1','2','3','4','5','6','7','8','9']
 GROUP_SHAPES = ['rect'] + ['ellipse']*9
-GROUP_COLORS = [QColor(255,255,255), QColor(255,0,0),QColor(255,128,0),QColor(255,255,0),
-                QColor(0,255,0),QColor(0,255,255),QColor(0,128,128),
-                QColor(0,0,255),QColor(128,0,255),QColor(255,0,255)]
+
+GROUP_COLORS = [
+    QColor(255,255,255),
+    QColor(255,0,0),
+    QColor(255,128,0),
+    QColor(255,255,0),
+    QColor(0,255,0),
+    QColor(0,255,255),
+    QColor(0,128,128),
+    QColor(0,0,255),
+    QColor(128,0,255),
+    QColor(255,0,255)
+]
+
+DEFAULT_COLORS:dict[str,QColor] = {}
+
 CATEGORY_NAMES = ['None','1','2','3','4','5']
 GROUP_MAX = ['None','None','None','None','None','None','None','None','None']
 RANDOMIZE_ORDER = False
 
-MARK_KEYBINDS = {1: {Qt.MouseButton.LeftButton,Qt.Key.Key_1}, 
-            2: {Qt.Key.Key_2}, 
-            3: {Qt.Key.Key_3}, 
-            4: {Qt.Key.Key_4}, 
-            5: {Qt.Key.Key_5}, 
-            6: {Qt.Key.Key_6}, 
-            7: {Qt.Key.Key_7}, 
-            8: {Qt.Key.Key_8}, 
-            9: {Qt.Key.Key_9}}
+MARK_KEYBINDS = {
+    1: {Qt.MouseButton.LeftButton,Qt.Key.Key_1}, 
+    2: {Qt.Key.Key_2}, 
+    3: {Qt.Key.Key_3}, 
+    4: {Qt.Key.Key_4}, 
+    5: {Qt.Key.Key_5}, 
+    6: {Qt.Key.Key_6}, 
+    7: {Qt.Key.Key_7}, 
+    8: {Qt.Key.Key_8}, 
+    9: {Qt.Key.Key_9}
+}
         
 def path():
     return os.path.join(SAVE_DIR,f'{USER}_config.txt')

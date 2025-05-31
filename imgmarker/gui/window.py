@@ -8,7 +8,8 @@ from imgmarker.gui.pyqt import (
     QLineEdit, QFileDialog, QIcon, QFont, QAction, 
     Qt, QPoint, QSpinBox, QMessageBox, QTableWidget, 
     QTableWidgetItem, QHeaderView, QShortcut,
-    QDesktopServices, QUrl, QMenu, QColorDialog, PYQT_VERSION_STR
+    QDesktopServices, QUrl, QMenu, QColorDialog, 
+    QPen, QBrush, QPixmap, QPainter, PYQT_VERSION_STR
 )
 from imgmarker.gui import Screen, QHLine, PosWidget, RestrictedLineEdit, DefaultDialog
 from imgmarker import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
@@ -461,10 +462,19 @@ class MarkMenu(QMenu):
 
         self.menus[path].addSeparator()
 
+        color_action = QAction('Default Color...', self)
+        color_action.triggered.connect(partial(self.mainwindow.update_colors,path))
+        color_action.setToolTip('Edit color of marks that aren\'t part of a group')
+        self.menus[path].addAction(color_action)
+        self.update_color(path)
+
+        self.menus[path].addSeparator()
+
         if path == self.mainwindow.markfile.path:
             labels_action.setShortcuts(['Ctrl+l'])
 
             del_marks_action = QAction(f'Delete Marks in Current Image', self)
+            
             del_marks_action.triggered.connect(partial(self.mainwindow.del_usermarks,'all'))
             self.menus[path].addAction(del_marks_action)
         else:
@@ -483,6 +493,22 @@ class MarkMenu(QMenu):
         else:
             self.marks_action(path).setEnabled(True)
             self.labels_action(path).setEnabled(True)
+
+    def update_color(self,path):
+        s = 14
+        pixmap = QPixmap(s,s)
+        painter = QPainter(pixmap)
+        
+        pen = QPen(Qt.GlobalColor.black, 2)
+        painter.setBrush(config.DEFAULT_COLORS[path])
+        painter.setPen(pen)
+        painter.drawRect(0, 0, s, s)
+        painter.end()
+        icon = QIcon(pixmap)
+        self.color_action(path).setIcon(icon)
+
+    def color_action(self,path):
+        return [action for action in self.menus[path].actions() if action.text() == "Default Color..."][0]
     
     def marks_action(self,path):
         return [action for action in self.menus[path].actions() if action.text() == "&Show Marks"][0]
@@ -676,13 +702,6 @@ class MainWindow(QMainWindow):
         redo_mark_action.setShortcuts(['Ctrl+Shift+z'])
         redo_mark_action.triggered.connect(self.redo_prev_mark)
         edit_menu.addAction(redo_mark_action)
-
-        edit_menu.addSeparator()
-
-        color_action = QAction('&Default Color...', self)
-        color_action.triggered.connect(self.update_colors)
-        color_action.setToolTip('Edit color of marks that aren\'t part of a group')
-        edit_menu.addAction(color_action)
 
         ### Settings menu
         edit_menu.addSeparator()
@@ -940,6 +959,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, a0):
         self.update_comments()
+        self.save()
         self.about_window.close()
         self.blur_window.close()
         self.frame_window.close()
@@ -1060,27 +1080,9 @@ class MainWindow(QMainWindow):
         mark_dst = shutil.copy(src,dst)
 
         self.images, imageless_marks = io.MarkFile(mark_dst).read(self.images)
-            
         self.imageless_marks += imageless_marks
 
         self.update_marks()
-
-        '''if catalog and not test:
-            self.color_picker_window = ColorPickerWindow(self)
-            self.color_picker_window.show()
-            self.color_picker_window.exec()
-            
-            if (self.picked_color == None):
-                return
-            else:
-                catalog.color = self.picked_color
-                self.catalogs.append(catalog)
-                self.update_catalogs()
-        else:
-            self.picked_color = QColor("Yellow")
-            catalog.color = self.picked_color
-            self.catalogs.append(catalog)
-            self.update_catalogs()'''
 
     def favorite(self,state) -> None:
         """Favorite the current image."""
@@ -1398,7 +1400,6 @@ class MainWindow(QMainWindow):
         if not comment: comment = 'None'
 
         self.image.comment = comment
-        self.save()
 
     def get_comment(self):
         """If the image has a comment, sets the text of the comment box to the image's comment."""
@@ -1467,7 +1468,7 @@ class MainWindow(QMainWindow):
                     self.image_scene.mark(mark)
                     mark.image = None
             
-            self.update_mark_menu()    
+            self.update_mark_menu()
 
     def update_mark_menu(self):
         for path in io.markpaths():
@@ -1483,27 +1484,25 @@ class MainWindow(QMainWindow):
             if path not in io.markpaths():
                 del self.mark_menu.menus[path]
 
-    def update_colors(self):
+    def update_colors(self,path):
         color = QColorDialog.getColor()
         if color.isValid():
-            config.GROUP_COLORS[0] = color
-        
-        if self.image.duplicate == True:
-            marks = self.image.dupe_marks
-        else:
-            marks = self.image.marks
-        
-        marks += self.imageless_marks
+            config.DEFAULT_COLORS[path] = color
 
-        for mark in marks:
-            if mark.g == 0:
-                mark.color = color
-                if mark in self.image_scene.items():
-                    mark.setPen(color)
-                    mark.label.lineedit.setStyleSheet(f"""background-color: rgba(0,0,0,0);
-                                                      border: none; 
-                                                      color: rgba{color.getRgb()}""")
-
+            for item in self.image_scene.items():
+                if hasattr(item,'dst'):
+                    if (item.dst == path) and (item.g == 0):
+                        pen = item.pen()
+                        pen.setColor(color)
+                        item.setPen(pen)
+                        item.label.lineedit.setStyleSheet(
+                            f"""background-color: rgba(0,0,0,0);
+                                border: none; 
+                                color: rgba{color.getRgb()}"""
+                        )
+                        
+            self.mark_menu.update_color(path)
+                
     def del_markfile(self, path):
         """Deletes a markfile."""
 

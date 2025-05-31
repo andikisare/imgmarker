@@ -6,13 +6,14 @@ from PyQt6.QtWidgets import (
     QDialog, QSizePolicy, QGraphicsPathItem, QGraphicsProxyWidget,
     QLineEdit, QGraphicsScene, QGraphicsPixmapItem, QSpinBox,
     QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView,
-    QMenu, QColorDialog
+    QMenu, QColorDialog, QWidgetAction,
 )
 
 from PyQt6.QtGui import (
     QIcon, QFont, QClipboard, QAction,
     QPen, QColor, QPixmap, QPainter, QPainterPathStroker,
-    QPainterPath, QImage, QShortcut, QDesktopServices
+    QPainterPath, QImage, QShortcut, QDesktopServices,
+    QBrush
 )
     
 from PyQt6.QtCore import (

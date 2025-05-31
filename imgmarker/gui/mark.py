@@ -86,7 +86,6 @@ class Mark(QGraphicsPathItem):
         # Set up some default values
         self.image = None
         self.g = 0
-        self.color = config.GROUP_COLORS[0]
         self._shape = 'ellipse'
         self.size_unit = 'px'
         self.dst = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')
@@ -95,12 +94,12 @@ class Mark(QGraphicsPathItem):
         if 'image' in kwargs: 
             self.image:'Image' = kwargs['image']
 
-        if 'group' in kwargs:
+        if ('group' in kwargs) and (kwargs['group'] != 0):
             self.g:int = kwargs['group']
-            self.color = config.GROUP_COLORS[self.g]
+            self._color = config.GROUP_COLORS[self.g]
 
-        if 'picked_color' in kwargs:
-            self.color = kwargs["picked_color"]
+        if 'color' in kwargs:
+            self._color = kwargs["color"]
 
         if 'text' in kwargs:
             self.text:str = kwargs['text']
@@ -123,6 +122,13 @@ class Mark(QGraphicsPathItem):
         super().__init__()
         
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable)
+
+    @property
+    def color(self):
+        if hasattr(self,'_color'):
+            return self._color
+        else:
+            return config.DEFAULT_COLORS[self.dst]
 
     @property
     def size_value(self):
