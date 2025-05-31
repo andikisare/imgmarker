@@ -171,7 +171,7 @@ class MarkFile:
                             else:
                                 label = f"{mark.text}, DUPLICATE"
 
-                        try: x, y = mark.center.x(), mark.center.y()
+                        try: x, y = mark.center
                         except: x, y = nan, nan
                         
                         try: ra, dec = mark.wcs_center
