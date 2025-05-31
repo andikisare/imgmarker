@@ -332,29 +332,9 @@ class Image(QGraphicsPixmapItem):
         self.width = self._array.shape[1]
         self.height = self._array.shape[0]
         
-        # Apply blur (and scaling)
-        self.blur()
-
-    def rescale(self):
-        out = self.array.astype(np.float64)
-
-        if (self.mode == Mode.RGB) or (self.mode == Mode.RGBA):
-            # Calculate scale factor
-            v = self.v
-            scale = self.mode.iinfo.max*self.scaling(v)/v
-
-            # Apply scale factor
-            out[:, :, 0] *= scale
-            out[:, :, 1] *= scale
-            out[:, :, 2] *= scale
-
-            # Truncate values greater than the max pixel value for this mode
-            out = np.minimum(self.mode.iinfo.max,out)
-
-        else:
-            out = self.mode.iinfo.max*self.scaling(out)
-
-        self.setPixmap(self.topixmap(out.astype(self.mode.iinfo.dtype)))
+        # Rescale (and blur)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            self.rescale()
 
     def toqimage(self,array:np.ndarray) -> QImage:
         width, height  = array.shape[1], array.shape[0]
@@ -379,6 +359,28 @@ class Image(QGraphicsPixmapItem):
 
         return pixmap
     
+    def rescale(self):
+        out = self._array.astype(np.float64)
+
+        if (self.mode == Mode.RGB) or (self.mode == Mode.RGBA):
+            # Calculate scale factor
+            v = self.v
+            scale = self.mode.iinfo.max*self.scaling(v)/v
+
+            # Apply scale factor
+            out[:, :, 0] *= scale
+            out[:, :, 1] *= scale
+            out[:, :, 2] *= scale
+
+            # Truncate values greater than the max pixel value for this mode
+            out = np.minimum(self.mode.iinfo.max,out)
+
+        else:
+            out = self.mode.iinfo.max*self.scaling(out)
+
+        self.array = out.astype(self.mode.iinfo.dtype)
+        self.blur()
+    
     @overload
     def blur(self) -> None: 
         """Applies the blur to the image"""
@@ -392,15 +394,15 @@ class Image(QGraphicsPixmapItem):
             else: r = value
             self.r = floor(r)/2
 
-        nanmask = ~np.isfinite(self._array)
+        nanmask = ~np.isfinite(self.array)
         if True in nanmask:
             # Create auxillary array
-            _out = self._array.copy()
+            _out = self.array.copy()
             _out[nanmask] = 0
             out = gaussian_filter(_out,self.r)
 
             # Calculate weights
-            _w = np.ones_like(self._array)
+            _w = np.ones_like(self.array)
             _w[nanmask] = 0
             w = gaussian_filter(_w,self.r)
 
@@ -409,11 +411,10 @@ class Image(QGraphicsPixmapItem):
                 out = out/w
                 out[nanmask] = np.nan
         else:
-            out = gaussian_filter(self._array,self.r)
+            out = gaussian_filter(self.array,self.r)
 
-        with np.errstate(divide='ignore', invalid='ignore'): 
-            self.array = out.astype(self.mode.iinfo.dtype)
-            self.rescale()
+        self.setPixmap(self.topixmap(out.astype(self.mode.iinfo.dtype)))
+
 
 class ImageScene(QGraphicsScene):
     """A class in which images and marks are stored."""

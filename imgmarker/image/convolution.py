@@ -53,7 +53,7 @@ def gaussian_filter(array:np.ndarray, sigma, n:int=3) -> np.ndarray:
 
     out = array.copy()
     if sigma > 0:
-        sizes = sigma_to_size(sigma, 3)
+        sizes = sigma_to_size(sigma, n)
         for s in sizes:
             if out.ndim == 3:
                 for i in range(out.shape[2]):
