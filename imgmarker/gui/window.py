@@ -666,13 +666,13 @@ class MainWindow(QMainWindow):
         open_action.triggered.connect(self.open)
         file_menu.addAction(open_action)
 
-        file_menu.addSeparator()
-
-        ### Import image folder menu
-        import_ims_action = QAction('&Import Images...', self)
+        ### Open new image folder menu
+        import_ims_action = QAction('&Open Images...', self)
         import_ims_action.setShortcuts(['Ctrl+Shift+i'])
         import_ims_action.triggered.connect(self.import_ims)
         file_menu.addAction(import_ims_action)
+
+        file_menu.addSeparator()
 
         ### Import mark file
         import_marks_action = QAction('&Import Mark File...', self)
