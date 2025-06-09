@@ -49,8 +49,10 @@ Below is a table of the keybindings.
      - :kbd:`Shift` + :kbd:`Tab`
    * - Change frame
      - :kbd:`Space`
-   * - Delete
-     - :kbd:`RightMouseButton` or :kbd:`Delete` or :kbd:`Backspace`
+   * - Delete mark
+     - :kbd:`Shift` + :kbd:`LeftMouseButton`
+   * - Delete selected marks
+     - :kbd:`Delete`
    * - Undo mark
      - :kbd:`Ctrl` + :kbd:`Z`
    * - Redo mark
