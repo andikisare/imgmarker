@@ -1509,8 +1509,8 @@ class MainWindow(QMainWindow):
             marks_pix = [mark for mark in self.imageless_marks if hasattr(mark,'_center') ]
 
             # create list of ras/decs
-            ra = [mark.wcs_center.ra.value for mark in marks_world]
-            dec = [mark.wcs_center.dec.value for mark in marks_world]
+            ra = [float(mark.wcs_center.ra) for mark in marks_world]
+            dec = [float(mark.wcs_center.dec) for mark in marks_world]
 
             # create list of x/y
             x = [mark.center.x for mark in marks_pix]

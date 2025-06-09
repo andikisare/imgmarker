@@ -57,7 +57,7 @@ class WorldCoord:
     def topix(self, wcs:WCS) -> 'PixCoord':
         """Converts world coordinate into pixel coordinates. The origin is the upper-left corner."""
 
-        _radec = np.dstack((self.ra.value,self.dec.value))[0]
+        _radec = np.dstack((self.ra,self.dec))[0]
         x, _y = wcs.all_world2pix(_radec, 0).T
         y = wcs.pixel_shape[1] - _y
         
