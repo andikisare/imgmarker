@@ -1,51 +1,40 @@
 import numpy as np
 from astropy.wcs import WCS
+import numpy as np
 
-
-class Angle:
+class Angle(np.ndarray):
     """Represents a single angle or an array of angles."""
 
-    def __init__(self,value):
-        self.value = value
+    def __new__(cls,a):
+        obj = np.asarray(a,dtype=float).view(cls)
+        return obj
 
     def __add__(self, value):
-        return Angle(self.value.__add__(value))
+        return Angle(super().__add__(value))
     
     def __sub__(self, value):
-        return Angle(self.value.__sub__(value))
+        return Angle(super().__sub__(value))
     
     def __mul__(self, value):
-        return Angle(self.value.__mul__(value))
+        return Angle(super().__mul__(value))
+    
+    def __abs__(self):
+        return Angle(super().__abs__())
     
     def __truediv__(self, value):
-        return Angle(self.value.__truediv__(value))
-    
-    def __repr__(self):
-        return self.__str__+'°'
-    
-    def __str__(self):
-        try:
-            return f'{float(self.value).__repr__()}'
-        except:
-            return f'{self.value.__repr__()}'
-    
-    def __float__(self):
-        try:
-            return float(self.value)
-        except:
-            return self.value.astype(np.float64)
+        return Angle(super().__truediv__(value))
     
     @property
     def hms(self):
-        sign = np.sign(self.value)
-        m, s = np.divmod(np.abs(self.value)*240, 60)
+        sign = np.sign(self)
+        m, s = np.divmod(np.abs(self)*240, 60)
         h, m = np.divmod(m, 60)
         return sign*h, sign*m, sign*s
 
     @property
     def dms(self):
-        sign = np.sign(self.value)
-        m, s = np.divmod(np.abs(self.value)*3600, 60)
+        sign = np.sign(self)
+        m, s = np.divmod(np.abs(self)*3600, 60)
         d, m = np.divmod(m, 60)
         return sign*d, sign*m, sign*s
     
