@@ -1248,11 +1248,36 @@ class MainWindow(QMainWindow):
             marks = self.image.dupe_marks
         else:
             marks = self.image.marks
+
+        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Marks"][0]
+        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Mark Labels"][0]
+
         if len(marks) > 0:
-            self.image.undone_marks.append(marks[-1])
-            self.image_scene.rmmark(marks[-1])
-            marks.remove(marks[-1])
-        
+            mark = marks[-1]
+            self.image.undone_marks.append(mark)
+            self.image_scene.rmmark(mark)
+            marks.remove(mark)
+
+            marks_enabled = marks_action.isChecked()
+            labels_enabled = labels_action.isChecked()
+
+            if labels_enabled: mark.label.show()
+            else: mark.label.hide()
+
+            if marks_enabled: 
+                mark.show()
+                if labels_enabled: mark.label.show()
+            else: 
+                mark.hide()
+                mark.label.hide()
+                
+        if len(marks) == 0:
+            marks_action.setEnabled(False)
+            labels_action.setEnabled(False)
+        else:
+            marks_action.setEnabled(True)
+            labels_action.setEnabled(True)
+
         self.save()
 
     def redo_prev_mark(self):
@@ -1260,10 +1285,54 @@ class MainWindow(QMainWindow):
             marks = self.image.dupe_marks
         else:
             marks = self.image.marks
-        if len(self.image.undone_marks) > 0:
-            self.image_scene.mark(self.image.undone_marks[-1])
-            marks.append(self.image.undone_marks[-1])
-            self.image.undone_marks.remove(self.image.undone_marks[-1])
+
+        try:
+            group = self.image.undone_marks[-1].g
+        except:
+            return
+
+        marks_in_group = [m for m in marks if m.g == group]
+
+        if config.GROUP_MAX[group - 1] == 'None': limit = inf
+        else: limit = int(config.GROUP_MAX[group - 1])
+
+        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Marks"][0]
+        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Mark Labels"][0]
+
+        if (len(self.image.undone_marks) > 0) and ((len(marks_in_group) < limit) or limit == 1):
+            mark = self.image.undone_marks[-1]
+            self.image_scene.mark(mark)
+
+            if (limit == 1) and (len(marks_in_group) == 1):
+                prev_mark = marks_in_group[0]
+                self.image_scene.rmmark(prev_mark)
+                marks.remove(prev_mark)
+                marks.append(mark)
+                self.image.undone_marks.remove(mark)
+
+            else:
+                marks.append(mark)
+                self.image.undone_marks.remove(mark)
+
+            marks_enabled = marks_action.isChecked()
+            labels_enabled = labels_action.isChecked()
+
+            if labels_enabled: mark.label.show()
+            else: mark.label.hide()
+
+            if marks_enabled: 
+                mark.show()
+                if labels_enabled: mark.label.show()
+            else: 
+                mark.hide()
+                mark.label.hide()
+
+        if len(marks) == 0:
+            marks_action.setEnabled(False)
+            labels_action.setEnabled(False)
+        else:
+            marks_action.setEnabled(True)
+            labels_action.setEnabled(True)
 
         self.save()
 
