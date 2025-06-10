@@ -67,7 +67,7 @@ Below is a table of the keybindings.
      - :kbd:`F`
    * - Open Save...
      - :kbd:`Ctrl` + :kbd:`O`
-   * - Import Images...
+   * - Open Images...
      - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`I`
    * - Import Mark File...
      - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`M`
@@ -79,6 +79,8 @@ Below is a table of the keybindings.
      - :kbd:`Ctrl` + :kbd:`-`
    * - Zoom to Fit
      - :kbd:`Ctrl` + :kbd:`0`
+   * - Copy selected mark coordinates
+     - :kbd:`Ctrl` + :kbd:`C`
    * - Frames...
      - :kbd:`Ctrl` + :kbd:`F`
    * - Show Marks
