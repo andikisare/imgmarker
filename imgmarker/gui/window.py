@@ -338,16 +338,16 @@ class ControlsWindow(QWidget):
         layout.addWidget(self.table)
 
         # Resize window according to size of layout
-        self.resize(int(Screen.width()*0.2), self.sizeHint().height())
+        self.resize(int(Screen.width()*0.25), self.sizeHint().height())
         self.setMaximumHeight(self.height())
         
     def update_text(self):
         # Lists for keybindings
-        actions_list = ['Next','Back','Change frame','Delete mark','Delete selected marks','Enter comment', 'Focus', 'Zoom in/out', 'Copy mark coordinates' ,'Favorite']
+        actions_list = ['Next','Back','Change frame','Delete mark','Delete selected marks','Enter comment', 'Focus', 'Zoom in/out', 'Zoom to fit', 'Copy selected mark coordinates' ,'Favorite']
         group_list = [f'Group \"{group}\"' for group in config.GROUP_NAMES[1:]]
         category_list = [f'Category \"{category}\"' for category in config.CATEGORY_NAMES[1:]]
         actions_list = group_list + category_list + actions_list
-        buttons_list = ['1 OR Left Click', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', 'Middle Click', 'Scroll Wheel', 'Ctrl + C', 'F']
+        buttons_list = ['1 OR Left Click', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', 'Middle Click', 'Scroll Wheel', 'Ctrl + 0', 'Ctrl + C', 'F']
         
         items = [ (action, button) for action, button in zip(actions_list, buttons_list) ]
 
