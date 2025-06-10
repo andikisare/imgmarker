@@ -24,6 +24,7 @@ import os
 from copy import deepcopy
 import gc
 import shutil
+import warnings
 
 def _open_save() -> str:
     dialog = DefaultDialog()
@@ -847,8 +848,11 @@ class MainWindow(QMainWindow):
         self.images, self.imageless_marks = self.markfile.read(self.imagesfile.read())
         for path in io.markpaths():
             if path != self.markfile.path:
-                self.images, imageless_marks = io.MarkFile(path).read(self.images)
-                self.imageless_marks += imageless_marks
+                try:
+                    self.images, imageless_marks = io.MarkFile(path).read(self.images)
+                    self.imageless_marks += imageless_marks
+                except Exception as e:
+                    print(f"WARNING: {str(e).strip("'")} Skipping import.")
         
         self.favorite_list = io.loadfav()
 
@@ -1071,18 +1075,23 @@ class MainWindow(QMainWindow):
         """Method for opening a catalog file."""
         if 'src' not in kwargs:
             src = QFileDialog.getOpenFileName(self, 'Import mark file', config.SAVE_DIR, 'Text files (*.txt *.csv)')[0]
-            if src == '': return
+            if src == '': return None
         else:
             src = kwargs['src']
         
-        file = src.split(os.sep)[-1]
         dst = os.path.join(config.SAVE_DIR,'imports')
         mark_dst = shutil.copy(src,dst)
+        
+        try:
+            self.images, imageless_marks = io.MarkFile(mark_dst).read(self.images)
+            self.imageless_marks += imageless_marks
 
-        self.images, imageless_marks = io.MarkFile(mark_dst).read(self.images)
-        self.imageless_marks += imageless_marks
+            self.update_marks()
 
-        self.update_marks()
+        except Exception as e:
+            print(f"WARNING: {str(e).strip("'")} Skipping import.")
+            os.remove(mark_dst)
+            
 
     def favorite(self,state) -> None:
         """Favorite the current image."""

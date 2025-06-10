@@ -12,7 +12,7 @@ import datetime as dt
 
 
 class MarkFile:
-    def __init__(self,path):
+    def __init__(self,path:str):
         self.path = path
 
         if path not in config.DEFAULT_COLORS:
@@ -35,6 +35,13 @@ class MarkFile:
         """
 
         imageless = []
+
+        valid_keys = [
+            'date','image','group',
+            'label','x','y',
+            'ra','dec','size'
+            'size(px)','size(arcsec)'
+        ]
         
         # Get list of marks for each image
         if os.path.exists(self.path):
@@ -44,8 +51,15 @@ class MarkFile:
                 reader = csv.DictReader(f,delimiter=delimiter)
 
                 for row in reader:
+                    
                     keys = row.copy().keys()
-                    for key in keys: row[key.strip().lower()] = row.pop(key).strip()
+                    
+                    for key in keys:
+                        new_key = key.strip().lower()
+                        if new_key not in valid_keys:
+                            raise KeyError(f'Key "{key}" in file "{self.path.split(os.sep)[-1]}" is not a valid key.')
+                        else:
+                            row[new_key] = row.pop(key).strip()
 
                     # Default values
                     name = 'None'
