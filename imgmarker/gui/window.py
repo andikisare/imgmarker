@@ -527,6 +527,7 @@ class MainWindow(QMainWindow):
         self.frame = 0
         self.markfile = io.MarkFile(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv'))
         self.imagesfile = io.ImagesFile()
+        self.favoritesfile = io.FavoritesFile()
         
         # Shortcuts
         del_shortcuts = [QShortcut('Backspace', self), QShortcut('Delete', self)]
@@ -597,7 +598,7 @@ class MainWindow(QMainWindow):
         self.submit_button = QPushButton(text='Enter',parent=self)
         self.submit_button.setFixedHeight(40)
         self.submit_button.clicked.connect(self.enter)
-        #self.submit_button.setShortcut('Return')
+        # self.submit_button.setShortcut('Return')
         self.submit_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # Next widget
@@ -633,7 +634,7 @@ class MainWindow(QMainWindow):
             self.categories_layout.addWidget(box)
 
         # Favorite box
-        self.favorite_list = io.loadfav()
+        # self.favorite_list = self.favoritesfile.read()
         self.favorite_box = QCheckBox(parent=self)
         self.favorite_box.setFixedHeight(20)
         self.favorite_box.setFixedWidth(40)
@@ -854,7 +855,7 @@ class MainWindow(QMainWindow):
                 except Exception as e:
                     print(f"WARNING: {str(e).strip("'")} Skipping import.")
         
-        self.favorite_list = io.loadfav()
+        self.favorite_list = self.favoritesfile.read()
 
         # Find all images in image directory
 
@@ -977,7 +978,7 @@ class MainWindow(QMainWindow):
         
         self.markfile.save(self.images,self.imageless_marks)
         self.imagesfile.save(self.images)
-        io.savefav(self.images,self.favorite_list)
+        self.favoritesfile.save(self.favorite_list, self.images)
 
     def open(self) -> None:
         """Method for the open save directory dialog."""
@@ -1092,7 +1093,6 @@ class MainWindow(QMainWindow):
             print(f"WARNING: {str(e).strip("'")} Skipping import.")
             os.remove(mark_dst)
             
-
     def favorite(self,state) -> None:
         """Favorite the current image."""
 
@@ -1100,12 +1100,12 @@ class MainWindow(QMainWindow):
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
             self.favorite_list.append(self.image.name)
-            io.savefav(self.images,self.favorite_list)
+            self.favoritesfile.save(self.favorite_list,self.images)
         else:
             self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             if self.image.name in self.favorite_list: 
                 self.favorite_list.remove(self.image.name)
-            io.savefav(self.images,self.favorite_list)
+            self.favoritesfile.save(self.favorite_list,self.images)
 
     def categorize(self,i:int) -> None:
         """Categorize the current image."""

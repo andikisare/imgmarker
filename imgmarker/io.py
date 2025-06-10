@@ -10,7 +10,6 @@ from typing import Tuple, List
 import csv
 import datetime as dt
 
-
 class MarkFile:
     def __init__(self,path:str):
         self.path = path
@@ -260,7 +259,6 @@ class MarkFile:
             for row in rows:
                 writer.writerow(row)
 
-
 class ImagesFile:
     def __init__(self):
         self.path = os.path.join(config.SAVE_DIR,f'{config.USER}_images.csv')
@@ -314,9 +312,6 @@ class ImagesFile:
 
         Parameters
         ----------
-        date: str
-            A string containing the current date in ISO 8601 extended format.
-
         images: list[`imgmarker.image.Image`]
             A list of Image objects for each image from the specified image directory.
 
@@ -351,8 +346,93 @@ class ImagesFile:
             writer.writeheader()
             for row in image_rows:
                 writer.writerow(row)
-        
 
+class FavoritesFile:
+    def __init__(self):
+        self.path = os.path.join(config.SAVE_DIR,f'{config.USER}_favorites.csv')
+    
+    def __eq__(self, value):
+        if hasattr(value,'path'):
+            return self.path == value.path
+        else:
+            return self.path == value
+        
+    def read(self) -> List[str]:
+        """
+        Takes data from favorites.csv and from them returns a list of image file names
+        with full directory.
+
+        Returns
+        ----------
+        favorites: list[`str`]
+        """
+
+        favorites:List[str] = []
+        
+        # Get list of images from favorites.csv
+        if os.path.exists(self.path):
+            with open(self.path,'r') as f:
+                delimiter = '|' if '|' in f.readline() else ','
+                f.seek(0)
+                reader = csv.DictReader(f,delimiter=delimiter)
+                
+                for row in reader:
+                    keys = row.copy().keys()
+                    for key in keys: row[key.strip().lower()] = row.pop(key).strip()
+                    date,name,categories,comment = row['date'], row['image'], row['categories'], row['comment']
+
+                    favorites.append(name)
+        return favorites
+
+    def save(self, favorites:List[str], images:List['image.Image']):
+        """
+        Saves favorites data.
+
+        Parameters
+        ----------
+        favorites: list[str]
+            A list of strings of each image file name from the specified image directory.
+
+        images: list['image.Image']
+            A list of image objects.
+            
+        Returns
+        ----------
+        None
+        """
+        # fav_out_path = os.path.join(config.SAVE_DIR, f'{config.USER}_favorites.csv')
+        date = dt.datetime.now(dt.timezone.utc).date().isoformat()
+        image_rows:list[dict] = []
+    
+        favorited = [favorite for favorite in images if favorite.name in favorites]
+
+        for img in favorited:
+            if img.seen:
+                name = img.name
+                comment = img.comment
+
+                category_list = img.categories
+                category_list.sort()
+                if (len(category_list) != 0):
+                    categories = '+'.join([config.CATEGORY_NAMES[i] for i in category_list])
+                else: categories = 'None'
+
+                image_rows.append({'date': str(date),
+                                    'image': str(name),
+                                    'RA': str(img.wcs_center[0]),
+                                    'DEC': str(img.wcs_center[1]),
+                                    'categories': str(categories),
+                                    'comment': str(comment)})
+        if len(favorited) > 0:
+            with open(self.path, 'w') as f:
+                writer = csv.DictWriter(f, fieldnames=image_rows[0].keys())
+                writer.writeheader()
+                for row in image_rows:
+                    writer.writerow(row)
+        else:
+            with open(self.path, 'w') as f:
+                f.write('')
+        
 def markpaths() -> List[str]:
     paths = [os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')]
     import_dir = os.path.join(config.SAVE_DIR,'imports')
@@ -362,111 +442,6 @@ def markpaths() -> List[str]:
     
     paths += _glob.glob(os.path.join(import_dir,'*'))
     return paths
-
-
-def savefav(images:List['image.Image'],fav_list:List[str]) -> None:
-    """
-    Creates a file, \'favorites.csv\', in the save directory containing all images that were favorited.
-    This file is in the same format as \'images.csv\' so that a user can open their favorites file to show
-    only favorited images with a little bit of file name manipulation. More details on how to do this can
-    be found in \'README.md\'.
-
-    Parameters
-    ----------
-    date: str
-        A string containing the current date in ISO 8601 extended format.
-
-    images: list[`imgmarker.image.Image`]
-        A list of Image objects for each image from the specified image directory.
-
-    fav_list: list[str]
-        A list of strings containing the file names of each favorited image.
-
-    Returns
-    ----------
-    None
-    """
-
-    image_lines = []
-    name_lengths = []
-    img_ra_lengths = []
-    img_dec_lengths = []
-    category_lengths = []
-    comment_lengths = []
-
-    fav_out_path = os.path.join(config.SAVE_DIR, f'{config.USER}_favorites.csv')
-    date = dt.datetime.now(dt.timezone.utc).date().isoformat()
-
-    # Remove the file if it exists
-    if os.path.exists(fav_out_path): os.remove(fav_out_path)
-    
-    fav_images = [img for img in images if img.name in fav_list]
-
-    if len(fav_list) != 0:
-        for img in fav_images:
-            if img.seen:
-                name = img.name
-                comment = img.comment
-
-                category_list = img.categories
-                category_list.sort()
-                if (len(category_list) != 0):
-                    categories = ','.join([config.CATEGORY_NAMES[i] for i in category_list])
-                else: categories = 'None'
-
-                img_ra, img_dec = img.wcs_center
-
-                il = [date,name,img_ra,img_dec,categories,comment]
-                for l in image_lines:
-                    if l[1] == name: image_lines.remove(l)
-                image_lines.append(il)
-                
-                name_lengths.append(len(name))
-                img_ra_lengths.append(len(f'{img_ra:.8f}'))
-                img_dec_lengths.append(len(f'{img_dec:.8f}'))
-                category_lengths.append(len(categories))
-                comment_lengths.append(len(comment))
-
-    if len(image_lines) != 0:
-        # Dynamically adjust column widths
-        dateln = 12
-        nameln = np.max(name_lengths) + 2
-        img_raln = max(np.max(img_ra_lengths), 2) + 2 
-        img_decln = max(np.max(img_ra_lengths), 3) + 2
-        categoryln = max(np.max(category_lengths), 10) + 2
-        commentln = max(np.max(comment_lengths), 7) + 2 
-        
-        il_fmt = [ f'^{dateln}',f'^{nameln}', f'^{img_raln}.8f', f'^{img_decln}.8f', f'^{categoryln}', f'^{commentln}' ]
-        il_fmt_nofloat = [ f'^{dateln}',f'^{nameln}', f'^{img_raln}', f'^{img_decln}', f'^{categoryln}', f'^{commentln}' ]
-        
-        header = ['date','image','RA', 'DEC','categories','comment']
-        header = ''.join(f'{h:{il_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
-        
-        with open(fav_out_path,'a') as fav_out:
-            fav_out.write(header)
-            for l in image_lines:
-                outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
-                fav_out.write(outline)
-    
-
-def loadfav() -> List[str]:
-    """
-    Loads f'{USER}_favorites.csv' from the save directory.
-
-    Returns
-    ----------
-    list: str
-        A list of strings containing the names of the files (images) that were saved.
-    """
-
-    fav_out_path = os.path.join(config.SAVE_DIR, f'{config.USER}_favorites.csv')
-    
-    if os.path.exists(fav_out_path):
-        fav_list = [ l.split('|')[1].strip() for l in open(fav_out_path) ][1:]
-    else: fav_list = []
-
-    return list(set(fav_list))
-    
 
 def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
     """
