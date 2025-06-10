@@ -854,6 +854,7 @@ class MainWindow(QMainWindow):
                     self.imageless_marks += imageless_marks
                 except Exception as e:
                     print(f"WARNING: {str(e).strip("'")} Skipping import.")
+                    os.remove(path)
         
         self.favorite_list = self.favoritesfile.read()
 

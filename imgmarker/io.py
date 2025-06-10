@@ -11,11 +11,22 @@ import csv
 import datetime as dt
 
 class MarkFile:
+    VALID_FIELDNAMES = [
+        'date','image','group',
+        'label','x','y',
+        'ra','dec','size'
+        'size(px)','size(arcsec)'
+    ]
+    
     def __init__(self,path:str):
         self.path = path
 
         if path not in config.DEFAULT_COLORS:
             config.DEFAULT_COLORS[path] = config.GROUP_COLORS[0]
+
+        valid, err = self.isvalid(return_err=True)
+        if not valid:
+            raise err
     
     def __eq__(self, value):
         if hasattr(value,'path'):
@@ -23,6 +34,25 @@ class MarkFile:
         else:
             return self.path == value
         
+    def isvalid(self,return_err=False):
+        valid = True
+        err = None
+
+        if os.path.exists(self.path):
+            with open(self.path,'r') as f:
+                delimiter = '|' if '|' in f.readline() else ','
+                f.seek(0)
+                reader = csv.DictReader(f,delimiter=delimiter)
+                for fieldname in reader.fieldnames:
+                    if fieldname.strip().lower() not in MarkFile.VALID_FIELDNAMES:
+                        valid = False
+                        err = KeyError(f'Field name "{fieldname}" in file "{self.path.split(os.sep)[-1]}" is not a valid field name.')
+
+        if return_err:
+            return valid, err
+        else:
+            return valid
+     
     def read(self,images:List[image.Image]) -> Tuple[List[image.Image],List[Mark]]:
         """
         Takes data from marks.csv and images.csv and from them returns a list of `imgmarker.image.Image`
@@ -34,13 +64,6 @@ class MarkFile:
         """
 
         imageless = []
-
-        valid_keys = [
-            'date','image','group',
-            'label','x','y',
-            'ra','dec','size'
-            'size(px)','size(arcsec)'
-        ]
         
         # Get list of marks for each image
         if os.path.exists(self.path):
@@ -50,15 +73,8 @@ class MarkFile:
                 reader = csv.DictReader(f,delimiter=delimiter)
 
                 for row in reader:
-                    
-                    keys = row.copy().keys()
-                    
-                    for key in keys:
-                        new_key = key.strip().lower()
-                        if new_key not in valid_keys:
-                            raise KeyError(f'Key "{key}" in file "{self.path.split(os.sep)[-1]}" is not a valid key.')
-                        else:
-                            row[new_key] = row.pop(key).strip()
+                    for fieldname in reader.fieldnames:
+                        row[fieldname.strip().lower()] = row.pop(fieldname).strip()
 
                     # Default values
                     name = 'None'
@@ -434,13 +450,19 @@ class FavoritesFile:
                 f.write('')
         
 def markpaths() -> List[str]:
-    paths = [os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')]
+    _paths = [os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')]
     import_dir = os.path.join(config.SAVE_DIR,'imports')
 
     if not os.path.exists(import_dir):
         os.makedirs(import_dir)
     
-    paths += _glob.glob(os.path.join(import_dir,'*'))
+    _paths += _glob.glob(os.path.join(import_dir,'*'))
+    paths = []
+
+    for path in _paths:
+        try: paths.append(MarkFile(path).path)
+        except: pass
+
     return paths
 
 def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
