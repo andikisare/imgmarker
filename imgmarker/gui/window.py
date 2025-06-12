@@ -468,6 +468,11 @@ class MarkMenu(QMenu):
         self.menus[path].addAction(color_action)
         self.update_color(path)
 
+        if len(self.mainwindow.imageless_marks) == 0:
+            color_action.setEnabled(False)
+        else:
+            color_action.setEnabled(True)
+
         self.menus[path].addSeparator()
 
         if path == self.mainwindow.markfile.path:
@@ -493,6 +498,11 @@ class MarkMenu(QMenu):
         else:
             self.marks_action(path).setEnabled(True)
             self.labels_action(path).setEnabled(True)
+
+        if len(self.mainwindow.imageless_marks) == 0:
+            self.color_action(path).setEnabled(False)
+        else:
+            self.color_action(path).setEnabled(True)
 
     def update_color(self,path):
         s = 14
