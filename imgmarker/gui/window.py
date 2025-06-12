@@ -190,11 +190,60 @@ class SettingsWindow(QWidget):
         for box in self.category_boxes: box.clearFocus()
         for box in self.max_boxes: box.clearFocus()
 
-        self.update_config()
-        self.mainwindow.save()
-        self.mainwindow.centralWidget().setFocus()
-        return super().closeEvent(a0)
+        fix_over_limit = self.check_max_marks()
+
+        if fix_over_limit:
+            a0.ignore()
+            return
+        else:
+            self.update_config()
+            self.mainwindow.save()
+            self.mainwindow.centralWidget().setFocus()
+            return super().closeEvent(a0)
     
+    def check_max_marks(self):
+        marks_in_group = []
+        over_limit_groups = []
+        popup_message = ""
+        for i, spinbox in enumerate(self.max_boxes):
+            limit = spinbox.value()
+            if limit > 0:
+                for image in self.mainwindow.images:
+                    group = i + 1
+                    if image.duplicate == True:
+                        marks = image.dupe_marks
+                    else:
+                        marks = image.marks
+
+                    marks_in_group = [mark for mark in marks if mark.g == (group)]
+
+                    if len(marks_in_group) > limit:
+                        over_limit_groups.append(group)
+
+        over_limit_groups = np.sort(list(set(over_limit_groups)))
+        
+        if len(over_limit_groups) == 1:
+            popup_message = f"You have set a mark limit for group {[config.GROUP_NAMES[i] for i in over_limit_groups]} that is lower than the number of marks you have placed in that group. Would you like to fix this (click Yes) or continue (click No)?\n\n" \
+            "If you continue, the previously placed marks will still be above the limit until you fix the limit or delete the excess marks."
+            reply = QMessageBox.question(self, 'WARNING',
+                popup_message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+
+            if reply == QMessageBox.StandardButton.Yes:
+                return True
+            else:
+                return False
+            
+        elif len(over_limit_groups) > 1:
+            popup_message = f"You have set a mark limit for groups {[config.GROUP_NAMES[i] for i in over_limit_groups]} that is lower than the number of marks you placed in those groups. Would you like to fix this (click Yes) or continue (click No)?\n\n" \
+            "If you continue, the previously placed marks will still be above the limit until you fix the limit or delete the excess marks."
+            reply = QMessageBox.question(self, 'WARNING',
+                popup_message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+
+            if reply == QMessageBox.StandardButton.Yes:
+                return True
+            else:
+                return False
+
     def duplicate_percentage_state(self):
         if not self.duplicate_box.isChecked():
             self.duplicate_percentage_spinbox.setEnabled(False)
@@ -995,7 +1044,7 @@ class MainWindow(QMainWindow):
 
         open_msg = 'This will save all current data in the current save directory and begin saving new data in the newly selected save directory.\
             Customized configuration file data will be kept if there is no available configuration file in the new save directory.\n\nAre you sure you want to continue?'
-        reply = QMessageBox.question(self, 'WARNING', 
+        reply = QMessageBox.question(self, 'WARNING',
                         open_msg, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.No: return
@@ -1208,6 +1257,9 @@ class MainWindow(QMainWindow):
                 self.image_scene.rmmark(prev_mark)
                 marks.remove(prev_mark)
                 marks.append(mark)
+            
+            elif (len(marks_in_group) > limit) and limit == 1:
+                self.image_scene.rmmark(mark)
 
             else: marks.append(mark)
 
