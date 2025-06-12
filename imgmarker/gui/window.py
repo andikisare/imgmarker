@@ -1001,6 +1001,10 @@ class MainWindow(QMainWindow):
         config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER = config.read()
         config.update()
 
+        self.markfile = io.MarkFile(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv'))
+        self.imagesfile = io.ImagesFile()
+        self.favoritesfile = io.FavoritesFile()
+
         after_image_dir = config.IMAGE_DIR
 
         if before_image_dir != after_image_dir: # if the image directory is different in the new config file, then we need to purge these lists
