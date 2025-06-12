@@ -429,26 +429,25 @@ class MarkMenu(QMenu):
         super().__init__()
         self.menus:dict[str,QMenu] = {}
         self.mainwindow = mainwindow
-        self.setTitle('&Mark')
+        self.setTitle('Mark')
 
     def menu_setup(self,path:str):
         file = path.split(os.sep)[-1]
 
         if path == self.mainwindow.markfile.path:
-            self.menus[path] = QMenu(f'&{file} (default)')
+            self.menus[path] = QMenu(f'{file} (default)')
         else:
-            self.menus[path] = QMenu(f'&{file}')
+            self.menus[path] = QMenu(f'{file}')
 
         # Toggle marks
-        marks_action = QAction('&Show Marks', self)
-        marks_action.setShortcuts(['Ctrl+m'])
+        marks_action = QAction('Show Marks', self)
         marks_action.setCheckable(True)
         marks_action.setChecked(True)
         marks_action.triggered.connect(partial(self.mainwindow.toggle_marks,path))
         self.menus[path].addAction(marks_action)
         
         ### Toggle mark labels menu
-        labels_action = QAction('&Show Mark Labels', self)
+        labels_action = QAction('Show Mark Labels', self)
         labels_action.setCheckable(True)
         labels_action.setChecked(True)
         labels_action.triggered.connect(partial(self.mainwindow.toggle_mark_labels,path))
@@ -473,14 +472,14 @@ class MarkMenu(QMenu):
 
         if path == self.mainwindow.markfile.path:
             labels_action.setShortcuts(['Ctrl+l'])
+            marks_action.setShortcuts(['Ctrl+m'])
 
             del_marks_action = QAction(f'Delete Marks in Current Image', self)
             
             del_marks_action.triggered.connect(partial(self.mainwindow.del_usermarks,'all'))
             self.menus[path].addAction(del_marks_action)
-        else:
-            labels_action.setShortcuts(['Ctrl+Shift+l'])
 
+        else:
             del_file_action = QAction(f'Delete', self)
             del_file_action.triggered.connect(partial(self.mainwindow.del_markfile,path))
             self.menus[path].addAction(del_file_action)
@@ -512,10 +511,10 @@ class MarkMenu(QMenu):
         return [action for action in self.menus[path].actions() if action.text() == "Default Color..."][0]
     
     def marks_action(self,path):
-        return [action for action in self.menus[path].actions() if action.text() == "&Show Marks"][0]
+        return [action for action in self.menus[path].actions() if action.text() == "Show Marks"][0]
     
     def labels_action(self,path):
-        return [action for action in self.menus[path].actions() if action.text() == "&Show Mark Labels"][0]
+        return [action for action in self.menus[path].actions() if action.text() == "Show Mark Labels"][0]
         
 class MainWindow(QMainWindow):
     """Class for the main window."""
@@ -660,16 +659,16 @@ class MainWindow(QMainWindow):
         menubar = self.menuBar()
 
         ## File menu
-        file_menu = menubar.addMenu("&File")
+        file_menu = menubar.addMenu("File")
 
         ### Open file menu
-        open_action = QAction('&Open Save...', self)
+        open_action = QAction('Open Save...', self)
         open_action.setShortcuts(['Ctrl+o'])
         open_action.triggered.connect(self.open)
         file_menu.addAction(open_action)
 
         ### Open new image folder menu
-        import_ims_action = QAction('&Open Images...', self)
+        import_ims_action = QAction('Open Images...', self)
         import_ims_action.setShortcuts(['Ctrl+Shift+i'])
         import_ims_action.triggered.connect(self.import_ims)
         file_menu.addAction(import_ims_action)
@@ -677,68 +676,68 @@ class MainWindow(QMainWindow):
         file_menu.addSeparator()
 
         ### Import mark file
-        import_marks_action = QAction('&Import Mark File...', self)
+        import_marks_action = QAction('Import Mark File...', self)
         import_marks_action.setShortcuts(['Ctrl+Shift+m'])
         import_marks_action.triggered.connect(self.import_markfile)
         file_menu.addAction(import_marks_action)
         
         ### Exit menu
         file_menu.addSeparator()
-        exit_action = QAction('&Exit', self)
+        exit_action = QAction('Exit', self)
         exit_action.setShortcuts(['Ctrl+q'])
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
         ## Edit menu
-        edit_menu = menubar.addMenu("&Edit")
+        edit_menu = menubar.addMenu("Edit")
         edit_menu.setToolTipsVisible(True)
 
         ### Undo previous mark
-        undo_mark_action = QAction('&Undo Previous Mark', self)
+        undo_mark_action = QAction('Undo Previous Mark', self)
         undo_mark_action.setShortcuts(['Ctrl+z'])
         undo_mark_action.triggered.connect(self.undo_prev_mark)
         edit_menu.addAction(undo_mark_action)
 
         ### Redo previous mark
-        redo_mark_action = QAction('&Redo Previous Mark', self)
+        redo_mark_action = QAction('Redo Previous Mark', self)
         redo_mark_action.setShortcuts(['Ctrl+Shift+z'])
         redo_mark_action.triggered.connect(self.redo_prev_mark)
         edit_menu.addAction(redo_mark_action)
 
         ### Settings menu
         edit_menu.addSeparator()
-        settings_action = QAction('&Settings...', self)
+        settings_action = QAction('Settings...', self)
         settings_action.setShortcuts(['Ctrl+,'])
         settings_action.triggered.connect(self.settings_window.show)
         edit_menu.addAction(settings_action)
 
         ## View menu
-        view_menu = menubar.addMenu("&View")
+        view_menu = menubar.addMenu("View")
 
         ### Zoom menu
-        zoom_menu = view_menu.addMenu("&Zoom")
+        zoom_menu = view_menu.addMenu("Zoom")
 
         #### Zoom in
-        zoomin_action = QAction('&Zoom In', self)
+        zoomin_action = QAction('Zoom In', self)
         zoomin_action.setShortcuts(['Ctrl+='])
         zoomin_action.triggered.connect(partial(self.image_view.zoom,1.2,'viewport'))
         zoom_menu.addAction(zoomin_action)
 
         ### Zoom out
-        zoomout_action = QAction('&Zoom Out', self)
+        zoomout_action = QAction('Zoom Out', self)
         zoomout_action.setShortcuts(['Ctrl+-'])
         zoomout_action.triggered.connect(partial(self.image_view.zoom,1/1.2,'viewport'))
         zoom_menu.addAction(zoomout_action)
 
         ### Zoom to Fit
-        zoomfit_action = QAction('&Zoom to Fit', self)
+        zoomfit_action = QAction('Zoom to Fit', self)
         zoomfit_action.setShortcuts(['Ctrl+0'])
         zoomfit_action.triggered.connect(self.image_view.zoomfit)
         zoom_menu.addAction(zoomfit_action)
 
         ### Frame menu
         view_menu.addSeparator()
-        self.frame_action = QAction('&Frames...', self)
+        self.frame_action = QAction('Frames...', self)
         self.frame_action.setShortcuts(['Ctrl+f'])
         self.frame_action.triggered.connect(self.frame_window.show)
         view_menu.addAction(self.frame_action)
@@ -751,24 +750,24 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
 
         ## Filter menu
-        filter_menu = menubar.addMenu("&Filter")
+        filter_menu = menubar.addMenu("Filter")
 
         ### Blur
-        blur_action = QAction('&Gaussian Blur...',self)
+        blur_action = QAction('Gaussian Blur...',self)
         blur_action.setShortcuts(['Ctrl+b'])
         blur_action.triggered.connect(self.blur_window.show)
         filter_menu.addAction(blur_action)
 
         ### Scale menus
         filter_menu.addSeparator()
-        stretch_menu = filter_menu.addMenu('&Stretch')
+        stretch_menu = filter_menu.addMenu('Stretch')
 
-        linear_action = QAction('&Linear', self)
+        linear_action = QAction('Linear', self)
         linear_action.setCheckable(True)
         linear_action.setChecked(True)
         stretch_menu.addAction(linear_action)
 
-        log_action = QAction('&Log', self)
+        log_action = QAction('Log', self)
         log_action.setCheckable(True)
         stretch_menu.addAction(log_action)
 
@@ -781,14 +780,14 @@ class MainWindow(QMainWindow):
         log_action.triggered.connect(partial(log_action.setChecked,True))
 
         ### Interval menus
-        interval_menu = filter_menu.addMenu('&Interval')
+        interval_menu = filter_menu.addMenu('Interval')
 
-        minmax_action = QAction('&Min-Max', self)
+        minmax_action = QAction('Min-Max', self)
         minmax_action.setCheckable(True)
         minmax_action.setChecked(True)
         interval_menu.addAction(minmax_action)
 
-        zscale_action = QAction('&ZScale', self)
+        zscale_action = QAction('ZScale', self)
         zscale_action.setCheckable(True)
         interval_menu.addAction(zscale_action)
 
@@ -809,22 +808,22 @@ class MainWindow(QMainWindow):
         menubar.addMenu(self.mark_menu)
 
         ## Help menu
-        help_menu = menubar.addMenu('&Help')
+        help_menu = menubar.addMenu('Help')
 
         ### Controls window
-        controls_action = QAction('&Controls', self)
+        controls_action = QAction('Controls', self)
         controls_action.setShortcuts(['F1'])
         controls_action.triggered.connect(self.controls_window.show)
         help_menu.addAction(controls_action)
 
         ### Documentation
-        docs_action = QAction('&Documentation', self)
+        docs_action = QAction('Documentation', self)
         docs_action.triggered.connect(partial(QDesktopServices.openUrl,QUrl(__docsurl__)))
         help_menu.addAction(docs_action)
 
         ### About window
         help_menu.addSeparator()
-        about_action = QAction('&About', self)
+        about_action = QAction('About', self)
         about_action.triggered.connect(self.about_window.show)
         help_menu.addAction(about_action)
         
@@ -1188,8 +1187,8 @@ class MainWindow(QMainWindow):
             if len(marks) >= 1: marks[-1].label.enter()
         except: pass
 
-        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Marks"][0]
-        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Mark Labels"][0]
+        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Marks"][0]
+        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Mark Labels"][0]
 
         if self.inview(x,y) and ((len(marks_in_group) < limit) or limit == 1):            
             mark = self.image_scene.mark(x,y,group=group)
@@ -1263,8 +1262,8 @@ class MainWindow(QMainWindow):
         else:
             marks = self.image.marks
 
-        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Marks"][0]
-        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Mark Labels"][0]
+        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Marks"][0]
+        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Mark Labels"][0]
 
         if len(marks) > 0:
             mark = marks[-1]
@@ -1310,8 +1309,8 @@ class MainWindow(QMainWindow):
         if config.GROUP_MAX[group - 1] == 'None': limit = inf
         else: limit = int(config.GROUP_MAX[group - 1])
 
-        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Marks"][0]
-        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "&Show Mark Labels"][0]
+        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Marks"][0]
+        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Mark Labels"][0]
 
         if (len(self.image.undone_marks) > 0) and ((len(marks_in_group) < limit) or limit == 1):
             mark = self.image.undone_marks[-1]
