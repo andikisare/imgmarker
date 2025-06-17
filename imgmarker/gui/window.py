@@ -1519,7 +1519,6 @@ class MainWindow(QMainWindow):
         self.frame = self.image.frame
         self.image = self.images[self.idx]
         self.image.seek(self.frame)
-        self.image.seen = True
         self.image_scene.update_image(self.image)
         if self.image.name not in self.order:   # or self.image.duplicate == True: This could be added to preserve order when duplicates are being inserted, but the use case for someone randomizing
                 self.order.append(self.image.name)   # who wants to keep the order if duplicates have been seen and then they turn off and back on randomization is quite low
@@ -1545,7 +1544,8 @@ class MainWindow(QMainWindow):
         self.blur_window.slider.setMaximum(self.blur_max)
 
         # Update image label
-        self.image_label.setText(f'{self.image.name} ({self.idx+1} of {self.N})')
+        seen_text = ' (seen)' if self.image.seen else ''
+        self.image_label.setText(f'{self.image.name} ({self.idx+1} of {self.N}){seen_text}')
 
         # Update menus
         self.update_mark_menu()
@@ -1560,7 +1560,9 @@ class MainWindow(QMainWindow):
         else:
             self.settings_window.show_sexagesimal_box.setEnabled(True)
 
-        
+        # Set image as seen
+        self.image.seen = True
+
     
     def update_comments(self):
         """Updates image comment with the contents of the comment box."""
