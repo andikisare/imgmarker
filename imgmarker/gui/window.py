@@ -190,11 +190,12 @@ class SettingsWindow(QWidget):
         for box in self.category_boxes: box.clearFocus()
         for box in self.max_boxes: box.clearFocus()
 
-        fix_over_limit = self.check_max_marks()
+        if self.isVisible():
+            fix_over_limit = self.check_max_marks()
 
-        if fix_over_limit:
-            a0.ignore()
-            return
+            if fix_over_limit:
+                a0.ignore()
+                return
         else:
             self.update_config()
             self.mainwindow.save()
