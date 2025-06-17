@@ -525,10 +525,7 @@ class MarkMenu(QMenu):
 
         self.menus[path].addSeparator()
 
-        if path == self.mainwindow.markfile.path:
-            labels_action.setShortcuts(['Ctrl+l'])
-            marks_action.setShortcuts(['Ctrl+m'])
-
+        if path == self.mainwindow.markfile.path:            
             del_marks_action = QAction(f'Delete Marks in Current Image', self)
             
             del_marks_action.triggered.connect(partial(self.mainwindow.del_usermarks,'all'))
@@ -992,10 +989,37 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, a0):
         """Checks which keyboard button was pressed and calls the appropriate function."""
+
+        # Keybinds for show/hide mark file
+        modifiers = QApplication.keyboardModifiers()
+        alt = modifiers == Qt.KeyboardModifier.AltModifier
+        nomod = modifiers == Qt.KeyboardModifier.NoModifier
         
-        # Check if key is bound with marking the image
-        for group, binds in config.MARK_KEYBINDS.items():
-            if a0.key() in binds: self.mark(group=group)
+        if alt:
+            toggle_mark_keys = [
+                Qt.Key.Key_M,Qt.Key.Key_1,Qt.Key.Key_2,
+                Qt.Key.Key_3,Qt.Key.Key_4,Qt.Key.Key_5,
+                Qt.Key.Key_6,Qt.Key.Key_7,Qt.Key.Key_8,
+                Qt.Key.Key_9
+            ]
+
+            paths = list(self.mark_menu.menus.keys())
+            
+            for i in range(len(paths)):
+                if a0.key() == toggle_mark_keys[i]:
+                    marks_action = self.mark_menu.marks_action(paths[i])
+                    marks_action.setChecked(not marks_action.isChecked())
+                    self.toggle_marks(paths[i])
+
+            if a0.key() == Qt.Key.Key_L:
+                labels_action = self.mark_menu.labels_action(paths[0])
+                labels_action.setChecked(not labels_action.isChecked())
+                self.toggle_mark_labels(paths[0])
+        
+        elif nomod:
+            # Check if key is bound with marking the image
+            for group, binds in config.MARK_KEYBINDS.items():
+                if a0.key() in binds: self.mark(group=group)
 
     def mousePressEvent(self, a0):
         """Checks which mouse button was pressed and calls the appropriate function."""
