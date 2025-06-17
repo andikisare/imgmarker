@@ -903,22 +903,12 @@ class MainWindow(QMainWindow):
         """Initializes images."""
         
         self.images, self.imageless_marks = self.markfile.read(self.imagesfile.read())
-        for path in io.markpaths():
-            if path != self.markfile.path:
-                try:
-                    self.images, imageless_marks = io.MarkFile(path).read(self.images)
-                    self.imageless_marks += imageless_marks
-                except Exception as e:
-                    print(f"WARNING: {str(e).strip("'")} Skipping import.")
-                    os.remove(path)
-        
         self.favorite_list = self.favoritesfile.read()
-
-        # Find all images in image directory
 
         try: self.image.close()
         except: pass
         
+        # Find all images in image directory
         try:
             self.images, self.idx = io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
@@ -939,6 +929,16 @@ class MainWindow(QMainWindow):
             self.N = len(self.images)
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
+
+        # Add marks from imports
+        for path in io.markpaths():
+            if path != self.markfile.path:
+                try:
+                    self.images, imageless_marks = io.MarkFile(path).read(self.images)
+                    self.imageless_marks += imageless_marks
+                except Exception as e:
+                    print(f"WARNING: {str(e).strip("'")} Skipping import.")
+                    os.remove(path)
     
     @property
     def interval(self): return self._interval_str
