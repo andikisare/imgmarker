@@ -1,3 +1,9 @@
+"""
+Copyright © 2025, UChicago Argonne, LLC
+
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
 """Image Marker's I/O module containing functions for reading and saving data."""
 
 import os

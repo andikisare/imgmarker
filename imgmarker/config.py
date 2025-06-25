@@ -1,3 +1,9 @@
+"""
+Copyright © 2025, UChicago Argonne, LLC
+
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
 """Configuration options and functions for interacting with the configuration file are contained within this module."""
 
 import os

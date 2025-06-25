@@ -1,3 +1,9 @@
+"""
+Copyright © 2025, UChicago Argonne, LLC
+
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
 """This contains the classes for the various windows displayed by Image Marker."""
 
 from imgmarker.gui.pyqt import (

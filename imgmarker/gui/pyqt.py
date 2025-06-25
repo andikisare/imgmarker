@@ -1,3 +1,9 @@
+"""
+Copyright © 2025, UChicago Argonne, LLC
+
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QLabel, 
     QScrollArea, QGraphicsView, QVBoxLayout, QWidget, 

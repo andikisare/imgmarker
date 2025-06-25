@@ -1,4 +1,11 @@
+"""
+Copyright © 2025, UChicago Argonne, LLC
+
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
 """This module contains custom PyQt widgets for Image Marker."""
+
 from imgmarker.gui.pyqt import Qt, QLabel, QWidget, QHBoxLayout, QLineEdit, QFrame, QLineEdit, QSizePolicy, QFileDialog
 import os
 

@@ -1,3 +1,9 @@
+"""
+Copyright © 2025, UChicago Argonne, LLC
+
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
 from imgmarker.gui.pyqt import QApplication, QIcon
 from imgmarker.gui.window import MainWindow, _open_save
 from imgmarker import config, ICON
