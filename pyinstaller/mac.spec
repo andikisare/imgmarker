@@ -1,20 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_all
 
-import sys
-sys.path.insert(0, '../')
-import imgmarker
-from PyInstaller.utils.hooks import collect_submodules, collect_data_files, collect_dynamic_libs
+datas = []
+binaries = []
+hiddenimports = ['scipy._cyutility', 'scipy.special._ufuncs_cxx']
+tmp_ret = collect_all('scipy')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
-hiddenimports = collect_submodules('imgmarker') 
-datas = collect_data_files('imgmarker') 
-for i, _ in enumerate(datas):
-    datas[i] = (datas[i][0], datas[i][1].replace('imgmarker','.'))
-
-binaries = collect_dynamic_libs('imgmarker')
 
 a = Analysis(
     ['../imgmarker/__main__.py'],
-    pathex=['../'],
+    pathex=[],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
