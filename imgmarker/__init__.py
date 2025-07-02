@@ -1,4 +1,4 @@
-__version__ = '1.1.3'
+__version__ = '1.1.4'
 __license__ = 'MIT License'
 __docsurl__ = 'https://imgmarker.readthedocs.io/en/latest/'
 
