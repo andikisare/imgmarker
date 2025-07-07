@@ -38,6 +38,5 @@ For tutorials, instructions, and details on functionality, visit the `online doc
 Citation
 *********************
 
-(coming soon)
-
+Walker, Kisare, Bleem, "Image Marker" arXiv:2507.02153 
     
