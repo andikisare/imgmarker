@@ -603,6 +603,16 @@ class MainWindow(QMainWindow):
 
         ctrlc_shortcut = QShortcut('Ctrl+C', self)
         ctrlc_shortcut.activated.connect(self.copy_to_clipboard)
+
+        # Custom keyboard shortcuts
+        z_shortcut = QShortcut('Z', self)
+        z_shortcut.activated.connect(self.flag1_true)
+        x_shortcut = QShortcut('X', self)
+        x_shortcut.activated.connect(self.flag1_false)
+        right_shortcut = QShortcut('Right', self)
+        right_shortcut.activated.connect(partial(self.shift, 1))
+        left_shortcut = QShortcut('Left', self)
+        left_shortcut.activated.connect(partial(self.shift, -1))
     
         # Initialize data
         self.order = []
@@ -943,7 +953,8 @@ class MainWindow(QMainWindow):
                     self.images, imageless_marks = io.MarkFile(path).read(self.images)
                     self.imageless_marks += imageless_marks
                 except Exception as e:
-                    print(f"WARNING: {str(e).strip("'")} Skipping import.")
+                    error_msg = str(e).strip("'")
+                    print(f"WARNING: {error_msg} Skipping import.")
                     os.remove(path)
     
     @property
@@ -1016,16 +1027,23 @@ class MainWindow(QMainWindow):
                     marks_action = self.mark_menu.marks_action(paths[i])
                     marks_action.setChecked(not marks_action.isChecked())
                     self.toggle_marks(paths[i])
+                    return
 
             if a0.key() == Qt.Key.Key_L:
                 labels_action = self.mark_menu.labels_action(paths[0])
                 labels_action.setChecked(not labels_action.isChecked())
                 self.toggle_mark_labels(paths[0])
+                return
         
         elif nomod:
             # Check if key is bound with marking the image
             for group, binds in config.MARK_KEYBINDS.items():
-                if a0.key() in binds: self.mark(group=group)
+                if a0.key() in binds:
+                    self.mark(group=group)
+                    return
+
+        # If no specific handling was done, let the parent class handle it (including shortcuts)
+        super().keyPressEvent(a0)
 
     def mousePressEvent(self, a0):
         """Checks which mouse button was pressed and calls the appropriate function."""
@@ -1184,7 +1202,8 @@ class MainWindow(QMainWindow):
             self.update_marks()
 
         except Exception as e:
-            print(f"WARNING: {str(e).strip("'")} Skipping import.")
+            error_msg = str(e).strip("'")
+            print(f"WARNING: {error_msg} Skipping import.")
             os.remove(mark_dst)
             
     def favorite(self,state) -> None:
@@ -1208,6 +1227,20 @@ class MainWindow(QMainWindow):
             self.image.categories.append(i)
         elif (i in self.image.categories):
             self.image.categories.remove(i)
+        self.save()
+
+    def flag1_true(self) -> None:
+        """Mark flag 1 (category 1) as true."""
+        self.category_boxes[0].setChecked(True)
+        if 1 not in self.image.categories:
+            self.image.categories.append(1)
+        self.save()
+
+    def flag1_false(self) -> None:
+        """Mark flag 1 (category 1) as false."""
+        self.category_boxes[0].setChecked(False)
+        if 1 in self.image.categories:
+            self.image.categories.remove(1)
         self.save()
 
     def copy_to_clipboard(self):
@@ -1808,7 +1841,6 @@ class MainWindow(QMainWindow):
             else: 
                 mark.hide()
                 mark.label.hide()
-                self.mark_menu.labels_action(path).setEnabled(False)
 
     def toggle_mark_labels(self,path):
         """Toggles whether or not mark labels are shown."""
