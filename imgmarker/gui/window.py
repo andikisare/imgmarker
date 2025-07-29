@@ -18,7 +18,7 @@ from imgmarker.gui.pyqt import (
     QPen, QBrush, QPixmap, QPainter, PYQT_VERSION_STR
 )
 from imgmarker.gui import Screen, QHLine, PosWidget, RestrictedLineEdit, DefaultDialog
-from imgmarker import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
+from imgmarker import HEART_SOLID, HEART_CLEAR, OS, __version__, __license__, __docsurl__
 from imgmarker import io, image, config
 from imgmarker.coordinates import Angle, PixCoord, WorldCoord
 import sys
@@ -403,7 +403,8 @@ class ControlsWindow(QWidget):
         group_list = [f'Group \"{group}\"' for group in config.GROUP_NAMES[1:]]
         category_list = [f'Category \"{category}\"' for category in config.CATEGORY_NAMES[1:]]
         actions_list = group_list + category_list + actions_list
-        buttons_list = ['1 OR Left Click', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', 'Middle Click', 'Scroll Wheel', 'Ctrl + 0', 'Ctrl + C', 'F']
+        ctrl = 'Cmd' if OS == 'Darwin' else 'Ctrl'
+        buttons_list = ['1 OR Left Click', '2', '3', '4', '5', '6', '7', '8', '9', f'{ctrl}+1', f'{ctrl}+2', f'{ctrl}+3', f'{ctrl}+4', f'{ctrl}+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', 'Middle Click', 'Scroll Wheel', f'{ctrl}+0', f'{ctrl}+C', 'F']
         
         items = [ (action, button) for action, button in zip(actions_list, buttons_list) ]
 
