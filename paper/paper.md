@@ -53,33 +53,6 @@ As part of this process, one must select the centers of the galaxy clusters in o
 
 While `Image Marker` was initially designed with the above use cases in mind, we have found it valuable as a general tool for inspecting data products and validating algorithmic development. As a second example usage, the ability to rapidly scan hundreds of small thumbnail cutouts in a matter of minutes, mark problematic locations, and easily read in lists of these locations, helped us to improve data cleaning for an upcoming analysis of SPT-3G data in the Euclid Deep Field South region.  This broad applicability motivated us to publicly release the software.
 
-
-# Functionality
-
-## Loading Images
-
-Currently supported image formats are FITS, TIFF, PNG, and JPEG. PyQt has limitations on bit depth. For RGB(A) images, up to 8 bits per channel is supported. For grayscale images, up to 16 bits is supported. Images that exceed these limitations will have their bit depth lowered.
-
-`Image Marker` can handle multi-frame FITS and TIFF files (Figure \ref{fig:figure2}). World Coordinate System (WCS) information stored in FITS and TIFF files is also accessed by `Image Marker`. If an image contains a WCS solution in its header, `Image Marker` will display the WCS coordinates of the cursor in addition to the pixel coordinates below the image. WCS solutions can be embedded in TIFFs using e.g., STIFF [@STIFF].
-
-## Marking Images
-
-Marks can be placed in any of 9 *groups*. The user can place a *mark* by pressing any number between 1 and 9. Pressing each number will place a *mark* at the location of the cursor and in the corresponding *group*. The names of each *group* can be modified in **Edit &rarr; Settings.** The label of a *mark* can be edited by clicking on the text next to the *mark* and entering the desired text. This does not change the *group* the *mark* is in. Once a *mark* is placed, its pixel coordinates, WCS coordinates (if applicable), *group*, label, the name of the image where the *mark* was placed, and the current date are all saved into `<username>_marks.txt`, where `<username>` is the username of the user’s profile on their computer. Figure \ref{fig:figure1}a shows an example of an image with several marks placed.
-
-*Marks* can also be loaded into `Image Marker` in the format of a CSV file, called *catalogs*. Example files can be found on the [GitHub](https://github.com/andikisare/imgmarker/tree/main/examples/catalogs).
-
-## Categorizing and Commenting on Images
-
-Images can be placed in any of 5 *categories*. These *categories* are listed as check boxes on the bottom panel of `Image Marker`. In the bottom panel, comments can be entered for the current image. This information is saved in the save directory in a file named `<username>_images.txt`. The user can also click the heart button on the far right of the bottom panel or press 'F', which will add the image to the user's Favorites. A list of Favorite images is saved in `<username>_favorites.txt`.
-
-## Filters
-
-`Image Marker` includes some basic image manipulation. In **Filter &rarr; Stretch**, the user can set the brightness scaling, the two options being **Linear** (default) and **Log**. In **Filter &rarr; Interval**, the user can set the interval of brightness values that are displayed. The two options are **Min-Max** (default) and **ZScale**. **In Filter &rarr; Gaussian Blur**, the user can blur the image using a slider.
-
-## Settings
-
-Settings can be edited through **Edit &rarr; Settings**. In the settings window, there are several customizations the user can make. Most importantly, the user can define the names of the *groups*, the names of the image *categories*, and the maximum *marks* per *group*. The user can also set whether to randomize the order of images, and whether the mouse cursor will move to the center of the image display window when the user pans to a point using the middle mouse button.
-
 # Acknowledgements
 
 We thank Keren Sharon, Mike Gladders, and Giulia Campitiello for helpful suggestions on features to include in `Image Marker`, Will Hicks for help compiling `Image Marker` on an Intel based Mac, and Florian Keruzore for providing helpful comments.
