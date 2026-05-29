@@ -899,6 +899,7 @@ class MainWindow(QMainWindow):
         self.move(center)
 
         self.controls_window.move(int(self.x()+self.width()*1.04),self.y())
+        self.controls_window.show()
 
         # Initialize some data
         self.get_comment()
