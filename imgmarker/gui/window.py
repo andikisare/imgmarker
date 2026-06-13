@@ -61,10 +61,16 @@ class SettingsWindow(QWidget):
         self.setLayout(layout)
         self.mainwindow = mainwindow
 
+        # Note
+        self.settings_note = QLabel()
+        self.settings_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.settings_note.setTextFormat(Qt.TextFormat.RichText)
+        self.settings_note.setText("<b>Click inside any text box to change the value.</b>")
+
         # Groups
         self.group_label = QLabel()
         self.group_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.group_label.setText('Groups')
+        self.group_label.setText('Mark group names\n(for classifying objects within an image)')
 
         self.group_boxes = []
         for i in range(1,10):
@@ -80,14 +86,15 @@ class SettingsWindow(QWidget):
         # Max marks per group
         self.max_label = QLabel()
         self.max_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.max_label.setText('Max marks per group')
+        self.max_label.setText("Max marks per group")
 
         self.max_boxes = []
         for i in range(0,9):
             spinbox = QSpinBox()
-            spinbox.setSpecialValueText('-')
             spinbox.setFixedHeight(30)
             spinbox.setMaximum(9)
+            spinbox.setMinimum(-1)
+            spinbox.setValue(-1)
             value:str = config.GROUP_MAX[i]
             if value.isnumeric(): spinbox.setValue(int(value))
             spinbox.valueChanged.connect(self.update_config)
@@ -96,10 +103,14 @@ class SettingsWindow(QWidget):
         self.max_layout = QHBoxLayout()
         for box in self.max_boxes: self.max_layout.addWidget(box)
 
+        self.spinbox_note_label = QLabel()
+        self.spinbox_note_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.spinbox_note_label.setText("('-1' max marks means there is no limit for that group)")
+
         # Categories
         self.category_label = QLabel()
         self.category_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.category_label.setText('Categories')
+        self.category_label.setText('Categories\n(for classifying an entire image)')
 
         self.category_boxes = []
         for i in range(1,6):
@@ -154,10 +165,12 @@ class SettingsWindow(QWidget):
         horizontal_duplicate_layout.addWidget(self.duplicate_percentage_spinbox)
 
         # Main layout
+        layout.addWidget(self.settings_note)
         layout.addWidget(self.group_label)
         layout.addLayout(self.group_layout)
         layout.addWidget(self.max_label)
         layout.addLayout(self.max_layout)
+        layout.addWidget(self.spinbox_note_label)
         layout.addWidget(QHLine())
         layout.addWidget(self.category_label)
         layout.addLayout(self.category_layout)
@@ -900,6 +913,9 @@ class MainWindow(QMainWindow):
 
         self.controls_window.move(int(self.x()+self.width()*1.04),self.y())
         self.controls_window.show()
+
+        self.settings_window.move(int(self.x()-self.width()*1.04), int(self.y()+self.height()*0.4))
+        self.settings_window.show()
 
         # Initialize some data
         self.get_comment()
