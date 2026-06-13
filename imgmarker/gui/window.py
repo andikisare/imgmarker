@@ -94,8 +94,9 @@ class SettingsWindow(QWidget):
             spinbox.setFixedHeight(30)
             spinbox.setMaximum(9)
             spinbox.setMinimum(-1)
-            spinbox.setValue(-1)
+            spinbox.setValue("-1")
             value:str = config.GROUP_MAX[i]
+            print(value, type(value))
             if value.isnumeric(): spinbox.setValue(int(value))
             spinbox.valueChanged.connect(self.update_config)
             self.max_boxes.append(spinbox)
