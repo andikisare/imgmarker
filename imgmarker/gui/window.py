@@ -1563,8 +1563,8 @@ class MainWindow(QMainWindow):
         self.blur_window.slider.setMaximum(self.blur_max)
 
         # Update image label
-        seen_text = ' (seen)' if self.image.seen else ''
-        self.image_label.setText(f'{self.image.name} ({self.idx+1} of {self.N}){seen_text}')
+        seen_text = "<span style='color: #3CB043;'><b>(seen)</b></span> " if self.image.seen else ""
+        self.image_label.setText(f"{seen_text}{self.image.name} ({self.idx+1} of {self.N})")
 
         # Update menus
         self.update_mark_menu()
