@@ -86,7 +86,7 @@ class SettingsWindow(QWidget):
         # Max marks per group
         self.max_label = QLabel()
         self.max_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.max_label.setText("Max marks per group")
+        self.max_label.setText("Max marks per group\n('-1' max marks means there is no limit for that group)")
 
         self.max_boxes = []
         for i in range(0,9):
@@ -102,10 +102,6 @@ class SettingsWindow(QWidget):
 
         self.max_layout = QHBoxLayout()
         for box in self.max_boxes: self.max_layout.addWidget(box)
-
-        self.spinbox_note_label = QLabel()
-        self.spinbox_note_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.spinbox_note_label.setText("('-1' max marks means there is no limit for that group)")
 
         # Categories
         self.category_label = QLabel()
@@ -170,7 +166,6 @@ class SettingsWindow(QWidget):
         layout.addLayout(self.group_layout)
         layout.addWidget(self.max_label)
         layout.addLayout(self.max_layout)
-        layout.addWidget(self.spinbox_note_label)
         layout.addWidget(QHLine())
         layout.addWidget(self.category_label)
         layout.addLayout(self.category_layout)
