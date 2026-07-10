@@ -1206,6 +1206,8 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(f"WARNING: {str(e).strip("'")} Skipping import.")
             os.remove(mark_dst)
+        
+        self.update_mark_menu()
             
     def favorite(self,state) -> None:
         """Favorite the current image."""
