@@ -45,10 +45,17 @@ def _open_ims() -> str:
     dialog = DefaultDialog(config.SAVE_DIR)
     dialog.setWindowTitle("Open image directory")
     dialog.exec()
-    if dialog.closed: sys.exit()
+
+    dialog.rejected.connect(_early_close())
 
     image_dir = dialog.selectedFiles()[0]
+
     return image_dir
+
+def _early_close() -> None:
+    print("User canceled or chosen image directory contains no " \
+    "valid images. Image Marker will now close.")
+    sys.exit()
 
 class SettingsWindow(QWidget):
     """Class for the window for settings."""
