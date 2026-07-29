@@ -963,7 +963,7 @@ class MainWindow(QMainWindow):
                     self.images, imageless_marks = io.MarkFile(path).read(self.images)
                     self.imageless_marks += imageless_marks
                 except Exception as e:
-                    print(f"WARNING: {str(e).strip("'")} Skipping import.")
+                    print(f"WARNING: {str(e).strip('\'')} Skipping import.")
                     os.remove(path)
     
     @property
@@ -1204,7 +1204,7 @@ class MainWindow(QMainWindow):
             self.update_marks()
 
         except Exception as e:
-            print(f"WARNING: {str(e).strip("'")} Skipping import.")
+            print(f"WARNING: {str(e).strip('\'')} Skipping import.")
             os.remove(mark_dst)
         
         self.update_mark_menu()
