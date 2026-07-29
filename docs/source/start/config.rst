@@ -5,6 +5,8 @@ Settings
 ---------------------
 Settings can be configured within the GUI (**Image Marker > Preferences** (MacOS) or **Edit > Settings** (Windows/Linux)) or directly edited in the configuration file (``<username>_config.txt``). Right now, only some settings are available in the configuration file, while everything is available in the GUI.
 
+Note: While there are only 9 distinct `mark`s  available, users can combine `image category` with `mark`s to make 59 unique flagged combinations.
+ 
 .. list-table:: Settings available for editing within the GUI (**Image Marker > Preferences** (MacOS) or **Edit > Settings** (Windows/Linux))
    :widths: 50 50
    :header-rows: 1
@@ -36,13 +38,13 @@ Settings can be configured within the GUI (**Image Marker > Preferences** (MacOS
    * - ``image_dir``
      - The image directory, where Image Marker looks for images of all supported formats. This can be changed in the GUI as well (**File > Open Images...**).
    * - ``groups`` 
-     - The name of each group. Names must not contain commas. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
+     - The name of each group. Names must not contain commas. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS or **Edit > Settings** in Windows/Linux).
    * - ``categories``
-     - The name of each category. Names must not contain commas. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
+     - The name of each category. Names must not contain commas. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS or **Edit > Settings** in Windows/Linux).
    * - ``group_max``
-     - The maximum number of marks that can be placed for a particular group. The position of the value that is replaced in this variable corresponds to which group it limits. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
+     - The maximum number of marks that can be placed for a particular group. The position of the value that is replaced in this variable corresponds to which group it limits. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS or **Edit > Settings** in Windows/Linux).
    * - ``randomize_order``
-     - True or False, whether or not the displayed images are shuffled randomly or displayed in alphabetical order. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
+     - True or False, whether or not the displayed images are shuffled randomly or displayed in alphabetical order. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS or **Edit > Settings** in Windows/Linux).
 
 .. Note::
    - Renaming groups or categories after already having classified some images into the corresponding group of marks or category **will rename** the groups and categories in your save files, as well as all marks in the renamed groups that have already been placed.

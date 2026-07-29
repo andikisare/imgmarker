@@ -60,7 +60,7 @@ Below is a table of the keybindings for MacOS (labeled) or Windows/Linux.
    * - Enter comment
      - :kbd:`Enter`
    * - Focus
-     - :kbd:`trackpadClick` (MacOS) | :kbd:`MiddleMouseButton` 
+     - :kbd:`Option` + :kbd:`trackpadClick` (MacOS) | :kbd:`MiddleMouseButton` 
    * - Zoom in/out
      - :kbd:`TwoFingerScroll` (MacOS) | :kbd:`Wheel` 
    * - Favorite image
