@@ -40,15 +40,3 @@ Citation
 *********************
 
 Walker, Kisare, Bleem, "Image Marker" arXiv:2507.02153 
-
-
-Testing
-*********************
-
-To run existing tests on Image Marker: 
-
-pip install pytest pytest-qt
-git clone https://github.com/andikisare/imgmarker.git
-cd imgmarker/imgmarker
-pytest tests.py
-rm -r tests/test_save/  # to be able to run tests again
