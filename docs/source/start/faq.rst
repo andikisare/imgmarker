@@ -16,6 +16,14 @@ General Issues
 
         import sys ; sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 
+.. dropdown:: Testing Functionality
+    To run the tests associated with Image Marker: 
+        pip install pytest pytest-qt
+        git clone https://github.com/andikisare/imgmarker.git
+        cd imgmarker/imgmarker
+        pytest tests.py
+        rm -r tests/test_save/  # to be able to run tests again
+
 Mac Issues
 ---------------------
 
