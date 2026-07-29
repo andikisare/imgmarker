@@ -16,7 +16,7 @@ Below is a table of the keybindings for MacOS (labeled) or Windows/Linux.
    :header-rows: 0
 
    * - Group "1"
-     - :kbd:`trackpadClick` (MacOS) | `LeftMouseButton` or :kbd:`1`
+     - :kbd:`trackpadClick` (MacOS) | :kbd:`LeftMouseButton` or :kbd:`1`
    * - Group "2" 
      - :kbd:`2`
    * - Group "3"
