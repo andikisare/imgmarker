@@ -398,11 +398,28 @@ class ControlsWindow(QWidget):
         self.setLayout(layout)
         self.setWindowTitle('Controls')
 
+        # Column labels
+        row = QHBoxLayout()
+        self.interactions_label = QLabel()
+        self.interactions_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.interactions_label.setTextFormat(Qt.TextFormat.RichText)
+        self.interactions_label.setText("<b>Interaction</b>")
+
+        self.keybinds_label = QLabel()
+        self.keybinds_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.keybinds_label.setTextFormat(Qt.TextFormat.RichText)
+        self.keybinds_label.setText("<b>Keybind</b>")
+        
+        row.addWidget(self.interactions_label)
+        row.addWidget(self.keybinds_label)
+        layout.addLayout(row)
+
+        # Controls
         self.table = QTableWidget()
         self.table.setColumnCount(2)
         self.table.setSizeAdjustPolicy(QScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.table.verticalHeader().setVisible(False)
-        self.table.horizontalHeader().setVisible(False)  
+        self.table.horizontalHeader().setVisible(False)
 
         self.update_text()
 
