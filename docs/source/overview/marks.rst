@@ -7,15 +7,15 @@ Marks are used to identify features in a particular image, like a cat's four paw
 
 - Marks can be placed in any of 9 :ref:`groups <groups>`.
 - Once a mark is placed, its pixel coordinates, WCS coordinates (if applicable), group, label, the name of the image associated with the mark, and the current date are all saved into <username>_marks.csv.
-- The maximum number of marks in a group can be customized in **Edit > Settings**.
+- The maximum number of marks in a group can be customized in  **Image Marker > Preferences** (MacOS) **Edit > Settings** (Windows/Linux).
 - If you place a mark in a group with a limit of 1, then placing another mark will replace the original mark with a new mark at the cursor.
 - The user can place a mark by pressing any number on the keyboard between 1 and 9.
 - Pressing each number will place a mark at the location of the cursor, and in the group associated with that number.
-- The names of each group can be modified in **Edit > Settings**.
+- The names of each group can be modified in **Image Marker > Preferences** (MacOS) **Edit > Settings** (Windows/Linux).
 - The label of the mark can be modified simply by clicking on the label of the mark, and typing. Pressing enter, or clicking outside the label, will save this information into the same text file. *This does not change the name of the* group *that the* mark *is in; the label is saved separately.*
-- Marks can be deleted using either "Shift+Left click" while hovering over a mark, or by selecting marks (left click while hovering over a mark to select it, hold "Ctrl" to select multiple) and pressing "Del" on the keyboard.
+- Marks can be deleted using either "Shift+click" (Left click Windows/Linux) while hovering over a mark, or by selecting marks (click while hovering over a mark to select it, hold "Cmd" (MacOS) or "Ctrl" (Windows/Linux) to select multiple) and pressing "Del" on the keyboard.
 
-The left panel in Figure 1 shows an image of Messier 31, a nearby galaxy, before placing marks, while the right panel shows the same image but after each galaxy in the image is marked with the group "Galaxy" (which is the first group here, placed using the left mouse button or the "1" key on the keyboard).
+The left panel in Figure 1 shows an image of Messier 31, a nearby galaxy, before placing marks, while the right panel shows the same image but after each galaxy in the image is marked with the group "Galaxy" (which is the first group here, placed by the left mouse button or the "1" key on the keyboard).
 
 .. figure:: Before_after_mark.jpg
   :align: center

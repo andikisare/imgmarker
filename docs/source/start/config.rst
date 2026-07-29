@@ -3,22 +3,22 @@ Configuration
 
 Settings
 ---------------------
-Settings can be configured within the GUI (**Edit > Settings**) or directly edited in the configuration file (``<username>_config.txt``). Right now, only some settings are available in the configuration file, while everything is available in the GUI.
+Settings can be configured within the GUI (**Image Marker > Preferences** (MacOS) or **Edit > Settings** (Windows/Linux)) or directly edited in the configuration file (``<username>_config.txt``). Right now, only some settings are available in the configuration file, while everything is available in the GUI.
 
-.. list-table:: Settings available for editing within the GUI (**Edit > Settings**)
+.. list-table:: Settings available for editing within the GUI (**Image Marker > Preferences** (MacOS) or **Edit > Settings** (Windows/Linux))
    :widths: 50 50
    :header-rows: 1
 
    * - Setting
      - Description
    * - Groups
-     - The name of each :ref:`mark <marks>` can be customized here for your specific purpose. The names are in order of their keybinds, so the far left text box corresponds to pressing "1" on the keyboard or the Left Mouse Button, and the far right text box corresponds to pressing "9" on the keyboard.
+     - The name of each :ref:`mark <marks>` can be customized here for your specific purpose. The names are in order of their keybinds, so the far left text box corresponds to pressing "1" on the keyboard or the Left Mouse Button (/click on MacOS trackpad), and the far right text box corresponds to pressing "9" on the keyboard.
    * - Max marks per group
-     - The maximum allowed number of :ref:`marks <marks>` in their respective group can be customized here. A "-" indicates no limit on that group. As with group names above, the far left number box corresponds to the first group.
+     - The maximum allowed number of :ref:`marks <marks>` in their respective group can be customized here. A "-1" indicates no limit on that group. As with group names above, the far left number box corresponds to the first group.
    * - Categories
-     - Each :ref:`image category <categories>` name can be customized here for your specific purpose. The category names are in order of their keybinds, so the far left text box corresponds to pressing "Ctrl+1" on the keyboard, and the far right text box corresponds to pressing "Ctrl+5" on the keyboard.
-   * - Middle-click to focus centers the cursor
-     - Enabling this option will center your cursor in the image display window when clicking on the scroll wheel. Since middle-clicking pans to the cursor, this option will place your cursor where you pan to after panning.
+     - Each :ref:`image category <categories>` name can be customized here for your specific purpose. The category names are in order of their keybinds, so the far left text box corresponds to pressing "Cmd+1" (Mac OS) or "Ctrl+1" (Windows/Linux) on the keyboard, and the far right text box corresponds to pressing "Cmd+5" (MacOS) "Ctrl+5" (Windows/Linux) on the keyboard.
+   * - Middle-click to focus centers the cursor 
+     - Enabling this option will center your cursor in the image display window when clicking on the scroll wheel. Since middle-clicking pans to the cursor, this option will place your cursor where you pan to after panning. **On MacOS holding option while clicking the track pad has the same functionality.**
    * - Randomize order of images
      - Randomizes the order that images are shown when pressing next. If enabled, images that have already been viewed keep their order when disabling and re-enabling this option.
    * - Insert duplicate images for testing user consistency
@@ -34,15 +34,15 @@ Settings can be configured within the GUI (**Edit > Settings**) or directly edit
    * - Setting
      - Description
    * - ``image_dir``
-     - The image directory, where Image Marker looks for images of all supported formats. This can be changed in the GUI as well (**File > Open > Open Images...**).
+     - The image directory, where Image Marker looks for images of all supported formats. This can be changed in the GUI as well (**File > Open Images...**).
    * - ``groups`` 
-     - The name of each group. Names must not contain commas. This can be changed in the GUI as well (**Edit > Settings**).
+     - The name of each group. Names must not contain commas. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
    * - ``categories``
-     - The name of each category. Names must not contain commas. This can be changed in the GUI as well (**Edit > Settings**).
+     - The name of each category. Names must not contain commas. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
    * - ``group_max``
      - The maximum number of marks that can be placed for a particular group. The position of the value that is replaced in this variable corresponds to which group it limits. This can be changed in the GUI as well (**Edit > Settings**).
    * - ``randomize_order``
-     - True or False, whether or not the displayed images are shuffled randomly or displayed in alphabetical order. This can be changed in the GUI as well (**Edit > Settings**).
+     - True or False, whether or not the displayed images are shuffled randomly or displayed in alphabetical order. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
 
 .. Note::
    - Renaming groups or categories after already having classified some images into the corresponding group of marks or category **will rename** the groups and categories in your save files, as well as all marks in the renamed groups that have already been placed.

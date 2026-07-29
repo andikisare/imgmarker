@@ -16,7 +16,7 @@ Below is a table of the keybindings.
    :header-rows: 0
 
    * - Group "1"
-     - :kbd:`LeftMouseButton` or :kbd:`1`
+     - :kbd: `trackpad click` (MacOS) or `LeftMouseButton` or :kbd:`1`
    * - Group "2" 
      - :kbd:`2`
    * - Group "3"
@@ -34,15 +34,15 @@ Below is a table of the keybindings.
    * - Group "9"
      - :kbd:`9`
    * - Category "1"
-     - :kbd:`Ctrl` + :kbd:`1`
+     - :kbd:`Cmd` + :kbd:`1` (MacOS) :kbd:`Ctrl` + :kbd:`1` (Windows/Linux)
    * - Category "2"
-     - :kbd:`Ctrl` + :kbd:`2`
+     - :kbd:`Cmd` + :kbd:`2` (MacOS) :kbd:`Ctrl` + :kbd:`2`  (Windows/Linux)
    * - Category "3"
-     - :kbd:`Ctrl` + :kbd:`3`
+     - :kbd: `Cmd` + :kbd:`3` (MacOS) :kbd:`Ctrl` + :kbd:`3`  (Windows/Linux)
    * - Category "4"
-     - :kbd:`Ctrl` + :kbd:`4`
+     - :kbd:`Cmd` + :kbd:`4`  (MacOS) :kbd:`Ctrl` + :kbd:`4`  (Windows/Linux)
    * - Category "5"
-     - :kbd:`Ctrl` + :kbd:`5`
+     - :kbd:`Cmd` + :kbd:`5`  (MacOS) :kbd:`Ctrl` + :kbd:`5`  (Windows/Linux)
    * - Next
      - :kbd:`Tab`
    * - Back
@@ -50,44 +50,44 @@ Below is a table of the keybindings.
    * - Change frame
      - :kbd:`Space`
    * - Delete mark
-     - :kbd:`Shift` + :kbd:`LeftMouseButton`
+     - :kbd:`Shift` + :kbd:`trackpad click` (MacOS) :kbd:`Shift` + :kbd:`LeftMouseButton` (Windows/Linux) on mark
    * - Delete selected marks
      - :kbd:`Delete`
    * - Undo mark
-     - :kbd:`Ctrl` + :kbd:`Z`
+     - :kbd:`Cmd` + :kbd:`Z` (MacOS) :kbd:`Ctrl` + :kbd:`Z` (Windows/Linux)
    * - Redo mark
-     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`Z`
+     - :kbd:`Cmd` + :kbd:`Shift` + :kbd:`Z` (MacOS) :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`Z` (Windows/Linux)
    * - Enter comment
      - :kbd:`Enter`
    * - Focus
-     - :kbd:`MiddleMouseButton`
+     - :kbd:`trackpad click` (MacOS) :kbd:`MiddleMouseButton` (Windows/Linux)
    * - Zoom in/out
-     - :kbd:`Wheel`
+     - :kbd:`Two finger scroll` (MacOS) :kbd:`Wheel` (Windows/Linux)
    * - Favorite image
      - :kbd:`F`
    * - Open Save...
-     - :kbd:`Ctrl` + :kbd:`O`
+     - :kbd:`Cmd` + :kbd:`O` (MacOS) :kbd:`Ctrl` + :kbd:`O` (Windows/Linux)
    * - Open Images...
-     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`I`
+     - :kbd:`Cmd` + :kbd:`Shift` + :kbd:`I` (MacOS) :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`I` (Windows/Linux)
    * - Import Mark File...
-     - :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`M`
+     - :kbd:`Cmd` + :kbd:`Shift` + :kbd:`M` (MacOS) :kbd:`Ctrl` + :kbd:`Shift` + :kbd:`M` (Windows/Linux)
    * - Settings
-     - :kbd:`Ctrl` + :kbd:`,`
+     - :kbd:`Cmd` + :kbd:`,` (MacOS) :kbd:`Ctrl` + :kbd:`,` (Windows/Linux)
    * - Zoom In
-     - :kbd:`Ctrl` + :kbd:`=`
+     - :kbd:`Cmd` + :kbd:`=` (MacOS) :kbd:`Ctrl` + :kbd:`=` (Windows/Linux)
    * - Zoom Out
-     - :kbd:`Ctrl` + :kbd:`-`
+     - :kbd:`Cmd` + :kbd:`-` (MacOS) :kbd:`Ctrl` + :kbd:`-` (Windows/Linux)
    * - Zoom to Fit
-     - :kbd:`Ctrl` + :kbd:`0`
+     - :kbd:`Cmd` + :kbd:`0` (MacOS) :kbd:`Ctrl` + :kbd:`0` (Windows/Linux)
    * - Copy selected mark coordinates
-     - :kbd:`Ctrl` + :kbd:`C`
+     - :kbd:`Cmd` + :kbd:`C` (MacOS) :kbd:`Ctrl` + :kbd:`C` (Windows/Linux)
    * - Frames...
-     - :kbd:`Ctrl` + :kbd:`F`
+     - :kbd:`Cmd` + :kbd:`F` (MacOS) :kbd:`Ctrl` + :kbd:`F` (Windows/Linux)
    * - Show Marks
-     - :kbd:`Ctrl` + :kbd:`M`
+     - :kbd:`Cmd` + :kbd:`M` (MacOS) :kbd:`Ctrl` + :kbd:`M` (Windows/Linux)
    * - Show Mark Labels
-     - :kbd:`Ctrl` + :kbd:`L`
+     - :kbd:`Cmd` + :kbd:`L` (MacOS) :kbd:`Ctrl` + :kbd:`L` (Windows/Linux)
    * - Gaussian Blur...
-     - :kbd:`Ctrl` + :kbd:`B`
+     - :kbd:`Cmd` + :kbd:`B` (MacOS) :kbd:`Ctrl` + :kbd:`B` (Windows/Linux)
    * - Controls
      - :kbd:`F1`
