@@ -35,8 +35,20 @@ the information that you mark. Image Marker uses `PyQt <https://pypi.org/project
 to build the GUI application, `Pillow <https://pypi.org/project/pillow/>`_ to handle images, and `astropy <https://www.astropy.org/>`_ to load FITS data and convert coordinates.
 For tutorials, instructions, and details on functionality, visit the `online documentation <https://imgmarker.readthedocs.io/en/latest/>`_.
 
+
 Citation
 *********************
 
 Walker, Kisare, Bleem, "Image Marker" arXiv:2507.02153 
-    
+
+
+Testing
+*********************
+
+To run existing tests on Image Marker: 
+
+pip install pytest pytest-qt
+git clone https://github.com/andikisare/imgmarker.git
+cd imgmarker/imgmarker
+pytest tests.py
+rm -r tests/test_save/  # to be able to run tests again
