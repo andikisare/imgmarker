@@ -639,6 +639,8 @@ class MainWindow(QMainWindow):
     
         # Initialize data
         self.order = []
+        self._interval_str = image.Interval.MINMAX
+        self._stretch_str = image.Stretch.LINEAR
         self.__init_data__()
         self.image_scene = image.ImageScene(self.image)
         self.image_view = image.ImageView(self.image_scene)
@@ -995,6 +997,18 @@ class MainWindow(QMainWindow):
         for img in self.images: img.stretch = value
         self.image.rescale()
 
+    def apply_scaling(self) -> None:
+        """Applies the currently active stretch/interval to all loaded images.
+
+        Freshly-globbed `Image` objects always start out with the default
+        stretch/interval, so this must be called after replacing `self.images`
+        (e.g. in `import_ims()` or `open()`) to keep newly loaded images
+        consistent with the currently selected Filter menu options.
+        """
+        for img in self.images:
+            img.interval = self._interval_str
+            img.stretch = self._stretch_str
+
     @property
     def blur_max(self):
         _blur_max = int((self.image.height+self.image.width)/20)
@@ -1154,6 +1168,7 @@ class MainWindow(QMainWindow):
                 except: pass
 
         self.__init_data__()
+        self.apply_scaling()
         self.settings_window.__init__(self)
         self.update_images()
         self.image_view.zoomfit()
@@ -1193,6 +1208,7 @@ class MainWindow(QMainWindow):
             return
 
         config.update()
+        self.apply_scaling()
         self.update_images()
         self.update_marks()
         self.get_comment()
