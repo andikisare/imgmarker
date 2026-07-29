@@ -900,7 +900,11 @@ class MainWindow(QMainWindow):
 
         ### Controls window
         controls_action = QAction('Controls', self)
-        controls_action.setShortcuts(['F1'])
+#        controls_action.setShortcuts(['F1'])
+        if sys.platform == "darwin":
+            controls_action.setShortcuts(['Ctrl+/', 'F1'])  # Ctrl+/ as Mac-friendly fallback
+        else:
+            controls_action.setShortcuts(['F1'])
         controls_action.triggered.connect(self.controls_window.show)
         help_menu.addAction(controls_action)
 

@@ -90,4 +90,4 @@ Below is a table of the keybindings for MacOS (labeled) or Windows/Linux.
    * - Gaussian Blur...
      - :kbd:`Cmd` + :kbd:`B` (MacOS) | :kbd:`Ctrl` + :kbd:`B` 
    * - Controls
-     - :kbd:`F1`
+     - :kbd:`Cmd` + :kbd:`\` (MacOS)  | :kbd:`F1`
