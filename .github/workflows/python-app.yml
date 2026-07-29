@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os : [windows-2022, ubuntu-22.04]
+        os : [windows-2022, ubuntu-22.04, macos-15]
         python: ["3.10","3.13"]
     env:
       DISPLAY: ':99.0'
