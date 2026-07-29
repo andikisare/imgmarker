@@ -689,13 +689,6 @@ class MainWindow(QMainWindow):
         self.back_button.setShortcut('Shift+Tab')
         self.back_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-        # Enter Button
-        # self.submit_button = QPushButton(text='Enter',parent=self)
-        # self.submit_button.setFixedHeight(40)
-        # self.submit_button.clicked.connect(self.enter)
-        # # self.submit_button.setShortcut('Return')
-        # self.submit_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
         # Next widget
         self.next_button = QPushButton(text='Next',parent=self)
         self.next_button.setFixedHeight(40)
@@ -712,7 +705,6 @@ class MainWindow(QMainWindow):
         self.bottom_layout.addWidget(self.back_button)
         self.bottom_layout.addWidget(self.next_button)
         self.bottom_layout.addWidget(self.comment_box)
-        # self.bottom_layout.addWidget(self.submit_button)
         
         ### Category widgets
         self.categories_layout = QHBoxLayout()
