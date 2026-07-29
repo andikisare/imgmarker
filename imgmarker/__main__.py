@@ -9,6 +9,17 @@ from imgmarker.gui.window import MainWindow, _open_save
 from imgmarker import config, ICON, __version__
 import sys
 
+if sys.platform == "darwin":
+    try:
+        from Foundation import NSBundle
+        bundle = NSBundle.mainBundle()
+        info = bundle.localizedInfoDictionary() or bundle.infoDictionary()
+        if info is not None:
+            info["CFBundleName"] = "Image Marker"
+    except ImportError:
+        pass  # pyobjc not installed
+
+
 
 def run():
     app = QApplication(sys.argv)

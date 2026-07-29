@@ -15,11 +15,13 @@ dependencies = [
   "pillow>=10.4.0",
   "PyQt6>=6.7.1",
   "scipy>=1.10.1",
+  "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
 ]
 
 authors = [
   {name = "Andi Kisare", email = "akisare@outlook.com"},
-  {name = "Ryan Walker", email = "astrorya@umich.edu"}
+  {name = "Ryan Walker", email = "astrorya@umich.edu"}, 
+  {name = "Lindsey Bleem", email = "lbleem@anl.gov"}
 ]
 
 description = "A package for marking objects in a series of images"
