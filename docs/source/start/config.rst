@@ -12,9 +12,9 @@ Settings can be configured within the GUI (**Image Marker > Preferences** (MacOS
    * - Setting
      - Description
    * - Groups
-     - The name of each :ref:`mark <marks>` can be customized here for your specific purpose. The names are in order of their keybinds, so the far left text box corresponds to pressing "1" on the keyboard or the Left Mouse Button (/click on MacOS trackpad), and the far right text box corresponds to pressing "9" on the keyboard.
+     - The name of each :ref:`mark <marks>` can be customized here for your specific purpose. The names are in order of their keybinds, so the far left text box corresponds to pressing "1" on the keyboard or the Left Mouse Button (click on MacOS trackpad), and the far right text box corresponds to pressing "9" on the keyboard.
    * - Max marks per group
-     - The maximum allowed number of :ref:`marks <marks>` in their respective group can be customized here. A "-1" indicates no limit on that group. As with group names above, the far left number box corresponds to the first group.
+     - The maximum allowed number of :ref:`marks <marks>` in their respective group can be customized here. A value of "-1" indicates no limit on that group. As with group names above, the far left number box corresponds to the first group.
    * - Categories
      - Each :ref:`image category <categories>` name can be customized here for your specific purpose. The category names are in order of their keybinds, so the far left text box corresponds to pressing "Cmd+1" (Mac OS) or "Ctrl+1" (Windows/Linux) on the keyboard, and the far right text box corresponds to pressing "Cmd+5" (MacOS) "Ctrl+5" (Windows/Linux) on the keyboard.
    * - Middle-click to focus centers the cursor 
@@ -40,7 +40,7 @@ Settings can be configured within the GUI (**Image Marker > Preferences** (MacOS
    * - ``categories``
      - The name of each category. Names must not contain commas. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
    * - ``group_max``
-     - The maximum number of marks that can be placed for a particular group. The position of the value that is replaced in this variable corresponds to which group it limits. This can be changed in the GUI as well (**Edit > Settings**).
+     - The maximum number of marks that can be placed for a particular group. The position of the value that is replaced in this variable corresponds to which group it limits. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
    * - ``randomize_order``
      - True or False, whether or not the displayed images are shuffled randomly or displayed in alphabetical order. This can be changed in the GUI as well (**Image Marker > Preferences** in MacOS) (**Edit > Settings** in Windows/Linux).
 
