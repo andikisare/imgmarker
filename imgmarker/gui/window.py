@@ -75,7 +75,7 @@ class SettingsWindow(QWidget):
         self.settings_note = QLabel()
         self.settings_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.settings_note.setTextFormat(Qt.TextFormat.RichText)
-        self.settings_note.setText("<b>Click inside any text box to change the value.</b>")
+        self.settings_note.setText("<b>Click inside any text box to change the value. Press 'Enter' to update the configuration.</b>")
 
         # Groups
         self.group_label = QLabel()
