@@ -35,26 +35,29 @@ import warnings
 def _open_save() -> str:
     dialog = DefaultDialog()
     dialog.setWindowTitle("Open save directory")
-    dialog.exec()
-    if dialog.closed: sys.exit()
+    result = dialog.exec()
+    if result == 1:
+        save_dir = dialog.selectedFiles()[0]
+    else:
+        _early_close()
 
-    save_dir = dialog.selectedFiles()[0]
     return save_dir
 
 def _open_ims() -> str:
     dialog = DefaultDialog(config.SAVE_DIR)
     dialog.setWindowTitle("Open image directory")
-    dialog.exec()
+    result = dialog.exec()
 
-    dialog.rejected.connect(_early_close())
-
-    image_dir = dialog.selectedFiles()[0]
+    if result == 1:
+        image_dir = dialog.selectedFiles()[0]
+    else:
+        _early_close()
 
     return image_dir
 
 def _early_close() -> None:
-    print("User canceled or chosen image directory contains no " \
-    "valid images. Image Marker will now close.")
+    msg = "User canceled. Image Marker will now close."
+    QMessageBox.information(None, "Image Marker", msg)
     sys.exit()
 
 class SettingsWindow(QWidget):
@@ -964,6 +967,13 @@ class MainWindow(QMainWindow):
             config.update()
             
             self.images, self.idx = io.glob(edited_images=self.images)
+            if len(self.images) < 1 and self.idx == 0:
+                while len(self.images) < 1:
+                    invalid_dir_msg = "The chosen directory does not contain compatible images. Please pick a new directory."
+                    invalid_dir_win = QMessageBox.information(None, "Image Marker", invalid_dir_msg)
+                    config.IMAGE_DIR = _open_ims()
+                    config.update()
+                    self.images, self.idx = io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seek(self.frame)
             self.image.seen = True
@@ -1179,6 +1189,18 @@ class MainWindow(QMainWindow):
         self.update_favorites()
         self.controls_window.update_text()
 
+    def import_ims_dialog(self, _image_dir) -> str:
+        dialog = DefaultDialog(config.SAVE_DIR)
+        dialog.setWindowTitle("Open image directory")
+        result = dialog.exec()
+
+        if result == 1:
+            image_dir = dialog.selectedFiles()[0]
+        else:
+            image_dir = None
+        
+        return image_dir
+
     def import_ims(self) -> None:
         """Method for the open image directory dialog."""
 
@@ -1187,25 +1209,41 @@ class MainWindow(QMainWindow):
                         open_msg, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.No: return
-
-        image_dir = QFileDialog.getExistingDirectory(self, 'Open image directory', config.SAVE_DIR)
-        if image_dir == '': return
-
-        _image_dir = config.IMAGE_DIR
-        config.IMAGE_DIR = image_dir
-
-        del self.order; del self.duplicates_seen; del self.images
-        gc.collect()
-        self.order = []
-        self.images_seen_since_duplicate_count = 0
-        self.duplicates_seen = []
+        _image_dir = os.path.normpath(config.IMAGE_DIR)
         
-        self.images, self.idx = io.glob(edited_images=[])
-        self.N = len(self.images)
+        new_image_dir = self.import_ims_dialog(_image_dir)
 
-        if self.N == 0:
+        if new_image_dir == _image_dir or new_image_dir == None:
             config.IMAGE_DIR = _image_dir
+            config.update()
             return
+        
+        invalid_dir_msg = "The chosen directory does not contain compatible images. Please pick a new directory."
+
+        config.IMAGE_DIR = new_image_dir
+        new_images, new_idx = io.glob(edited_images=[])
+
+        while len(new_images) < 1:
+            invalid_dir_win = QMessageBox.information(None, "Image Marker", invalid_dir_msg)
+            new_image_dir = self.import_ims_dialog(_image_dir)
+            if new_image_dir == _image_dir or new_image_dir == None:
+                config.IMAGE_DIR = _image_dir
+                config.update()
+                return
+            else:
+                config.IMAGE_DIR = new_image_dir
+                new_images, new_idx = io.glob(edited_images=[])
+
+        if new_image_dir != _image_dir:
+            del self.order; del self.duplicates_seen; del self.images
+            gc.collect()
+            self.order = []
+            self.images_seen_since_duplicate_count = 0
+            self.duplicates_seen = []
+
+            self.images, self.idx = new_images, new_idx
+        
+        self.N = len(self.images)
 
         config.update()
         self.apply_scaling()
@@ -1214,6 +1252,7 @@ class MainWindow(QMainWindow):
         self.get_comment()
         self.update_categories()
         self.update_comments()
+        self.save()
 
     def import_markfile(self, **kwargs):
         """Method for opening a catalog file."""

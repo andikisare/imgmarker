@@ -495,6 +495,9 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
     paths = sorted(_glob.glob(os.path.join(config.IMAGE_DIR, '*.*')))
     paths = [fp for fp in paths if image.pathtoformat(fp) in image.FORMATS]
 
+    if len(paths) < 1:
+        return [], 0
+
     # Get list of paths to images if they are in the dictionary (have been edited)
     edited_paths = [os.path.join(config.IMAGE_DIR,img.name) for img in edited_images]
     unedited_paths = [fp for fp in paths if fp not in edited_paths]
