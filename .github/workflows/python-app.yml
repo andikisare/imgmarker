@@ -14,6 +14,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+  workflow_run:
+    workflows: ["Build"]
+    types: [requested]
+
 permissions:
   contents: read
 jobs:
