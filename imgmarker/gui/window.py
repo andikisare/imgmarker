@@ -284,7 +284,7 @@ class SettingsWindow(QWidget):
 
         # Get the new settings from the boxes
         config.GROUP_NAMES = ['None'] + [box.text() for box in self.group_boxes]
-        config.GROUP_MAX = [str(box.value()) if box.value() != 0 else 'None' for box in self.max_boxes]
+        config.GROUP_MAX = [str(box.value()) if box.value() > 0 else 'None' for box in self.max_boxes]
         config.CATEGORY_NAMES = ['None'] + [box.text() for box in self.category_boxes]
         config.RANDOMIZE_ORDER = self.randomize_box.isChecked()
 
@@ -1360,7 +1360,7 @@ class MainWindow(QMainWindow):
         # Mark if hovering over image
         if config.GROUP_MAX[group - 1] == 'None': limit = inf
         else: limit = int(config.GROUP_MAX[group - 1])
-
+        
         marks_in_group = [m for m in marks if m.g == group]
 
         try: 
@@ -1398,7 +1398,6 @@ class MainWindow(QMainWindow):
                 mark.label.hide()
 
             self.save()
-        
         
         if len(marks) == 0:
             marks_action.setEnabled(False)
