@@ -27,7 +27,7 @@
 |icon| Image Marker
 #####################
 
-|github| |license| |pyqt| |docs| |CI| |JOSS| |arxiv|
+|github| |pyqt| |docs| |CI| |JOSS| |arxiv| |license| 
 
 Image Marker is a tool for marking, categorizing, and annotating TIFF, FITS, PNG, and JPEG files.
 Image Marker does not modify the image itself, it only displays it and creates text files containing 
