@@ -73,4 +73,9 @@ These formats are supported with the following limitations:
   - Supports RGB with Alpha channel
   - **Does not** support logging WCS coordinates
 
-Furthermore, RGB images are limited to 8 bits per channel, and grayscale images are limited to 16 bits. Images with higher bit depths will have their bit depth reduced.
+Furthermore, RGB (color) images are limited to 8 bits per channel, and grayscale (single-channel) images are limited to 16 bits. What happens to an image that exceeds these limits depends on its format:
+
+- **TIFF, PNG, and JPEG**: Image Marker uses Pillow to open these formats. If a color (RGB/RGBA) image has more than 8 bits per channel, Pillow itself converts it down to 8 bits *before* Image Marker ever sees the pixel data. This is a **truncation**, not a rescale of the image's dynamic range: only the highest 8 bits of each 16-bit channel value are kept (equivalent to integer-dividing each pixel value by 256), so the lowest-order bits of detail are simply discarded. Grayscale images are not affected by this, since Image Marker supports up to 16 bits per pixel for a single channel natively.
+- **FITS**: pixel values are instead **rescaled**, not truncated. For each frame, the minimum and maximum data values are linearly stretched to fill the full range of the assigned bit depth: 0-255 for RGB FITS cubes (which are always treated as 8-bit, regardless of the file's ``BITPIX``), or 0-65535 for single-channel/grayscale FITS (which are always treated as 16-bit, even if the file stores, e.g., 32-bit floating-point data). This rescaling happens once, when the file is loaded, and is separate from (and happens before) the interactive stretch and interval settings (Linear/Log, ZScale/Min-Max) used to control on-screen display.
+
+In neither case does Image Marker currently show a warning when an image's bit depth is reduced on load, so it's worth checking your source data's bit depth ahead of time if retaining every bit of precision matters for your use case.
