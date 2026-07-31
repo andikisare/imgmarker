@@ -5,7 +5,7 @@ Marks
 
 Marks are used to identify features in a particular image, like a cat's four paws. They are instantiated through the :py:class:`~imgmarker.gui.mark.Mark` class. 
 
-- Marks can be placed in any of 9 :ref:`groups <groups>`.
+- Marks can be placed in any of 9 groups.
 - Once a mark is placed, its pixel coordinates, WCS coordinates (if applicable), group, label, the name of the image associated with the mark, and the current date are all saved into <username>_marks.csv.
 - The maximum number of marks in a group can be customized in  **Image Marker > Preferences** (MacOS) **Edit > Settings** (Windows/Linux).
 - If you place a mark in a group with a limit of 1, then placing another mark will replace the original mark with a new mark at the cursor.
