@@ -1,15 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [ ('../imgmarker/heart_clear.ico', '.'), ('../imgmarker/heart_solid.ico', '.'), ('../imgmarker/icon.ico', '.') ]
+datas = []
 binaries = []
-hiddenimports = ['imgmarker', 'imgmarker.pyqt']
-tmp_ret = collect_all('imgmarker')
+hiddenimports = ['scipy._cyutility', 'scipy.special._ufuncs_cxx']
+tmp_ret = collect_all('scipy')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
 a = Analysis(
-    ['../imgmarker/__init__.py'],
+    ['../imgmarker/__main__.py'],
     pathex=[],
     binaries=binaries,
     datas=datas,

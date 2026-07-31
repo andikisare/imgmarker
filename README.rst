@@ -12,16 +12,22 @@
 .. |icon| image:: https://raw.githubusercontent.com/andikisare/imgmarker/main/imgmarker/icon.ico
     :width: 40
 
-.. |license| image:: https://img.shields.io/github/license/andikisare/imgmarker
-    :target: https://github.com/andikisare/imgmarker/blob/main/LICENSE
-
 .. |CI| image:: https://github.com/andikisare/imgmarker/actions/workflows/python-app.yml/badge.svg
     :target: https://github.com/andikisare/imgmarker/actions/workflows/python-app.yml
+
+.. |JOSS| image:: https://joss.theoj.org/papers/21a640a3fd4e2ad1815891a61af4a21b/status.svg
+    :target: https://joss.theoj.org/papers/21a640a3fd4e2ad1815891a61af4a21b
+
+.. |arxiv| image:: https://img.shields.io/badge/arXiv-2507.02153-b31b1b.svg
+    :target: https://arxiv.org/abs/2507.02153
+
+.. |license| image:: https://img.shields.io/github/license/andikisare/imgmarker
+    :target: https://github.com/andikisare/imgmarker/blob/main/LICENSE
 
 |icon| Image Marker
 #####################
 
-|github| |license| |pyqt| |docs| |CI|
+|github| |pyqt| |docs| |CI| |JOSS| |arxiv| |license| 
 
 Image Marker is a tool for marking, categorizing, and annotating TIFF, FITS, PNG, and JPEG files.
 Image Marker does not modify the image itself, it only displays it and creates text files containing 
@@ -29,9 +35,8 @@ the information that you mark. Image Marker uses `PyQt <https://pypi.org/project
 to build the GUI application, `Pillow <https://pypi.org/project/pillow/>`_ to handle images, and `astropy <https://www.astropy.org/>`_ to load FITS data and convert coordinates.
 For tutorials, instructions, and details on functionality, visit the `online documentation <https://imgmarker.readthedocs.io/en/latest/>`_.
 
+
 Citation
 *********************
 
-(coming soon)
-
-    
+Walker, Kisare, Bleem, "Image Marker" arXiv:2507.02153 

@@ -1,51 +1,64 @@
+"""
+Copyright © 2025, UChicago Argonne, LLC
+
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
 """This contains the classes for the various windows displayed by Image Marker."""
 
-from .pyqt import (
+from imgmarker.gui.pyqt import (
     QApplication, QMainWindow, QPushButton,
-    QLabel, QScrollArea, QGraphicsView, QDialog,
+    QLabel, QScrollArea,
     QVBoxLayout, QWidget, QHBoxLayout, QLineEdit, 
-    QCheckBox, QGraphicsScene, QColor, QSlider,
+    QCheckBox, QSlider,
     QLineEdit, QFileDialog, QIcon, QFont, QAction, 
     Qt, QPoint, QSpinBox, QMessageBox, QTableWidget, 
     QTableWidgetItem, QHeaderView, QShortcut,
-    QDesktopServices, QUrl, PYQT_VERSION_STR
+    QDesktopServices, QUrl, QMenu, QColorDialog,
+    QPen, QBrush, QPixmap, QPainter, PYQT_VERSION_STR, QComboBox
 )
-from . import Screen
-from .. import HEART_SOLID, HEART_CLEAR, __version__, __license__, __docsurl__
-from .. import io
-from .. import image
-from .. import config
-from . import QHLine, QVLine, PosWidget, RestrictedLineEdit, DefaultDialog
-from ..catalog import Catalog
+from imgmarker.gui import Screen, QHLine, PosWidget, RestrictedLineEdit, DefaultDialog
+from imgmarker import HEART_SOLID, HEART_CLEAR, OS, __version__, __license__, __docsurl__
+from imgmarker import io, image, config
+from imgmarker.coordinates import Angle, PixCoord, WorldCoord
 import sys
-import datetime as dt
 from math import floor, inf, nan
 import numpy as np
 from numpy import argsort
 from functools import partial
-from typing import Union, List
 import os
-from astropy.coordinates import Angle
 from copy import deepcopy
 import gc
+import shutil
+import warnings
 
 def _open_save() -> str:
     dialog = DefaultDialog()
     dialog.setWindowTitle("Open save directory")
-    dialog.exec()
-    if dialog.closed: sys.exit()
+    result = dialog.exec()
+    if result == 1:
+        save_dir = dialog.selectedFiles()[0]
+    else:
+        _early_close()
 
-    save_dir = dialog.selectedFiles()[0]
     return save_dir
 
 def _open_ims() -> str:
     dialog = DefaultDialog(config.SAVE_DIR)
     dialog.setWindowTitle("Open image directory")
-    dialog.exec()
-    if dialog.closed: sys.exit()
+    result = dialog.exec()
 
-    image_dir = dialog.selectedFiles()[0]
+    if result == 1:
+        image_dir = dialog.selectedFiles()[0]
+    else:
+        _early_close()
+
     return image_dir
+
+def _early_close() -> None:
+    msg = "User canceled. Image Marker will now close."
+    QMessageBox.information(None, "Image Marker", msg)
+    sys.exit()
 
 class SettingsWindow(QWidget):
     """Class for the window for settings."""
@@ -58,10 +71,16 @@ class SettingsWindow(QWidget):
         self.setLayout(layout)
         self.mainwindow = mainwindow
 
+        # Note
+        self.settings_note = QLabel()
+        self.settings_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.settings_note.setTextFormat(Qt.TextFormat.RichText)
+        self.settings_note.setText("<b>Click inside any text box to change the value.<br>Press 'Enter' to update the configuration.</b>")
+
         # Groups
         self.group_label = QLabel()
         self.group_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.group_label.setText('Groups')
+        self.group_label.setText('Mark group names\n(for classifying objects within an image)')
 
         self.group_boxes = []
         for i in range(1,10):
@@ -77,15 +96,16 @@ class SettingsWindow(QWidget):
         # Max marks per group
         self.max_label = QLabel()
         self.max_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.max_label.setText('Max marks per group')
+        self.max_label.setText("Max marks per group\n('-1' max marks means there is no limit for that group)")
 
         self.max_boxes = []
         for i in range(0,9):
             spinbox = QSpinBox()
-            spinbox.setSpecialValueText('-')
             spinbox.setFixedHeight(30)
             spinbox.setMaximum(9)
-            value:str = config.GROUP_MAX[i]
+            spinbox.setMinimum(-1)
+            spinbox.setValue(-1)
+            value:str = str(config.GROUP_MAX[i])
             if value.isnumeric(): spinbox.setValue(int(value))
             spinbox.valueChanged.connect(self.update_config)
             self.max_boxes.append(spinbox)
@@ -96,7 +116,7 @@ class SettingsWindow(QWidget):
         # Categories
         self.category_label = QLabel()
         self.category_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.category_label.setText('Categories')
+        self.category_label.setText('Categories\n(for classifying an entire image)')
 
         self.category_boxes = []
         for i in range(1,6):
@@ -110,14 +130,26 @@ class SettingsWindow(QWidget):
         for box in self.category_boxes: self.category_layout.addWidget(box)
 
         # Options
-        self.show_sexigesimal_box = QCheckBox(text='Show sexigesimal coordinates of cursor', parent=self)
+        self.show_sexagesimal_box = QCheckBox(text='Show sexagesimal coordinates of cursor', parent=self)
         if self.mainwindow.image.wcs == None:
-            self.show_sexigesimal_box.setEnabled(False)
+            self.show_sexagesimal_box.setEnabled(False)
         else:
-            self.show_sexigesimal_box.setEnabled(True)
+            self.show_sexagesimal_box.setEnabled(True)
 
         self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
-        
+
+        # Left click group
+        self.leftclick_label = QLabel(text='Left mouse click marks group:', parent=self)
+
+        self.leftclick_box = QComboBox(parent=self)
+        self.leftclick_box.addItems(config.GROUP_NAMES[1:])
+        self.leftclick_box.setCurrentIndex(config.LEFT_CLICK_GROUP - 1)
+        self.leftclick_box.currentIndexChanged.connect(self.update_config)
+
+        leftclick_layout = QHBoxLayout()
+        leftclick_layout.addWidget(self.leftclick_label)
+        leftclick_layout.addWidget(self.leftclick_box)
+
         self.randomize_box = QCheckBox(text='Randomize order of images', parent=self)
         self.randomize_box.setChecked(config.RANDOMIZE_ORDER)
 
@@ -151,6 +183,7 @@ class SettingsWindow(QWidget):
         horizontal_duplicate_layout.addWidget(self.duplicate_percentage_spinbox)
 
         # Main layout
+        layout.addWidget(self.settings_note)
         layout.addWidget(self.group_label)
         layout.addLayout(self.group_layout)
         layout.addWidget(self.max_label)
@@ -159,15 +192,16 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.category_label)
         layout.addLayout(self.category_layout)
         layout.addWidget(QHLine())
-        layout.addWidget(self.show_sexigesimal_box)
+        layout.addWidget(self.show_sexagesimal_box)
         layout.addWidget(self.focus_box)
+        layout.addLayout(leftclick_layout)
         layout.addWidget(self.randomize_box)
         layout.addWidget(self.duplicate_box)
         layout.addLayout(horizontal_duplicate_layout)
         layout.addWidget(QHLine())
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFixedWidth(int(Screen.width()/3))
-        self.setFixedHeight(layout.sizeHint().height())
+        self.setFixedHeight(int(layout.sizeHint().height()*1.03))
 
         # Set position of window
         qt_rectangle = self.frameGeometry()
@@ -193,11 +227,61 @@ class SettingsWindow(QWidget):
         for box in self.category_boxes: box.clearFocus()
         for box in self.max_boxes: box.clearFocus()
 
-        self.update_config()
-        self.mainwindow.save()
-        self.mainwindow.centralWidget().setFocus()
-        return super().closeEvent(a0)
+        if self.isVisible():
+            fix_over_limit = self.check_max_marks()
+
+            if fix_over_limit:
+                a0.ignore()
+                return
+        else:
+            self.update_config()
+            self.mainwindow.save()
+            self.mainwindow.centralWidget().setFocus()
+            return super().closeEvent(a0)
     
+    def check_max_marks(self):
+        marks_in_group = []
+        over_limit_groups = []
+        popup_message = ""
+        for i, spinbox in enumerate(self.max_boxes):
+            limit = spinbox.value()
+            if limit > 0:
+                for image in self.mainwindow.images:
+                    group = i + 1
+                    if image.duplicate == True:
+                        marks = image.dupe_marks
+                    else:
+                        marks = image.marks
+
+                    marks_in_group = [mark for mark in marks if mark.g == (group)]
+
+                    if len(marks_in_group) > limit:
+                        over_limit_groups.append(group)
+
+        over_limit_groups = np.sort(list(set(over_limit_groups)))
+        
+        if len(over_limit_groups) == 1:
+            popup_message = f"You have set a mark limit for group {[config.GROUP_NAMES[i] for i in over_limit_groups]} that is lower than the number of marks you have placed in that group. Would you like to fix this (click Yes) or continue (click No)?\n\n" \
+            "If you continue, the previously placed marks will still be above the limit until you fix the limit or delete the excess marks."
+            reply = QMessageBox.question(self, 'WARNING',
+                popup_message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+
+            if reply == QMessageBox.StandardButton.Yes:
+                return True
+            else:
+                return False
+            
+        elif len(over_limit_groups) > 1:
+            popup_message = f"You have set a mark limit for groups {[config.GROUP_NAMES[i] for i in over_limit_groups]} that is lower than the number of marks you placed in those groups. Would you like to fix this (click Yes) or continue (click No)?\n\n" \
+            "If you continue, the previously placed marks will still be above the limit until you fix the limit or delete the excess marks."
+            reply = QMessageBox.question(self, 'WARNING',
+                popup_message, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+
+            if reply == QMessageBox.StandardButton.Yes:
+                return True
+            else:
+                return False
+
     def duplicate_percentage_state(self):
         if not self.duplicate_box.isChecked():
             self.duplicate_percentage_spinbox.setEnabled(False)
@@ -213,11 +297,19 @@ class SettingsWindow(QWidget):
 
         # Get the new settings from the boxes
         config.GROUP_NAMES = ['None'] + [box.text() for box in self.group_boxes]
-        config.GROUP_MAX = [str(box.value()) if box.value() != 0 else 'None' for box in self.max_boxes]
+        config.GROUP_MAX = [str(box.value()) if box.value() > 0 else 'None' for box in self.max_boxes]
         config.CATEGORY_NAMES = ['None'] + [box.text() for box in self.category_boxes]
         config.RANDOMIZE_ORDER = self.randomize_box.isChecked()
+        config.set_left_click_group(self.leftclick_box.currentIndex() + 1)
 
-        for i, box in enumerate(self.mainwindow.category_boxes): 
+        # Keep the left-click group combo box in sync with renamed groups
+        self.leftclick_box.blockSignals(True)
+        self.leftclick_box.clear()
+        self.leftclick_box.addItems(config.GROUP_NAMES[1:])
+        self.leftclick_box.setCurrentIndex(config.LEFT_CLICK_GROUP - 1)
+        self.leftclick_box.blockSignals(False)
+
+        for i, box in enumerate(self.mainwindow.category_boxes):
             box.setText(config.CATEGORY_NAMES[i+1])
             box.setShortcut(self.mainwindow.category_shortcuts[i])
             
@@ -226,462 +318,16 @@ class SettingsWindow(QWidget):
             if image.duplicate == True: marks = image.dupe_marks
             else: marks = image.marks
             for mark in marks:
-                if mark.label.lineedit.text() in group_names_old:
-                    mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
+                try:
+                    if mark.label.lineedit.text() in group_names_old:
+                        mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
+                except: pass
 
         # Update text in the controls window 
         self.mainwindow.controls_window.update_text()
 
         # Save the new settings into the config file
         config.update()
-
-class ColorPickerWindow(QDialog):
-    """Class for the window for color picker."""
-
-    def __init__(self,mainwindow:'MainWindow'):
-        super().__init__()
-        
-        self.setWindowTitle("Color picker")
-
-        # This is the main vertical layout, and is the main layout overall, for the window that everything will be added to
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-        self.mainwindow = mainwindow
-        MainWindow.picked_color = None
-        # Use this for dynamic scaling of preview box based on screen resolution
-        window_width = int(Screen.width()/3)
-        
-        # Default color options
-        # These buttons are just the whole top row in the main layout
-        self.default_color_label = QLabel()
-        self.default_color_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.default_color_label.setText("Default colors")
-
-        default_color_list = ["Red", "Orange", "Yellow", "Green", "Blue", "Cyan", "Purple", "Black", "White"]
-        default_color_functions = [self.default_red,self.default_orange,self.default_yellow,self.default_green,
-                                   self.default_blue,self.default_cyan,self.default_purple,self.default_black,
-                                   self.default_white]
-        self.default_color_boxes = []
-        for i, color in enumerate(default_color_list):
-            colorbox = QPushButton(text=color)
-            colorbox.setFixedHeight(30)
-            colorbox.setFixedWidth(int(window_width/8))
-            colorbox.clicked.connect(default_color_functions[i])
-            self.default_color_boxes.append(colorbox)
-
-        self.default_color_box_layout = QHBoxLayout()
-        for colorbox in self.default_color_boxes: self.default_color_box_layout.addWidget(colorbox)
-
-        # Left and right vertical layouts are self-explanatory, main horizontal layout is the only other layout
-        # that gets added to the main vertical layout, "layout"
-        left_vertical_layout = QVBoxLayout()
-        right_vertical_layout = QVBoxLayout()
-        main_horizontal_layout = QHBoxLayout()
-
-        # RGB inputs
-        # This layout contains the row with RGB labels, as opposed to just adding a QLabel to the left horizontal layout,
-        # in order to allow for dynamic spacing
-        horizontal_RGB_label_layout = QHBoxLayout()
-
-        self.RGB_spinbox_labels_list = ["R", "G", "B"]
-
-        for i in range(0,3):
-            RGB_label = QLabel()
-            RGB_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            RGB_label.setText(self.RGB_spinbox_labels_list[i])
-            horizontal_RGB_label_layout.addWidget(RGB_label)
-
-        self.RGB_spinbox_functions = [self.R, self.G, self.B]
-
-        # This layout is the row containing the RGB spinboxes
-        self.RGB_spinboxes_layout = QHBoxLayout()
-        self.RGB_spinboxes = []
-
-        for i in range(0,3):
-            RGB_spinbox = QSpinBox()
-            RGB_spinbox.setFixedHeight(30)
-            RGB_spinbox.setFixedWidth(50)
-
-            # This forces the values to be 8 bit (sorry, you don't need more colors)
-            RGB_spinbox.setRange(0,255)
-            RGB_spinbox.valueChanged.connect(self.RGB_spinbox_functions[i])
-            self.RGB_spinboxes_layout.addWidget(RGB_spinbox)
-            
-            # Store the spinboxes in a class variable to be accessed later by syncing functions and for
-            # making colors
-            self.RGB_spinboxes.append(RGB_spinbox)
-
-        self.RGB_spinboxes_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # These margins space out the labels to line up with the spinboxes, but this hasn't been tested on
-        # a different resolution screen (only 1920x1080), so relative values using screen width may be required down the line
-        horizontal_RGB_label_layout.setContentsMargins(55,0,55,0)
-        left_vertical_layout.addLayout(horizontal_RGB_label_layout)
-        left_vertical_layout.addLayout(self.RGB_spinboxes_layout)
-
-        # The remaining unexplained layouts, variables, and loops follow the same idea as the RGB layouts
-
-        # HSV inputs
-        horizontal_HSV_label_layout = QHBoxLayout()
-        self.HSV_spinbox_labels_list = ["H", "S", "V"]
-
-        for i in range(0,3):
-            HSV_label = QLabel()
-            HSV_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            HSV_label.setText(self.HSV_spinbox_labels_list[i])
-            horizontal_HSV_label_layout.addWidget(HSV_label)
-
-        self.HSV_spinbox_functions = [self.H, self.S, self.V]
-        self.HSV_spinboxes_layout = QHBoxLayout()
-        self.HSV_spinboxes = []
-
-        for i in range(0,3):
-            HSV_spinbox = QSpinBox()
-            HSV_spinbox.setFixedHeight(30)
-            HSV_spinbox.setFixedWidth(50)
-            HSV_spinbox.setRange(0,255)
-            HSV_spinbox.valueChanged.connect(self.HSV_spinbox_functions[i])
-            self.HSV_spinboxes_layout.addWidget(HSV_spinbox)
-            self.HSV_spinboxes.append(HSV_spinbox)
-
-        self.HSV_spinboxes_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        horizontal_HSV_label_layout.setContentsMargins(55,0,55,0)
-        left_vertical_layout.addWidget(QHLine())
-        left_vertical_layout.addLayout(horizontal_HSV_label_layout)
-        left_vertical_layout.addLayout(self.HSV_spinboxes_layout)
-
-        # CMYK inputs
-        horizontal_CMYK_label_layout = QHBoxLayout()
-        self.CMYK_spinbox_labels_list = ["C", "M", "Y", "K"]
-
-        for i in range(0,4):
-            CMYK_label = QLabel()
-            CMYK_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            CMYK_label.setText(self.CMYK_spinbox_labels_list[i])
-            horizontal_CMYK_label_layout.addWidget(CMYK_label)
-
-        self.CMYK_spinbox_functions = [self.C, self.M, self.Y, self.K]
-        self.CMYK_spinboxes_layout = QHBoxLayout()
-        self.CMYK_spinboxes = []
-
-        for i in range(0,4):
-            CMYK_spinbox = QSpinBox()
-            CMYK_spinbox.setFixedHeight(30)
-            CMYK_spinbox.setFixedWidth(50)
-            CMYK_spinbox.setRange(0,100)
-            CMYK_spinbox.valueChanged.connect(self.CMYK_spinbox_functions[i])
-            self.CMYK_spinboxes_layout.addWidget(CMYK_spinbox)
-            self.CMYK_spinboxes.append(CMYK_spinbox)
-
-        self.CMYK_spinboxes_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        horizontal_CMYK_label_layout.setContentsMargins(35,0,35,0)
-        left_vertical_layout.addWidget(QHLine())
-        left_vertical_layout.addLayout(horizontal_CMYK_label_layout)
-        left_vertical_layout.addLayout(self.CMYK_spinboxes_layout)
-
-        # Hex code input
-        # This layout is solely to allow for adding the # symbol to the left of the input
-        self.hex_line_layout = QHBoxLayout()
-
-        self.hex_label = QLabel()
-        self.hex_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.hex_label.setText("Hex code color")
-
-        self.hex_pound = QLabel()
-        self.hex_pound.setText("#")
-        self.hex_pound.setAlignment(Qt.AlignmentFlag.AlignRight)
-
-        self.hex_input = QLineEdit()
-        # setInputMask allows us to force only hexadecimal values to be inputted (H) using meta characters provided
-        # by the Qt framework for QLineEdit: https://doc.qt.io/qt-6/qlineedit.html#inputMask-prop
-        self.hex_input.setInputMask("HHHHHH;*")
-        self.hex_input.textChanged.connect(self.hex)
-
-        self.hex_line_layout.addWidget(self.hex_pound)
-        self.hex_line_layout.addWidget(self.hex_input)
-
-        left_vertical_layout.addWidget(QHLine())
-        left_vertical_layout.addWidget(self.hex_label)
-        left_vertical_layout.addLayout(self.hex_line_layout)
-
-        # Preview box
-        self.preview_label = QLabel()
-        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview_label.setText("Color preview")
-
-        self.preview_box = QGraphicsScene()
-        self.color = QColor("Red")
-        self.preview_box.setBackgroundBrush(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-        self.preview_box.setSceneRect(0,0,window_width/6,window_width/3)
-        self.preview_box_view = QGraphicsView(self.preview_box)
-        right_vertical_layout.addWidget(self.preview_label)
-        right_vertical_layout.addWidget(self.preview_box_view)
-
-        # Cancel/apply buttons
-        cancel_apply_button_layout = QHBoxLayout()
-
-        self.cancel_button = QPushButton()
-        self.cancel_button.setFixedHeight(30)
-        self.cancel_button.setText("Cancel")
-        self.cancel_button.clicked.connect(self.cancel)
-
-        self.apply_button = QPushButton()
-        self.apply_button.setFixedHeight(30)
-        self.apply_button.setText("Apply")
-        self.apply_button.clicked.connect(self.apply)
-
-        cancel_apply_button_layout.addWidget(self.cancel_button)
-        cancel_apply_button_layout.addWidget(self.apply_button)
-        right_vertical_layout.addLayout(cancel_apply_button_layout)
-
-        # Main layout
-        main_horizontal_layout.addLayout(left_vertical_layout)
-        main_horizontal_layout.addWidget(QVLine())
-        main_horizontal_layout.addLayout(right_vertical_layout)
-        layout.addWidget(self.default_color_label)
-        layout.addLayout(self.default_color_box_layout)
-        layout.addWidget(QHLine())
-        layout.addLayout(main_horizontal_layout)
-
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setFixedWidth(int(Screen.width()/2.5))
-        self.setFixedHeight(layout.sizeHint().height())
-
-        # Set position of window
-        qt_rectangle = self.frameGeometry()
-        qt_rectangle.moveCenter(Screen.center())
-        self.move(qt_rectangle.topLeft())
-
-    # Default color setters
-
-    def default_red(self):
-        self.color = QColor("Red")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_orange(self):
-        self.color = QColor("Orange")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_yellow(self):
-        self.color = QColor("Yellow")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_green(self):
-        self.color = QColor("Green")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_blue(self):
-        self.color = QColor("Blue")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_cyan(self):
-        self.color = QColor("Cyan")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_purple(self):
-        self.color = QColor("Purple")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_black(self):
-        self.color = QColor("Black")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def default_white(self):
-        self.color = QColor("White")
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def R(self):
-        self.color = self.make_QColor_from_RGB()
-        self.update_preview(self.color)
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def G(self):
-        self.color = self.make_QColor_from_RGB()
-        self.update_preview(self.color)
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def B(self):
-        self.color = self.make_QColor_from_RGB()
-        self.update_preview(self.color)
-        self.sync_HSV()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def H(self):
-        self.color = self.make_QColor_from_HSV()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def S(self):
-        self.color = self.make_QColor_from_HSV()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def V(self):
-        self.color = self.make_QColor_from_HSV()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_CMYK()
-        self.sync_hex()
-
-    def C(self):
-        self.color = self.make_QColor_from_CMYK()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_hex()
-
-    def M(self):
-        self.color = self.make_QColor_from_CMYK()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_hex()
-
-    def Y(self):
-        self.color = self.make_QColor_from_CMYK()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_hex()
-
-    def K(self):
-        self.color = self.make_QColor_from_CMYK()
-        self.update_preview(self.color)
-        self.sync_RGB()
-        self.sync_HSV()
-        self.sync_hex()
-
-    def hex(self):
-        hex_code = "#" + str(self.hex_input.text())
-        self.color = QColor(hex_code)
-        self.update_preview(self.color)
-
-    def make_QColor_from_RGB(self): 
-        R = self.RGB_spinboxes[0].value()
-        G = self.RGB_spinboxes[1].value()
-        B = self.RGB_spinboxes[2].value()
-
-        return QColor(R, G, B)
-
-    def make_QColor_from_HSV(self):
-        H = self.HSV_spinboxes[0].value()
-        S = self.HSV_spinboxes[1].value()
-        V = self.HSV_spinboxes[2].value()
-        
-        return QColor.fromHsv(H, S, V)
-
-    def make_QColor_from_CMYK(self):
-        C = self.CMYK_spinboxes[0].value()
-        M = self.CMYK_spinboxes[1].value()
-        Y = self.CMYK_spinboxes[2].value()
-        K = self.CMYK_spinboxes[3].value()
-
-        return QColor.fromCmyk(C, M, Y, K)
-
-    def sync_RGB(self):
-        red = self.color.red()
-        green = self.color.green()
-        blue = self.color.blue()
-        rgb = [red, green, blue]
-
-        for i, spinbox in enumerate(self.RGB_spinboxes):
-            spinbox.blockSignals(True)
-            spinbox.setValue(rgb[i])
-            spinbox.blockSignals(False)
-
-    def sync_HSV(self):
-        hue = self.color.hsvHue()
-        saturation = self.color.hsvSaturation()
-        value = self.color.value()
-        hsv = [hue, saturation, value]
-
-        for i, spinbox in enumerate(self.HSV_spinboxes):
-            spinbox.blockSignals(True)
-            spinbox.setValue(hsv[i])
-            spinbox.blockSignals(False)
-
-    def sync_CMYK(self):
-        cyan = self.color.cyan()
-        magenta = self.color.magenta()
-        yellow = self.color.yellow()
-        black = self.color.black()
-        cmyk = [cyan, magenta, yellow, black]
-        
-        for i, spinbox in enumerate(self.CMYK_spinboxes):
-            spinbox.blockSignals(True)
-            spinbox.setValue(cmyk[i])
-            spinbox.blockSignals(False)
-
-    def sync_hex(self):
-        hex = self.color.name()
-        stripped_hex = hex.replace("#", "")
-        self.hex_input.blockSignals(True)
-        self.hex_input.setText(stripped_hex)
-        self.hex_input.blockSignals(False)
-
-    def update_preview(self, color):
-        self.preview_box.setBackgroundBrush(color)
-
-    def apply(self):
-        MainWindow.picked_color = self.color
-        self.close()
-
-    def cancel(self):
-        MainWindow.picked_color = None
-        self.close()
-
-    def show(self):
-        super().show()
-        self.activateWindow()
 
 class BlurWindow(QWidget):
     """Class for the blur adjustment window."""
@@ -776,27 +422,50 @@ class ControlsWindow(QWidget):
         self.setLayout(layout)
         self.setWindowTitle('Controls')
 
+        # Column labels
+        row = QHBoxLayout()
+        self.interactions_label = QLabel()
+        self.interactions_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.interactions_label.setTextFormat(Qt.TextFormat.RichText)
+        self.interactions_label.setText("<b>Interaction</b>")
+
+        self.keybinds_label = QLabel()
+        self.keybinds_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.keybinds_label.setTextFormat(Qt.TextFormat.RichText)
+        self.keybinds_label.setText("<b>Keybind</b>")
+        
+        row.addWidget(self.interactions_label)
+        row.addWidget(self.keybinds_label)
+        layout.addLayout(row)
+
+        # Controls
         self.table = QTableWidget()
         self.table.setColumnCount(2)
         self.table.setSizeAdjustPolicy(QScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.table.verticalHeader().setVisible(False)
-        self.table.horizontalHeader().setVisible(False)  
+        self.table.horizontalHeader().setVisible(False)
 
         self.update_text()
 
         layout.addWidget(self.table)
 
         # Resize window according to size of layout
-        self.resize(int(Screen.width()*0.2), self.sizeHint().height())
+        self.resize(int(Screen.width()*0.25), self.sizeHint().height())
         self.setMaximumHeight(self.height())
         
     def update_text(self):
         # Lists for keybindings
-        actions_list = ['Next','Back','Change frame','Delete','Enter comment', 'Focus', 'Zoom in/out', 'Copy mark coordinates' ,'Favorite']
+        actions_list = ['Next','Back','Change frame','Delete mark','Delete selected marks','Enter comment', 'Focus', 'Zoom in/out', 'Zoom to fit', 'Copy selected mark coordinates' ,'Favorite', 'Show/hide your marks', 'Show/hide an imported mark file']
         group_list = [f'Group \"{group}\"' for group in config.GROUP_NAMES[1:]]
         category_list = [f'Category \"{category}\"' for category in config.CATEGORY_NAMES[1:]]
         actions_list = group_list + category_list + actions_list
-        buttons_list = ['Left click OR 1', '2', '3', '4', '5', '6', '7', '8', '9', 'Ctrl+1', 'Ctrl+2', 'Ctrl+3', 'Ctrl+4', 'Ctrl+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Right click OR Backspace', 'Enter', 'Middle click', 'Scroll wheel', 'Ctrl + C', 'F']
+        ctrl = 'Cmd' if OS == 'Darwin' else 'Ctrl'
+        alt = 'Opt' if OS == 'Darwin' else 'Alt'
+        focus_button = 'Middle Click/Opt-Click' if OS == 'Darwin' else 'Middle Click'
+        zoom_button = 'Scroll Wheel/2 finger scroll' if OS == 'Darwin' else 'Scroll Wheel'
+        group_buttons = [str(i) for i in range(1,10)]
+        group_buttons[config.LEFT_CLICK_GROUP - 1] += ' OR Left Click'
+        buttons_list = group_buttons + [f'{ctrl}+1', f'{ctrl}+2', f'{ctrl}+3', f'{ctrl}+4', f'{ctrl}+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', focus_button, zoom_button, f'{ctrl}+0', f'{ctrl}+C', 'F', f'{alt}+M', f'{alt}+1 through {alt}+9']
         
         items = [ (action, button) for action, button in zip(actions_list, buttons_list) ]
 
@@ -814,6 +483,48 @@ class ControlsWindow(QWidget):
         
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
     
+    def show(self):
+        """Shows the window and moves it to the front."""
+
+        super().show()
+        self.activateWindow()
+
+class WelcomeWindow(QWidget):
+    """Class for the window that welcomes new users on startup."""
+
+    def __init__(self):
+        super().__init__()
+
+        layout = QVBoxLayout()
+        self.setWindowTitle('Welcome')
+        self.setLayout(layout)
+
+        self.text_label = QLabel()
+        self.text_label.setWordWrap(True)
+        self.text_label.setTextFormat(Qt.TextFormat.RichText)
+        self.text_label.setOpenExternalLinks(True)
+        self.text_label.setText(
+            '<h3>Welcome to Image Marker!</h3>'
+            '<p>Browse your images with the Next/Back buttons (or Tab/Shift+Tab), place classified '
+            'marks with the number keys or a left-click, and add comments or categories for each image '
+            'as needed; open the Settings window to customize group names, categories, mark limits, and '
+            'keybindings for your project.</p>'
+            f'<p>For full documentation, visit the <a href="{__docsurl__}">Image Marker docs</a>.</p>'
+        )
+
+        layout.addWidget(self.text_label)
+
+        width = int(Screen.width()/5)
+        margins = layout.contentsMargins()
+        text_width = width - margins.left() - margins.right()
+        text_height = self.text_label.heightForWidth(text_width)
+
+        self.setFixedWidth(width)
+        self.setFixedHeight(text_height + margins.top() + margins.bottom())
+
+        # Position in the upper-left corner of the screen
+        self.move(int(Screen.width()*0.02), int(Screen.height()*0.05))
+
     def show(self):
         """Shows the window and moves it to the front."""
 
@@ -873,6 +584,116 @@ class AboutWindow(QWidget):
         super().show()
         self.activateWindow()
 
+class MarkMenu(QMenu):
+    def __init__(self,mainwindow:'MainWindow'):
+        super().__init__()
+        self.menus:dict[str,QMenu] = {}
+        self.mainwindow = mainwindow
+        self.setTitle('Mark')
+
+    def toggle_shortcut(self,path:str) -> str:
+        """Returns the display text for the hotkey that toggles this mark file's visibility."""
+
+        alt = 'Opt' if OS == 'Darwin' else 'Alt'
+        index = list(self.menus.keys()).index(path)
+        return f'{alt}+M' if index == 0 else f'{alt}+{index}'
+
+    def menu_setup(self,path:str):
+        file = path.split(os.sep)[-1]
+
+        if path == self.mainwindow.markfile.path:
+            self.menus[path] = QMenu(f'{file} (default)')
+        else:
+            self.menus[path] = QMenu(f'{file}')
+
+        # Toggle marks
+        marks_action = QAction(f'Show Marks ({self.toggle_shortcut(path)})', self)
+        marks_action.setObjectName('marks_action')
+        marks_action.setCheckable(True)
+        marks_action.setChecked(True)
+        marks_action.triggered.connect(partial(self.mainwindow.toggle_marks,path))
+        self.menus[path].addAction(marks_action)
+
+        ### Toggle mark labels menu
+        labels_action = QAction('Show Mark Labels', self)
+        labels_action.setObjectName('labels_action')
+        labels_action.setCheckable(True)
+        labels_action.setChecked(True)
+        labels_action.triggered.connect(partial(self.mainwindow.toggle_mark_labels,path))
+        self.menus[path].addAction(labels_action)
+
+        if self.mainwindow.n_marks(path) == 0:
+            marks_action.setEnabled(False)
+            labels_action.setEnabled(False)
+        else:
+            marks_action.setEnabled(True)
+            labels_action.setEnabled(True)
+
+        self.menus[path].addSeparator()
+
+        color_action = QAction('Default Color...', self)
+        color_action.triggered.connect(partial(self.mainwindow.update_colors,path))
+        color_action.setToolTip('Edit color of marks that aren\'t part of a group')
+        self.menus[path].addAction(color_action)
+        self.update_color(path)
+
+        if len(self.mainwindow.imageless_marks) == 0:
+            color_action.setEnabled(False)
+        else:
+            color_action.setEnabled(True)
+
+        self.menus[path].addSeparator()
+
+        if path == self.mainwindow.markfile.path:            
+            del_marks_action = QAction(f'Delete Marks in Current Image', self)
+            
+            del_marks_action.triggered.connect(partial(self.mainwindow.del_usermarks,'all'))
+            self.menus[path].addAction(del_marks_action)
+
+        else:
+            del_file_action = QAction(f'Delete', self)
+            del_file_action.triggered.connect(partial(self.mainwindow.del_markfile,path))
+            self.menus[path].addAction(del_file_action)
+
+        self.addMenu(self.menus[path])
+
+    def update_menu(self,path:str):
+        self.marks_action(path).setText(f'Show Marks ({self.toggle_shortcut(path)})')
+
+        if self.mainwindow.n_marks(path) == 0:
+            self.marks_action(path).setEnabled(False)
+            self.labels_action(path).setEnabled(False)
+        else:
+            self.marks_action(path).setEnabled(True)
+            self.labels_action(path).setEnabled(True)
+
+        if len(self.mainwindow.imageless_marks) == 0:
+            self.color_action(path).setEnabled(False)
+        else:
+            self.color_action(path).setEnabled(True)
+
+    def update_color(self,path):
+        s = 14
+        pixmap = QPixmap(s,s)
+        painter = QPainter(pixmap)
+        
+        pen = QPen(Qt.GlobalColor.black, 2)
+        painter.setBrush(config.DEFAULT_COLORS[path])
+        painter.setPen(pen)
+        painter.drawRect(0, 0, s, s)
+        painter.end()
+        icon = QIcon(pixmap)
+        self.color_action(path).setIcon(icon)
+
+    def color_action(self,path):
+        return [action for action in self.menus[path].actions() if action.text() == "Default Color..."][0]
+    
+    def marks_action(self,path):
+        return [action for action in self.menus[path].actions() if action.objectName() == "marks_action"][0]
+    
+    def labels_action(self,path):
+        return [action for action in self.menus[path].actions() if action.objectName() == "labels_action"][0]
+        
 class MainWindow(QMainWindow):
     """Class for the main window."""
 
@@ -881,21 +702,27 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Image Marker")
         self.frame = 0
+        self.markfile = io.MarkFile(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv'))
+        self.imagesfile = io.ImagesFile()
+        self.favoritesfile = io.FavoritesFile()
         
         # Shortcuts
         del_shortcuts = [QShortcut('Backspace', self), QShortcut('Delete', self)]
-        for shortcut in del_shortcuts: shortcut.activated.connect(self.del_marks)
+        for shortcut in del_shortcuts: shortcut.activated.connect(self.del_usermarks)
 
         shiftplus_shorcut = QShortcut('Space', self)
         shiftplus_shorcut.activated.connect(partial(self.shiftframe,1))
 
         shiftminus_shorcut = QShortcut('Shift+Space', self)
         shiftminus_shorcut.activated.connect(partial(self.shiftframe,-1))
+
+        ctrlc_shortcut = QShortcut('Ctrl+C', self)
+        ctrlc_shortcut.activated.connect(self.copy_to_clipboard)
     
         # Initialize data
-        self.date = dt.datetime.now(dt.timezone.utc).date().isoformat()
         self.order = []
-        self.catalogs:List['Catalog'] = []
+        self._interval_str = image.Interval.MINMAX
+        self._stretch_str = image.Stretch.LINEAR
         self.__init_data__()
         self.image_scene = image.ImageScene(self.image)
         self.image_view = image.ImageView(self.image_scene)
@@ -917,12 +744,13 @@ class MainWindow(QMainWindow):
         self.frame_window.slider.setMaximum(self.image.n_frames-1)
 
         self.settings_window = SettingsWindow(self)
-        # self.settings_window.show_sexigesimal_box.stateChanged.connect(self.show_sexigesimal)
+        # self.settings_window.show_sexagesimal_box.stateChanged.connect(self.show_sexagesimal)
         self.settings_window.focus_box.stateChanged.connect(partial(setattr,self.image_view,'cursor_focus'))
         self.settings_window.randomize_box.stateChanged.connect(self.toggle_randomize)
 
         self.controls_window = ControlsWindow()
         self.about_window = AboutWindow()
+        self.welcome_window = WelcomeWindow()
 
         # Update max blur
         self.blur_window.slider.setMaximum(self.blur_max)
@@ -946,13 +774,6 @@ class MainWindow(QMainWindow):
         self.back_button.setShortcut('Shift+Tab')
         self.back_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-        # Enter Button
-        self.submit_button = QPushButton(text='Enter',parent=self)
-        self.submit_button.setFixedHeight(40)
-        self.submit_button.clicked.connect(self.enter)
-        #self.submit_button.setShortcut('Return')
-        self.submit_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
         # Next widget
         self.next_button = QPushButton(text='Next',parent=self)
         self.next_button.setFixedHeight(40)
@@ -969,7 +790,6 @@ class MainWindow(QMainWindow):
         self.bottom_layout.addWidget(self.back_button)
         self.bottom_layout.addWidget(self.next_button)
         self.bottom_layout.addWidget(self.comment_box)
-        self.bottom_layout.addWidget(self.submit_button)
         
         ### Category widgets
         self.categories_layout = QHBoxLayout()
@@ -986,7 +806,7 @@ class MainWindow(QMainWindow):
             self.categories_layout.addWidget(box)
 
         # Favorite box
-        self.favorite_list = io.loadfav()
+        # self.favorite_list = self.favoritesfile.read()
         self.favorite_box = QCheckBox(parent=self)
         self.favorite_box.setFixedHeight(20)
         self.favorite_box.setFixedWidth(40)
@@ -1012,97 +832,100 @@ class MainWindow(QMainWindow):
         menubar = self.menuBar()
 
         ## File menu
-        file_menu = menubar.addMenu("&File")
+        file_menu = menubar.addMenu("File")
 
-        ### Open menu
-        open_menu = file_menu.addMenu('&Open')
-
-        #### Open file menu
-        open_action = QAction('&Open Save...', self)
+        ### Open file menu
+        open_action = QAction('Open Save...', self)
         open_action.setShortcuts(['Ctrl+o'])
         open_action.triggered.connect(self.open)
-        open_menu.addAction(open_action)
+        file_menu.addAction(open_action)
 
-        #### Open image folder menu
-        open_ims_action = QAction('&Open Images...', self)
-        open_ims_action.setShortcuts(['Ctrl+Shift+o'])
-        open_ims_action.triggered.connect(self.open_ims)
-        open_menu.addAction(open_ims_action)
+        ### Open new image folder menu
+        import_ims_action = QAction('Open Images...', self)
+        import_ims_action.setShortcuts(['Ctrl+Shift+i'])
+        import_ims_action.triggered.connect(self.import_ims)
+        file_menu.addAction(import_ims_action)
 
-        #### Open catalog file
-        open_marks_action = QAction('&Open Catalog...', self)
-        open_marks_action.setShortcuts(['Ctrl+Shift+c'])
-        open_marks_action.triggered.connect(self.open_catalog)
-        open_menu.addAction(open_marks_action)
-        
+        file_menu.addSeparator()
+
+        ### Import mark file
+        import_marks_action = QAction('Import Mark File...', self)
+        import_marks_action.setShortcuts(['Ctrl+Shift+m'])
+        import_marks_action.triggered.connect(self.import_markfile)
+        file_menu.addAction(import_marks_action)
+
+        file_menu.addSeparator()
+
+        ### Export current image as a picture
+        export_image_action = QAction('Export Image...', self)
+        export_image_action.setShortcuts(['Ctrl+e'])
+        export_image_action.triggered.connect(self.export_image)
+        file_menu.addAction(export_image_action)
+
+        ### Export marks with WCS coordinates as a VOTable
+        self.export_votable_action = QAction('Export Marks as VOTable...', self)
+        self.export_votable_action.setToolTip('Export marks with sky (RA/Dec) coordinates; requires at least one image with WCS information')
+        self.export_votable_action.triggered.connect(self.export_votable)
+        self.export_votable_action.setEnabled(any(img.wcs is not None for img in self.images))
+        file_menu.addAction(self.export_votable_action)
+
         ### Exit menu
         file_menu.addSeparator()
-        exit_action = QAction('&Exit', self)
+        exit_action = QAction('Exit', self)
         exit_action.setShortcuts(['Ctrl+q'])
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
         ## Edit menu
-        edit_menu = menubar.addMenu("&Edit")
+        edit_menu = menubar.addMenu("Edit")
         edit_menu.setToolTipsVisible(True)
 
-        ### Delete marks menu
-        del_menu = QAction('&Delete All Marks', self)
-        del_menu.triggered.connect(partial(self.del_marks,True))
-        edit_menu.addAction(del_menu)
-
-        ### Delete catalogs menu
-        del_catalog_menu = QAction('&Delete All Catalogs', self)
-        del_catalog_menu.triggered.connect(self.del_catalog_marks)
-        edit_menu.addAction(del_catalog_menu)
-
         ### Undo previous mark
-        undo_mark_action = QAction('&Undo Previous Mark', self)
+        undo_mark_action = QAction('Undo Previous Mark', self)
         undo_mark_action.setShortcuts(['Ctrl+z'])
         undo_mark_action.triggered.connect(self.undo_prev_mark)
         edit_menu.addAction(undo_mark_action)
 
         ### Redo previous mark
-        redo_mark_action = QAction('&Redo Previous Mark', self)
+        redo_mark_action = QAction('Redo Previous Mark', self)
         redo_mark_action.setShortcuts(['Ctrl+Shift+z'])
         redo_mark_action.triggered.connect(self.redo_prev_mark)
         edit_menu.addAction(redo_mark_action)
 
         ### Settings menu
         edit_menu.addSeparator()
-        settings_action = QAction('&Settings...', self)
+        settings_action = QAction('Settings...', self)
         settings_action.setShortcuts(['Ctrl+,'])
-        settings_action.setToolTip('Randomize the order in which images appear')
         settings_action.triggered.connect(self.settings_window.show)
         edit_menu.addAction(settings_action)
 
         ## View menu
-        view_menu = menubar.addMenu("&View")
+        view_menu = menubar.addMenu("View")
 
         ### Zoom menu
-        zoom_menu = view_menu.addMenu("&Zoom")
+        zoom_menu = view_menu.addMenu("Zoom")
 
         #### Zoom in
-        zoomin_action = QAction('&Zoom In', self)
+        zoomin_action = QAction('Zoom In', self)
         zoomin_action.setShortcuts(['Ctrl+='])
         zoomin_action.triggered.connect(partial(self.image_view.zoom,1.2,'viewport'))
         zoom_menu.addAction(zoomin_action)
 
         ### Zoom out
-        zoomout_action = QAction('&Zoom Out', self)
+        zoomout_action = QAction('Zoom Out', self)
         zoomout_action.setShortcuts(['Ctrl+-'])
         zoomout_action.triggered.connect(partial(self.image_view.zoom,1/1.2,'viewport'))
         zoom_menu.addAction(zoomout_action)
 
         ### Zoom to Fit
-        zoomfit_action = QAction('&Zoom to Fit', self)
+        zoomfit_action = QAction('Zoom to Fit', self)
         zoomfit_action.setShortcuts(['Ctrl+0'])
         zoomfit_action.triggered.connect(self.image_view.zoomfit)
         zoom_menu.addAction(zoomfit_action)
 
         ### Frame menu
         view_menu.addSeparator()
-        self.frame_action = QAction('&Frames...', self)
+        self.frame_action = QAction('Frames...', self)
         self.frame_action.setShortcuts(['Ctrl+f'])
         self.frame_action.triggered.connect(self.frame_window.show)
         view_menu.addAction(self.frame_action)
@@ -1112,67 +935,27 @@ class MainWindow(QMainWindow):
         else:
             self.frame_action.setEnabled(False)
 
-        ### Toggle marks menu
         view_menu.addSeparator()
-        self.marks_action = QAction('&Show Marks', self)
-        self.marks_action.setShortcuts(['Ctrl+m'])
-        self.marks_action.setCheckable(True)
-        self.marks_action.setChecked(True)
-        self.marks_action.triggered.connect(self.toggle_marks)
-        view_menu.addAction(self.marks_action)
-
-        ### Toggle mark labels menu
-        self.labels_action = QAction('&Show Mark Labels', self)
-        self.labels_action.setShortcuts(['Ctrl+l'])
-        self.labels_action.setCheckable(True)
-        self.labels_action.setChecked(True)
-        self.labels_action.triggered.connect(self.toggle_mark_labels)
-        view_menu.addAction(self.labels_action)
-
-        ### Toggle catalogs menu
-        self.catalogs_action = QAction('&Show Catalog', self)
-        self.catalogs_action.setShortcuts(['Ctrl+Shift+m'])
-        self.catalogs_action.setCheckable(True)
-        self.catalogs_action.setChecked(True)
-        self.catalogs_action.triggered.connect(self.toggle_catalogs)
-        view_menu.addAction(self.catalogs_action)
-        self.catalogs_action.setEnabled(False)
-
-        ### Toggle catalog labels menu
-        self.catalog_labels_action = QAction('&Show Catalog Labels', self)
-        self.catalog_labels_action.setShortcuts(['Ctrl+Shift+l'])
-        self.catalog_labels_action.setCheckable(True)
-        self.catalog_labels_action.setChecked(True)
-        self.catalog_labels_action.triggered.connect(self.toggle_catalog_labels)
-        view_menu.addAction(self.catalog_labels_action)
-        self.catalog_labels_action.setEnabled(False)
-
-        if len(self.image.marks) == 0:
-            self.marks_action.setEnabled(False)
-            self.labels_action.setEnabled(False)
-        else:
-            self.marks_action.setEnabled(True)
-            self.labels_action.setEnabled(True)
 
         ## Filter menu
-        filter_menu = menubar.addMenu("&Filter")
+        filter_menu = menubar.addMenu("Filter")
 
         ### Blur
-        blur_action = QAction('&Gaussian Blur...',self)
+        blur_action = QAction('Gaussian Blur...',self)
         blur_action.setShortcuts(['Ctrl+b'])
         blur_action.triggered.connect(self.blur_window.show)
         filter_menu.addAction(blur_action)
 
         ### Scale menus
         filter_menu.addSeparator()
-        stretch_menu = filter_menu.addMenu('&Stretch')
+        stretch_menu = filter_menu.addMenu('Stretch')
 
-        linear_action = QAction('&Linear', self)
+        linear_action = QAction('Linear', self)
         linear_action.setCheckable(True)
         linear_action.setChecked(True)
         stretch_menu.addAction(linear_action)
 
-        log_action = QAction('&Log', self)
+        log_action = QAction('Log', self)
         log_action.setCheckable(True)
         stretch_menu.addAction(log_action)
 
@@ -1185,14 +968,14 @@ class MainWindow(QMainWindow):
         log_action.triggered.connect(partial(log_action.setChecked,True))
 
         ### Interval menus
-        interval_menu = filter_menu.addMenu('&Interval')
+        interval_menu = filter_menu.addMenu('Interval')
 
-        minmax_action = QAction('&Min-Max', self)
+        minmax_action = QAction('Min-Max', self)
         minmax_action.setCheckable(True)
         minmax_action.setChecked(True)
         interval_menu.addAction(minmax_action)
 
-        zscale_action = QAction('&ZScale', self)
+        zscale_action = QAction('ZScale', self)
         zscale_action.setCheckable(True)
         interval_menu.addAction(zscale_action)
 
@@ -1204,23 +987,35 @@ class MainWindow(QMainWindow):
         zscale_action.triggered.connect(partial(minmax_action.setChecked,False))
         zscale_action.triggered.connect(partial(zscale_action.setChecked,True))
 
+        ### Marks Menu
+        self.mark_menu = MarkMenu(self)
+        self.mark_menu.setToolTipsVisible(True)
+        for path in io.markpaths():
+            self.mark_menu.menu_setup(path)
+
+        menubar.addMenu(self.mark_menu)
+
         ## Help menu
-        help_menu = menubar.addMenu('&Help')
+        help_menu = menubar.addMenu('Help')
 
         ### Controls window
-        controls_action = QAction('&Controls', self)
-        controls_action.setShortcuts(['F1'])
+        controls_action = QAction('Controls', self)
+#        controls_action.setShortcuts(['F1'])
+        if sys.platform == "darwin":
+            controls_action.setShortcuts(['Ctrl+/', 'F1'])  # Ctrl+/ as Mac-friendly fallback
+        else:
+            controls_action.setShortcuts(['F1'])
         controls_action.triggered.connect(self.controls_window.show)
         help_menu.addAction(controls_action)
 
         ### Documentation
-        docs_action = QAction('&Documentation', self)
+        docs_action = QAction('Documentation', self)
         docs_action.triggered.connect(partial(QDesktopServices.openUrl,QUrl(__docsurl__)))
         help_menu.addAction(docs_action)
 
         ### About window
         help_menu.addSeparator()
-        about_action = QAction('&About', self)
+        about_action = QAction('About', self)
         about_action.triggered.connect(self.about_window.show)
         help_menu.addAction(about_action)
         
@@ -1232,6 +1027,12 @@ class MainWindow(QMainWindow):
         self.move(center)
 
         self.controls_window.move(int(self.x()+self.width()*1.04),self.y())
+        self.controls_window.show()
+
+        self.settings_window.move(int(self.x()-self.width()*1.04), int(self.y()+self.height()*0.4))
+        self.settings_window.show()
+
+        self.welcome_window.show()
 
         # Initialize some data
         self.get_comment()
@@ -1242,16 +1043,13 @@ class MainWindow(QMainWindow):
     def __init_data__(self):
         """Initializes images."""
         
-        # Initialize output dictionary
-        self.images = io.load()
-        
-        self.favorite_list = io.loadfav()
-
-        # Find all images in image directory
+        self.images, self.imageless_marks = self.markfile.read(self.imagesfile.read())
+        self.favorite_list = self.favoritesfile.read()
 
         try: self.image.close()
         except: pass
         
+        # Find all images in image directory
         try:
             self.images, self.idx = io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
@@ -1266,6 +1064,13 @@ class MainWindow(QMainWindow):
             config.update()
             
             self.images, self.idx = io.glob(edited_images=self.images)
+            if len(self.images) < 1 and self.idx == 0:
+                while len(self.images) < 1:
+                    invalid_dir_msg = "The chosen directory does not contain compatible images. Please pick a new directory."
+                    invalid_dir_win = QMessageBox.information(None, "Image Marker", invalid_dir_msg)
+                    config.IMAGE_DIR = _open_ims()
+                    config.update()
+                    self.images, self.idx = io.glob(edited_images=self.images)
             self.image = self.images[self.idx]
             self.image.seek(self.frame)
             self.image.seen = True
@@ -1273,6 +1078,16 @@ class MainWindow(QMainWindow):
             if self.image.name not in self.order:
                 self.order.append(self.image.name)
 
+        # Add marks from imports
+        for path in io.markpaths():
+            if path != self.markfile.path:
+                try:
+                    self.images, imageless_marks = io.MarkFile(path).read(self.images)
+                    self.imageless_marks += imageless_marks
+                except Exception as e:
+                    print(f"""WARNING: {str(e).strip("'")} Skipping import.""")
+                    os.remove(path)
+    
     @property
     def interval(self): return self._interval_str
     @interval.setter
@@ -1289,13 +1104,30 @@ class MainWindow(QMainWindow):
         for img in self.images: img.stretch = value
         self.image.rescale()
 
+    def apply_scaling(self) -> None:
+        """Applies the currently active stretch/interval to all loaded images.
+
+        Freshly-globbed `Image` objects always start out with the default
+        stretch/interval, so this must be called after replacing `self.images`
+        (e.g. in `import_ims()` or `open()`) to keep newly loaded images
+        consistent with the currently selected Filter menu options.
+        """
+        for img in self.images:
+            img.interval = self._interval_str
+            img.stretch = self._stretch_str
+
     @property
     def blur_max(self):
         _blur_max = int((self.image.height+self.image.width)/20)
         _blur_max = 10*round(_blur_max/10)
         return max(10, _blur_max)
+    
+    def n_marks(self,path):
+        marks = [mark for mark in self.image.marks if mark.dst == path]
+        marks += [mark for mark in self.imageless_marks if mark.dst == path]
+        return len(marks)
 
-    def inview(self,x:Union[int,float],y:Union[int,float]):
+    def inview(self,x:int|float,y:int|float):
         """
         Checks if x and y are contained within the image.
 
@@ -1311,64 +1143,134 @@ class MainWindow(QMainWindow):
         True if the (x,y) is contained within the image, False otherwise.
         """
 
-        return (x>=0) and (x<=self.image.width-1) and (y>=0) and  (y<=self.image.height-1)
+        return (0 <= x) & (x <=self.image.width-1) & (0 <= y) & ( y <= self.image.height-1)
 
     # === Events ===
 
-    def keyPressEvent(self,event):
+    def keyPressEvent(self, a0):
         """Checks which keyboard button was pressed and calls the appropriate function."""
+
+        # Keybinds for show/hide mark file
+        modifiers = QApplication.keyboardModifiers()
+        alt = modifiers == Qt.KeyboardModifier.AltModifier
+        nomod = modifiers == Qt.KeyboardModifier.NoModifier
         
-        # Check if key is bound with marking the image
-        for group, binds in config.MARK_KEYBINDS.items():
-            if event.key() in binds: self.mark(group=group)
+        if alt:
+            toggle_mark_keys = [
+                Qt.Key.Key_M,Qt.Key.Key_1,Qt.Key.Key_2,
+                Qt.Key.Key_3,Qt.Key.Key_4,Qt.Key.Key_5,
+                Qt.Key.Key_6,Qt.Key.Key_7,Qt.Key.Key_8,
+                Qt.Key.Key_9
+            ]
 
-        if (event.keyCombination() == config.COPY_KEYBIND) and (PYQT_VERSION_STR[0] == '6'):
-            self.copy_to_clipboard()
+            paths = list(self.mark_menu.menus.keys())
+            
+            for i in range(len(paths)):
+                if a0.key() == toggle_mark_keys[i]:
+                    marks_action = self.mark_menu.marks_action(paths[i])
+                    marks_action.setChecked(not marks_action.isChecked())
+                    self.toggle_marks(paths[i])
 
-    def mousePressEvent(self,event):
+            if a0.key() == Qt.Key.Key_L:
+                labels_action = self.mark_menu.labels_action(paths[0])
+                labels_action.setChecked(not labels_action.isChecked())
+                self.toggle_mark_labels(paths[0])
+        
+        elif nomod:
+            # Check if key is bound with marking the image
+            for group, binds in config.MARK_KEYBINDS.items():
+                if a0.key() in binds: self.mark(group=group)
+
+    def mousePressEvent(self, a0):
         """Checks which mouse button was pressed and calls the appropriate function."""
 
+        #super().mousePressEvent(a0)
+
         modifiers = QApplication.keyboardModifiers()
-        leftbutton = event.button() == Qt.MouseButton.LeftButton
-        rightbutton = event.button() == Qt.MouseButton.RightButton
-        middlebutton = event.button() == Qt.MouseButton.MiddleButton
-        ctrl = modifiers == Qt.KeyboardModifier.ControlModifier
+        leftbutton = a0.button() == Qt.MouseButton.LeftButton
+        middlebutton = a0.button() == Qt.MouseButton.MiddleButton
+        alt = modifiers == Qt.KeyboardModifier.AltModifier
+        shift = modifiers == Qt.KeyboardModifier.ShiftModifier
         nomod = modifiers == Qt.KeyboardModifier.NoModifier
 
         # Check if key is bound with marking the image
         for group, binds in config.MARK_KEYBINDS.items():
-            if (event.button() in binds) and nomod: self.mark(group=group)
+            if (a0.button() in binds) and nomod: self.mark(group=group)
 
-        if middlebutton or (ctrl and leftbutton): self.image_view.center_cursor()
-
-        if rightbutton: self.del_marks()
-
-    def mouseMoveEvent(self, event):
+        if middlebutton or (alt and leftbutton): self.image_view.center_cursor()
+        if shift and leftbutton: self.del_usermarks(mode='cursor')
+        
+    def mouseMoveEvent(self, a0):
         """Operations executed when the mouse cursor is moved."""
 
+        super().mouseMoveEvent(a0)
         self.update_pos()
 
     def closeEvent(self, a0):
         self.update_comments()
+        self.save()
         self.about_window.close()
         self.blur_window.close()
         self.frame_window.close()
         self.controls_window.close()
         self.settings_window.close()
+        self.welcome_window.close()
         return super().closeEvent(a0)
 
     # === Actions ===
     def save(self) -> None:
         """Method for saving image data"""
-        io.save(self.date,self.images)
-        io.savefav(self.date,self.images,self.favorite_list)
+
+        self.markfile.save(self.images,self.imageless_marks)
+        self.imagesfile.save(self.images)
+        self.favoritesfile.save(self.favorite_list, self.images)
+
+    def export_image(self) -> None:
+        """Exports the current view (as zoomed/panned on screen), with any visible marks, to an image file."""
+
+        default_name = os.path.splitext(self.image.name)[0] + '_export.png'
+        default_path = os.path.join(config.SAVE_DIR, default_name)
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, 'Export Image', default_path,
+            'PNG (*.png);;JPEG (*.jpg *.jpeg);;BMP (*.bmp);;TIFF (*.tiff *.tif)'
+        )
+
+        if path != '':
+            pixmap = self.image_view.viewport().grab()
+            if not pixmap.save(path):
+                QMessageBox.warning(self, 'Export Image', f'Failed to save image to {path}.')
+
+        # A native save dialog can leave the main window inactive on some platforms,
+        # which blocks further mouse/key input until focus is restored explicitly.
+        self.activateWindow()
+        self.centralWidget().setFocus()
+
+    def export_votable(self) -> None:
+        """Exports marks with valid sky (RA/Dec) coordinates to a VOTable file."""
+
+        default_path = os.path.join(config.SAVE_DIR, f'{config.USER}_marks.xml')
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, 'Export Marks as VOTable', default_path,
+            'VOTable (*.xml *.vot)'
+        )
+
+        if path != '':
+            try:
+                self.markfile.save_votable(path, self.images, self.imageless_marks)
+            except Exception as e:
+                QMessageBox.warning(self, 'Export Marks as VOTable', f'Failed to save VOTable: {e}')
+
+        self.activateWindow()
+        self.centralWidget().setFocus()
 
     def open(self) -> None:
         """Method for the open save directory dialog."""
 
         open_msg = 'This will save all current data in the current save directory and begin saving new data in the newly selected save directory.\
             Customized configuration file data will be kept if there is no available configuration file in the new save directory.\n\nAre you sure you want to continue?'
-        reply = QMessageBox.question(self, 'WARNING', 
+        reply = QMessageBox.question(self, 'WARNING',
                         open_msg, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.No: return
@@ -1380,8 +1282,13 @@ class MainWindow(QMainWindow):
         group_names_old = config.GROUP_NAMES.copy()
 
         config.SAVE_DIR = save_dir
-        config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER = config.read()
+        config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER, left_click_group = config.read()
+        config.set_left_click_group(left_click_group)
         config.update()
+
+        self.markfile = io.MarkFile(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv'))
+        self.imagesfile = io.ImagesFile()
+        self.favoritesfile = io.FavoritesFile()
 
         after_image_dir = config.IMAGE_DIR
 
@@ -1404,10 +1311,13 @@ class MainWindow(QMainWindow):
             if image.duplicate == True: marks = image.dupe_marks
             else: marks = image.marks
             for mark in marks:
-                if mark.label.lineedit.text() in group_names_old:
-                    mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
+                try:
+                    if mark.label.lineedit.text() in group_names_old:
+                        mark.label.lineedit.setText(config.GROUP_NAMES[mark.g])
+                except: pass
 
         self.__init_data__()
+        self.apply_scaling()
         self.settings_window.__init__(self)
         self.update_images()
         self.image_view.zoomfit()
@@ -1417,8 +1327,21 @@ class MainWindow(QMainWindow):
         self.update_comments()
         self.update_favorites()
         self.controls_window.update_text()
+        self.export_votable_action.setEnabled(any(img.wcs is not None for img in self.images))
 
-    def open_ims(self) -> None:
+    def import_ims_dialog(self, _image_dir) -> str:
+        dialog = DefaultDialog(config.SAVE_DIR)
+        dialog.setWindowTitle("Open image directory")
+        result = dialog.exec()
+
+        if result == 1:
+            image_dir = dialog.selectedFiles()[0]
+        else:
+            image_dir = None
+        
+        return image_dir
+
+    def import_ims(self) -> None:
         """Method for the open image directory dialog."""
 
         open_msg = 'This will overwrite all data associated with your current images, including all marks.\n\nAre you sure you want to continue?'
@@ -1426,58 +1349,75 @@ class MainWindow(QMainWindow):
                         open_msg, QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.No: return
-
-        image_dir = QFileDialog.getExistingDirectory(self, 'Open image directory', config.SAVE_DIR)
-        if image_dir == '': return
-
-        _image_dir = config.IMAGE_DIR
-        config.IMAGE_DIR = image_dir
-
-        del self.order; del self.duplicates_seen; del self.images
-        gc.collect()
-        self.order = []
-        self.images_seen_since_duplicate_count = 0
-        self.duplicates_seen = []
+        _image_dir = os.path.normpath(config.IMAGE_DIR)
         
-        self.images, self.idx = io.glob(edited_images=[])
+        new_image_dir = self.import_ims_dialog(_image_dir)
+
+        if new_image_dir == _image_dir or new_image_dir == None:
+            config.IMAGE_DIR = _image_dir
+            config.update()
+            return
+        
+        invalid_dir_msg = "The chosen directory does not contain compatible images. Please pick a new directory."
+
+        config.IMAGE_DIR = new_image_dir
+        new_images, new_idx = io.glob(edited_images=[])
+
+        while len(new_images) < 1:
+            invalid_dir_win = QMessageBox.information(None, "Image Marker", invalid_dir_msg)
+            new_image_dir = self.import_ims_dialog(_image_dir)
+            if new_image_dir == _image_dir or new_image_dir == None:
+                config.IMAGE_DIR = _image_dir
+                config.update()
+                return
+            else:
+                config.IMAGE_DIR = new_image_dir
+                new_images, new_idx = io.glob(edited_images=[])
+
+        if new_image_dir != _image_dir:
+            del self.order; del self.duplicates_seen; del self.images
+            gc.collect()
+            self.order = []
+            self.images_seen_since_duplicate_count = 0
+            self.duplicates_seen = []
+
+            self.images, self.idx = new_images, new_idx
+        
         self.N = len(self.images)
 
-        if self.N == 0:
-            config.IMAGE_DIR = _image_dir
-            return
-
         config.update()
+        self.apply_scaling()
         self.update_images()
         self.update_marks()
         self.get_comment()
         self.update_categories()
         self.update_comments()
+        self.save()
+        self.export_votable_action.setEnabled(any(img.wcs is not None for img in self.images))
 
-    def open_catalog(self, test=False):
+    def import_markfile(self, **kwargs):
         """Method for opening a catalog file."""
-        if not test:
-            self.catalog_path = QFileDialog.getOpenFileName(self, 'Open catalog', config.SAVE_DIR, 'Text files (*.txt *.csv)')[0]
-            if self.catalog_path == '': return
-        
-        catalog = Catalog(self.catalog_path)
-
-        if catalog and not test:
-            self.color_picker_window = ColorPickerWindow(self)
-            self.color_picker_window.show()
-            self.color_picker_window.exec()
-            
-            if (self.picked_color == None):
-                return
-            else:
-                catalog.color = self.picked_color
-                self.catalogs.append(catalog)
-                self.update_catalogs()
+        if 'src' not in kwargs:
+            src = QFileDialog.getOpenFileName(self, 'Import mark file', config.SAVE_DIR, 'Text files (*.txt *.csv)')[0]
+            if src == '': return None
         else:
-            self.picked_color = QColor("Yellow")
-            catalog.color = self.picked_color
-            self.catalogs.append(catalog)
-            self.update_catalogs()
+            src = kwargs['src']
+        
+        dst = os.path.join(config.SAVE_DIR,'imports')
+        mark_dst = shutil.copy(src,dst)
+        
+        try:
+            self.images, imageless_marks = io.MarkFile(mark_dst).read(self.images)
+            self.imageless_marks += imageless_marks
 
+            self.update_marks()
+
+        except Exception as e:
+            print(f"""WARNING: {str(e).strip("'")} Skipping import.""")
+            os.remove(mark_dst)
+        
+        self.update_mark_menu()
+            
     def favorite(self,state) -> None:
         """Favorite the current image."""
 
@@ -1485,12 +1425,12 @@ class MainWindow(QMainWindow):
         if state == Qt.CheckState.PartiallyChecked:
             self.favorite_box.setIcon(QIcon(HEART_SOLID))
             self.favorite_list.append(self.image.name)
-            io.savefav(self.date,self.images,self.favorite_list)
+            self.favoritesfile.save(self.favorite_list,self.images)
         else:
             self.favorite_box.setIcon(QIcon(HEART_CLEAR))
             if self.image.name in self.favorite_list: 
                 self.favorite_list.remove(self.image.name)
-            io.savefav(self.date,self.images,self.favorite_list)
+            self.favoritesfile.save(self.favorite_list,self.images)
 
     def categorize(self,i:int) -> None:
         """Categorize the current image."""
@@ -1501,41 +1441,28 @@ class MainWindow(QMainWindow):
             self.image.categories.remove(i)
         self.save()
 
-    def calculate_pix_dist(self,x1,y1,x2,y2):
-        dist = np.sqrt(((x2-x1)**2) + ((y2-y1)**2))
-        return dist
-
     def copy_to_clipboard(self):
 
-        if self.image.wcs == None:
-            has_wcs = False
-        else: 
-            has_wcs = True
+        has_wcs = self.image.wcs != None
 
         if self.image.duplicate == True:
             marks = self.image.dupe_marks
         else:
             marks = self.image.marks
-        
-        x_pos = self.image_view.mouse_pix_pos(correction=False).x()
-        y_pos = self.image_view.mouse_pix_pos(correction=False).y()
-        pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
-        selected_items = [item for item in marks 
-                            if item is self.image_scene.itemAt(pix_pos, item.transform())]
-        selected_items_dist = [np.abs(self.calculate_pix_dist(x_pos, y_pos, item.center.x(), item.center.y())) for item in selected_items]
 
-        try:
-            mark_to_copy = selected_items[np.argmin(selected_items_dist)]
+        selected_marks = [mark for mark in marks if mark.isSelected()]
 
-        except:
-            return
+        if len(selected_marks) == 0:
+            return 
+        else:
+            mark_to_copy = selected_marks[-1]
 
         if has_wcs:
             ra, dec = mark_to_copy.wcs_center
         
-            if self.settings_window.show_sexigesimal_box.isChecked():
-                ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
-                dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
+            if self.settings_window.show_sexagesimal_box.isChecked():
+                ra_h,ra_m,ra_s = ra.hms
+                dec_d,dec_m,dec_s = dec.dms
 
                 ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
                 dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
@@ -1550,7 +1477,7 @@ class MainWindow(QMainWindow):
             string_copy = ra_str + ", " + dec_str
 
         else:
-            x, y = str(mark_to_copy.center.x()), str(mark_to_copy.center.y())
+            x, y = str(mark_to_copy.center.x), str(mark_to_copy.center.y)
             string_copy = x + ", " + y
 
         self.clipboard.setText(string_copy)
@@ -1574,10 +1501,15 @@ class MainWindow(QMainWindow):
         # Mark if hovering over image
         if config.GROUP_MAX[group - 1] == 'None': limit = inf
         else: limit = int(config.GROUP_MAX[group - 1])
-
+        
         marks_in_group = [m for m in marks if m.g == group]
 
-        if len(marks) >= 1: marks[-1].label.enter()
+        try: 
+            if len(marks) >= 1: marks[-1].label.enter()
+        except: pass
+
+        marks_action = self.mark_menu.marks_action(self.markfile.path)
+        labels_action = self.mark_menu.labels_action(self.markfile.path)
 
         if self.inview(x,y) and ((len(marks_in_group) < limit) or limit == 1):            
             mark = self.image_scene.mark(x,y,group=group)
@@ -1587,11 +1519,14 @@ class MainWindow(QMainWindow):
                 self.image_scene.rmmark(prev_mark)
                 marks.remove(prev_mark)
                 marks.append(mark)
+            
+            elif (len(marks_in_group) > limit) and limit == 1:
+                self.image_scene.rmmark(mark)
 
             else: marks.append(mark)
 
-            marks_enabled = self.marks_action.isChecked()
-            labels_enabled = self.labels_action.isChecked()
+            marks_enabled = marks_action.isChecked()
+            labels_enabled = labels_action.isChecked()
 
             if labels_enabled: mark.label.show()
             else: mark.label.hide()
@@ -1606,15 +1541,15 @@ class MainWindow(QMainWindow):
             self.save()
         
         if len(marks) == 0:
-            self.marks_action.setEnabled(False)
-            self.labels_action.setEnabled(False)
+            marks_action.setEnabled(False)
+            labels_action.setEnabled(False)
         else:
-            self.marks_action.setEnabled(True)
-            self.labels_action.setEnabled(True)
+            marks_action.setEnabled(True)
+            labels_action.setEnabled(True)
 
     def shift(self,delta:int):
         """Move back or forward *delta* number of images."""
-
+        
         # Increment the index
         self.idx += delta
         if self.idx > self.N-1:
@@ -1625,10 +1560,11 @@ class MainWindow(QMainWindow):
         self.update_comments()
         self.update_images()
         self.update_marks()
-        self.update_catalogs()
         self.get_comment()
         self.update_categories()
         self.update_favorites()
+
+        self.save()
 
     def shiftframe(self,delta:int):
         self.image.seek(self.frame+delta)
@@ -1648,11 +1584,36 @@ class MainWindow(QMainWindow):
             marks = self.image.dupe_marks
         else:
             marks = self.image.marks
+
+        marks_action = self.mark_menu.marks_action(self.markfile.path)
+        labels_action = self.mark_menu.labels_action(self.markfile.path)
+
         if len(marks) > 0:
-            self.image.undone_marks.append(marks[-1])
-            self.image_scene.rmmark(marks[-1])
-            marks.remove(marks[-1])
-        
+            mark = marks[-1]
+            self.image.undone_marks.append(mark)
+            self.image_scene.rmmark(mark)
+            marks.remove(mark)
+
+            marks_enabled = marks_action.isChecked()
+            labels_enabled = labels_action.isChecked()
+
+            if labels_enabled: mark.label.show()
+            else: mark.label.hide()
+
+            if marks_enabled: 
+                mark.show()
+                if labels_enabled: mark.label.show()
+            else: 
+                mark.hide()
+                mark.label.hide()
+                
+        if len(marks) == 0:
+            marks_action.setEnabled(False)
+            labels_action.setEnabled(False)
+        else:
+            marks_action.setEnabled(True)
+            labels_action.setEnabled(True)
+
         self.save()
 
     def redo_prev_mark(self):
@@ -1660,10 +1621,54 @@ class MainWindow(QMainWindow):
             marks = self.image.dupe_marks
         else:
             marks = self.image.marks
-        if len(self.image.undone_marks) > 0:
-            self.image_scene.mark(self.image.undone_marks[-1])
-            marks.append(self.image.undone_marks[-1])
-            self.image.undone_marks.remove(self.image.undone_marks[-1])
+
+        try:
+            group = self.image.undone_marks[-1].g
+        except:
+            return
+
+        marks_in_group = [m for m in marks if m.g == group]
+
+        if config.GROUP_MAX[group - 1] == 'None': limit = inf
+        else: limit = int(config.GROUP_MAX[group - 1])
+
+        marks_action = self.mark_menu.marks_action(self.markfile.path)
+        labels_action = self.mark_menu.labels_action(self.markfile.path)
+
+        if (len(self.image.undone_marks) > 0) and ((len(marks_in_group) < limit) or limit == 1):
+            mark = self.image.undone_marks[-1]
+            self.image_scene.mark(mark)
+
+            if (limit == 1) and (len(marks_in_group) == 1):
+                prev_mark = marks_in_group[0]
+                self.image_scene.rmmark(prev_mark)
+                marks.remove(prev_mark)
+                marks.append(mark)
+                self.image.undone_marks.remove(mark)
+
+            else:
+                marks.append(mark)
+                self.image.undone_marks.remove(mark)
+
+            marks_enabled = marks_action.isChecked()
+            labels_enabled = labels_action.isChecked()
+
+            if labels_enabled: mark.label.show()
+            else: mark.label.hide()
+
+            if marks_enabled: 
+                mark.show()
+                if labels_enabled: mark.label.show()
+            else: 
+                mark.hide()
+                mark.label.hide()
+
+        if len(marks) == 0:
+            marks_action.setEnabled(False)
+            labels_action.setEnabled(False)
+        else:
+            marks_action.setEnabled(True)
+            labels_action.setEnabled(True)
 
         self.save()
 
@@ -1679,9 +1684,9 @@ class MainWindow(QMainWindow):
             try: ra, dec = self.image.wcs.all_pix2world([[_x, _y]], 0)[0]
             except: ra, dec = nan, nan
 
-            if self.settings_window.show_sexigesimal_box.isChecked():
-                ra_h,ra_m,ra_s = Angle(ra, unit='deg').hms
-                dec_d,dec_m,dec_s = Angle(dec, unit='deg').dms
+            if self.settings_window.show_sexagesimal_box.isChecked():
+                ra_h,ra_m,ra_s = Angle(ra).hms
+                dec_d,dec_m,dec_s = Angle(dec).dms
 
                 ra_str = rf'{np.abs(ra_h):02.0f}h {np.abs(ra_m):02.0f}m {np.abs(ra_s):05.2f}s'
                 dec_str = f'{np.abs(dec_d):02.0f}° {np.abs(dec_m):02.0f}\' {np.abs(dec_s):05.2f}\"'.replace('-', '')
@@ -1750,7 +1755,6 @@ class MainWindow(QMainWindow):
         self.frame = self.image.frame
         self.image = self.images[self.idx]
         self.image.seek(self.frame)
-        self.image.seen = True
         self.image_scene.update_image(self.image)
         if self.image.name not in self.order:   # or self.image.duplicate == True: This could be added to preserve order when duplicates are being inserted, but the use case for someone randomizing
                 self.order.append(self.image.name)   # who wants to keep the order if duplicates have been seen and then they turn off and back on randomization is quite low
@@ -1776,22 +1780,11 @@ class MainWindow(QMainWindow):
         self.blur_window.slider.setMaximum(self.blur_max)
 
         # Update image label
-        self.image_label.setText(f'{self.image.name} ({self.idx+1} of {self.N})')
+        seen_text = "<span style='color: #3CB043;'><b>(seen)</b></span> " if self.image.seen else ""
+        self.image_label.setText(f"{seen_text}{self.image.name} ({self.idx+1} of {self.N})")
 
         # Update menus
-        if len(self.image.marks) == 0:
-            self.marks_action.setEnabled(False)
-            self.labels_action.setEnabled(False)
-        else:
-            self.marks_action.setEnabled(True)
-            self.labels_action.setEnabled(True)
-
-        if len(self.image.cat_marks) == 0:
-            self.catalogs_action.setEnabled(False)
-            self.catalog_labels_action.setEnabled(False)
-        else:
-            self.catalogs_action.setEnabled(True)
-            self.catalog_labels_action.setEnabled(True)
+        self.update_mark_menu()
 
         if self.image.n_frames > 1:
             self.frame_action.setEnabled(True)
@@ -1799,14 +1792,13 @@ class MainWindow(QMainWindow):
             self.frame_action.setEnabled(False)
 
         if self.image.wcs == None:
-            self.settings_window.show_sexigesimal_box.setEnabled(False)
+            self.settings_window.show_sexagesimal_box.setEnabled(False)
         else:
-            self.settings_window.show_sexigesimal_box.setEnabled(True)
+            self.settings_window.show_sexagesimal_box.setEnabled(True)
 
-        self.toggle_marks()
-        self.toggle_mark_labels()
-        self.toggle_catalogs()
-        self.toggle_catalog_labels()
+        # Set image as seen
+        self.image.seen = True
+
     
     def update_comments(self):
         """Updates image comment with the contents of the comment box."""
@@ -1815,7 +1807,6 @@ class MainWindow(QMainWindow):
         if not comment: comment = 'None'
 
         self.image.comment = comment
-        self.save()
 
     def get_comment(self):
         """If the image has a comment, sets the text of the comment box to the image's comment."""
@@ -1833,51 +1824,145 @@ class MainWindow(QMainWindow):
         for i in self.image.categories:
             self.category_boxes[i-1].setChecked(True)
 
-    def update_catalogs(self):
-        for mark in self.image.cat_marks: 
-            if mark not in self.image_scene.items():
-                self.image_scene.mark(mark)
-
-        for catalog in self.catalogs:
-            color = catalog.color
-            size_unit = catalog.size_unit
-            size = catalog.size
-            if catalog.path not in self.image.catalogs:
-                for label, a, b in zip(catalog.labels,catalog.alphas,catalog.betas):
-                    if catalog.coord_sys == 'wcs':
-                        ra, dec = a, b
-                        try:
-                            mark_coord_cart = self.image.wcs.all_world2pix([[ra,dec]], 0)[0]
-                            x, y = mark_coord_cart[0], self.image.height - mark_coord_cart[1]
-                            if self.inview(x,y):
-                                mark = self.image_scene.mark(x, y, shape='rect', text=label, picked_color=color, size_unit=size_unit, size=size)
-                                self.image.cat_marks.append(mark)    
-                        except: pass
-                    else:
-                        x, y = a, b
-                        if self.inview(x,y):
-                            mark = self.image_scene.mark(x, y, shape='rect', text=label, picked_color=color, size_unit=size_unit, size=size)
-                            self.image.cat_marks.append(mark)
-                self.image.catalogs.append(catalog.path)
-
-        if len(self.image.cat_marks) > 0:
-            self.catalogs_action.setEnabled(True)
-            self.catalog_labels_action.setEnabled(True)
-        else:
-            self.catalogs_action.setEnabled(False)
-            self.catalog_labels_action.setEnabled(False)
-
     def update_marks(self):
         """Redraws all marks in image."""
-        
+
+        # Update regular marks
         if self.image.duplicate == True:
             marks = self.image.dupe_marks
         else:
             marks = self.image.marks
 
-        for mark in marks: self.image_scene.mark(mark)
+        for mark in marks: 
+            if mark not in self.image_scene.items():
+                self.image_scene.mark(mark)
 
-    def del_marks(self,del_all=False):
+        # Update imageless marks
+        if len(self.imageless_marks) > 0:
+
+            # get imageless marks with coordinates in ra/dec
+            marks_world = [mark for mark in self.imageless_marks if hasattr(mark,'_wcs_center')]
+            
+            # get imageless marks with coordinates in x/y
+            marks_pix = [mark for mark in self.imageless_marks if hasattr(mark,'_center') ]
+
+            # create list of ras/decs
+            ra = [float(mark.wcs_center.ra) for mark in marks_world]
+            dec = [float(mark.wcs_center.dec) for mark in marks_world]
+
+            # create list of x/y
+            x = [mark.center.x for mark in marks_pix]
+            y = [mark.center.y for mark in marks_pix]
+
+            # create pixcoords, converting ras/decs into x/y
+            world_pix = WorldCoord(ra,dec).topix(self.image.wcs)
+            pix_pix = PixCoord(x,y)
+
+            # find which coordinates are inside the image
+            world_filter = self.inview(world_pix.x,world_pix.y)
+            pix_filter = self.inview(pix_pix.x,pix_pix.y)
+
+            # add marks to image scene if it is inside the image
+            for mark, viewable in zip(marks_world, world_filter):
+                if viewable and (mark not in self.image_scene.items()):
+                    mark.image = self.image
+                    self.image_scene.mark(mark)
+                    mark.image = None
+
+            for mark, viewable in zip(marks_pix, pix_filter):
+                if viewable and (mark not in self.image_scene.items()):
+                    mark.image = self.image
+                    self.image_scene.mark(mark)
+                    mark.image = None
+            
+            self.update_mark_menu()
+
+    def update_mark_menu(self):
+        for path in io.markpaths():
+            if path not in self.mark_menu.menus:
+                self.mark_menu.menu_setup(path)
+            else:
+                self.mark_menu.update_menu(path)
+                self.toggle_marks(path)
+                self.toggle_mark_labels(path)
+
+        menu_paths = self.mark_menu.menus.copy().keys()
+        for path in menu_paths:
+            if path not in io.markpaths():
+                del self.mark_menu.menus[path]
+
+    def update_colors(self,path):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            config.DEFAULT_COLORS[path] = color
+
+            for item in self.image_scene.items():
+                if hasattr(item,'dst'):
+                    if (item.dst == path) and (item.g == 0):
+                        pen = item.pen()
+                        pen.setColor(color)
+                        item.setPen(pen)
+                        item.label.lineedit.setStyleSheet(
+                            f"""background-color: rgba(0,0,0,0);
+                                border: none; 
+                                color: rgba{color.getRgb()}"""
+                        )
+                        
+            self.mark_menu.update_color(path)
+                
+    def del_markfile(self, path):
+        """Deletes a markfile."""
+
+        if path == self.markfile.path:
+            if self.image.duplicate == True:
+                marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
+            else:
+                marks = [mark for mark in self.image.marks if mark.dst == path]
+
+            for mark in marks:
+                self.image.undone_marks.append(mark)
+
+                if mark in self.image_scene.items():
+                    self.image_scene.rmmark(mark)
+                
+                if mark in self.image.marks:
+                    self.image.marks.remove(mark)
+
+                if mark in self.image.dupe_marks:
+                    self.image.dupe_marks.remove(mark)
+        
+        else:
+            for image in self.images:
+                if image.duplicate == True:
+                    marks = [mark for mark in image.dupe_marks if os.path.samefile(mark.dst, path)]
+                    
+                else:
+                    marks = [mark for mark in image.marks if os.path.samefile(mark.dst, path)]
+
+                for mark in marks:
+                    if mark in self.image_scene.items():
+                        self.image_scene.rmmark(mark)
+
+                    if mark in image.marks:
+                        image.marks.remove(mark)
+                    
+                    if mark in image.dupe_marks:
+                        image.dupe_marks.remove(mark)
+
+            os.remove(path)
+                    
+        imageless_marks = [mark for mark in self.imageless_marks if mark.dst == path]            
+
+        for mark in imageless_marks:
+            if mark in self.image_scene.items():
+                self.image_scene.rmmark(mark)
+            self.imageless_marks.remove(mark)
+
+        self.update_mark_menu()
+        
+        self.save()
+    
+    def del_usermarks(self,mode='selected'):
         """Deletes marks, either the selected one or all."""
         
         if self.image.duplicate == True:
@@ -1885,42 +1970,24 @@ class MainWindow(QMainWindow):
         else:
             marks = self.image.marks
 
-        if not del_all:
+        if mode == 'all':
+            selected_marks = [mark for mark in marks if mark.dst == self.markfile.path]
+        elif mode == 'selected': 
+            selected_marks = [mark for mark in marks 
+                              if (mark.dst == self.markfile.path) and mark.isSelected()]
+        elif mode == 'cursor':
             pix_pos = self.image_view.mouse_pix_pos(correction=False).toPointF()
-            selected_items = [item for item in marks 
-                              if item is self.image_scene.itemAt(pix_pos, item.transform())]
-        else: selected_items = marks.copy()
-
-        for item in selected_items:
-            self.image.undone_marks.append(item)
-            self.image_scene.rmmark(item)
-            marks.remove(item)
+            selected_marks = [mark for mark in marks if (mark is self.image_scene.itemAt(pix_pos, mark.transform()))
+                              and (mark.dst == self.markfile.path)]
+            
+        for mark in selected_marks:
+            self.image.undone_marks.append(mark)
+            self.image_scene.rmmark(mark)
+            marks.remove(mark)
         
-        if len(marks) == 0:
-            self.marks_action.setEnabled(False)
-            self.labels_action.setEnabled(False)
+        self.update_mark_menu()
             
         self.save()
-
-    def del_catalog_marks(self):
-        self.catalogs.clear()
-        
-        # For current image scene
-        catalog_marks_current = self.image.cat_marks.copy()
-        for cat_mark in catalog_marks_current:
-            self.image_scene.rmmark(cat_mark)
-
-        for image in self.images:
-            catalog_marks_global = image.cat_marks.copy()
-            image.catalogs.clear()
-            for cat_mark in catalog_marks_global:
-                try:
-                    image.cat_marks.remove(cat_mark)
-                except: pass
-
-        gc.collect()
-        self.catalogs_action.setEnabled(False)
-        self.catalog_labels_action.setEnabled(False)
 
     def toggle_randomize(self,state):
         """Updates the config file for randomization and reloads unseen images."""
@@ -1950,67 +2017,42 @@ class MainWindow(QMainWindow):
         self.update_categories()
         self.update_comments()
 
-    def toggle_marks(self):
+    def toggle_marks(self,path):
         """Toggles whether or not marks are shown."""
 
         if self.image.duplicate == True:
-            marks = self.image.dupe_marks
+            marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
         else:
-            marks = self.image.marks
+            marks = [mark for mark in self.image.marks if mark.dst == path]
 
-        marks_enabled = self.marks_action.isChecked()
-        labels_enabled = self.labels_action.isChecked()
+        marks += [mark for mark in self.imageless_marks if (mark.dst == path)]
+
+        marks_enabled = self.mark_menu.marks_action(path).isChecked()
+        labels_enabled = self.mark_menu.labels_action(path).isChecked()
 
         for mark in marks:
             if marks_enabled: 
                 mark.show()
-                self.labels_action.setEnabled(True)
+                self.mark_menu.labels_action(path).setEnabled(True)
                 if labels_enabled: mark.label.show()
             else: 
                 mark.hide()
                 mark.label.hide()
-                self.labels_action.setEnabled(False)
+                self.mark_menu.labels_action(path).setEnabled(False)
 
-    def toggle_mark_labels(self):
+    def toggle_mark_labels(self,path):
         """Toggles whether or not mark labels are shown."""
 
         if self.image.duplicate == True:
-            marks = self.image.dupe_marks
+            marks = [mark for mark in self.image.dupe_marks if mark.dst == path]
         else:
-            marks = self.image.marks
+            marks = [mark for mark in self.image.marks if mark.dst == path]
 
-        marks_enabled = self.marks_action.isChecked()
-        labels_enabled = self.labels_action.isChecked()
+        marks += [mark for mark in self.imageless_marks if mark.dst == path]
+
+        marks_enabled = self.mark_menu.marks_action(path).isChecked()
+        labels_enabled = self.mark_menu.labels_action(path).isChecked()
 
         for mark in marks:
             if marks_enabled and labels_enabled: mark.label.show()
             else: mark.label.hide()
-
-    def toggle_catalogs(self):
-        """Toggles whether or not catalogs are shown."""
-
-        catalogs_enabled = self.catalogs_action.isChecked()
-        catalog_labels_enabled = self.catalog_labels_action.isChecked()
-
-        for mark in self.image.cat_marks:
-            if catalogs_enabled:
-                mark.show()
-                self.catalog_labels_action.setEnabled(True)
-                if catalog_labels_enabled:
-                    mark.label.show()
-            else:
-                mark.hide()
-                mark.label.hide()
-                self.catalog_labels_action.setEnabled(False)
-
-    def toggle_catalog_labels(self):
-        """Toggles whether or not catalog labels are shown."""
-
-        catalogs_enabled = self.catalogs_action.isChecked()
-        catalog_labels_enabled = self.catalog_labels_action.isChecked()
-
-        for mark in self.image.cat_marks:
-            if catalogs_enabled and catalog_labels_enabled:
-                mark.label.show()
-            else:
-                mark.label.hide()

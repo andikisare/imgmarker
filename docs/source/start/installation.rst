@@ -3,7 +3,7 @@ Installation
 
 .. Important::
     - It is recommended that you create a Python environment for Image Marker using a tool like `Anaconda <https://anaconda.org/>`_.
-    - Image Marker was developed using Python 3.12, so we recommend an environment with this Python version.
+    - Image Marker was developed using Python 3.12, so we recommend an environment with this Python version. Python versions 3.10-3.13 have been validated to work.
     - Installing Image Marker automatically installs Python dependencies in the environment.
     - Executables **do not** install Image Marker, instead they are run directly, and thus do not need a Python environment to run in.
 

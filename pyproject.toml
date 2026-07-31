@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "imgmarker"
 readme = "README.rst"
+requires-python = ">=3.10, <3.14"
 dynamic = [
   "version",
 ]
@@ -14,11 +15,13 @@ dependencies = [
   "pillow>=10.4.0",
   "PyQt6>=6.7.1",
   "scipy>=1.10.1",
+  "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'",
 ]
 
 authors = [
   {name = "Andi Kisare", email = "akisare@outlook.com"},
-  {name = "Ryan Walker", email = "astrorya@umich.edu"}
+  {name = "Ryan Walker", email = "astrorya@umich.edu"}, 
+  {name = "Lindsey Bleem", email = "lbleem@anl.gov"}
 ]
 
 description = "A package for marking objects in a series of images"
@@ -34,12 +37,12 @@ Issues = "https://github.com/andikisare/imgmarker/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["imgmarker","imgmarker.gui","imgmarker.image","imgmarker.tests"]
+include = ["imgmarker","imgmarker.coordinates","imgmarker.gui","imgmarker.image","imgmarker.tests"]
 
 [tool.setuptools.package-data]
 imgmarker = ["*.ico"]
 
 [project.scripts]
-imgmarker = "imgmarker.__init__:main"
+imgmarker = "imgmarker.__main__:run"
 
 
