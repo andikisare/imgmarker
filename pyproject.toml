@@ -26,7 +26,7 @@ authors = [
 
 description = "A package for marking objects in a series of images"
 
-license = {file = "LICENSE"}
+license = "MIT"
 
 [tool.setuptools.dynamic]
 version = { attr = "imgmarker.__version__" }
