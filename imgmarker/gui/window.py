@@ -455,16 +455,17 @@ class ControlsWindow(QWidget):
         
     def update_text(self):
         # Lists for keybindings
-        actions_list = ['Next','Back','Change frame','Delete mark','Delete selected marks','Enter comment', 'Focus', 'Zoom in/out', 'Zoom to fit', 'Copy selected mark coordinates' ,'Favorite']
+        actions_list = ['Next','Back','Change frame','Delete mark','Delete selected marks','Enter comment', 'Focus', 'Zoom in/out', 'Zoom to fit', 'Copy selected mark coordinates' ,'Favorite', 'Show/hide your marks', 'Show/hide an imported mark file']
         group_list = [f'Group \"{group}\"' for group in config.GROUP_NAMES[1:]]
         category_list = [f'Category \"{category}\"' for category in config.CATEGORY_NAMES[1:]]
         actions_list = group_list + category_list + actions_list
         ctrl = 'Cmd' if OS == 'Darwin' else 'Ctrl'
+        alt = 'Opt' if OS == 'Darwin' else 'Alt'
         focus_button = 'Middle Click/Opt-Click' if OS == 'Darwin' else 'Middle Click'
         zoom_button = 'Scroll Wheel/2 finger scroll' if OS == 'Darwin' else 'Scroll Wheel'
         group_buttons = [str(i) for i in range(1,10)]
         group_buttons[config.LEFT_CLICK_GROUP - 1] += ' OR Left Click'
-        buttons_list = group_buttons + [f'{ctrl}+1', f'{ctrl}+2', f'{ctrl}+3', f'{ctrl}+4', f'{ctrl}+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', focus_button, zoom_button, f'{ctrl}+0', f'{ctrl}+C', 'F']
+        buttons_list = group_buttons + [f'{ctrl}+1', f'{ctrl}+2', f'{ctrl}+3', f'{ctrl}+4', f'{ctrl}+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', focus_button, zoom_button, f'{ctrl}+0', f'{ctrl}+C', 'F', f'{alt}+M', f'{alt}+1 through {alt}+9']
         
         items = [ (action, button) for action, button in zip(actions_list, buttons_list) ]
 
@@ -590,6 +591,13 @@ class MarkMenu(QMenu):
         self.mainwindow = mainwindow
         self.setTitle('Mark')
 
+    def toggle_shortcut(self,path:str) -> str:
+        """Returns the display text for the hotkey that toggles this mark file's visibility."""
+
+        alt = 'Opt' if OS == 'Darwin' else 'Alt'
+        index = list(self.menus.keys()).index(path)
+        return f'{alt}+M' if index == 0 else f'{alt}+{index}'
+
     def menu_setup(self,path:str):
         file = path.split(os.sep)[-1]
 
@@ -599,14 +607,16 @@ class MarkMenu(QMenu):
             self.menus[path] = QMenu(f'{file}')
 
         # Toggle marks
-        marks_action = QAction('Show Marks', self)
+        marks_action = QAction(f'Show Marks ({self.toggle_shortcut(path)})', self)
+        marks_action.setObjectName('marks_action')
         marks_action.setCheckable(True)
         marks_action.setChecked(True)
         marks_action.triggered.connect(partial(self.mainwindow.toggle_marks,path))
         self.menus[path].addAction(marks_action)
-        
+
         ### Toggle mark labels menu
         labels_action = QAction('Show Mark Labels', self)
+        labels_action.setObjectName('labels_action')
         labels_action.setCheckable(True)
         labels_action.setChecked(True)
         labels_action.triggered.connect(partial(self.mainwindow.toggle_mark_labels,path))
@@ -648,6 +658,8 @@ class MarkMenu(QMenu):
         self.addMenu(self.menus[path])
 
     def update_menu(self,path:str):
+        self.marks_action(path).setText(f'Show Marks ({self.toggle_shortcut(path)})')
+
         if self.mainwindow.n_marks(path) == 0:
             self.marks_action(path).setEnabled(False)
             self.labels_action(path).setEnabled(False)
@@ -677,10 +689,10 @@ class MarkMenu(QMenu):
         return [action for action in self.menus[path].actions() if action.text() == "Default Color..."][0]
     
     def marks_action(self,path):
-        return [action for action in self.menus[path].actions() if action.text() == "Show Marks"][0]
+        return [action for action in self.menus[path].actions() if action.objectName() == "marks_action"][0]
     
     def labels_action(self,path):
-        return [action for action in self.menus[path].actions() if action.text() == "Show Mark Labels"][0]
+        return [action for action in self.menus[path].actions() if action.objectName() == "labels_action"][0]
         
 class MainWindow(QMainWindow):
     """Class for the main window."""
@@ -1468,8 +1480,8 @@ class MainWindow(QMainWindow):
             if len(marks) >= 1: marks[-1].label.enter()
         except: pass
 
-        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Marks"][0]
-        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Mark Labels"][0]
+        marks_action = self.mark_menu.marks_action(self.markfile.path)
+        labels_action = self.mark_menu.labels_action(self.markfile.path)
 
         if self.inview(x,y) and ((len(marks_in_group) < limit) or limit == 1):            
             mark = self.image_scene.mark(x,y,group=group)
@@ -1545,8 +1557,8 @@ class MainWindow(QMainWindow):
         else:
             marks = self.image.marks
 
-        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Marks"][0]
-        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Mark Labels"][0]
+        marks_action = self.mark_menu.marks_action(self.markfile.path)
+        labels_action = self.mark_menu.labels_action(self.markfile.path)
 
         if len(marks) > 0:
             mark = marks[-1]
@@ -1592,8 +1604,8 @@ class MainWindow(QMainWindow):
         if config.GROUP_MAX[group - 1] == 'None': limit = inf
         else: limit = int(config.GROUP_MAX[group - 1])
 
-        marks_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Marks"][0]
-        labels_action = [action for action in self.mark_menu.menus[self.markfile.path].actions() if action.text() == "Show Mark Labels"][0]
+        marks_action = self.mark_menu.marks_action(self.markfile.path)
+        labels_action = self.mark_menu.labels_action(self.markfile.path)
 
         if (len(self.image.undone_marks) > 0) and ((len(marks_in_group) < limit) or limit == 1):
             mark = self.image.undone_marks[-1]
