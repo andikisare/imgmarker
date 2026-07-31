@@ -30,14 +30,6 @@ imgmarker.io module
    :undoc-members:
    :show-inheritance:
 
-imgmarker.tests module
-----------------------
-
-.. automodule:: imgmarker.tests
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 

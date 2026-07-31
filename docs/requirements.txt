@@ -3,6 +3,7 @@ sphinx-design
 furo
 numpydoc
 astropy==6.1.3
+numpy==2.3.2
 pillow==10.4.0
 scipy
 -e .
