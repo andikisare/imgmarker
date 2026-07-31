@@ -27,7 +27,8 @@ def run():
     app.setApplicationName(f"Image Marker v. {__version__}")
     
     config.SAVE_DIR = _open_save()
-    config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER = config.read()
+    config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER, left_click_group = config.read()
+    config.set_left_click_group(left_click_group)
 
     window = MainWindow()
     window.show()

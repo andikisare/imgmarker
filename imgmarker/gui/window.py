@@ -14,8 +14,8 @@ from imgmarker.gui.pyqt import (
     QLineEdit, QFileDialog, QIcon, QFont, QAction, 
     Qt, QPoint, QSpinBox, QMessageBox, QTableWidget, 
     QTableWidgetItem, QHeaderView, QShortcut,
-    QDesktopServices, QUrl, QMenu, QColorDialog, 
-    QPen, QBrush, QPixmap, QPainter, PYQT_VERSION_STR
+    QDesktopServices, QUrl, QMenu, QColorDialog,
+    QPen, QBrush, QPixmap, QPainter, PYQT_VERSION_STR, QComboBox
 )
 from imgmarker.gui import Screen, QHLine, PosWidget, RestrictedLineEdit, DefaultDialog
 from imgmarker import HEART_SOLID, HEART_CLEAR, OS, __version__, __license__, __docsurl__
@@ -137,7 +137,19 @@ class SettingsWindow(QWidget):
             self.show_sexagesimal_box.setEnabled(True)
 
         self.focus_box = QCheckBox(text='Middle-click to focus centers the cursor', parent=self)
-        
+
+        # Left click group
+        self.leftclick_label = QLabel(text='Left mouse click marks group:', parent=self)
+
+        self.leftclick_box = QComboBox(parent=self)
+        self.leftclick_box.addItems(config.GROUP_NAMES[1:])
+        self.leftclick_box.setCurrentIndex(config.LEFT_CLICK_GROUP - 1)
+        self.leftclick_box.currentIndexChanged.connect(self.update_config)
+
+        leftclick_layout = QHBoxLayout()
+        leftclick_layout.addWidget(self.leftclick_label)
+        leftclick_layout.addWidget(self.leftclick_box)
+
         self.randomize_box = QCheckBox(text='Randomize order of images', parent=self)
         self.randomize_box.setChecked(config.RANDOMIZE_ORDER)
 
@@ -182,6 +194,7 @@ class SettingsWindow(QWidget):
         layout.addWidget(QHLine())
         layout.addWidget(self.show_sexagesimal_box)
         layout.addWidget(self.focus_box)
+        layout.addLayout(leftclick_layout)
         layout.addWidget(self.randomize_box)
         layout.addWidget(self.duplicate_box)
         layout.addLayout(horizontal_duplicate_layout)
@@ -287,8 +300,16 @@ class SettingsWindow(QWidget):
         config.GROUP_MAX = [str(box.value()) if box.value() > 0 else 'None' for box in self.max_boxes]
         config.CATEGORY_NAMES = ['None'] + [box.text() for box in self.category_boxes]
         config.RANDOMIZE_ORDER = self.randomize_box.isChecked()
+        config.set_left_click_group(self.leftclick_box.currentIndex() + 1)
 
-        for i, box in enumerate(self.mainwindow.category_boxes): 
+        # Keep the left-click group combo box in sync with renamed groups
+        self.leftclick_box.blockSignals(True)
+        self.leftclick_box.clear()
+        self.leftclick_box.addItems(config.GROUP_NAMES[1:])
+        self.leftclick_box.setCurrentIndex(config.LEFT_CLICK_GROUP - 1)
+        self.leftclick_box.blockSignals(False)
+
+        for i, box in enumerate(self.mainwindow.category_boxes):
             box.setText(config.CATEGORY_NAMES[i+1])
             box.setShortcut(self.mainwindow.category_shortcuts[i])
             
@@ -439,7 +460,9 @@ class ControlsWindow(QWidget):
         category_list = [f'Category \"{category}\"' for category in config.CATEGORY_NAMES[1:]]
         actions_list = group_list + category_list + actions_list
         ctrl = 'Cmd' if OS == 'Darwin' else 'Ctrl'
-        buttons_list = ['1 OR Left Click', '2', '3', '4', '5', '6', '7', '8', '9', f'{ctrl}+1', f'{ctrl}+2', f'{ctrl}+3', f'{ctrl}+4', f'{ctrl}+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', 'Middle Click', 'Scroll Wheel', f'{ctrl}+0', f'{ctrl}+C', 'F']
+        group_buttons = [str(i) for i in range(1,10)]
+        group_buttons[config.LEFT_CLICK_GROUP - 1] += ' OR Left Click'
+        buttons_list = group_buttons + [f'{ctrl}+1', f'{ctrl}+2', f'{ctrl}+3', f'{ctrl}+4', f'{ctrl}+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', 'Middle Click', 'Scroll Wheel', f'{ctrl}+0', f'{ctrl}+C', 'F']
         
         items = [ (action, button) for action, button in zip(actions_list, buttons_list) ]
 
@@ -773,7 +796,15 @@ class MainWindow(QMainWindow):
         import_marks_action.setShortcuts(['Ctrl+Shift+m'])
         import_marks_action.triggered.connect(self.import_markfile)
         file_menu.addAction(import_marks_action)
-        
+
+        file_menu.addSeparator()
+
+        ### Export current image as a picture
+        export_image_action = QAction('Export Image...', self)
+        export_image_action.setShortcuts(['Ctrl+e'])
+        export_image_action.triggered.connect(self.export_image)
+        file_menu.addAction(export_image_action)
+
         ### Exit menu
         file_menu.addSeparator()
         exit_action = QAction('Exit', self)
@@ -1122,10 +1153,31 @@ class MainWindow(QMainWindow):
     # === Actions ===
     def save(self) -> None:
         """Method for saving image data"""
-        
+
         self.markfile.save(self.images,self.imageless_marks)
         self.imagesfile.save(self.images)
         self.favoritesfile.save(self.favorite_list, self.images)
+
+    def export_image(self) -> None:
+        """Exports the current view (as zoomed/panned on screen), with any visible marks, to an image file."""
+
+        default_name = os.path.splitext(self.image.name)[0] + '_export.png'
+        default_path = os.path.join(config.SAVE_DIR, default_name)
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, 'Export Image', default_path,
+            'PNG (*.png);;JPEG (*.jpg *.jpeg);;BMP (*.bmp);;TIFF (*.tiff *.tif)'
+        )
+
+        if path != '':
+            pixmap = self.image_view.viewport().grab()
+            if not pixmap.save(path):
+                QMessageBox.warning(self, 'Export Image', f'Failed to save image to {path}.')
+
+        # A native save dialog can leave the main window inactive on some platforms,
+        # which blocks further mouse/key input until focus is restored explicitly.
+        self.activateWindow()
+        self.centralWidget().setFocus()
 
     def open(self) -> None:
         """Method for the open save directory dialog."""
@@ -1144,7 +1196,8 @@ class MainWindow(QMainWindow):
         group_names_old = config.GROUP_NAMES.copy()
 
         config.SAVE_DIR = save_dir
-        config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER = config.read()
+        config.IMAGE_DIR, config.GROUP_NAMES, config.CATEGORY_NAMES, config.GROUP_MAX, config.RANDOMIZE_ORDER, left_click_group = config.read()
+        config.set_left_click_group(left_click_group)
         config.update()
 
         self.markfile = io.MarkFile(os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv'))

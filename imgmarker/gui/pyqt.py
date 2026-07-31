@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QDialog, QSizePolicy, QGraphicsPathItem, QGraphicsProxyWidget,
     QLineEdit, QGraphicsScene, QGraphicsPixmapItem, QSpinBox,
     QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView,
-    QMenu, QColorDialog, QWidgetAction,
+    QMenu, QColorDialog, QWidgetAction, QComboBox,
 )
 
 from PyQt6.QtGui import (
