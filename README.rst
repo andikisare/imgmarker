@@ -12,9 +12,6 @@
 .. |icon| image:: https://raw.githubusercontent.com/andikisare/imgmarker/main/imgmarker/icon.ico
     :width: 40
 
-.. |license| image:: https://img.shields.io/github/license/andikisare/imgmarker
-    :target: https://github.com/andikisare/imgmarker/blob/main/LICENSE
-
 .. |CI| image:: https://github.com/andikisare/imgmarker/actions/workflows/python-app.yml/badge.svg
     :target: https://github.com/andikisare/imgmarker/actions/workflows/python-app.yml
 
@@ -23,6 +20,9 @@
 
 .. |arxiv| image:: https://img.shields.io/badge/arXiv-2507.02153-b31b1b.svg
     :target: https://arxiv.org/abs/2507.02153
+
+.. |license| image:: https://img.shields.io/github/license/andikisare/imgmarker
+    :target: https://github.com/andikisare/imgmarker/blob/main/LICENSE
 
 |icon| Image Marker
 #####################
