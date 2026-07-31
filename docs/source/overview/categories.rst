@@ -17,4 +17,4 @@ Pressing the category box for an image (or their respective keyboard shortcuts) 
 .. figure:: Category_zoe.jpg
   :align: center
 
-  Figure 1: An image of a cat (Zoe!) in a box. The "Cat" category is selected, the comment box contains a comment relevant to the image, and several different :ref:`groups <groups>` of :ref:`marks <marks>` are used here. This image has also been favorited, as seen in the bottom right (indicated by the full heart).
+  Figure 1: An image of a cat (Zoe!) in a box. The "Cat" category is selected, the comment box contains a comment relevant to the image, and several different groups of :ref:`marks <marks>` are used here. This image has also been favorited, as seen in the bottom right (indicated by the full heart).

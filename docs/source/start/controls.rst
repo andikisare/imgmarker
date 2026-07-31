@@ -4,7 +4,7 @@ Controls and Keybindings
 Currently, there is no functionality for modifying the keybindings.
 
 .. Note::
-   Changing the names of :ref:`mark groups <groups>` and :ref:`image categories <categories>` will change their name in the Controls window of Image Marker to help keep track of which mark group and category corresponds to which buttons.
+   Changing the names of mark groups and :ref:`image categories <categories>` will change their name in the Controls window of Image Marker to help keep track of which mark group and category corresponds to which buttons.
 
 Keybindings
 -----------

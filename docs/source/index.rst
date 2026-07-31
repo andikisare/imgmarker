@@ -18,7 +18,6 @@
    Image Loading <overview/loading>
    Image Categories & Comments <overview/categories>
    Marks <overview/marks>
-   Mark Groups <overview/groups>
    Filters <overview/filters>
 
 .. toctree::
