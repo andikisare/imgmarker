@@ -862,6 +862,13 @@ class MainWindow(QMainWindow):
         export_image_action.triggered.connect(self.export_image)
         file_menu.addAction(export_image_action)
 
+        ### Export marks with WCS coordinates as a VOTable
+        self.export_votable_action = QAction('Export Marks as VOTable...', self)
+        self.export_votable_action.setToolTip('Export marks with sky (RA/Dec) coordinates; requires at least one image with WCS information')
+        self.export_votable_action.triggered.connect(self.export_votable)
+        self.export_votable_action.setEnabled(any(img.wcs is not None for img in self.images))
+        file_menu.addAction(self.export_votable_action)
+
         ### Exit menu
         file_menu.addSeparator()
         exit_action = QAction('Exit', self)
@@ -1239,6 +1246,25 @@ class MainWindow(QMainWindow):
         self.activateWindow()
         self.centralWidget().setFocus()
 
+    def export_votable(self) -> None:
+        """Exports marks with valid sky (RA/Dec) coordinates to a VOTable file."""
+
+        default_path = os.path.join(config.SAVE_DIR, f'{config.USER}_marks.xml')
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, 'Export Marks as VOTable', default_path,
+            'VOTable (*.xml *.vot)'
+        )
+
+        if path != '':
+            try:
+                self.markfile.save_votable(path, self.images, self.imageless_marks)
+            except Exception as e:
+                QMessageBox.warning(self, 'Export Marks as VOTable', f'Failed to save VOTable: {e}')
+
+        self.activateWindow()
+        self.centralWidget().setFocus()
+
     def open(self) -> None:
         """Method for the open save directory dialog."""
 
@@ -1301,6 +1327,7 @@ class MainWindow(QMainWindow):
         self.update_comments()
         self.update_favorites()
         self.controls_window.update_text()
+        self.export_votable_action.setEnabled(any(img.wcs is not None for img in self.images))
 
     def import_ims_dialog(self, _image_dir) -> str:
         dialog = DefaultDialog(config.SAVE_DIR)
@@ -1366,6 +1393,7 @@ class MainWindow(QMainWindow):
         self.update_categories()
         self.update_comments()
         self.save()
+        self.export_votable_action.setEnabled(any(img.wcs is not None for img in self.images))
 
     def import_markfile(self, **kwargs):
         """Method for opening a catalog file."""

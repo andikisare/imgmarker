@@ -159,22 +159,8 @@ class MarkFile:
 
         return images, imageless
     
-    def save(self,images:List[image.Image],imageless_marks:List[Mark]) -> None:
-        """
-        Saves mark data.
-
-        Parameters
-        ----------
-
-        images: list[`imgmarker.image.Image`]
-            A list of Image objects for each image from the specified image directory.
-
-        Returns
-        ----------
-        None
-        """
-
-        # Will organize output rows into dictionary of the path to save to
+    def _build_rows(self,images:List[image.Image],imageless_marks:List[Mark]) -> List[dict]:
+        """Builds the list of row dicts (date, image, group, label, x, y, RA, DEC) shared by `save` and `save_votable`."""
 
         date = dt.datetime.now(dt.timezone.utc).date().isoformat()
         rows = []
@@ -271,15 +257,68 @@ class MarkFile:
                     'RA': str(ra),
                     'DEC': str(dec)
                 }
-                    
+
                 rows.append(row)
-        
+
+        return rows
+
+    def save(self,images:List[image.Image],imageless_marks:List[Mark]) -> None:
+        """
+        Saves mark data.
+
+        Parameters
+        ----------
+
+        images: list[`imgmarker.image.Image`]
+            A list of Image objects for each image from the specified image directory.
+
+        Returns
+        ----------
+        None
+        """
+
+        rows = self._build_rows(images,imageless_marks)
+
         # Write lines if there are lines to print
         with open(self.path, 'w', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=rows[0].keys())
             writer.writeheader()
             for row in rows:
                 writer.writerow(row)
+
+    def save_votable(self,path:str,images:List[image.Image],imageless_marks:List[Mark]) -> None:
+        """
+        Saves marks with valid WCS (RA/Dec) coordinates to a VOTable file.
+
+        Parameters
+        ----------
+        path: str
+            Destination path for the VOTable file.
+
+        images: list[`imgmarker.image.Image`]
+            A list of Image objects for each image from the specified image directory.
+
+        imageless_marks: list[`imgmarker.gui.mark.Mark`]
+            Marks that aren't currently associated with a loaded image.
+        """
+
+        from astropy.table import Table
+        import astropy.units as u
+
+        rows = self._build_rows(images,imageless_marks)
+        rows = [row for row in rows if not (isnan(float(row['RA'])) or isnan(float(row['DEC'])))]
+
+        table = Table()
+        table['date'] = [row['date'] for row in rows]
+        table['image'] = [row['image'] for row in rows]
+        table['group'] = [row['group'] for row in rows]
+        table['label'] = [row['label'] for row in rows]
+        table['x'] = np.array([float(row['x']) for row in rows])
+        table['y'] = np.array([float(row['y']) for row in rows])
+        table['ra'] = np.array([float(row['RA']) for row in rows]) * u.deg
+        table['dec'] = np.array([float(row['DEC']) for row in rows]) * u.deg
+
+        table.write(path, format='votable', overwrite=True)
 
 class ImagesFile:
     def __init__(self):
