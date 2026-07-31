@@ -1,7 +1,12 @@
+"""
+Copyright © 2025, UChicago Argonne, LLC
 
-from .pyqt import QApplication
-from .mark import *
-from .widget import *
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
+from imgmarker.gui.pyqt import QApplication
+from imgmarker.gui.mark import *
+from imgmarker.gui.widget import *
 
 class Screen:
     @staticmethod

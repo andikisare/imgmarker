@@ -7,19 +7,12 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   imgmarker.coordinates
    imgmarker.gui
    imgmarker.image
 
 Submodules
 ----------
-
-imgmarker.catalog module
-------------------------
-
-.. automodule:: imgmarker.catalog
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 imgmarker.config module
 -----------------------

@@ -1,4 +1,5 @@
-sphinx>=2.1
+sphinx
+sphinx-design
 furo
 numpydoc
 astropy==6.1.3

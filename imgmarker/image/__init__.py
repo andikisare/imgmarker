@@ -1,7 +1,13 @@
+"""
+Copyright © 2025, UChicago Argonne, LLC
+
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
 """This module contains code for the `Image` class and image manipulation."""
 
-from ..gui.pyqt import QImage, QGraphicsPixmapItem, QGraphicsView, QGraphicsScene, QPixmap, Qt, QPointF
-from ..gui import Mark
+from imgmarker.gui.pyqt import QImage, QGraphicsPixmapItem, QGraphicsView, QGraphicsScene, QPixmap, Qt, QPointF, QApplication
+from imgmarker.gui import Mark, MarkLabel
 from io import StringIO
 import os
 from math import floor
@@ -9,13 +15,14 @@ import PIL.Image as pillow
 from PIL.TiffTags import TAGS
 from math import nan
 import numpy as np
-from typing import overload, Union, List
+from typing import overload, Union, List, Set
 from astropy.visualization import ZScaleInterval, MinMaxInterval, ManualInterval, LinearStretch, LogStretch
 from . import fits
 from .convolution import gaussian_filter
 from astropy.wcs import WCS
 from enum import Enum
-from copy import copy, deepcopy
+from copy import deepcopy
+import warnings
 
 class Interval:
     ZSCALE = ZScaleInterval()
@@ -172,17 +179,14 @@ class Image(QGraphicsPixmapItem):
     marks: list[imgmarker.mark.Mark]
         List of the marks in this image.
 
-    cat_marks: list[imgmarker.mark.Mark]
-        List of catalog marks in this image.
-
     dupe_marks: list[imgmarker.mark.Mark]
         List of marks made on a duplicate-showing of the same image. Kept separate for saving purposes.
 
     seen: bool
         Whether this image has been seen by the user or not.
 
-    catalogs: list[str]
-        List of paths to the catalogs that have been imported for this image
+    markfiles: list[str]
+        List of paths to the markfiles that have been imported for this image
     """
     
     def __init__(self,path:str):
@@ -220,10 +224,10 @@ class Image(QGraphicsPixmapItem):
                 self.comment = 'None'
                 self.categories:List[int] = []
                 self.marks:List['Mark'] = []
-                self.cat_marks:List['Mark'] = []
                 self.dupe_marks:List['Mark'] = []
+                self.undone_marks:List['Mark'] = []
                 self.seen:bool = False
-                self.catalogs:List[str] = []
+                self.markfiles:Set[str] = set()
             else:
                 self.incompatible = True
 
@@ -295,7 +299,7 @@ class Image(QGraphicsPixmapItem):
                     metadata['wcs'] = read_wcs(f[self.frame])
                     
                 except:
-                    print(f"File \"{self.name}\" is not compatible and will not be loaded. Skipping \"{self.name}\".")
+                    warnings.warn(f"File \"{self.name}\" is not compatible and will not be loaded. Skipping \"{self.name}\".")
                     self.incompatible = True
                     return None
 
@@ -334,29 +338,9 @@ class Image(QGraphicsPixmapItem):
         self.width = self._array.shape[1]
         self.height = self._array.shape[0]
         
-        # Apply blur (and scaling)
-        self.blur()
-
-    def rescale(self):
-        out = self.array.astype(np.float64)
-
-        if (self.mode == Mode.RGB) or (self.mode == Mode.RGBA):
-            # Calculate scale factor
-            v = self.v
-            scale = self.mode.iinfo.max*self.scaling(v)/v
-
-            # Apply scale factor
-            out[:, :, 0] *= scale
-            out[:, :, 1] *= scale
-            out[:, :, 2] *= scale
-
-            # Truncate values greater than the max pixel value for this mode
-            out = np.minimum(self.mode.iinfo.max,out)
-
-        else:
-            out = self.mode.iinfo.max*self.scaling(out)
-
-        self.setPixmap(self.topixmap(out.astype(self.mode.iinfo.dtype)))
+        # Rescale (and blur)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            self.rescale()
 
     def toqimage(self,array:np.ndarray) -> QImage:
         width, height  = array.shape[1], array.shape[0]
@@ -381,6 +365,28 @@ class Image(QGraphicsPixmapItem):
 
         return pixmap
     
+    def rescale(self):
+        out = self._array.astype(np.float64)
+
+        if (self.mode == Mode.RGB) or (self.mode == Mode.RGBA):
+            # Calculate scale factor
+            v = self.v
+            scale = self.mode.iinfo.max*self.scaling(v)/v
+
+            # Apply scale factor
+            out[:, :, 0] *= scale
+            out[:, :, 1] *= scale
+            out[:, :, 2] *= scale
+
+            # Truncate values greater than the max pixel value for this mode
+            out = np.minimum(self.mode.iinfo.max,out)
+
+        else:
+            out = self.mode.iinfo.max*self.scaling(out)
+
+        self.array = out.astype(self.mode.iinfo.dtype)
+        self.blur()
+    
     @overload
     def blur(self) -> None: 
         """Applies the blur to the image"""
@@ -394,15 +400,15 @@ class Image(QGraphicsPixmapItem):
             else: r = value
             self.r = floor(r)/2
 
-        nanmask = ~np.isfinite(self._array)
+        nanmask = ~np.isfinite(self.array)
         if True in nanmask:
             # Create auxillary array
-            _out = self._array.copy()
+            _out = self.array.copy()
             _out[nanmask] = 0
             out = gaussian_filter(_out,self.r)
 
             # Calculate weights
-            _w = np.ones_like(self._array)
+            _w = np.ones_like(self.array)
             _w[nanmask] = 0
             w = gaussian_filter(_w,self.r)
 
@@ -411,11 +417,10 @@ class Image(QGraphicsPixmapItem):
                 out = out/w
                 out[nanmask] = np.nan
         else:
-            out = gaussian_filter(self._array,self.r)
+            out = gaussian_filter(self.array,self.r)
 
-        with np.errstate(divide='ignore', invalid='ignore'): 
-            self.array = out.astype(self.mode.iinfo.dtype)
-            self.rescale()
+        self.setPixmap(self.topixmap(out.astype(self.mode.iinfo.dtype)))
+
 
 class ImageScene(QGraphicsScene):
     """A class in which images and marks are stored."""
@@ -426,6 +431,15 @@ class ImageScene(QGraphicsScene):
         self.setBackgroundBrush(Qt.GlobalColor.black)
         self.addItem(self.image)
         self.setSceneRect(-4*self.image.width,-4*self.image.height,9*self.image.width,9*self.image.height)
+
+    def mousePressEvent(self, event):
+        modifiers = QApplication.keyboardModifiers()
+        leftbutton = event.button() == Qt.MouseButton.LeftButton
+        shift = modifiers == Qt.KeyboardModifier.ShiftModifier
+        if not (leftbutton and shift):
+            return super().mousePressEvent(event)
+        
+    
 
     def update_image(self,image:Image):
         """Updates the current image with a new image."""
@@ -449,8 +463,10 @@ class ImageScene(QGraphicsScene):
 
         if len(args) == 1: mark = args[0]
         else: mark = Mark(*args,image=self.image,**kwargs)
-        self.addItem(mark.label)
+        mark.draw()
+        mark.label = MarkLabel(mark)
         self.addItem(mark)
+        self.addItem(mark.label)
         return mark
     
     def rmmark(self,mark:'Mark') -> None:
@@ -482,7 +498,7 @@ class ImageView(QGraphicsView):
         #Install event filter for zooming
         self.viewport().installEventFilter(self)
 
-    def eventFilter(self, source, event):
+    def eventFilter(self, a0, a1):
         """
         Performs operations based on the event source and type.
 
@@ -498,12 +514,12 @@ class ImageView(QGraphicsView):
         True if the event triggered an some operation.
         """
 
-        if (source == self.viewport()) and (event.type() == 31):
-            x = event.angleDelta().y()/120
+        if (a0 == self.viewport()) and (a1.type() == 31):
+            x = a1.angleDelta().y()/120
             self.zoom(1.2**(-x))
             return True
 
-        return super().eventFilter(source, event)
+        return super().eventFilter(a0, a1)        
     
     def scene(self) -> ImageScene:
         """Returns the associated image scene."""

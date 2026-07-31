@@ -1,137 +1,170 @@
-"""Image Marker's I/O module containing functions for loading and saving data."""
+"""
+Copyright © 2025, UChicago Argonne, LLC
+
+Full license found at _YOUR_INSTALLATION_DIRECTORY_/imgmarker/LICENSE
+"""
+
+"""Image Marker's I/O module containing functions for reading and saving data."""
 
 import os
 import numpy as np
-from .gui import Mark
-from . import image
-from . import config
+from imgmarker.gui import Mark
+from imgmarker import image, config
 import glob as _glob
 from math import nan, isnan
 from typing import Tuple, List
+import csv
+import datetime as dt
 
-def savefav(date:str,images:List['image.Image'],fav_list:List[str]) -> None:
-    """
-    Creates a file, \'favorites.txt\', in the save directory containing all images that were favorited.
-    This file is in the same format as \'images.txt\' so that a user can open their favorites file to show
-    only favorited images with a little bit of file name manipulation. More details on how to do this can
-    be found in \'README.md\'.
-
-    Parameters
-    ----------
-    date: str
-        A string containing the current date in ISO 8601 extended format.
-
-    images: list[`imgmarker.image.Image`]
-        A list of Image objects for each image from the specified image directory.
-
-    fav_list: list[str]
-        A list of strings containing the file names of each favorited image.
-
-    Returns
-    ----------
-    None
-    """
-
-    image_lines = []
-    name_lengths = []
-    img_ra_lengths = []
-    img_dec_lengths = []
-    category_lengths = []
-    comment_lengths = []
-
-    fav_out_path = os.path.join(config.SAVE_DIR, f'{config.USER}_favorites.txt')
-
-    # Remove the file if it exists
-    if os.path.exists(fav_out_path): os.remove(fav_out_path)
+class MarkFile:
+    VALID_FIELDNAMES = [
+        'date','image','group',
+        'label','x','y',
+        'ra','dec','size'
+        'size(px)','size(arcsec)'
+    ]
     
-    fav_images = [img for img in images if img.name in fav_list]
+    def __init__(self,path:str):
+        self.path = path
 
-    if len(fav_list) != 0:
-        for img in fav_images:
-            if img.seen:
-                name = img.name
-                comment = img.comment
+        if path not in config.DEFAULT_COLORS:
+            config.DEFAULT_COLORS[path] = config.GROUP_COLORS[0]
 
-                category_list = img.categories
-                category_list.sort()
-                if (len(category_list) != 0):
-                    categories = ','.join([config.CATEGORY_NAMES[i] for i in category_list])
-                else: categories = 'None'
-
-                img_ra, img_dec = img.wcs_center
-
-                il = [date,name,img_ra,img_dec,categories,comment]
-                for l in image_lines:
-                    if l[1] == name: image_lines.remove(l)
-                image_lines.append(il)
-                
-                name_lengths.append(len(name))
-                img_ra_lengths.append(len(f'{img_ra:.8f}'))
-                img_dec_lengths.append(len(f'{img_dec:.8f}'))
-                category_lengths.append(len(categories))
-                comment_lengths.append(len(comment))
-
-    if len(image_lines) != 0:
-        # Dynamically adjust column widths
-        dateln = 12
-        nameln = np.max(name_lengths) + 2
-        img_raln = max(np.max(img_ra_lengths), 2) + 2 
-        img_decln = max(np.max(img_ra_lengths), 3) + 2
-        categoryln = max(np.max(category_lengths), 10) + 2
-        commentln = max(np.max(comment_lengths), 7) + 2 
+        valid, err = self.isvalid(return_err=True)
+        if not valid:
+            raise err
+    
+    def __eq__(self, value):
+        if hasattr(value,'path'):
+            return self.path == value.path
+        else:
+            return self.path == value
         
-        il_fmt = [ f'^{dateln}',f'^{nameln}', f'^{img_raln}.8f', f'^{img_decln}.8f', f'^{categoryln}', f'^{commentln}' ]
-        il_fmt_nofloat = [ f'^{dateln}',f'^{nameln}', f'^{img_raln}', f'^{img_decln}', f'^{categoryln}', f'^{commentln}' ]
+    def isvalid(self,return_err=False):
+        valid = True
+        err = None
+
+        if os.path.exists(self.path):
+            with open(self.path,'r') as f:
+                delimiter = '|' if '|' in f.readline() else ','
+                f.seek(0)
+                reader = csv.DictReader(f,delimiter=delimiter)
+                for fieldname in reader.fieldnames:
+                    if fieldname.strip().lower() not in MarkFile.VALID_FIELDNAMES:
+                        valid = False
+                        err = KeyError(f'Field name "{fieldname}" in file "{self.path.split(os.sep)[-1]}" is not a valid field name.')
+
+        if return_err:
+            return valid, err
+        else:
+            return valid
+     
+    def read(self,images:List[image.Image]) -> Tuple[List[image.Image],List[Mark]]:
+        """
+        Takes data from marks.csv and images.csv and from them returns a list of `imgmarker.image.Image`
+        objects.
+
+        Returns
+        ----------
+        images: list[`imgmarker.image.Image`]
+        """
+
+        imageless = []
         
-        header = ['date','image','RA', 'DEC','categories','comment']
-        header = ''.join(f'{h:{il_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
-        
-        with open(fav_out_path,'a') as fav_out:
-            fav_out.write(header)
-            for l in image_lines:
-                outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
-                fav_out.write(outline)
+        # Get list of marks for each image
+        if os.path.exists(self.path):
+            with open(self.path,'r') as f:
+                delimiter = '|' if '|' in f.readline() else ','
+                f.seek(0)
+                reader = csv.DictReader(f,delimiter=delimiter)
 
-def save(date,images:List['image.Image']) -> None:
-    """
-    Saves image data.
+                for row in reader:
+                    for fieldname in reader.fieldnames:
+                        row[fieldname.strip().lower()] = row.pop(fieldname).strip()
 
-    Parameters
-    ----------
-    date: str
-        A string containing the current date in ISO 8601 extended format.
+                    # Default values
+                    name = 'None'
+                    group = config.GROUP_NAMES.index('None')
+                    shape = 'rect'
+                    label = 'None'
+                    x,y = nan,nan
+                    ra,dec = nan,nan
+                    size = None
+                    size_unit = None
 
-    images: list[`imgmarker.image.Image`]
-        A list of Image objects for each image from the specified image directory.
+                    # Values from row
+                    if 'date' in row: date = row['date']
 
-    Returns
-    ----------
-    None
-    """
+                    if 'image' in row: name = row['image']
 
-    mark_lines = []
-    image_lines = []
+                    if 'group' in row: 
+                        group = config.GROUP_NAMES.index(row['group'])
+                        shape = config.GROUP_SHAPES[group]
+                        
+                    if 'label' in row: label = row['label']
 
-    name_lengths = []
-    group_lengths = []
-    x_lengths = []
-    y_lengths = []
-    ra_lengths = []
-    dec_lengths = []
-    img_ra_lengths = []
-    img_dec_lengths = []
-    category_lengths = []
-    comment_lengths = []
-    label_lengths = []
+                    if 'x' in row: x = float(row['x'])
+                    if 'y' in row: y = float(row['y'])
 
-    mark_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.txt')
-    images_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_images.txt')
+                    if 'ra' in row: ra = float(row['ra'])
+                    if 'dec' in row: dec = float(row['dec'])
 
-    # Create the file
-    if os.path.exists(mark_out_path): os.remove(mark_out_path)
-    if os.path.exists(images_out_path): os.remove(images_out_path)
+                    if 'size(arcsec)' in row: 
+                        size = float(row['size(arcsec)'])
+                        size_unit = 'arcsec'
+                    
+                    if 'size(px)' in row:
+                        size = float(row['size(px)'])
+                        size_unit = 'px'
 
-    if images:
+                    if 'size' in row:
+                        size = float(row['size'])
+                        size_unit = 'px'
+
+                    if name != 'None':
+                        for img in images:
+                            if (name == img.name) and (not isnan(float(x))) and (not isnan(float(y))):
+                                args = (float(x),float(y))
+                                kwargs = {'image': img, 'group': group, 'shape': shape}
+
+                                if label != 'None': 
+                                    kwargs['text'] = label
+
+                                if size != None: 
+                                    kwargs['size'] = size
+                                    kwargs['size_unit'] = size_unit
+
+                                mark = Mark(*args, **kwargs)
+                                mark.dst = self.path
+                                img.marks.append(mark)
+
+                    else:
+                        if isnan(float(ra)) and isnan(float(dec)):
+                            args = (float(x),float(y))
+                            kwargs = {'image': None, 'group': group, 'shape': shape}
+                        else:
+                            args = ()
+                            kwargs = {'image': None,'group': group, 'shape': shape, 'ra': ra, 'dec': dec}
+
+                        if label != 'None': 
+                            kwargs['text'] = label
+
+                        if size != None: 
+                            kwargs['size'] = size
+                            kwargs['size_unit'] = size_unit
+                        
+                        mark = Mark(*args, **kwargs)
+                        mark.dst = self.path
+                        imageless.append(mark)
+
+        return images, imageless
+    
+    def _build_rows(self,images:List[image.Image],imageless_marks:List[Mark]) -> List[dict]:
+        """Builds the list of row dicts (date, image, group, label, x, y, RA, DEC) shared by `save` and `save_votable`."""
+
+        date = dt.datetime.now(dt.timezone.utc).date().isoformat()
+        rows = []
+
         for img in images:
             if img.seen:
                 if img.duplicate == True:
@@ -140,171 +173,342 @@ def save(date,images:List['image.Image']) -> None:
                     marks = img.marks
 
                 name = img.name
-                comment = img.comment
-
-                category_list = img.categories
-                category_list.sort()
-                if (len(category_list) != 0):
-                    categories = ','.join([config.CATEGORY_NAMES[i] for i in category_list])
-                else: categories = 'None'
 
                 if not marks: mark_list = [None]
                 else: mark_list = marks.copy()
                 
                 for mark in mark_list:
-                    if mark != None:
+                    
+                    row = {}
+
+                    if (mark != None) and (mark.dst == self.path):
                         group_name = config.GROUP_NAMES[mark.g]
-                        if mark.text == group_name: label = 'None'
-                        else: label = mark.text
+
+                        if mark.text == group_name: 
+                            label = 'None'
+                        else: 
+                            label = mark.text
+
                         if (img.duplicate == True) and (mark in img.dupe_marks):
                             if (mark.text == group_name):
                                 label = "DUPLICATE"
                             else:
                                 label = f"{mark.text}, DUPLICATE"
-                        ra, dec = mark.wcs_center
-                        img_ra, img_dec = img.wcs_center
-                        x, y = mark.center.x(), mark.center.y()
-                    else:
-                        group_name = 'None'
-                        label = 'None'
-                        ra, dec = nan, nan
-                        img_ra, img_dec = img.wcs_center
-                        x, y = nan, nan
+
+                        try: x, y = mark.center
+                        except: x, y = nan, nan
                         
-                    ml = [date,name,group_name,label,x,y,ra,dec]
-                    mark_lines.append(ml)
+                        try: ra, dec = mark.wcs_center
+                        except: ra, dec = nan, nan
 
-                    il = [date,name,img_ra,img_dec,categories,comment]
-                    for l in image_lines:
-                        if l[1] == name: image_lines.remove(l)
-                    image_lines.append(il)
+                        row = {
+                            'date': str(date),
+                            'image': str(name),
+                            'group': str(group_name),
+                            'label': str(label),
+                            'x': str(x),
+                            'y': str(y),
+                            'RA': str(ra),
+                            'DEC': str(dec)
+                        }
+                        
+                        rows.append(row)
+
+                    # Row entries if the seen image has no marks (user looked at image without placing)
+                    else:
+                        row = {
+                            'date': str(date),
+                            'image': str(name),
+                            'group': 'None',
+                            'label': 'None',
+                            'x': nan,
+                            'y': nan,
+                            'RA': nan,
+                            'DEC': nan
+                        }
                     
-                    name_lengths.append(len(name))
-                    group_lengths.append(len(group_name))
-                    x_lengths.append(len(str(x)))
-                    y_lengths.append(len(str(y)))
-                    ra_lengths.append(len(f'{ra:.8f}'))
-                    dec_lengths.append(len(f'{dec:.8f}'))
-                    img_ra_lengths.append(len(f'{img_ra:.8f}'))
-                    img_dec_lengths.append(len(f'{img_dec:.8f}'))
-                    category_lengths.append(len(categories))
-                    comment_lengths.append(len(comment))
-                    label_lengths.append(len(label))
+                        rows.append(row)
 
-    # Print out lines if there are lines to print
-    if len(mark_lines) != 0:
-        # Dynamically adjust column widths
-        nameln = np.max(name_lengths) + 2
-        groupln = max(np.max(group_lengths), 5) + 2
-        labelln = max(np.max(label_lengths), 5) + 2
-        xln = max(np.max(x_lengths), 1) + 2
-        yln = max(np.max(y_lengths), 1) + 2
-        raln = max(np.max(ra_lengths), 2) + 2
-        decln = max(np.max(dec_lengths), 3) + 2
-        dateln = 12
+        for mark in imageless_marks:
+            row = {}
+            if mark.dst == self.path:
+                group_name = config.GROUP_NAMES[mark.g]
 
-        ml_fmt = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',f'^{labelln}',
-                  f'^{xln}', f'^{yln}', f'^{raln}.8f', f'^{decln}.8f' ]
-        
-        ml_fmt_nofloat = [ f'^{dateln}',f'^{nameln}',f'^{groupln}',f'^{labelln}',
-                          f'^{xln}', f'^{yln}', f'^{raln}', f'^{decln}' ]
-        
-        header = ['date','image','group','label','x','y','RA','DEC']
-        header = ''.join(f'{h:{ml_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
-        
-        with open(mark_out_path,"a") as mark_out:
-            mark_out.write(header)
-            for l in mark_lines:
-                try: outline = ''.join(f'{_l:{ml_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
-                except: outline = ''.join(f'{_l:{ml_fmt_nofloat[i]}}|' for i, _l in enumerate(l)) + '\n'
-                mark_out.write(outline)
+                if mark.text == group_name: 
+                    label = 'None'
+                else: 
+                    label = mark.text
 
-    if len(image_lines) != 0:
-        # Dynamically adjust column widths
-        dateln = 12
-        nameln = np.max(name_lengths) + 2
-        img_raln = max(np.max(img_ra_lengths), 2) + 2 
-        img_decln = max(np.max(img_ra_lengths), 3) + 2
-        categoryln = max(np.max(category_lengths), 10) + 2
-        commentln = max(np.max(comment_lengths), 7) + 2 
-        
-        il_fmt = [ f'^{dateln}',f'^{nameln}', f'^{img_raln}.8f', f'^{img_decln}.8f', f'^{categoryln}', f'^{commentln}' ]
-        il_fmt_nofloat = [ f'^{dateln}',f'^{nameln}', f'^{img_raln}', f'^{img_decln}', f'^{categoryln}', f'^{commentln}' ]
-        
-        header = ['date','image','RA', 'DEC','categories','comment']
-        header = ''.join(f'{h:{il_fmt_nofloat[i]}}|' for i, h in enumerate(header)) + '\n'
-        
-        with open(images_out_path,"a") as images_out:
-            images_out.write(header)
-            for l in image_lines:
-                outline = ''.join(f'{_l:{il_fmt[i]}}|' for i, _l in enumerate(l)) + '\n'           
-                images_out.write(outline)
+                name = 'None'
 
-def loadfav() -> List[str]:
-    """
-    Loads f'{USER}_favorites.txt' from the save directory.
+                try: x, y = mark.center.x(), mark.center.y()
+                except: x, y = nan, nan
+                
+                try: ra, dec = mark.wcs_center
+                except: ra, dec = nan, nan
 
-    Returns
-    ----------
-    list: str
-        A list of strings containing the names of the files (images) that were saved.
-    """
+                row = {
+                    'date': str(date),
+                    'image': str(name),
+                    'group': str(group_name),
+                    'label': str(label),
+                    'x': str(x),
+                    'y': str(y),
+                    'RA': str(ra),
+                    'DEC': str(dec)
+                }
 
-    fav_out_path = os.path.join(config.SAVE_DIR, f'{config.USER}_favorites.txt')
+                rows.append(row)
+
+        return rows
+
+    def save(self,images:List[image.Image],imageless_marks:List[Mark]) -> None:
+        """
+        Saves mark data.
+
+        Parameters
+        ----------
+
+        images: list[`imgmarker.image.Image`]
+            A list of Image objects for each image from the specified image directory.
+
+        Returns
+        ----------
+        None
+        """
+
+        rows = self._build_rows(images,imageless_marks)
+
+        # Write lines if there are lines to print
+        with open(self.path, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            for row in rows:
+                writer.writerow(row)
+
+    def save_votable(self,path:str,images:List[image.Image],imageless_marks:List[Mark]) -> None:
+        """
+        Saves marks with valid WCS (RA/Dec) coordinates to a VOTable file.
+
+        Parameters
+        ----------
+        path: str
+            Destination path for the VOTable file.
+
+        images: list[`imgmarker.image.Image`]
+            A list of Image objects for each image from the specified image directory.
+
+        imageless_marks: list[`imgmarker.gui.mark.Mark`]
+            Marks that aren't currently associated with a loaded image.
+        """
+
+        from astropy.table import Table
+        import astropy.units as u
+
+        rows = self._build_rows(images,imageless_marks)
+        rows = [row for row in rows if not (isnan(float(row['RA'])) or isnan(float(row['DEC'])))]
+
+        table = Table()
+        table['date'] = [row['date'] for row in rows]
+        table['image'] = [row['image'] for row in rows]
+        table['group'] = [row['group'] for row in rows]
+        table['label'] = [row['label'] for row in rows]
+        table['x'] = np.array([float(row['x']) for row in rows])
+        table['y'] = np.array([float(row['y']) for row in rows])
+        table['ra'] = np.array([float(row['RA']) for row in rows]) * u.deg
+        table['dec'] = np.array([float(row['DEC']) for row in rows]) * u.deg
+
+        table.write(path, format='votable', overwrite=True)
+
+class ImagesFile:
+    def __init__(self):
+        self.path = os.path.join(config.SAVE_DIR,f'{config.USER}_images.csv')
     
-    if os.path.exists(fav_out_path):
-        fav_list = [ l.split('|')[1].strip() for l in open(fav_out_path) ][1:]
-    else: fav_list = []
+    def __eq__(self, value):
+        if hasattr(value,'path'):
+            return self.path == value.path
+        else:
+            return self.path == value
+        
+    def read(self) -> Tuple[List[image.Image],List[Mark]]:
+        """
+        Takes data from marks.csv and images.csv and from them returns a list of `imgmarker.image.Image`
+        objects.
 
-    return list(set(fav_list))
+        Returns
+        ----------
+        images: list[`imgmarker.image.Image`]
+        """
 
-def load() -> List[image.Image]:
-    """
-    Takes data from marks.txt and images.txt and from them returns a list of `imgmarker.image.Image`
-    objects.
+        images:List[image.Image] = []
+        
+        # Get list of images from images.csv
+        if os.path.exists(self.path):
+            with open(self.path,'r') as f:
+                delimiter = '|' if '|' in f.readline() else ','
+                f.seek(0)
+                reader = csv.DictReader(f,delimiter=delimiter)
+                
+                for row in reader:
+                    keys = row.copy().keys()
+                    for key in keys: row[key.strip().lower()] = row.pop(key).strip()
 
-    Returns
-    ----------
-    images: list[`imgmarker.image.Image`]
-    """
+                    ra,dec = float(row['ra']), float(row['dec'])
+                    date,name,categories,comment = row['date'], row['image'], row['categories'], row['comment']
+                    categories = categories.split('+')
+                    categories = [config.CATEGORY_NAMES.index(cat) for cat in categories if cat != 'None']
+                    categories.sort()
 
-    mark_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_marks.txt')
-    images_out_path = os.path.join(config.SAVE_DIR,f'{config.USER}_images.txt')
-    images:List[image.Image] = []
+                    img = image.Image(os.path.join(config.IMAGE_DIR,name))
+                    img.comment = comment
+                    img.categories = categories
+                    img.seen = True
+                    images.append(img)
+
+        return images
+
+    def save(self, images:List['image.Image']):
+        """
+        Saves image data.
+
+        Parameters
+        ----------
+        images: list[`imgmarker.image.Image`]
+            A list of Image objects for each image from the specified image directory.
+
+        Returns
+        ----------
+        None
+        """
+
+        date = dt.datetime.now(dt.timezone.utc).date().isoformat()
+        image_rows:list[dict] = []
     
-    # Get list of images from images.txt
-    if os.path.exists(images_out_path):
-        line0 = True
-        for l in open(images_out_path):
-            if line0: line0 = False
-            else:
-                date,name,ra,dec,categories,comment = [i.strip() for i in l.replace('|\n','').split('|')]
-                categories = categories.split(',')
-                categories = [config.CATEGORY_NAMES.index(cat) for cat in categories if cat != 'None']
-                categories.sort()
+        for img in images:
+            if img.seen:
+                name = img.name
+                comment = img.comment
 
-                img = image.Image(os.path.join(config.IMAGE_DIR,name))
-                img.comment = comment
-                img.categories = categories
-                img.seen = True
-                images.append(img)
+                category_list = img.categories
+                category_list.sort()
+                if (len(category_list) != 0):
+                    categories = '+'.join([config.CATEGORY_NAMES[i] for i in category_list])
+                else: categories = 'None'
+
+                image_rows.append({'date': str(date),
+                                    'image': str(name),
+                                    'RA': str(img.wcs_center[0]),
+                                    'DEC': str(img.wcs_center[1]),
+                                    'categories': str(categories),
+                                    'comment': str(comment)})
+
+        with open(self.path, 'w') as f:
+            writer = csv.DictWriter(f, fieldnames=image_rows[0].keys())
+            writer.writeheader()
+            for row in image_rows:
+                writer.writerow(row)
+
+class FavoritesFile:
+    def __init__(self):
+        self.path = os.path.join(config.SAVE_DIR,f'{config.USER}_favorites.csv')
     
-    # Get list of marks for each image
-    for img in images:
-        line0 = True
-        for l in open(mark_out_path):
-            if line0: line0 = False
-            else:
-                date,name,group,label,x,y,ra,dec = [i.strip() for i in l.replace('|\n','').split('|')]
+    def __eq__(self, value):
+        if hasattr(value,'path'):
+            return self.path == value.path
+        else:
+            return self.path == value
+        
+    def read(self) -> List[str]:
+        """
+        Takes data from favorites.csv and from them returns a list of image file names
+        with full directory.
 
-                if (name == img.name) and (not isnan(float(x))) and (not isnan(float(y))):
-                    group = config.GROUP_NAMES.index(group)
-                    mark_args = (float(x),float(y))
-                    mark_kwargs = {'image': img, 'group': group}
-                    if label != 'None': mark_kwargs['text'] = label
-                    mark = Mark(*mark_args, **mark_kwargs)
-                    img.marks.append(mark)
-    return images
+        Returns
+        ----------
+        favorites: list[`str`]
+        """
+
+        favorites:List[str] = []
+        
+        # Get list of images from favorites.csv
+        if os.path.exists(self.path):
+            with open(self.path,'r') as f:
+                delimiter = '|' if '|' in f.readline() else ','
+                f.seek(0)
+                reader = csv.DictReader(f,delimiter=delimiter)
+                
+                for row in reader:
+                    keys = row.copy().keys()
+                    for key in keys: row[key.strip().lower()] = row.pop(key).strip()
+                    date,name,categories,comment = row['date'], row['image'], row['categories'], row['comment']
+
+                    favorites.append(name)
+        return favorites
+
+    def save(self, favorites:List[str], images:List['image.Image']):
+        """
+        Saves favorites data.
+
+        Parameters
+        ----------
+        favorites: list[str]
+            A list of strings of each image file name from the specified image directory.
+
+        images: list['image.Image']
+            A list of image objects.
+            
+        Returns
+        ----------
+        None
+        """
+        # fav_out_path = os.path.join(config.SAVE_DIR, f'{config.USER}_favorites.csv')
+        date = dt.datetime.now(dt.timezone.utc).date().isoformat()
+        image_rows:list[dict] = []
+    
+        favorited = [favorite for favorite in images if favorite.name in favorites]
+
+        for img in favorited:
+            if img.seen:
+                name = img.name
+                comment = img.comment
+
+                category_list = img.categories
+                category_list.sort()
+                if (len(category_list) != 0):
+                    categories = '+'.join([config.CATEGORY_NAMES[i] for i in category_list])
+                else: categories = 'None'
+
+                image_rows.append({'date': str(date),
+                                    'image': str(name),
+                                    'RA': str(img.wcs_center[0]),
+                                    'DEC': str(img.wcs_center[1]),
+                                    'categories': str(categories),
+                                    'comment': str(comment)})
+        if len(favorited) > 0:
+            with open(self.path, 'w') as f:
+                writer = csv.DictWriter(f, fieldnames=image_rows[0].keys())
+                writer.writeheader()
+                for row in image_rows:
+                    writer.writerow(row)
+        else:
+            with open(self.path, 'w') as f:
+                f.write('')
+        
+def markpaths() -> List[str]:
+    _paths = [os.path.join(config.SAVE_DIR,f'{config.USER}_marks.csv')]
+    import_dir = os.path.join(config.SAVE_DIR,'imports')
+
+    if not os.path.exists(import_dir):
+        os.makedirs(import_dir)
+    
+    _paths += _glob.glob(os.path.join(import_dir,'*'))
+    paths = []
+
+    for path in _paths:
+        try: paths.append(MarkFile(path).path)
+        except: pass
+
+    return paths
 
 def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
     """
@@ -329,6 +533,9 @@ def glob(edited_images:List[image.Image]=[]) -> Tuple[List[image.Image],int]:
     # Find all images in image directory
     paths = sorted(_glob.glob(os.path.join(config.IMAGE_DIR, '*.*')))
     paths = [fp for fp in paths if image.pathtoformat(fp) in image.FORMATS]
+
+    if len(paths) < 1:
+        return [], 0
 
     # Get list of paths to images if they are in the dictionary (have been edited)
     edited_paths = [os.path.join(config.IMAGE_DIR,img.name) for img in edited_images]

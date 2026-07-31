@@ -23,6 +23,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'numpydoc',
+    'sphinx_design'
 ]
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
