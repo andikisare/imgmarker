@@ -29,3 +29,15 @@ Mark files can be imported via **File > Import Mark File**. Any imported mark fi
 If a mark file does not specify an image under the ``image`` column, then each time you look at an image, Image Marker will show all marks that have pixel coordinates or WCS coordinates that are within the bounds of the image. For this reason, if you have many marks in the mark file that don't have a specified image, this may slow down Image Marker when cycling between images.
 
 If the mark file specifies WCS coordinates rather than pixel coordinates, make sure that all of your images have a WCS solution.
+
+Exporting marks as a VOTable
+----------
+
+If at least one of your loaded images has a WCS solution, marks can also be exported as a `VOTable <https://www.ivoa.net/documents/VOTable/>`_ via **File > Export Marks as VOTable...**. This option is disabled if none of your images have WCS information.
+
+The exported table only includes marks that have valid RA/Dec coordinates; marks on images without a WCS solution are skipped. Each row contains the mark's date, image name, group, label, pixel coordinates (``x``, ``y``), and sky coordinates (``ra``, ``dec``, in degrees).
+
+The resulting file can be read back in with `astropy <https://www.astropy.org/>`_::
+
+  from astropy.table import Table
+  t = Table.read('marks.xml', format='votable')
