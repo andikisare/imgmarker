@@ -97,5 +97,5 @@ Below is a table of the keybindings, with MacOS and Windows/Linux listed in sepa
      - :kbd:`Cmd` + :kbd:`B`
      - :kbd:`Ctrl` + :kbd:`B`
    * - Controls
-     - :kbd:`Cmd` + :kbd:`/` or :kbd:`F1`
+     - :kbd:`Cmd` + :kbd:`/` 
      - :kbd:`F1`
