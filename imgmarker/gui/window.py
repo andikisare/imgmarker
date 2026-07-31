@@ -75,7 +75,7 @@ class SettingsWindow(QWidget):
         self.settings_note = QLabel()
         self.settings_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.settings_note.setTextFormat(Qt.TextFormat.RichText)
-        self.settings_note.setText("<b>Click inside any text box to change the value. Press 'Enter' to update the configuration.</b>")
+        self.settings_note.setText("<b>Click inside any text box to change the value.<br>Press 'Enter' to update the configuration.</b>")
 
         # Groups
         self.group_label = QLabel()
@@ -201,7 +201,7 @@ class SettingsWindow(QWidget):
         layout.addWidget(QHLine())
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setFixedWidth(int(Screen.width()/3))
-        self.setFixedHeight(layout.sizeHint().height())
+        self.setFixedHeight(int(layout.sizeHint().height()*1.03))
 
         # Set position of window
         qt_rectangle = self.frameGeometry()
@@ -460,9 +460,11 @@ class ControlsWindow(QWidget):
         category_list = [f'Category \"{category}\"' for category in config.CATEGORY_NAMES[1:]]
         actions_list = group_list + category_list + actions_list
         ctrl = 'Cmd' if OS == 'Darwin' else 'Ctrl'
+        focus_button = 'Middle Click/Opt-Click' if OS == 'Darwin' else 'Middle Click'
+        zoom_button = 'Scroll Wheel/2 finger scroll' if OS == 'Darwin' else 'Scroll Wheel'
         group_buttons = [str(i) for i in range(1,10)]
         group_buttons[config.LEFT_CLICK_GROUP - 1] += ' OR Left Click'
-        buttons_list = group_buttons + [f'{ctrl}+1', f'{ctrl}+2', f'{ctrl}+3', f'{ctrl}+4', f'{ctrl}+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', 'Middle Click', 'Scroll Wheel', f'{ctrl}+0', f'{ctrl}+C', 'F']
+        buttons_list = group_buttons + [f'{ctrl}+1', f'{ctrl}+2', f'{ctrl}+3', f'{ctrl}+4', f'{ctrl}+5', 'Tab', 'Shift+Tab', 'Spacebar', 'Shift+Left Click', 'Delete', 'Enter', focus_button, zoom_button, f'{ctrl}+0', f'{ctrl}+C', 'F']
         
         items = [ (action, button) for action, button in zip(actions_list, buttons_list) ]
 
@@ -480,6 +482,48 @@ class ControlsWindow(QWidget):
         
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
     
+    def show(self):
+        """Shows the window and moves it to the front."""
+
+        super().show()
+        self.activateWindow()
+
+class WelcomeWindow(QWidget):
+    """Class for the window that welcomes new users on startup."""
+
+    def __init__(self):
+        super().__init__()
+
+        layout = QVBoxLayout()
+        self.setWindowTitle('Welcome')
+        self.setLayout(layout)
+
+        self.text_label = QLabel()
+        self.text_label.setWordWrap(True)
+        self.text_label.setTextFormat(Qt.TextFormat.RichText)
+        self.text_label.setOpenExternalLinks(True)
+        self.text_label.setText(
+            '<h3>Welcome to Image Marker!</h3>'
+            '<p>Browse your images with the Next/Back buttons (or Tab/Shift+Tab), place classified '
+            'marks with the number keys or a left-click, and add comments or categories for each image '
+            'as needed; open the Settings window to customize group names, categories, mark limits, and '
+            'keybindings for your project.</p>'
+            f'<p>For full documentation, visit the <a href="{__docsurl__}">Image Marker docs</a>.</p>'
+        )
+
+        layout.addWidget(self.text_label)
+
+        width = int(Screen.width()/5)
+        margins = layout.contentsMargins()
+        text_width = width - margins.left() - margins.right()
+        text_height = self.text_label.heightForWidth(text_width)
+
+        self.setFixedWidth(width)
+        self.setFixedHeight(text_height + margins.top() + margins.bottom())
+
+        # Position in the upper-left corner of the screen
+        self.move(int(Screen.width()*0.02), int(Screen.height()*0.05))
+
     def show(self):
         """Shows the window and moves it to the front."""
 
@@ -694,6 +738,7 @@ class MainWindow(QMainWindow):
 
         self.controls_window = ControlsWindow()
         self.about_window = AboutWindow()
+        self.welcome_window = WelcomeWindow()
 
         # Update max blur
         self.blur_window.slider.setMaximum(self.blur_max)
@@ -968,6 +1013,8 @@ class MainWindow(QMainWindow):
         self.settings_window.move(int(self.x()-self.width()*1.04), int(self.y()+self.height()*0.4))
         self.settings_window.show()
 
+        self.welcome_window.show()
+
         # Initialize some data
         self.get_comment()
         self.update_marks()
@@ -1148,6 +1195,7 @@ class MainWindow(QMainWindow):
         self.frame_window.close()
         self.controls_window.close()
         self.settings_window.close()
+        self.welcome_window.close()
         return super().closeEvent(a0)
 
     # === Actions ===
