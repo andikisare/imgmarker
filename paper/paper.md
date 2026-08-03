@@ -55,7 +55,7 @@ While `Image Marker` was initially designed with the above use cases in mind, we
 
 # Acknowledgements
 
-We thank Keren Sharon, Mike Gladders, and Giulia Campitiello for helpful suggestions on features to include in `Image Marker`, Will Hicks for help compiling `Image Marker` on an Intel based Mac, and Florian Keruzore for providing helpful comments.
+We thank Keren Sharon, Mike Gladders, and Giulia Campitiello for helpful suggestions on features to include in `Image Marker`, Will Hicks for help compiling `Image Marker` on an Intel based Mac, and Florian Keruzore and the JOSS referees, Erfan Nourbakhsh and Alex Lyttle, for providing helpful comments.
 This work was supported in part by the U.S. Department of Energy, Office of Science, Office of Workforce Development for Teachers and Scientists (WDTS) under the Science Undergraduate Laboratory Internships (SULI) program. Work at Argonne National Lab is supported by UChicago Argonne LLC, Operator of Argonne National Laboratory (Argonne). Argonne, a U.S. Department of Energy Office of Science Laboratory, is operated under contract no. DE-AC02-06CH11357.
 We thank the SPT-3G collaboration for the use of the Sunyaev Zel'dovich detection contours displayed on the image in Figure \ref{fig:figure2}.
 This work made use of Astropy[^1]: a community-developed core Python package and an ecosystem of tools and resources for astronomy [@astropy13; @astropy18; @astropy22]; Pillow [@clark15]; SciPy [@Virtanen20]; NumPy [@Harris20]; and PyQt [@PyQt].
