@@ -5,7 +5,7 @@ Settings
 ---------------------
 Settings can be configured within the GUI (**Image Marker > Preferences** (MacOS) or **Edit > Settings** (Windows/Linux)) or directly edited in the configuration file (``<username>_config.txt``). Right now, only some settings are available in the configuration file, while everything is available in the GUI.
 
-Note: While there are only 9 distinct **mark**s  available, users can combine **image category** with **mark**s to make 59 unique flagged combinations.
+Note: While there are only 9 distinct marks available, users can combine **image category** with **mark** to make 59 unique flagged combinations.
  
 .. list-table:: Settings available for editing within the GUI (**Image Marker > Preferences** (MacOS) or **Edit > Settings** (Windows/Linux))
    :widths: 50 50
