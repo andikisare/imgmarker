@@ -78,7 +78,7 @@ Then navigate to the pyinstaller folder in the main source code directory::
     cd imgmarker/pyinstaller
 
 Lastly, run the ``.spec`` file corresponding to your operating system.
-    * For Mac:: 
+    * For Mac (M1+ chips):: 
 
         pyinstaller mac.spec
 
