@@ -56,7 +56,7 @@ Executables
 .. Note::
     For your own security, you may make your own executable from the source code, but we provide precompiled executables for major releases that you may use at your own risk.
 
-Portable executables are available on `GitHub <https://github.com/andikisare/imgmarker/releases/latest>`_. Versions are available for Windows 11 and M1+ Mac.
+Portable executables are available on `GitHub <https://github.com/andikisare/imgmarker/releases/latest>`_. Versions are available for Windows 11 and M1+ Mac. It is recommended Intel users use the pip install version. 
 
 
 Building from source
