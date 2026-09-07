@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: Image Marker
+type: software
+authors:
+- given-names: Ryan
+  family-names: Walker
+  orcid: https://orcid.org/0000-0001-5424-3698
+- given-names: Andi
+  family-names: Kisare
+  orcid: https://orcid.org/0009-0006-7664-877X
+- given-names: Lindsey
+  family-names: Bleem
+  orcid: https://orcid.org/0000-0001-7665-5079
+repository-code: https://github.com/andikisare/imgmarker
+license: MIT
